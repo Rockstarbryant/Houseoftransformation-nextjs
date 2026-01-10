@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-dvh flex-col bg-gray-50 overflow-x-hidden">
       {/* Sidebar */}
       <aside
         className={`
@@ -148,7 +148,7 @@ const AdminLayout = ({ children }) => {
       {/* Main content area */}
       <div className={`flex-1 flex flex-col lg:${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
         {/* Sticky Header */}
-        <header className="sticky top-0 z-40 bg-blue-900 text-white shadow-md">
+        <header className="sticky top-0 z-40 w-full bg-blue-900 text-white shadow-md">
           <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             {/* Mobile menu button */}
             <button
@@ -179,8 +179,8 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
-          {children}
+        <main className="flex-1 overflow-x-hidden bg-gray-50 p-4 md:p-6">
+        {children}
         </main>
       </div>
 
