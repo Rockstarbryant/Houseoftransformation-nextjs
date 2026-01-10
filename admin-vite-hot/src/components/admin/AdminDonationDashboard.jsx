@@ -12,7 +12,7 @@ import PledgeHistory from '../donation/PledgeHistory';
 import PaymentModal from '../donation/PaymentModal';
 import { useDonation } from '../../context/DonationContext';
 
-const API_URL = process.env.REACT_APP_DONATION_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Main Dashboard Component
 const AdminDonationDashboardMain = () => {

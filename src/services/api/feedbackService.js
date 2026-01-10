@@ -1,5 +1,5 @@
 import api from './authService';
-import { API_ENDPOINTS } from '../../utils/constants';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 export const feedbackService = {
   /**

@@ -1,6 +1,6 @@
 import api from './authService';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://house-of-transformation.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://house-of-transformation.onrender.com/api';
 
 export const userService = {
   /**

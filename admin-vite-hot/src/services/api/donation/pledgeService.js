@@ -1,7 +1,7 @@
 // src/services/donation/pledgeService.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_DONATION_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_DONATION_API_URL || 'http://localhost:5001/api';
 
 const getAuthHeaders = () => ({
   headers: {

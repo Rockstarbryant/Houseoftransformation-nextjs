@@ -27,6 +27,16 @@ const nextConfig = {
   eslint: {
   ignoreDuringBuilds: true,
 },
+rewrites: async () => {
+    return {
+      beforeFiles: [
+        {
+          source: '/admin/:path*',
+          destination: 'http://localhost:3001/admin/:path*',
+        },
+      ],
+    }
+  },
 };
 
 module.exports = nextConfig;
