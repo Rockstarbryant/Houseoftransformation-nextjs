@@ -32,7 +32,7 @@ rewrites: async () => {
       beforeFiles: [
         {
           source: '/admin/:path*',
-          destination: 'http://localhost:3001/admin/:path*',
+          destination: 'https://hotadmin.vercel.app/:path*',
         },
       ],
     }
