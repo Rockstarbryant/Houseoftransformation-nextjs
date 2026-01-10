@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, BookOpen, Calendar, Newspaper, Image, Play,
   Users, UserPlus, MessageSquare, DollarSign, FileText, LogOut, Home,
-  Menu, ChevronLeft, ChevronRight
+  Menu, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 
@@ -37,32 +37,43 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={`
-          bg-blue-900 text-white flex flex-col fixed h-full transition-all duration-300 z-50
+          bg-blue-900 text-white flex flex-col fixed inset-y-0 left-0 z-50
+          transition-transform duration-300 ease-in-out lg:transition-all lg:duration-300
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
           ${isSidebarOpen ? 'w-64' : 'w-20'}
-          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="p-4 flex items-center justify-between">
+        {/* Header of sidebar */}
+        <div className="p-4 flex items-center justify-between relative">
           {isSidebarOpen ? (
-            <>
-              <div>
-                <h2 className="text-xl font-bold">Admin Panel</h2>
-                <p className="text-xs text-blue-200 mt-0.5">House of Transformation</p>
-              </div>
-            </>
+            <div>
+              <h2 className="text-xl font-bold">Admin Panel</h2>
+              <p className="text-xs text-blue-200 mt-0.5">House of Transformation</p>
+            </div>
           ) : (
             <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold mx-auto">
               HT
             </div>
           )}
 
-          {/* Desktop toggle - only visible on large screens */}
+          {/* Desktop collapse/expand button */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="hidden lg:block p-1.5 hover:bg-blue-800 rounded-lg transition-colors"
           >
             {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
           </button>
+
+          {/* Mobile close button */}
+          {isMobileSidebarOpen && (
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="lg:hidden absolute right-4 top-5 p-2 rounded-md hover:bg-blue-800 text-white"
+            >
+              <X size={24} />
+            </button>
+          )}
         </div>
 
         <nav className="flex-1 px-3 pt-2 overflow-y-auto">
@@ -103,7 +114,7 @@ const AdminLayout = ({ children }) => {
               </a>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-900 font-bold">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-900 font-bold flex-shrink-0">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
                 <div className="min-w-0">
@@ -121,13 +132,13 @@ const AdminLayout = ({ children }) => {
               </button>
             </>
           ) : (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-6 py-4">
               <button 
                 onClick={handleLogout}
-                className="p-2 hover:bg-blue-800 rounded-lg transition-colors"
+                className="p-3 hover:bg-blue-800 rounded-lg transition-colors"
                 title="Logout"
               >
-                <LogOut size={20} />
+                <LogOut size={24} />
               </button>
             </div>
           )}
@@ -135,7 +146,7 @@ const AdminLayout = ({ children }) => {
       </aside>
 
       {/* Main content area */}
-      <div className={`flex-1 flex flex-col ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+      <div className={`flex-1 flex flex-col lg:${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
         {/* Sticky Header */}
         <header className="sticky top-0 z-40 bg-blue-900 text-white shadow-md">
           <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -147,7 +158,7 @@ const AdminLayout = ({ children }) => {
               <Menu size={24} />
             </button>
 
-            {/* When collapsed on desktop - show toggle */}
+            {/* Desktop - show menu button when sidebar is collapsed */}
             {!isSidebarOpen && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
@@ -157,12 +168,12 @@ const AdminLayout = ({ children }) => {
               </button>
             )}
 
-            <div className="text-lg font-semibold">
+            <div className="text-lg font-semibold flex-1 text-center lg:text-left">
               Admin Dashboard
             </div>
 
             <div className="flex items-center gap-4">
-              {/* You can add user dropdown, notifications etc here */}
+              {/* Space for future user menu, notifications etc */}
             </div>
           </div>
         </header>
@@ -173,7 +184,7 @@ const AdminLayout = ({ children }) => {
         </main>
       </div>
 
-      {/* Mobile overlay backdrop */}
+      {/* Mobile backdrop */}
       {isMobileSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
