@@ -238,30 +238,102 @@ export default function ManageSermons() {
     onUpdate: ({ editor }) => debouncedUpdateHtml(editor.getHTML())
   });
 
-  // ─── Your existing API logic (unchanged) ─────────────────────────────────────
-  useEffect(() => { fetchSermons(); }, []);
+  useEffect(() => {
+    fetchSermons();
+  }, []);
+
+  useEffect(() => {
+    if (editor && editingId) {
+      editor.commands.setContent(descriptionHtml || '<p></p>', false);
+    }
+  }, [editingId, editor]);
 
   const fetchSermons = async () => {
     try {
-      const { sermons: data } = await sermonService.getSermons({ limit: 100 });
-      setSermons(data || []);
-      setPinnedCount(data.filter(s => s.pinned).length);
-    } catch (err) {
-      console.error(err);
+      const data = await sermonService.getSermons({ limit: 100 });
+      setSermons(data.sermons || []);
+      const pinned = (data.sermons || []).filter(s => s.pinned).length;
+      setPinnedCount(pinned);
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
   const resetForm = () => {
-    setFormData({ title:'', pastor:'', date:'', category:'Sunday Service', thumbnail:'', videoUrl:'', type:'text' });
+    setFormData({
+      title: '',
+      pastor: '',
+      date: '',
+      category: 'Sunday Service',
+      description: '',
+      thumbnail: '',
+      videoUrl: '',
+      type: 'text'
+    });
     setDescriptionHtml('');
     setSermonType('text');
     setEditingId(null);
     setThumbnailPreview(null);
-    editor?.commands.setContent('<p></p>');
+    if (editor) {
+      editor.commands.setContent('<p></p>');
+    }
   };
 
-  // Your Cloudinary upload function (unchanged)
-  const handleImageUpload = async (file, editorInstance) => { /* ... your existing code ... */ };
+  const handleImageUpload = async (file, editorInstance) => {
+    try {
+      setUploading(true);
+      
+      // Insert temporary placeholder
+      const placeholderId = `upload-${Date.now()}`;
+      editorInstance
+        .chain()
+        .focus()
+        .setImage({ 
+          src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23e5e7eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="%239ca3af"%3EUploading...%3C/text%3E%3C/svg%3E',
+          alt: placeholderId 
+        })
+        .run();
+
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append('file', file);
+      cloudinaryFormData.append('upload_preset', 'church_sermons');
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: cloudinaryFormData
+        }
+      );
+
+      const data = await response.json();
+      
+      if (data.secure_url) {
+        // Replace placeholder with actual image
+        const { state } = editorInstance;
+        const { doc } = state;
+        
+        doc.descendants((node) => {
+          if (node.type.name === 'image' && node.attrs.alt === placeholderId) {
+            editorInstance
+              .chain()
+              .focus()
+              .setImage({ src: data.secure_url, alt: file.name })
+              .run();
+          }
+        });
+      } else {
+        alert('Image upload failed');
+        editorInstance.chain().focus().deleteSelection().run();
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error uploading image: ' + error.message);
+      editorInstance.chain().focus().deleteSelection().run();
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleThumbnailUpload = (e) => {
     const file = e.target.files[0];
@@ -273,23 +345,86 @@ export default function ManageSermons() {
     }
   };
 
-  const handleSubmit = async (e) => { /* ... your existing submit logic ... */ };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (sermonType === 'video' && !formData.videoUrl) {
+      alert('Please add a video URL for video sermons');
+      return;
+    }
+    if (!descriptionHtml || descriptionHtml === '<p></p>') {
+      alert('Please add some content to the description');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const dataToSubmit = {
+        ...formData,
+        type: sermonType,
+        descriptionHtml,
+        description: editor?.getText() || ''
+      };
+
+      if (editingId) {
+        await sermonService.updateSermon(editingId, dataToSubmit);
+        alert('Sermon updated successfully!');
+      } else {
+        await sermonService.createSermon(dataToSubmit);
+        alert('Sermon added successfully!');
+      }
+
+      setShowForm(false);
+      resetForm();
+      fetchSermons();
+    } catch (error) {
+      console.error('Error saving sermon:', error);
+      alert('Error saving sermon: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEdit = (sermon) => {
     setFormData({
-      title: sermon.title,
-      pastor: sermon.pastor,
-      date: sermon.date.split('T')[0],
-      category: sermon.category,
+      ...sermon,
       thumbnail: sermon.thumbnail || '',
-      videoUrl: sermon.videoUrl || '',
-      type: sermon.type
+      descriptionHtml: sermon.descriptionHtml || ''
     });
     setDescriptionHtml(sermon.descriptionHtml || '');
     setThumbnailPreview(sermon.thumbnail);
-    setSermonType(sermon.type);
+    setSermonType(sermon.type || 'text');
     setEditingId(sermon._id);
     setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this sermon?')) {
+      try {
+        await sermonService.deleteSermon(id);
+        alert('Sermon deleted!');
+        fetchSermons();
+      } catch (error) {
+        alert('Error deleting sermon');
+      }
+    }
+  };
+
+  const handlePin = async (id) => {
+    if (pinnedCount >= 3 && !sermons.find(s => s._id === id)?.pinned) {
+      alert('You can only pin up to 3 sermons');
+      return;
+    }
+
+    try {
+      const sermon = sermons.find(s => s._id === id);
+      await sermonService.updateSermon(id, { pinned: !sermon.pinned });
+      alert(sermon.pinned ? 'Sermon unpinned' : 'Sermon pinned!');
+      fetchSermons();
+    } catch (error) {
+      alert('Error pinning sermon');
+    }
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
