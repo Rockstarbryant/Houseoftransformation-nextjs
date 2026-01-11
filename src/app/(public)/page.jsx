@@ -75,10 +75,10 @@ export default function HomePage() {
                 {featuredSermon?.pinned ? 'Featured Sermon' : 'Latest Sermon'}
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            <h2 className="text-4xl md:text-5xl text-center font-bold text-slate-900 mb-4">
               {featuredSermon?.pinned ? 'Featured' : 'Latest'} <span className="text-blue-600">Sermon</span>
             </h2>
-            <p className="text-xl text-slate-600">
+            <p className="text-xl text-center text-slate-600">
               {featuredSermon?.pinned 
                 ? 'Our pastor\'s most important message for you' 
                 : 'Grow in faith with our most recent teachings and messages'}
@@ -104,7 +104,7 @@ export default function HomePage() {
               <div className="text-center">
                 <Link href="/sermons">
                   <Button variant="primary" size="lg">
-                    Browse All Sermons <ArrowRight size={20} />
+                    Browse All Sermons <ArrowRight size={10} />
                   </Button>
                 </Link>
               </div>
@@ -120,14 +120,15 @@ export default function HomePage() {
             <span className="inline-block px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-bold mb-4 uppercase tracking-widest">
               What's Happening
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            <h2 className="text-4xl md:text-5xl text-center font-bold text-slate-900 mb-4">
               Upcoming <span className="text-blue-600">Events</span>
             </h2>
-            <p className="text-xl text-slate-600 max-w-2xl">
+            <p className="text-xl text-center text-slate-600 max-w-full">
               Join us for special gatherings and connect with our community
             </p>
           </div>
-          <EventList limit={3} showViewAll />
+          
+          <EventList limit={1} showViewAll />
         </div>
       </section>
 
@@ -138,10 +139,10 @@ export default function HomePage() {
             <span className="inline-block px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-bold mb-4 uppercase tracking-widest">
               Get Connected
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            <h2 className="text-4xl md:text-5xl text-center font-bold text-slate-900 mb-4">
               Service <span className="text-blue-600">Areas & Teams</span>
             </h2>
-            <p className="text-xl text-slate-600 max-w-2xl">
+            <p className="text-xl text-slate-600 text-center max-w-full">
               Find your place to serve, grow, and make an impact in our community
             </p>
           </div>
@@ -160,7 +161,7 @@ export default function HomePage() {
           <div className="mt-12 text-center">
             <Link href="/service-areas">
               <Button variant="primary" size="lg">
-                Explore All Service Areas <ArrowRight size={20} />
+                Explore All Service Areas <ArrowRight size={10} />
               </Button>
             </Link>
           </div>
