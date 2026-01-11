@@ -571,68 +571,71 @@ const ManageLiveStream = () => {
 
       {/* Create/Edit Modal */}
       {showStreamModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl w-full max-w-4xl my-8 shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {editingId ? 'Edit Livestream' : 'Create New Livestream'}
-              </h2>
-              <button
-                onClick={resetForm}
-                className="p-2 hover:bg-gray-100 rounded-full transition"
-              >
-                <X size={24} />
-              </button>
-            </div>
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    {/* Modal Container - responsive width */}
+    <div className="bg-white rounded-2xl w-full max-w-2xl md:max-w-3xl lg:max-w-4xl my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 z-10 flex items-center justify-between p-5 md:p-6">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+          {editingId ? 'Edit Livestream' : 'Create New Livestream'}
+        </h2>
+        <button
+          onClick={resetForm}
+          className="p-2 hover:bg-gray-100 rounded-full transition"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Stream Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Sunday Morning Worship Service"
-                  required
-                />
-              </div>
+      {/* Form - scrollable content */}
+      <form onSubmit={handleSubmit} className="p-5 md:p-6 space-y-6">
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Stream Title *
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., Sunday Morning Worship Service"
+            required
+          />
+        </div>
 
-              {/* Type & Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stream Type *
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    {streamTypes.map(t => (
-                      <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
-                    ))}
-                  </select>
-                </div>
+        {/* Type & Status - smaller grid on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Stream Type *
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {streamTypes.map(t => (
+                <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+              ))}
+            </select>
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status *
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value="scheduled">Scheduled</option>
-                    <option value="live">Live Now</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </div>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status *
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="scheduled">Scheduled</option>
+              <option value="live">Live Now</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
 
               {/* Start Time */}
               <div>
@@ -782,34 +785,34 @@ const ManageLiveStream = () => {
                 </label>
               </div>
 
-              {/* Submit Actions */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60"
-                >
-                  {loading 
-                    ? 'Saving...' 
-                    : editingId 
-                      ? 'Update Stream' 
-                      : 'Create Stream'}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-60"
-                >
-                  Cancel
-                </button>
-              </div>
+              {/* Submit Buttons - stacked on mobile */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 px-6 py-3.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60 order-2 sm:order-1"
+          >
+            {loading 
+              ? 'Saving...' 
+              : editingId 
+                ? 'Update Stream' 
+                : 'Create Stream'}
+          </button>
+          <button
+            type="button"
+            onClick={resetForm}
+            disabled={loading}
+            className="flex-1 px-6 py-3.5 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-60 order-1 sm:order-2"
+          >
+            Cancel
+            </button>
+            </div>
             </form>
+            </div>
           </div>
-        </div>
-      )}
+          )}
 
-      {/* Delete Confirmation */}
+        {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
