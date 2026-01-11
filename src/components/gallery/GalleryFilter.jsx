@@ -23,7 +23,7 @@ const GalleryFilter = ({ selectedCategory, onCategoryChange }) => {
               relative px-6 py-2.5 rounded-full font-medium text-base transition-all duration-300
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
               ${isActive 
-                ? 'text-blue-900 bg-blue-50/80 shadow-sm' 
+                ? 'text-blue-900 bg-red-500 shadow-sm' 
                 : 'text-gray-700 hover:text-blue-800 hover:bg-blue-50/50'
               }
             `}

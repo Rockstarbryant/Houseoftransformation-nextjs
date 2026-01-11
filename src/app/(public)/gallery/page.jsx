@@ -48,11 +48,11 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Push content below fixed header */}
-      <div className="pt-28 md:pt-32 lg:pt-36">
+      <div className="pt-14 md:pt-16 lg:pt-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
           {/* Page Title & Subtitle */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-red-900 tracking-tight mb-4">
               Photo Gallery
             </h1>
             <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
