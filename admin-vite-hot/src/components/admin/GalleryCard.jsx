@@ -1,34 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Heart, Trash2, Eye, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, Trash2, Eye } from 'lucide-react';
 
 const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const menuRef = useRef(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleDelete = () => {
     if (window.confirm('Delete this photo? This action cannot be undone.')) {
       onDelete(photo._id);
     }
-    setShowMenu(false);
-  };
-
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setShowMenu(prev => !prev);
   };
 
   const handleLike = (e) => {
@@ -38,33 +17,32 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group relative"
+      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container */}
-      <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-200 overflow-hidden">
+      <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
         <img
           src={photo.imageUrl}
           alt={photo.title || 'Gallery photo'}
-          className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-110' : 'scale-100'}`}
+          className={`w-full h-full object-cover transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'}`}
           onError={(e) => {
-            e.target.src = '/placeholder-image.jpg'; // ← optional: add fallback image
-            e.target.alt = 'Image failed to load';
+            e.target.style.display = 'none';
+            // Minimal fallback - no broken image icon spam
+            e.target.parentElement.style.background = '#f3f4f6';
+            e.target.parentElement.innerHTML += '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">Image unavailable</div>';
           }}
         />
 
-        {/* Hover Overlay */}
+        {/* Hover Overlay - only View button */}
         {isHovered && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-4 transition-opacity duration-300">
+          <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails(photo);
-              }}
-              className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-lg font-medium shadow-lg hover:bg-gray-100 active:scale-95 transition transform"
+              onClick={() => onViewDetails(photo)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-900 rounded-lg font-medium shadow hover:bg-gray-50 transition active:scale-95"
             >
-              <Eye size={18} />
+              <Eye size={17} />
               View
             </button>
           </div>
@@ -72,93 +50,62 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
 
         {/* Category Badge */}
         <div className="absolute top-3 left-3">
-          <span className="inline-block px-3 py-1 bg-white/95 text-gray-900 text-xs font-semibold rounded-full shadow backdrop-blur-sm">
-            {photo.category || 'Uncategorized'}
+          <span className="px-2.5 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded-full shadow-sm">
+            {photo.category || 'General'}
           </span>
         </div>
 
         {/* Like Button */}
         <button
           onClick={handleLike}
-          className={`absolute top-3 right-3 p-2.5 rounded-full transition-all shadow-sm ${
+          className={`absolute top-3 right-3 p-2 rounded-full transition ${
             isLiked
               ? 'bg-red-50 text-red-600'
-              : 'bg-white/90 text-gray-600 hover:text-red-600 hover:bg-red-50'
+              : 'bg-white/85 text-gray-600 hover:bg-red-50 hover:text-red-600'
           }`}
         >
           <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
         </button>
       </div>
 
-      {/* Content */}
+      {/* Content + Footer with actions */}
       <div className="p-4">
-        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1.5">
+        <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">
           {photo.title || 'Untitled'}
         </h3>
         {photo.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+          <p className="text-sm text-gray-600 line-clamp-1 mb-3">
             {photo.description}
           </p>
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-100">
+          {/* Likes */}
+          <div className="flex items-center gap-1.5 text-gray-600">
             <Heart 
-              size={16} 
-              className={isLiked ? 'fill-red-600 text-red-600' : ''} 
+              size={15} 
+              className={isLiked ? 'fill-red-500 text-red-500' : ''} 
             />
             <span>{photo.likes || 0}</span>
           </div>
 
-          {/* Menu Button + Dropdown */}
-          <div className="relative" ref={menuRef}>
+          {/* Admin Actions - always visible, clean */}
+          <div className="flex items-center gap-1">
             <button
-              type="button"
-              onClick={toggleMenu}
-              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              onClick={() => onViewDetails(photo)}
+              className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+              title="View Details"
             >
-              <MoreVertical size={18} className="text-gray-700" />
+              <Eye size={18} />
             </button>
 
-            {showMenu && (
-              <>
-                {/* Small pointer arrow */}
-                <div className="absolute right-3 -top-1.5 w-3 h-3 bg-white border-l border-t border-gray-300 rotate-45 shadow-sm z-[60]" />
-
-                <div 
-                  className="
-                    absolute right-0 top-full mt-2 w-48 
-                    bg-white border border-gray-200 rounded-xl 
-                    shadow-2xl z-[100] overflow-hidden
-                    ring-1 ring-black/5
-                  "
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewDetails(photo);
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                  >
-                    <Eye size={16} className="text-gray-600" />
-                    View Details
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
+            <button
+              onClick={handleDelete}
+              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition"
+              title="Delete Photo"
+            >
+              <Trash2 size={18} />
+            </button>
           </div>
         </div>
       </div>
