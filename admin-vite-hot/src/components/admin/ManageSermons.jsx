@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Edit, Trash2, Star, X, Image as ImageIcon, 
-  RotateCcw, RotateCw, Eye, AlignLeft, AlignCenter, 
+  RotateCcw, RotateCw, RefreshCw, Eye, AlignLeft, AlignCenter, 
   AlignRight, AlignJustify, List, ListOrdered 
 } from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -31,7 +31,7 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
   };
 
   return (
-    <div className="border border-gray-300 rounded-lg bg-white p-3 space-y-3 shadow-sm">
+    <div className="border border-gray-300 rounded-lg bg-slate-300 p-3 space-y-3 shadow-sm">
       {/* First row: basic + headings + lists + align + quote/code */}
       <div className="flex flex-wrap gap-2 items-center border-b border-gray-200 pb-3">
         {/* B I S */}
@@ -437,8 +437,8 @@ export default function ManageSermons() {
         {/* Header + Add button */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Manage Sermons</h1>
-            <p className="text-gray-600 mt-1">Create, edit and organize your sermon collection</p>
+            <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900">Manage Sermons</h1>
+            <p className="text-gray-600 text-center mt-1">Create, edit and organize your sermon collection</p>
           </div>
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
@@ -446,6 +446,14 @@ export default function ManageSermons() {
           >
             <Plus size={20} /> Add Sermon
           </button>
+          <button
+                        onClick={fetchSermons}
+                        disabled={loading}
+                        className="px-4 py-2 bg-blue-500 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        Refresh
+                      </button>
         </div>
 
         {/* Featured counter - very similar to dummy */}
