@@ -1,9 +1,8 @@
-// src/components/layout/Footer.jsx
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Facebook, Youtube, Instagram, Mail, Phone, MapPin, Heart } from 'lucide-react';
+import { Facebook, Youtube, Instagram, Mail, Phone, MapPin, Heart, ArrowRight } from 'lucide-react';
 import { CHURCH_INFO, SERVICE_TIMES, SOCIAL_LINKS } from '@/utils/constants';
 
 const Footer = () => {
@@ -22,178 +21,145 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-900 text-slate-200">
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Church Info */}
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
-                HT
-              </div>
-              <h3 className="font-bold text-lg text-white">{CHURCH_INFO.name}</h3>
+    <footer className="bg-slate-950 text-slate-200 border-t-8 border-[#8B1A1A]">
+      {/* 1. TOP BAR: Contact Grid (Sharp) */}
+      <div className="border-b border-slate-800">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+          <div className="p-8 flex items-center gap-6 group hover:bg-slate-900 transition-colors">
+            <Phone className="text-[#8B1A1A]" size={24} />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Inquiries</p>
+              <a href={`tel:${CHURCH_INFO.phone}`} className="text-sm font-bold text-white hover:text-[#8B1A1A] transition-colors uppercase tracking-tighter">
+                {CHURCH_INFO.phone}
+              </a>
             </div>
-            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+          </div>
+          <div className="p-8 flex items-center gap-6 group hover:bg-slate-900 transition-colors">
+            <Mail className="text-[#8B1A1A]" size={24} />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Correspondence</p>
+              <a href={`mailto:${CHURCH_INFO.email}`} className="text-sm font-bold text-white hover:text-[#8B1A1A] transition-colors uppercase tracking-tighter">
+                {CHURCH_INFO.email}
+              </a>
+            </div>
+          </div>
+          <div className="p-8 flex items-center gap-6 group hover:bg-slate-900 transition-colors">
+            <MapPin className="text-[#8B1A1A]" size={24} />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Visit Us</p>
+              <p className="text-sm font-bold text-white uppercase tracking-tighter">
+                {CHURCH_INFO.address || CHURCH_INFO.location}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. MAIN CONTENT GRID */}
+      <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          
+          {/* Brand Column */}
+          <div className="lg:col-span-4 space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+                {CHURCH_INFO.name} <br /> <span className="text-[#8B1A1A]">Ministry.</span>
+              </h3>
+              <div className="w-12 h-1 bg-[#8B1A1A]" />
+            </div>
+            <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs uppercase tracking-wider">
               Transforming lives through God's love and the message of Jesus Christ in {CHURCH_INFO.location}.
             </p>
-            <div className="flex gap-4">
-              <a 
-                href={SOCIAL_LINKS.facebook} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-slate-800 hover:bg-blue-600 p-2 rounded-lg transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook size={20} />
-              </a>
-              <a 
-                href={SOCIAL_LINKS.youtube} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-slate-800 hover:bg-red-600 p-2 rounded-lg transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube size={20} />
-              </a>
-              <a 
-                href={SOCIAL_LINKS.instagram} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-slate-800 hover:bg-pink-600 p-2 rounded-lg transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram size={20} />
-              </a>
+            <div className="flex gap-2">
+              {[
+                { icon: Facebook, href: SOCIAL_LINKS.facebook },
+                { icon: Youtube, href: SOCIAL_LINKS.youtube },
+                { icon: Instagram, href: SOCIAL_LINKS.instagram }
+              ].map((social, i) => (
+                <a 
+                  key={i}
+                  href={social.href} 
+                  target="_blank" 
+                  className="size-10 border border-slate-800 flex items-center justify-center hover:bg-[#8B1A1A] hover:border-[#8B1A1A] transition-all"
+                >
+                  <social.icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-bold text-white mb-6 text-lg">Quick Links</h4>
-            <ul className="space-y-3 text-slate-400 text-sm">
-              <li><Link href="/" className="hover:text-blue-400 transition-colors">Home</Link></li>
-              <li><Link href="/about" className="hover:text-blue-400 transition-colors">About Us</Link></li>
-              <li><Link href="/sermons" className="hover:text-blue-400 transition-colors">Sermons</Link></li>
-              <li><Link href="/events" className="hover:text-blue-400 transition-colors">Events</Link></li>
-              <li><Link href="/gallery" className="hover:text-blue-400 transition-colors">Gallery</Link></li>
-              <li><Link href="/blog" className="hover:text-blue-400 transition-colors">Blog</Link></li>
-              <li><Link href="/volunteer" className="hover:text-blue-400 transition-colors">Volunteer</Link></li>
-              <li><Link href="/donate" className="hover:text-blue-400 transition-colors">Give</Link></li>
-              <li><Link href="/donation" className="hover:text-blue-400 transition-colors">Donations</Link></li>
-            </ul>
+          {/* Links and Times Group */}
+          <div className="lg:col-span-4 grid grid-cols-2 gap-8">
+            <div>
+              <h4 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-8">Navigation</h4>
+              <ul className="space-y-4 text-slate-500 text-[11px] font-black uppercase tracking-widest">
+                <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link href="/sermons" className="hover:text-white transition-colors">Sermons</Link></li>
+                <li><Link href="/events" className="hover:text-white transition-colors">Events</Link></li>
+                <li><Link href="/volunteer" className="hover:text-white transition-colors">Volunteer</Link></li>
+                <li><Link href="/donate" className="hover:text-white transition-colors">Giving</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-8">Services</h4>
+              <ul className="space-y-6 text-[11px] font-black uppercase tracking-widest">
+                <li>
+                  <p className="text-[#8B1A1A] mb-1">Sunday Worship</p>
+                  <p className="text-slate-400">{SERVICE_TIMES.sunday.time}</p>
+                </li>
+                <li>
+                  <p className="text-[#8B1A1A] mb-1">Midweek Growth</p>
+                  <p className="text-slate-400">{SERVICE_TIMES.wednesday?.time || 'Wednesdays'}</p>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          {/* Service Times */}
-          <div>
-            <h4 className="font-bold text-white mb-6 text-lg">Service Times</h4>
-            <ul className="space-y-4 text-slate-400 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-white mt-1">Sunday:</span>
-                <div>
-                  <p>{SERVICE_TIMES.sunday.time}</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-white mt-1">Wednesday:</span>
-                <div>
-                  <p>{SERVICE_TIMES.wednesday?.time || 'By appointment'}</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-white mt-1">Friday:</span>
-                <div>
-                  <p>{SERVICE_TIMES.friday?.time || 'By appointment'}</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="font-bold text-white mb-6 text-lg">Stay Connected</h4>
-            <p className="text-slate-400 text-sm mb-4">
-              Get updates on services, events, and spiritual growth.
-            </p>
-            <form onSubmit={handleSubscribe} className="space-y-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-600 transition-colors"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-              >
-                <Mail size={16} /> Subscribe
-              </button>
+          {/* Newsletter Column */}
+          <div className="lg:col-span-4 space-y-8">
+            <h4 className="text-[11px] font-black text-white uppercase tracking-[0.4em]">Newsletter</h4>
+            <form onSubmit={handleSubscribe} className="space-y-0">
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="EMAIL ADDRESS"
+                  className="w-full px-6 py-5 bg-slate-900 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#8B1A1A] transition-colors font-black text-[10px] tracking-widest"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="absolute right-0 top-0 h-full px-6 bg-[#8B1A1A] text-white hover:bg-white hover:text-slate-950 transition-all flex items-center justify-center"
+                >
+                  <ArrowRight size={18} />
+                </button>
+              </div>
               {subscribeSuccess && (
-                <p className="text-green-400 text-xs text-center">
-                  Thank you for subscribing!
+                <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mt-4">
+                  Confirmed. Welcome to the mission.
                 </p>
               )}
             </form>
+            <p className="text-slate-600 text-[9px] font-bold uppercase tracking-[0.2em] leading-loose">
+              By subscribing, you agree to receive spiritual resources and event updates.
+            </p>
           </div>
         </div>
-
-        {/* Contact Info Bar */}
-        <div className="bg-slate-800 rounded-2xl p-6 md:p-8 mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex items-center gap-4">
-              <Phone className="text-blue-400" size={24} />
-              <div>
-                <p className="text-slate-400 text-sm">Phone</p>
-                <a href={`tel:${CHURCH_INFO.phone}`} className="text-white font-semibold hover:text-blue-400 transition-colors">
-                  {CHURCH_INFO.phone}
-                </a>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Mail className="text-blue-400" size={24} />
-              <div>
-                <p className="text-slate-400 text-sm">Email</p>
-                <a href={`mailto:${CHURCH_INFO.email}`} className="text-white font-semibold hover:text-blue-400 transition-colors">
-                  {CHURCH_INFO.email}
-                </a>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <MapPin className="text-blue-400" size={24} />
-              <div>
-                <p className="text-slate-400 text-sm">Location</p>
-                <p className="text-white font-semibold">{CHURCH_INFO.address || CHURCH_INFO.location}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-slate-700" />
       </div>
 
-      {/* Bottom Footer */}
-      <div className="border-t border-slate-700 py-8">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
-            <p>
-              &copy; {currentYear} {CHURCH_INFO.name}. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link href="/privacy" className="hover:text-blue-400 transition-colors">
-                Privacy Policy
-              </Link>
-              <span className="text-slate-600">|</span>
-              <Link href="/terms" className="hover:text-blue-400 transition-colors">
-                Terms of Service
-              </Link>
-              <span className="text-slate-600">|</span>
-              <span className="flex items-center gap-1">
-                Built with <Heart size={14} className="text-red-500" /> for God's glory
-              </span>
-            </div>
+      {/* 3. FINAL BAR */}
+      <div className="border-t border-slate-900 py-10 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            &copy; {currentYear} {CHURCH_INFO.name}. BUILDING A LEGACY OF FAITH.
+          </p>
+          <div className="flex items-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <span className="flex items-center gap-2 text-white">
+              Built with <Heart size={12} className="text-[#8B1A1A] fill-[#8B1A1A]" /> for God's glory
+            </span>
           </div>
         </div>
       </div>

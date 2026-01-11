@@ -37,8 +37,8 @@ const AboutSection = ({ preview = false }) => {
   if (preview) {
     // HOMEPAGE PREVIEW (Modular Grid Style)
     return (
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-20 max-w-full bg-slate-50">
+        <div className="max-w-full mx-auto px-6">
           <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100 flex flex-col lg:flex-row">
             <div className="lg:w-1/2 p-12 md:p-16 space-y-8">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UserPlus, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { UserPlus, AlertCircle, CheckCircle, Clock, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import OpportunityCard from '@/components/volunteer/OpportunityCard';
 import { useAuthContext } from '@/context/AuthContext';
 import { volunteerService } from '@/services/api/volunteerService';
@@ -26,7 +26,6 @@ const VolunteerPage = () => {
     try {
       setLoading(true);
       const response = await volunteerService.checkExistingApplication();
-      
       if (response.hasApplication) {
         setExistingApplication(response.application);
       }
@@ -37,154 +36,155 @@ const VolunteerPage = () => {
     }
   };
 
-  const getApplicationBannerContent = (app) => {
-    const statusConfig = {
-      pending: {
-        icon: <Clock className="text-yellow-600" size={24} />,
-        title: '⏳ Application Under Review',
-        color: 'bg-yellow-50 border-yellow-200',
-        textColor: 'text-yellow-900',
-        description: `Your application for ${app.ministry} is under review. We will contact you within 1-2 weeks.`
-      },
-      interviewing: {
-        icon: <AlertCircle className="text-blue-600" size={24} />,
-        title: '📞 Interview Scheduled',
-        color: 'bg-blue-50 border-blue-200',
-        textColor: 'text-blue-900',
-        description: `Great progress! Your application for ${app.ministry} is advancing. Watch for contact from our team.`
-      },
-      approved: {
-        icon: <CheckCircle className="text-green-600" size={24} />,
-        title: '✨ Approved!',
-        color: 'bg-green-50 border-green-200',
-        textColor: 'text-green-900',
-        description: `Congratulations! Your application for ${app.ministry} has been approved. Our team will reach out shortly.`
-      },
-      rejected: {
-        icon: <AlertCircle className="text-red-600" size={24} />,
-        title: '📋 Application Status',
-        color: 'bg-red-50 border-red-200',
-        textColor: 'text-red-900',
-        description: `Thank you for your interest. Unfortunately, we cannot move forward with your application at this time.`
-      }
+  const getStatusBranding = (status) => {
+    const config = {
+      pending: { color: 'bg-slate-900', icon: <Clock size={20} />, label: 'Reviewing' },
+      interviewing: { color: 'bg-blue-600', icon: <AlertCircle size={20} />, label: 'Interview' },
+      approved: { color: 'bg-[#8B1A1A]', icon: <CheckCircle size={20} />, label: 'Approved' },
+      rejected: { color: 'bg-slate-400', icon: <AlertCircle size={20} />, label: 'Closed' }
     };
-
-    return statusConfig[app.status] || statusConfig.pending;
+    return config[status] || config.pending;
   };
 
   return (
-    <div className="pt-20 pb-20 bg-gray-300 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-blue-900 mb-4 flex items-center justify-center gap-3">
-            <UserPlus size={48} /> Volunteer Portal
-          </h1>
-          <p className="text-xl text-gray-600">Use your gifts to serve and make a difference</p>
-        </div>
-
-        {/* Application Status Banner */}
-        {user && existingApplication && !loading && (
-          <Card className={`mb-12 border-l-4 border-blue-900 ${getApplicationBannerContent(existingApplication.status).color}`}>
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 mt-1">
-                {getApplicationBannerContent(existingApplication.status).icon}
+    <div className="bg-white min-h-screen font-sans antialiased">
+      {/* 1. MINIMALIST STRIPED HEADER */}
+      <section className="pt-32 pb-20 border-b border-slate-100 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-[#8B1A1A]">
+                <div className="w-12 h-[2px] bg-[#8B1A1A]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.5em]">The H.O.T Portal</span>
               </div>
-              <div className="flex-grow">
-                <h3 className={`text-xl font-bold ${getApplicationBannerContent(existingApplication.status).textColor} mb-2`}>
-                  {getApplicationBannerContent(existingApplication.status).title}
-                </h3>
-                <p className={`text-sm ${getApplicationBannerContent(existingApplication.status).textColor} mb-4`}>
-                  {getApplicationBannerContent(existingApplication.status).description}
-                </p>
-                <div className="flex gap-3 flex-wrap">
-                  <Button 
-                    onClick={() => window.location.href = '/profile/' + user._id}
-                    variant="primary"
-                    className="text-sm"
-                  >
-                    Check Application Progress
+              <h1 className="text-7xl md:text-9xl font-black text-slate-900 tracking-tighter uppercase leading-[0.8]">
+                Serve <br /> <span className="text-slate-200">The Mission.</span>
+              </h1>
+            </div>
+            <p className="max-w-xs text-slate-500 font-bold uppercase tracking-widest text-[11px] leading-relaxed">
+              Use your God-given talents to transform lives and grow in faith. Founded on faith, hope, and love.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. DYNAMIC STATUS & AUTH NOTIFICATIONS (Sharp Rectangles) */}
+      <section className="bg-slate-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            
+            {/* Status Panel (Visible if logged in and has app) */}
+            {user && existingApplication && !loading ? (
+              <div className="py-12 lg:pr-12 lg:border-r border-slate-200 flex flex-col justify-center">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={`p-4 text-white ${getStatusBranding(existingApplication.status).color}`}>
+                    {getStatusBranding(existingApplication.status).icon}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Status</p>
+                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                      {getStatusBranding(existingApplication.status).label}
+                    </h2>
+                  </div>
+                </div>
+                <p className="text-slate-600 mb-8 font-medium">Your application for {existingApplication.ministry} is currently being processed by our team.</p>
+                <div className="flex gap-2">
+                  <Button onClick={() => window.location.href = '/profile/' + user._id} className="rounded-none bg-slate-900 text-white px-8 py-4 font-black uppercase text-[10px] tracking-widest">
+                    Track Progress
                   </Button>
-                  {existingApplication.isEditable && (
-                    <Button 
-                      onClick={() => window.location.href = '/volunteer'}
-                      variant="outline"
-                      className="text-sm"
-                    >
-                      Edit Application
-                    </Button>
-                  )}
                 </div>
               </div>
-            </div>
-          </Card>
-        )}
+            ) : (
+              /* Auth Prompt (Visible if not logged in) */
+              !user && !loading && (
+                <div className="py-12 lg:pr-12 lg:border-r border-slate-200 flex flex-col justify-center">
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">Sign In to Proceed</h3>
+                  <p className="text-slate-500 mb-8 max-w-sm">Create an account to track your application status and progress.</p>
+                  <Button onClick={() => window.location.href = '/login'} className="rounded-none bg-[#8B1A1A] text-white px-10 py-5 font-black uppercase text-[10px] tracking-widest self-start">
+                    Access Dashboard
+                  </Button>
+                </div>
+              )
+            )}
 
-        {/* Not Logged In Message */}
-        {!user && !loading && (
-          <Card className="mb-12 bg-blue-50 border-l-4 border-blue-900">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="text-blue-600 flex-shrink-0 mt-1" size={24} />
-              <div>
-                <h3 className="text-lg font-bold text-blue-900 mb-2">Sign In to Track Your Application</h3>
-                <p className="text-blue-800 mb-4">
-                  Create an account or sign in to see your volunteer application status and progress.
-                </p>
-                <Button onClick={() => window.location.href = '/login'} variant="primary">
-                  Sign In
-                </Button>
-              </div>
+            {/* Inspirational Block */}
+            <div className="py-12 lg:pl-12 flex flex-col justify-center bg-[#8B1A1A] lg:bg-transparent lg:text-slate-900 text-white p-6 lg:p-0">
+              <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Why We Volunteer</h3>
+              <p className="text-sm opacity-80 font-medium leading-relaxed max-w-md italic">
+                "Our Busia Main Campus serves as a beacon of hope, fostering vibrant worship and active service".
+              </p>
             </div>
-          </Card>
-        )}
-
-        {/* Inspirational Banner */}
-        <div className="bg-purple-900 text-white rounded-2xl p-8 mb-12 text-center">
-          <h3 className="text-3xl font-bold mb-4">Why Volunteer?</h3>
-          <p className="text-lg mb-6">Use your God-given talents to transform lives and grow in faith</p>
+          </div>
         </div>
+      </section>
 
-        {/* Opportunities Section */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-blue-900 mb-8">Available Opportunities</h2>
-          <div className="space-y-6">
-            {volunteerData.map(opp => (
-              <OpportunityCard 
-                key={opp.id} 
-                opportunity={opp}
-                onApplicationSuccess={checkApplicationStatus}
-              />
+      {/* 3. OPPORTUNITIES (Industrial List Style) */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-16">
+            <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Available Roles</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-[#8B1A1A]">{volunteerData.length}</span>
+              <div className="w-8 h-[1px] bg-slate-200" />
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100 border-y border-slate-100">
+            {volunteerData.map((opp) => (
+              <div key={opp.id} className="group py-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 transition-all hover:bg-slate-50/50">
+                <div className="flex-1 space-y-2">
+                   <p className="text-[10px] font-black text-[#8B1A1A] uppercase tracking-[0.3em]">{opp.category || 'General Ministry'}</p>
+                   <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter group-hover:translate-x-3 transition-transform duration-500">
+                     {opp.title || opp.role}
+                   </h3>
+                </div>
+                
+                <div className="lg:w-1/2 flex flex-col md:flex-row md:items-center justify-end gap-12 w-full">
+                  <div className="flex gap-10">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Weekly Commitment</p>
+                      <p className="text-sm font-bold text-slate-900 uppercase">{opp.timeCommitment || '2-4 Hours'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Team Size</p>
+                      <p className="text-sm font-bold text-slate-900 uppercase">{opp.teamCount || '15+ Members'}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Keep OpportunityCard as functional component wrapper if it contains logic, 
+                      but style the trigger to match this new layout */}
+                  <OpportunityCard 
+                    opportunity={opp}
+                    onApplicationSuccess={checkApplicationStatus}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* How It Works Section */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
-          <h2 className="text-2xl font-bold text-blue-900 mb-8">How It Works</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-3">1</div>
-              <h4 className="font-bold text-gray-900 mb-2">Apply</h4>
-              <p className="text-sm text-gray-600">Submit your application for the ministry you're interested in</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-3">2</div>
-              <h4 className="font-bold text-gray-900 mb-2">Review</h4>
-              <p className="text-sm text-gray-600">Our team reviews your application and qualifications</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-3">3</div>
-              <h4 className="font-bold text-gray-900 mb-2">Interview</h4>
-              <p className="text-sm text-gray-600">If selected, we'll schedule an interview to discuss the role</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-3">4</div>
-              <h4 className="font-bold text-gray-900 mb-2">Serve</h4>
-              <p className="text-sm text-gray-600">Upon approval, join our ministry team and make an impact</p>
-            </div>
+      {/* 4. THE PROCESS (Sharp Grid) */}
+      <section className="py-24 bg-slate-900 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-px bg-[#8B1A1A] border border-[#8B1A1A]">
+            {[
+              { n: '01', t: 'Apply', d: 'Submit your specific ministry interest' },
+              { n: '02', t: 'Vet', d: 'Our leaders review your qualifications' },
+              { n: '03', t: 'Meet', d: 'A quick connect to discuss the vision' },
+              { n: '04', t: 'Join', d: 'Welcome to the team and begin serving' }
+            ].map((step, i) => (
+              <div key={i} className="bg-slate-900 p-12 space-y-6 group hover:bg-black transition-all">
+                <span className="text-5xl font-black text-slate-800 group-hover:text-[#8B1A1A] transition-colors leading-none">{step.n}</span>
+                <div>
+                  <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">{step.t}</h4>
+                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider leading-relaxed">{step.d}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        </Card>
-      </div>
+        </div>
+      </section>
     </div>
   );
 };
