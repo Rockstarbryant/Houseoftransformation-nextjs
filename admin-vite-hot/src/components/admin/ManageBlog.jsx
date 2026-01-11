@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, Filter, X } from 'lucide-react';
+import SimpleMDE from 'react-simplemde-editor';
+import 'easymde/dist/easymde.min.css'; // Required CSS for SimpleMDE
 import { useAuthContext } from '../../context/AuthContext';
 import { blogService } from '../../services/api/blogService';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import PermissionAlert from '../common/PermissionAlert';
-
-// Debounce utility (kept in case you need it later)
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
 
 const ManageBlog = () => {
   const { user, canPostBlogCategory, getAllowedBlogCategories } = useAuthContext();
@@ -35,7 +28,7 @@ const ManageBlog = () => {
     content: '',
     description: '',
     category: 'testimonies',
-    imageUrl: ''
+    imageUrl: '' // featured image
   });
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -58,7 +51,7 @@ const ManageBlog = () => {
     if (searchQuery.trim()) {
       filtered = filtered.filter(p =>
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        (p.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -100,13 +93,13 @@ const ManageBlog = () => {
     setEditingId(null);
   };
 
+  // Featured image upload
   const handleFeaturedImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     try {
       setUploading(true);
-
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
@@ -125,14 +118,43 @@ const ManageBlog = () => {
       if (data.secure_url) {
         setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
       } else {
-        setErrorMessage('Image upload failed');
+        setErrorMessage('Featured image upload failed');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
-      setErrorMessage('Error uploading image');
+      console.error('Featured image upload error:', error);
+      setErrorMessage('Error uploading featured image');
     } finally {
       setUploading(false);
     }
+  };
+
+  // Inline image upload for SimpleMDE (called when drag/drop or paste image)
+  const handleInlineImageUpload = (file, onSuccess, onError) => {
+    if (!file.type.startsWith('image/')) {
+      onError('Please upload an image file');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'church_sermons');
+
+    fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    )
+      .then(res => res.json())
+      .then(data => {
+        if (data.secure_url) {
+          onSuccess(data.secure_url);
+        } else {
+          onError('Image upload failed');
+        }
+      })
+      .catch(err => {
+        console.error('Inline image upload error:', err);
+        onError('Failed to upload image');
+      });
   };
 
   const handleSubmit = async (e) => {
@@ -161,7 +183,7 @@ const ManageBlog = () => {
         content: formData.content,
         description: formData.description,
         category: formData.category,
-        image: formData.imageUrl
+        image: formData.imageUrl // featured image
       };
 
       if (editingId) {
@@ -174,10 +196,9 @@ const ManageBlog = () => {
 
       setTimeout(() => {
         setShowForm(false);
-        setSuccessMessage('');
         resetForm();
         fetchPosts();
-      }, 1400);
+      }, 1500);
     } catch (error) {
       console.error('Error saving post:', error);
       setErrorMessage('Failed to save post');
@@ -194,7 +215,7 @@ const ManageBlog = () => {
       category: post.category,
       imageUrl: post.image || ''
     });
-    setImagePreview(post.image);
+    setImagePreview(post.image || null);
     setEditingId(post._id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -206,9 +227,9 @@ const ManageBlog = () => {
     try {
       setLoading(true);
       await blogService.deleteBlog(id);
-      setSuccessMessage('Post deleted');
+      setSuccessMessage('Post deleted successfully');
       fetchPosts();
-      setTimeout(() => setSuccessMessage(''), 1800);
+      setTimeout(() => setSuccessMessage(''), 2000);
     } catch (error) {
       setErrorMessage('Failed to delete post');
     } finally {
@@ -385,7 +406,7 @@ const ManageBlog = () => {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Enter post title"
                 required
-                disabled={loading}
+                disabled={loading || uploading}
               />
             </div>
 
@@ -400,7 +421,7 @@ const ManageBlog = () => {
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Brief summary (optional)"
-                disabled={loading}
+                disabled={loading || uploading}
               />
             </div>
 
@@ -414,7 +435,7 @@ const ManageBlog = () => {
                 onChange={e => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 required
-                disabled={loading}
+                disabled={loading || uploading}
               >
                 {allCategories.map(cat => {
                   const allowed = allowedCategories.includes(cat.value);
@@ -441,35 +462,47 @@ const ManageBlog = () => {
                 accept="image/*"
                 onChange={handleFeaturedImageUpload}
                 disabled={loading || uploading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
-              {uploading && <p className="text-sm text-blue-600 mt-2">Uploading...</p>}
+              {uploading && <p className="text-sm text-blue-600 mt-2">Uploading featured image...</p>}
               {imagePreview && (
                 <div className="mt-4">
                   <img
                     src={imagePreview}
-                    alt="Preview"
+                    alt="Featured preview"
                     className="max-w-md h-48 object-cover rounded-lg border"
                   />
                 </div>
               )}
             </div>
 
-            {/* Main Content - Simple Textarea */}
+            {/* Main Content - SimpleMDE Markdown Editor */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Content *
+                Content * (supports Markdown + drag/drop image upload)
               </label>
-              <textarea
-                value={formData.content}
-                onChange={e => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 min-h-[400px] font-mono text-sm"
-                placeholder="Write your full blog post here..."
-                required
-                disabled={loading}
-              />
+              <div className="border rounded overflow-hidden">
+                <SimpleMDE
+                  value={formData.content}
+                  onChange={value => setFormData(prev => ({ ...prev, content: value }))}
+                  options={{
+                    spellChecker: false,
+                    autoFocus: true,
+                    placeholder: "Start writing your post here...\n\nDrag & drop or paste images directly into the editor!",
+                    uploadImage: true,
+                    imageUploadFunction: handleInlineImageUpload,
+                    status: true,
+                    toolbar: [
+                      "bold", "italic", "heading", "|",
+                      "quote", "unordered-list", "ordered-list", "|",
+                      "link", "image", "code", "table", "|",
+                      "preview", "side-by-side", "fullscreen"
+                    ]
+                  }}
+                />
+              </div>
               <p className="text-xs text-gray-500 mt-2">
-                You can use Markdown if your backend supports it (e.g. **bold**, *italic*, # Heading)
+                Use **bold**, *italic*, # Heading, - lists, ```code blocks```. Drag & drop or paste images anywhere.
               </p>
             </div>
 
@@ -552,9 +585,7 @@ const ManageBlog = () => {
                     )}
 
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-auto pt-4 border-t border-gray-200">
-                      <span className="flex items-center gap-1">
-                        <span>📅</span> {formatDate(post.createdAt || post.date)}
-                      </span>
+                      <span>{formatDate(post.createdAt || post.date)}</span>
                     </div>
 
                     <div className="flex gap-2 mt-5">
