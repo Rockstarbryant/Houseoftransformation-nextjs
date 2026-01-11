@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, Filter, X } from 'lucide-react';
 import SimpleMDE from 'react-simplemde-editor';
-import 'easymde/dist/easymde.min.css'; // Required CSS for SimpleMDE
+import 'easymde/dist/easymde.min.css'; // ← move this to main.jsx if you get 404 in production!
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import ReactDOMServer from 'react-dom/server';
+
 import { useAuthContext } from '../../context/AuthContext';
 import { blogService } from '../../services/api/blogService';
 import Card from '../common/Card';
@@ -109,7 +113,7 @@ const ManageBlog = () => {
       formData.append('upload_preset', 'church_sermons');
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
         { method: 'POST', body: formData }
       );
 
@@ -128,7 +132,7 @@ const ManageBlog = () => {
     }
   };
 
-  // Inline image upload for SimpleMDE (called when drag/drop or paste image)
+  // Inline image upload handler for SimpleMDE
   const handleInlineImageUpload = (file, onSuccess, onError) => {
     if (!file.type.startsWith('image/')) {
       onError('Please upload an image file');
@@ -140,7 +144,7 @@ const ManageBlog = () => {
     formData.append('upload_preset', 'church_sermons');
 
     fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
       { method: 'POST', body: formData }
     )
       .then(res => res.json())
@@ -476,19 +480,19 @@ const ManageBlog = () => {
               )}
             </div>
 
-            {/* Main Content - SimpleMDE Markdown Editor */}
+            {/* Main Content - SimpleMDE with fixed preview */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Content * (supports Markdown + drag/drop image upload)
+                Content * (Markdown + drag & drop images)
               </label>
-              <div className="border rounded overflow-hidden">
+              <div className="border rounded overflow-hidden bg-white">
                 <SimpleMDE
                   value={formData.content}
                   onChange={value => setFormData(prev => ({ ...prev, content: value }))}
                   options={{
                     spellChecker: false,
                     autoFocus: true,
-                    placeholder: "Start writing your post here...\n\nDrag & drop or paste images directly into the editor!",
+                    placeholder: "Start writing...\n\nDrag & drop or paste images anywhere!",
                     uploadImage: true,
                     imageUploadFunction: handleInlineImageUpload,
                     status: true,
@@ -497,12 +501,40 @@ const ManageBlog = () => {
                       "quote", "unordered-list", "ordered-list", "|",
                       "link", "image", "code", "table", "|",
                       "preview", "side-by-side", "fullscreen"
-                    ]
+                    ],
+                    previewRender: (plainText) => {
+                      return ReactDOMServer.renderToString(
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            img: ({ node, ...props }) => (
+                              <img
+                                {...props}
+                                alt={props.alt || 'Uploaded image'}
+                                style={{ maxWidth: '100%', height: 'auto', borderRadius: '6px', margin: '0.75rem 0' }}
+                                loading="lazy"
+                              />
+                            ),
+                            table: ({ node, ...props }) => (
+                              <table {...props} style={{ borderCollapse: 'collapse', width: '100%', margin: '1rem 0' }} />
+                            ),
+                            th: ({ node, ...props }) => (
+                              <th {...props} style={{ border: '1px solid #ddd', padding: '8px', background: '#f5f5f5' }} />
+                            ),
+                            td: ({ node, ...props }) => (
+                              <td {...props} style={{ border: '1px solid #ddd', padding: '8px' }} />
+                            )
+                          }}
+                        >
+                          {plainText}
+                        </ReactMarkdown>
+                      );
+                    }
                   }}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Use **bold**, *italic*, # Heading, - lists, ```code blocks```. Drag & drop or paste images anywhere.
+                Supports **bold**, *italic*, # headings, lists, code blocks. Drag & drop images directly.
               </p>
             </div>
 
