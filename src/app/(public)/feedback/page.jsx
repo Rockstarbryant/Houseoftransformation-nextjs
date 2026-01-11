@@ -13,9 +13,10 @@ import TestimoniesWall from '@/components/feedback/TestimoniesWall';
 import { useAuthContext } from '@/context/AuthContext';
 
 const FeedbackPage = () => {
-  // Safe destructuring with fallback
   const authContext = useAuthContext();
-  const { user = null, isLoading = true, error: authError = null } = authContext || {};
+  const user = authContext?.user ?? null;
+  const isLoading = authContext?.isLoading ?? true;
+  const authError = authContext?.error ?? null;
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
