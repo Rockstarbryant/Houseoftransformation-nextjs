@@ -45,24 +45,33 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Very minimal top padding */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
-        {/* Filter section */}
-        <div className="mb-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        {/* Title & Subtitle - Clear indication this is the gallery */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+            Photo Gallery
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Capturing memories, moments, and milestones from our church family
+          </p>
+        </div>
+
+        {/* Category Filters */}
+        <div className="mb-12">
           <GalleryFilter
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
           />
         </div>
 
-        {/* Error message */}
+        {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-10 text-center">
             {error}
           </div>
         )}
 
-        {/* Gallery */}
+        {/* Gallery Content */}
         {filteredPhotos.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="text-7xl mb-6 opacity-70">📸</div>
@@ -72,7 +81,7 @@ export default function GalleryPage() {
             <p className="text-gray-600 max-w-md mx-auto text-lg">
               {selectedCategory === 'All'
                 ? 'The gallery is currently empty.'
-                : `No photos in "${selectedCategory}" yet.`}
+                : `No photos in the "${selectedCategory}" category yet.`}
             </p>
           </div>
         ) : (
