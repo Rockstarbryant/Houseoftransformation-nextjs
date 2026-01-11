@@ -13,10 +13,7 @@ import TestimoniesWall from '@/components/feedback/TestimoniesWall';
 import { useAuthContext } from '@/context/AuthContext';
 
 const FeedbackPage = () => {
-  const authContext = useAuthContext();
-  const user = authContext?.user ?? null;
-  const isLoading = authContext?.isLoading ?? true;
-  const authError = authContext?.error ?? null;
+  const { user, isLoading, error: authError } = useAuthContext();
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
