@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { Heart, Trash2, Download } from 'lucide-react';
+import { Heart, Trash2, Download, Square, CheckSquare } from 'lucide-react';
 
-const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = false, isSelected = false, onToggleSelect }) => {
+const GalleryCard = ({
+  photo,
+  onDelete,
+  onLike,
+  onViewDetails,
+  isLiked = false,
+  // ── NEW PROPS FOR MULTI-SELECT ──
+  selectMode = false,
+  isSelected = false,
+  onToggleSelect = () => {}
+}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleDelete = () => {
@@ -17,7 +27,6 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
 
   const handleDownload = (e) => {
     e.stopPropagation();
-    // Trigger browser download
     const link = document.createElement('a');
     link.href = photo.imageUrl;
     link.download = photo.title ? `${photo.title.replace(/\s+/g, '_')}.jpg` : 'photo.jpg';
@@ -30,33 +39,22 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
 
   return (
     <div
-      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
+      className={`
+        bg-white rounded-lg border shadow-sm transition-all duration-200 overflow-hidden group
+        ${isSelected 
+          ? 'border-2 border-blue-500 ring-2 ring-blue-300 ring-offset-2 shadow-lg' 
+          : 'border-gray-200 hover:shadow-md'
+        }
+      `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-        >
+    >
       {/* Image Container */}
       <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-        {selectMode && (
-        <button
-        onClick={(e) => {
-        e.stopPropagation();           // ← very important!
-        e.preventDefault();            // extra safety
-        onToggleSelect();              // call parent handler
-        }}
-        className="absolute top-3 left-3 z-30 p-1.5 bg-white/90 rounded-full shadow-md hover:bg-white transition"
-        type="button"
-            >
-        {isSelected ? (
-        <CheckSquare size={28} className="text-blue-600 fill-blue-600" />
-        ) : (
-        <Square size={28} className="text-gray-400" />
-        )}
-        </button>
-            )}
-            <img
+        <img
           src={photo.imageUrl}
           alt={photo.title || 'Gallery photo'}
-          className={`w-full h-full object-cover transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'}`}
+          className={`w-full h-full object-cover transition-transform duration-300 ${isHovered && !selectMode ? 'scale-105' : 'scale-100'}`}
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.parentElement.style.background = '#f3f4f6';
@@ -64,8 +62,30 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
           }}
         />
 
-        {/* Hover Overlay - View button only */}
-        {isHovered && (
+        {/* ── MULTI-SELECT CHECKBOX ── appears only in select mode */}
+        {selectMode && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onToggleSelect();
+            }}
+            className={`
+              absolute top-3 left-3 z-30 p-1.5 rounded-full shadow-md transition-all
+              ${isSelected ? 'bg-blue-600' : 'bg-white hover:bg-gray-100'}
+            `}
+            type="button"
+          >
+            {isSelected ? (
+              <CheckSquare size={28} className="text-white" fill="currentColor" />
+            ) : (
+              <Square size={28} className="text-gray-500 hover:text-blue-600" />
+            )}
+          </button>
+        )}
+
+        {/* Hover Overlay - only shown when NOT in select mode */}
+        {isHovered && !selectMode && (
           <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
             <button
               onClick={() => onViewDetails(photo)}
@@ -77,7 +97,7 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
         )}
 
         {/* Category Badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 right-3 z-20">
           <span className="px-2.5 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded-full shadow-sm">
             {photo.category || 'General'}
           </span>
@@ -86,13 +106,13 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
         {/* Like Button */}
         <button
           onClick={handleLike}
-          className={`absolute top-3 right-3 p-2 rounded-full transition ${
-            photo.isLiked // assuming you pass or compute isLiked per photo
+          className={`absolute bottom-3 right-3 p-2 rounded-full transition z-20 ${
+            isLiked
               ? 'bg-red-50 text-red-600'
               : 'bg-white/85 text-gray-600 hover:bg-red-50 hover:text-red-600'
           }`}
         >
-          <Heart size={18} fill={photo.isLiked ? 'currentColor' : 'none'} />
+          <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
         </button>
       </div>
 
@@ -112,12 +132,12 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, selectMode = fals
           <div className="flex items-center gap-1.5 text-gray-600">
             <Heart 
               size={15} 
-              className={photo.isLiked ? 'fill-red-500 text-red-500' : ''} 
+              className={isLiked ? 'fill-red-500 text-red-500' : ''} 
             />
             <span>{photo.likes || 0}</span>
           </div>
 
-          {/* Admin Actions - Download + Delete */}
+          {/* Admin Actions */}
           <div className="flex items-center gap-1">
             <button
               onClick={handleDownload}
