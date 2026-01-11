@@ -1,243 +1,390 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-import { galleryService } from '../../services/api/galleryService';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import Input from '../common/Input';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, LayoutGrid, ListIcon, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { galleryService } from '@/services/api/galleryService';
+import GalleryUploader from './GalleryUploader';
+import GalleryCard from './GalleryCard';
+import GalleryLightbox from './GalleryLightbox';
 
-const ManageGallery = () => {
+const GALLERY_CATEGORIES = [
+  'All',
+  'Worship Services',
+  'Youth Events',
+  'Community Outreach',
+  'Special Events',
+  'Kids Ministry'
+];
+
+export default function ManageGallery() {
   const [photos, setPhotos] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    photo: null,
-    category: 'Worship Services'
-  });
-  const [preview, setPreview] = useState(null);
+  const [filteredPhotos, setFilteredPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  useEffect(() => {
-    fetchPhotos();
-  }, []);
+  // UI States
+  const [showUploader, setShowUploader] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [likedPhotos, setLikedPhotos] = useState([]);
 
-  const fetchPhotos = async () => {
-    try {
-      const data = await galleryService.getPhotos();
-      setPhotos(data.photos || []);
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-    }
-  };
+  // Filters
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, photo: file });
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Fetch photos from API
+  const fetchPhotos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     
-    if (!formData.photo) {
-      alert('Please select a photo');
-      return;
-    }
-
-    if (!formData.title) {
-      alert('Please enter a title');
-      return;
-    }
-
     try {
-      setLoading(true);
+      const response = await galleryService.getPhotos();
       
-      const uploadData = new FormData();
-      uploadData.append('photo', formData.photo);
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      uploadData.append('category', formData.category);
-
-      console.log('Uploading to: /gallery/upload');
-      await galleryService.uploadPhoto(uploadData);
-      
-      alert('Photo uploaded successfully!');
-      setShowForm(false);
-      setFormData({
-        title: '',
-        description: '',
-        photo: null,
-        category: 'Worship Services'
-      });
-      setPreview(null);
-      fetchPhotos();
-    } catch (error) {
-      console.error('Error uploading:', error);
-      if (error.response?.status === 404) {
-        alert('❌ Upload endpoint not found. Check backend configuration.');
-      } else if (error.response?.status === 413) {
-        alert('❌ File too large. Max size is 5MB.');
-      } else if (error.response?.status === 401) {
-        alert('❌ Not authorized. Please login as admin.');
+      if (response.success) {
+        setPhotos(response.photos || []);
       } else {
-        alert('❌ Error: ' + (error.response?.data?.message || error.message));
+        setError(response.message || 'Failed to load photos');
       }
+    } catch (err) {
+      console.error('Error fetching photos:', err);
+      setError(err.response?.data?.message || 'Failed to load photos. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this photo?')) {
-      try {
-        await galleryService.deletePhoto(id);
-        alert('Photo deleted!');
-        fetchPhotos();
-      } catch (error) {
-        console.error('Error deleting:', error);
-        alert('Error deleting photo');
+  useEffect(() => {
+    fetchPhotos();
+  }, [fetchPhotos]);
+
+  // Filter & Sort Photos
+  useEffect(() => {
+    let result = [...photos];
+
+    // Category filter
+    if (selectedCategory !== 'All') {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    if (sortBy === 'newest') {
+      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === 'oldest') {
+      result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (sortBy === 'most-liked') {
+      result.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    } else if (sortBy === 'alphabetical') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    setFilteredPhotos(result);
+  }, [photos, selectedCategory, searchQuery, sortBy]);
+
+  // Handle Upload
+  const handleUpload = async (formData) => {
+    try {
+      const response = await galleryService.uploadPhoto(formData);
+      
+      if (response.success) {
+        setSuccessMessage('Photo uploaded successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+        await fetchPhotos();
+        return true;
+      } else {
+        throw new Error(response.message || 'Upload failed');
       }
+    } catch (err) {
+      console.error('Upload error:', err);
+      throw err;
     }
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
-    setFormData({
-      title: '',
-      description: '',
-      photo: null,
-      category: 'Worship Services'
-    });
-    setPreview(null);
+  // Handle Delete
+  const handleDelete = async (photoId) => {
+    try {
+      const response = await galleryService.deletePhoto(photoId);
+      
+      if (response.success) {
+        setPhotos(prev => prev.filter(p => p._id !== photoId));
+        setFilteredPhotos(prev => prev.filter(p => p._id !== photoId));
+        setSuccessMessage('Photo deleted successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        setError(response.message || 'Failed to delete photo');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err.response?.data?.message || 'Failed to delete photo');
+    }
   };
 
+  // Handle Like
+  const handleLike = async (photoId) => {
+    try {
+      const response = await galleryService.likePhoto(photoId);
+      
+      if (response.success) {
+        setLikedPhotos(prev =>
+          prev.includes(photoId)
+            ? prev.filter(id => id !== photoId)
+            : [...prev, photoId]
+        );
+
+        setPhotos(prev =>
+          prev.map(p =>
+            p._id === photoId
+              ? { ...p, likes: response.likes }
+              : p
+          )
+        );
+
+        setFilteredPhotos(prev =>
+          prev.map(p =>
+            p._id === photoId
+              ? { ...p, likes: response.likes }
+              : p
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Like error:', err);
+      setError('Failed to like photo');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleViewDetails = (photo) => {
+    setSelectedPhoto(photo);
+    setShowLightbox(true);
+  };
+
+  const calculateStorageUsage = () => {
+    const totalPhotos = photos.length;
+    const estimatedSize = (totalPhotos * 2.5) / 1024;
+    return estimatedSize.toFixed(2);
+  };
+
+  const totalLikes = photos.reduce((sum, p) => sum + (p.likes || 0), 0);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-blue-900">Manage Gallery</h1>
-        <Button variant="primary" icon={Plus} onClick={() => setShowForm(!showForm)}>
-          Upload Photo
-        </Button>
-      </div>
-
-      {showForm && (
-        <Card className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Upload New Photo</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              name="title"
-              label="Photo Title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-            />
-            
-            <Input
-              name="description"
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-
+    <div className="w-full min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Upload Photo *
-              </label>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Gallery</h1>
+              <p className="text-gray-600">Manage and organize your church photos</p>
+            </div>
+            <button
+              onClick={() => setShowUploader(true)}
+              className="inline-flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto justify-center"
+            >
+              <Plus size={20} />
+              Upload Photos
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-600 mb-1">Total Photos</p>
+              <p className="text-3xl font-bold text-gray-900">{photos.length}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-600 mb-1">Storage Used</p>
+              <p className="text-3xl font-bold text-gray-900">{calculateStorageUsage()} GB</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <p className="text-sm text-gray-600 mb-1">Total Likes</p>
+              <p className="text-3xl font-bold text-gray-900">{totalLikes}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+            <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+            <span className="text-green-800 font-medium">{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="ml-auto text-green-600 hover:text-green-800"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+            <span className="text-red-800 font-medium">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-600 hover:text-red-800"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Filters & Controls */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 space-y-4">
+          {/* Search & Sort Row */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
-                required
+                type="text"
+                placeholder="Search photos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, GIF, WebP (Max 5MB)</p>
             </div>
 
             <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             >
-              <option>Worship Services</option>
-              <option>Youth Events</option>
-              <option>Community Outreach</option>
-              <option>Special Events</option>
-              <option>Kids Ministry</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="most-liked">Most Liked</option>
+              <option value="alphabetical">A-Z</option>
             </select>
 
-            {preview && (
-              <div>
-                <p className="font-bold mb-2">Preview:</p>
-                <img src={preview} alt="Preview" className="w-full h-64 object-cover rounded-lg" />
-              </div>
-            )}
+            <button
+              onClick={() => fetchPhotos()}
+              disabled={loading}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
 
-            <div className="flex gap-4">
-              <Button 
-                type="submit" 
-                variant="primary"
-                disabled={loading}
-              >
-                {loading ? 'Uploading...' : 'Upload Photo'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
+          {/* Category Filter & View Mode */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              {GALLERY_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1 rounded-full text-sm font-semibold transition ${
+                    selectedCategory === cat
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-          </form>
-        </Card>
-      )}
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {photos.map((photo) => (
-          <Card key={photo._id} padding="none" hover>
-            {/* ✅ FIXED: Use imageUrl directly - it's already a Cloudinary URL */}
-            <img 
-              src={photo.imageUrl}
-              alt={photo.title}
-              className="w-full h-64 object-cover rounded-t-xl"
-              onError={(e) => {
-                console.error('Image failed to load:', photo.imageUrl);
-                e.target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
-              }}
-            />
-            <div className="p-4">
-              <h3 className="font-bold text-blue-900 mb-1">{photo.title}</h3>
-              <p className="text-sm text-gray-600 mb-2">{photo.category}</p>
-              <p className="text-xs text-gray-500 mb-3">
-                Uploaded: {new Date(photo.createdAt).toLocaleDateString()}
-              </p>
+            <div className="flex gap-2 ml-auto">
               <button
-                onClick={() => handleDelete(photo._id)}
-                className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                <Trash2 size={16} /> Delete
+                <LayoutGrid size={20} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition ${
+                  viewMode === 'list'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <ListIcon size={20} />
               </button>
             </div>
-          </Card>
-        ))}
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && filteredPhotos.length === 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <div className="text-5xl mb-4">📸</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {photos.length === 0 ? 'No photos yet' : 'No photos found'}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {photos.length === 0
+                ? 'Start building your gallery by uploading photos'
+                : 'Try adjusting your filters or search'}
+            </p>
+            {photos.length === 0 && (
+              <button
+                onClick={() => setShowUploader(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                <Plus size={20} />
+                Upload First Photo
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Photos Grid/List */}
+        {!loading && filteredPhotos.length > 0 && (
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+            {filteredPhotos.map(photo => (
+              <GalleryCard
+                key={photo._id}
+                photo={photo}
+                onDelete={handleDelete}
+                onLike={handleLike}
+                onViewDetails={handleViewDetails}
+                isLiked={likedPhotos.includes(photo._id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {photos.length === 0 && !showForm && (
-        <Card className="text-center py-12">
-          <p className="text-gray-600">No photos uploaded yet. Click "Upload Photo" to get started.</p>
-        </Card>
-      )}
+      {/* Uploader Modal */}
+      <GalleryUploader
+        isOpen={showUploader}
+        onClose={() => setShowUploader(false)}
+        onUpload={handleUpload}
+        categories={GALLERY_CATEGORIES.slice(1)}
+      />
+
+      {/* Lightbox */}
+      <GalleryLightbox
+        photo={selectedPhoto}
+        isOpen={showLightbox}
+        onClose={() => setShowLightbox(false)}
+        onLike={handleLike}
+        onDelete={handleDelete}
+        allPhotos={filteredPhotos}
+        isLiked={selectedPhoto ? likedPhotos.includes(selectedPhoto._id) : false}
+      />
     </div>
   );
-};
-
-export default ManageGallery;
+}

@@ -1,0 +1,299 @@
+import React, { useState, useRef } from 'react';
+import { Upload, X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+
+const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: 'Worship Services'
+  });
+  
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef(null);
+  const dragRef = useRef(null);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragRef.current) {
+      dragRef.current.classList.add('border-blue-500', 'bg-blue-50');
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragRef.current) {
+      dragRef.current.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragRef.current) {
+      dragRef.current.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    processFiles(droppedFiles);
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    processFiles(selectedFiles);
+  };
+
+  const processFiles = (selectedFiles) => {
+    setError(null);
+    const validFiles = [];
+
+    selectedFiles.forEach(file => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setError(`Invalid file type: ${file.name}. Only JPEG, PNG, WebP, GIF allowed.`);
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File too large: ${file.name}. Max size is 5MB.`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setFiles(prevFiles => [...prevFiles, ...validFiles]);
+    }
+  };
+
+  const removeFile = (index) => {
+    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+
+    if (files.length === 0) {
+      setError('Please select at least one photo');
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      setError('Please enter a title');
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      for (const file of files) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('photo', file);
+        uploadFormData.append('title', formData.title);
+        uploadFormData.append('description', formData.description);
+        uploadFormData.append('category', formData.category);
+
+        await onUpload(uploadFormData);
+      }
+
+      setSuccess(true);
+      setFormData({ title: '', description: '', category: 'Worship Services' });
+      setFiles([]);
+      
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-8">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+          <h2 className="text-2xl font-bold text-gray-900">Upload Photos</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Success Message */}
+          {success && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+              <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+              <p className="text-green-800 font-medium">Photos uploaded successfully!</p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Drag & Drop Area */}
+          <div
+            ref={dragRef}
+            onClick={() => fileInputRef.current?.click()}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors cursor-pointer bg-gray-50 hover:border-blue-400 hover:bg-blue-50"
+          >
+            <Upload size={40} className="mx-auto mb-3 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Drag & drop photos here</h3>
+            <p className="text-sm text-gray-600 mb-4">or click to select files</p>
+            <div className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition inline-block">
+              Browse Files
+            </div>
+            <p className="text-xs text-gray-500 mt-4">Supported: JPG, PNG, WebP, GIF (Max 5MB each)</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={ALLOWED_TYPES.join(',')}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+
+          {/* Selected Files Preview */}
+          {files.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm font-semibold text-gray-900 mb-3">Selected Files ({files.length})</p>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {files.map((file, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 truncate">{file.name}</p>
+                      <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(idx)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition ml-2"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Photo Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="e.g., Sunday Morning Worship"
+                disabled={uploading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Description (Optional)
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Add details about these photos..."
+                rows="3"
+                disabled={uploading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Category *
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                disabled={uploading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={uploading}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={uploading || files.length === 0}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Loader size={18} className="animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={18} />
+                    Upload {files.length > 0 ? `(${files.length})` : ''}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GalleryUploader;
