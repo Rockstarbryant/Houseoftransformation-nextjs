@@ -114,7 +114,7 @@ const TestimoniesWall = () => {
 
               {/* Read More Button */}
               <Link
-                to={`/testimony/${testimony._id}`}
+                href={`/testimony/${testimony._id}`}
                 className="inline-flex items-center gap-2 w-full justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-lg font-semibold hover:shadow-md transition-all transform hover:-translate-y-0.5 group"
               >
                 <span>Read Full Story</span>
@@ -129,7 +129,7 @@ const TestimoniesWall = () => {
       {testimonies.length >= 6 && (
         <div className="text-center mt-12">
           <Link 
-            to="/feedback"
+            href="/feedback"
             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold text-lg hover:underline transition group"
           >
             View All Testimonies
