@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Edit, Trash2, Star, X, Image as ImageIcon, 
-  RotateCcw, RotateCw, RefreshCw, Eye, AlignLeft, AlignCenter, 
+  RotateCcw, RotateCw, Eye, AlignLeft, AlignCenter, 
   AlignRight, AlignJustify, List, ListOrdered 
 } from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -446,14 +446,6 @@ export default function ManageSermons() {
           >
             <Plus size={20} /> Add Sermon
           </button>
-          <button
-                        onClick={fetchSermons}
-                        disabled={loading}
-                        className="px-4 py-2 bg-blue-500 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 disabled:opacity-50"
-                      >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        Refresh
-                      </button>
         </div>
 
         {/* Featured counter - very similar to dummy */}
