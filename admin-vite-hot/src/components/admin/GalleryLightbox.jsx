@@ -60,13 +60,14 @@ const GalleryLightbox = ({ photo, isOpen, onClose, onLike, onDelete, allPhotos =
 
       {/* Main Image Container */}
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+        <div className="max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
           <img
             src={currentPhoto.imageUrl}
             alt={currentPhoto.title}
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
             onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/800x600?text=Image+Error';
+              e.target.style.display = 'none';
+              e.target.parentElement.innerHTML = '<div class="text-center text-gray-500"><p>Image failed to load</p></div>';
             }}
           />
         </div>

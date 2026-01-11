@@ -30,7 +30,8 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
           alt={photo.title}
           className={`w-full h-full object-cover transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'}`}
           onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/400x400?text=Image+Error';
+            e.target.style.display = 'none';
+            e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-200"><span class="text-gray-500 text-sm">Image unavailable</span></div>';
           }}
         />
 
@@ -85,23 +86,33 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
 
           <div className="relative">
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
               <MoreVertical size={16} className="text-gray-600" />
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
                 <button
-                  onClick={() => onViewDetails(photo)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails(photo);
+                    setShowMenu(false);
+                  }}
                   className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-900 flex items-center gap-2"
                 >
                   <Eye size={16} />
                   View Details
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
                   className="w-full text-left px-4 py-2 hover:bg-red-50 text-sm text-red-600 flex items-center gap-2 border-t border-gray-200"
                 >
                   <Trash2 size={16} />

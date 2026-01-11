@@ -102,16 +102,29 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
     setUploading(true);
     setError(null);
 
+    let uploadedCount = 0;
+    const totalFiles = files.length;
+
     try {
-      for (const file of files) {
+      // Upload all files in parallel for better performance
+      const uploadPromises = files.map(file => {
         const uploadFormData = new FormData();
         uploadFormData.append('photo', file);
-        uploadFormData.append('title', formData.title);
+        uploadFormData.append('title', `${formData.title}${totalFiles > 1 ? ` - ${uploadedCount + 1}` : ''}`);
         uploadFormData.append('description', formData.description);
         uploadFormData.append('category', formData.category);
 
-        await onUpload(uploadFormData);
-      }
+        return onUpload(uploadFormData)
+          .then(() => {
+            uploadedCount++;
+          })
+          .catch(err => {
+            console.error(`Failed to upload ${file.name}:`, err);
+            throw err;
+          });
+      });
+
+      await Promise.all(uploadPromises);
 
       setSuccess(true);
       setFormData({ title: '', description: '', category: 'Worship Services' });
@@ -122,7 +135,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
         onClose();
       }, 2000);
     } catch (err) {
-      setError(err.message || 'Upload failed. Please try again.');
+      setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${err.message || 'Please try again.'}`);
     } finally {
       setUploading(false);
     }
