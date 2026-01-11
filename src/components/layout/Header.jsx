@@ -17,8 +17,20 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   
-  const { user, isAdmin, logout } = useAuthContext();
+  const { user, isAdmin, logout, isLoading } = useAuthContext();
   const pathname = usePathname();
+
+  // Debug: Log admin status (remove in production)
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('[Header Debug]', {
+        userExists: !!user,
+        userName: user?.name,
+        userRole: user?.role,
+        isAdminResult: isAdmin()
+      });
+    }
+  }, [user, isLoading, isAdmin]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,7 +76,11 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout();
+    setIsMobileMenuOpen(false);
   };
+
+  // Check if user is admin - safe version
+  const userIsAdmin = isAdmin && isAdmin();
 
   return (
     <>
@@ -161,6 +177,7 @@ const Header = () => {
                     ))}
                     </div>
                 </div>
+
                 <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
           {user ? (
             <div className="flex items-center gap-4 border-l border-white/30 pl-6">
@@ -168,14 +185,18 @@ const Header = () => {
                 <span className="text-sm text-white font-semibold">{user.name}</span>
                 <span className="text-xs text-white/70 capitalize">{user.role}</span>
               </div>
-              {isAdmin() && (
+              
+              {/* ADMIN BUTTON - Only show if user is admin */}
+              {userIsAdmin && (
                 <Link
                   href="/admin"
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
+                  title="Go to Admin Dashboard"
                 >
                   <Settings size={16} /> Admin
                 </Link>
               )}
+              
               <button
                 onClick={handleLogout}
                 className="text-white hover:text-white/80 transition-colors font-medium flex items-center gap-2 p-2 hover:bg-red-800 rounded-lg"
@@ -206,7 +227,7 @@ const Header = () => {
     <MobileMenu
       isOpen={isMobileMenuOpen}
       user={user}
-      isAdmin={isAdmin()}
+      isAdmin={userIsAdmin}
       onAuthClick={handleAuthClick}
       onLogout={handleLogout}
       onClose={() => setIsMobileMenuOpen(false)}
@@ -223,4 +244,5 @@ const Header = () => {
 </>
 );
 };
+
 export default Header;
