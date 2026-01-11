@@ -86,8 +86,10 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
 
           <div className="relative">
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 setShowMenu(!showMenu);
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -96,7 +98,10 @@ const GalleryCard = ({ photo, onDelete, onLike, onViewDetails, isLiked = false }
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+              <div 
+                className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
