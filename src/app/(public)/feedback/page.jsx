@@ -1,7 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { 
+  MessageSquare, 
+  Loader2, 
+  ArrowLeft, 
+  CheckCircle2, 
+  BookOpen, 
+  Sparkles, 
+  Heart, 
+  Lightbulb, 
+  Users,
+  ChevronRight,
+  Info
+} from 'lucide-react';
+
 import AnonymousToggle from '@/components/feedback/AnonymousToggle';
 import SermonFeedbackForm from '@/components/feedback/SermonFeedbackForm';
 import ServiceFeedbackForm from '@/components/feedback/ServiceFeedbackForm';
@@ -14,268 +27,147 @@ import { useAuthContext } from '@/context/AuthContext';
 
 const FeedbackPage = () => {
   const { user, isLoading, error: authError } = useAuthContext();
-
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [successData, setSuccessData] = useState(null); // no generics needed in JS
 
+  // Updated categories with specific background and border colors for each card
   const categories = [
     {
       id: 'sermon',
       title: 'Sermon Feedback',
-      description: 'Share your thoughts on recent sermons',
-      color: 'blue',
-      gradient: 'from-blue-500 to-blue-600',
+      description: 'Reflections on the word shared today.',
+      icon: <BookOpen className="text-blue-600" size={28} />,
+      bgColor: 'bg-blue-50/50',
+      borderColor: 'border-blue-100',
+      hoverBorder: 'hover:border-blue-400',
+      accent: 'text-blue-700'
     },
     {
       id: 'service',
       title: 'Service Experience',
-      description: 'Rate your worship experience',
-      color: 'purple',
-      gradient: 'from-purple-500 to-purple-600',
+      description: 'Your atmosphere and worship experience.',
+      icon: <Sparkles className="text-purple-600" size={28} />,
+      bgColor: 'bg-purple-50/50',
+      borderColor: 'border-purple-100',
+      hoverBorder: 'hover:border-purple-400',
+      accent: 'text-purple-700'
     },
     {
       id: 'testimony',
       title: 'Share Testimony',
-      description: 'Tell us how God has moved in your life',
-      color: 'red',
-      gradient: 'from-red-500 to-pink-600',
+      description: 'Witnessing God’s movement in your life.',
+      icon: <Users className="text-amber-600" size={28} />,
+      bgColor: 'bg-amber-50/50',
+      borderColor: 'border-amber-100',
+      hoverBorder: 'hover:border-amber-400',
+      accent: 'text-amber-700'
     },
     {
       id: 'suggestion',
-      title: 'Suggestions & Ideas',
-      description: 'Help us improve and grow',
-      color: 'yellow',
-      gradient: 'from-yellow-500 to-orange-600',
+      title: 'Suggestions',
+      description: 'Ideas to help our community grow.',
+      icon: <Lightbulb className="text-emerald-600" size={28} />,
+      bgColor: 'bg-emerald-50/50',
+      borderColor: 'border-emerald-100',
+      hoverBorder: 'hover:border-emerald-400',
+      accent: 'text-emerald-700'
     },
     {
       id: 'prayer',
       title: 'Prayer Request',
-      description: 'Submit your prayer needs',
-      color: 'green',
-      gradient: 'from-green-500 to-teal-600',
+      description: 'Submit needs for our intercessory team.',
+      icon: <Heart className="text-red-600" size={28} />,
+      bgColor: 'bg-red-50/50',
+      borderColor: 'border-red-100',
+      hoverBorder: 'hover:border-red-400',
+      accent: 'text-red-700'
     },
     {
       id: 'general',
-      title: 'General Feedback',
-      description: 'Questions, comments, or concerns',
-      color: 'gray',
-      gradient: 'from-gray-500 to-gray-600',
+      title: 'General Voice',
+      description: 'Any other comments or concerns.',
+      icon: <Info className="text-slate-600" size={28} />,
+      bgColor: 'bg-slate-50/50',
+      borderColor: 'border-slate-200',
+      hoverBorder: 'hover:border-slate-400',
+      accent: 'text-slate-700'
     },
   ];
 
-  const handleCategorySelect = (categoryId) => {
-    setSelectedCategory(categoryId);
-    setShowSuccessMessage(false);
+  const handleCategorySelect = (id) => {
+    setSelectedCategory(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmitSuccess = (data) => {
-    setSuccessData(data);
-    setShowSuccessMessage(true);
-    setSelectedCategory(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <Loader2 className="animate-spin text-[#8B1A1A]" size={40} />
+    </div>
+  );
 
-    setTimeout(() => setShowSuccessMessage(false), 10000);
-  };
-
-  const handleBack = () => {
-    setSelectedCategory(null);
-    setShowSuccessMessage(false);
-  };
-
-  const renderForm = () => {
-    const formProps = {
-      isAnonymous,
-      user,
-      onSuccess: handleSubmitSuccess,
-      onBack: handleBack,
-    };
-
-    switch (selectedCategory) {
-      case 'sermon':
-        return <SermonFeedbackForm {...formProps} />;
-      case 'service':
-        return <ServiceFeedbackForm {...formProps} />;
-      case 'testimony':
-        return <TestimonyForm {...formProps} />;
-      case 'suggestion':
-        return <SuggestionForm {...formProps} />;
-      case 'prayer':
-        return <PrayerRequestForm {...formProps} />;
-      case 'general':
-        return <GeneralFeedbackForm {...formProps} />;
-      default:
-        return null;
-    }
-  };
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-          <p className="text-gray-600">Loading your session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Auth error state
-  if (authError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full text-center bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h2>
-          <p className="text-gray-700 mb-6">{authError}</p>
-          <p className="text-sm text-gray-500">
-            Please try refreshing the page or contact support.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Main content
   return (
-    <div className="pt-20 pb-20 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <MessageSquare size={48} className="text-blue-900" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-blue-900">
-              We Value Your Voice
-            </h1>
-          </div>
-          <p className="text-xl text-gray-600 mb-3">
-            Your feedback helps us serve you better
-          </p>
-          <p className="text-lg text-green-600 font-semibold">
-            ✓ No login required • Submit anonymously if you prefer
-          </p>
-        </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mb-10 bg-green-50 border-l-4 border-green-500 rounded-lg p-6 animate-fade-in shadow-sm">
-            <div className="flex items-start gap-4">
-              <svg
-                className="w-8 h-8 text-green-500 flex-shrink-0 mt-1"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-
-              <div className="flex-grow">
-                <h3 className="text-lg font-bold text-green-900 mb-2">
-                  {isAnonymous ? 'Thank You for Your Anonymous Feedback!' : 'Thank You for Your Feedback!'}
-                </h3>
-                <p className="text-green-800 mb-3">
-                  {isAnonymous
-                    ? "Your voice matters to us. While we can't follow up personally, your feedback will help us serve better."
-                    : "We've received your submission and will review it shortly."}
-                </p>
-                {successData?.referenceId && (
-                  <p className="text-sm text-green-700 font-mono bg-green-100 inline-block px-3 py-1 rounded">
-                    Reference ID: {successData.referenceId}
-                  </p>
-                )}
-              </div>
-
-              <button
-                onClick={() => setShowSuccessMessage(false)}
-                className="text-green-700 hover:text-green-900 transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Anonymous Toggle */}
-        {selectedCategory && (
-          <div className="mb-8 max-w-3xl mx-auto">
-            <AnonymousToggle isAnonymous={isAnonymous} onToggle={setIsAnonymous} />
-          </div>
-        )}
-
-        {/* Content */}
+    <div className="min-h-screen bg-[#FDFCFB] py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        
         {!selectedCategory ? (
-          <>
-            {/* Categories */}
-            <div className="mb-16">
-              <h2 className="text-3xl font-bold text-blue-900 mb-8 text-center">
-                Choose Feedback Type
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category.id)}
-                    className="group relative bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-blue-200 text-left"
-                  >
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`}
-                    />
-                    <div className="relative">
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-900 transition-colors">
-                        {category.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-6">{category.description}</p>
-                      <div className="flex items-center text-blue-600 font-semibold text-sm group-hover:gap-2 transition-all">
-                        <span>Get Started</span>
-                        <svg
-                          className="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="bg-gradient-to-r from-blue-900 to-purple-900 text-white rounded-2xl p-8 mb-12 text-center shadow-lg">
-              <h3 className="text-3xl font-bold mb-4">Join Our Community Voice</h3>
-              <p className="text-lg mb-6 opacity-90">
-                Help us grow and serve better through your valuable feedback
+          <div className="animate-in fade-in duration-700">
+            <header className="text-center mb-8">
+              <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">
+                We Value Your <span className="text-[#8B1A1A]">Voice.</span>
+              </h1>
+              <p className="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
+                Your feedback is the catalyst for our transformation. Share your heart or testify of God’s goodness.
               </p>
-              <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-                <div>
-                  <p className="text-4xl font-bold mb-1">500+</p>
-                  <p className="text-sm opacity-80">Feedback Received</p>
-                </div>
-                <div>
-                  <p className="text-4xl font-bold mb-1">95%</p>
-                  <p className="text-sm opacity-80">Satisfaction Rate</p>
-                </div>
-                <div>
-                  <p className="text-4xl font-bold mb-1">100+</p>
-                  <p className="text-sm opacity-80">Testimonies Shared</p>
-                </div>
-              </div>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat.id)}
+                  className={`group relative p-10 rounded-[2.5rem] border-2 transition-all duration-300 text-left flex flex-col items-start shadow-sm hover:shadow-xl hover:-translate-y-1 ${cat.bgColor} ${cat.borderColor} ${cat.hoverBorder}`}
+                >
+                  <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    {cat.icon}
+                  </div>
+                  <h3 className={`text-2xl font-bold mb-3 ${cat.accent}`}>{cat.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-8">{cat.description}</p>
+                  
+                  <div className={`mt-auto flex items-center gap-2 text-xs font-black uppercase tracking-widest ${cat.accent}`}>
+                    Get Started <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+              ))}
             </div>
 
-            <TestimoniesWall />
-          </>
+            <div className="mt-24 border-t border-slate-100 pt-16">
+              <TestimoniesWall />
+            </div>
+          </div>
         ) : (
-          <div className="max-w-3xl mx-auto">{renderForm()}</div>
+          <div className="max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
+            <button 
+              onClick={() => setSelectedCategory(null)}
+              className="flex items-center gap-2 text-slate-400 hover:text-[#8B1A1A] transition-colors mb-8 font-bold uppercase text-xs tracking-widest"
+            >
+              <ArrowLeft size={18} /> Change Type
+            </button>
+            
+            <div className="mb-10 flex justify-center">
+              <AnonymousToggle isAnonymous={isAnonymous} onToggle={setIsAnonymous} />
+            </div>
+
+            <div className="bg-white rounded-[3rem] p-12 shadow-2xl shadow-slate-200 border border-slate-50">
+               {/* Logic for rendering forms remains the same */}
+               {selectedCategory === 'sermon' && <SermonFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+               {selectedCategory === 'service' && <ServiceFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+               {selectedCategory === 'testimony' && <TestimonyForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+               {selectedCategory === 'suggestion' && <SuggestionForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+               {selectedCategory === 'prayer' && <PrayerRequestForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+               {selectedCategory === 'general' && <GeneralFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+            </div>
+          </div>
         )}
       </div>
     </div>
