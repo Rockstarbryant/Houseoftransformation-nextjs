@@ -20,23 +20,10 @@ const Header = () => {
   const { user, isAdmin, logout, isLoading } = useAuthContext();
   const pathname = usePathname();
 
-  // Debug: Log admin status (remove in production)
-  useEffect(() => {
-    if (!isLoading) {
-      console.log('[Header Debug]', {
-        userExists: !!user,
-        userName: user?.name,
-        userRole: user?.role,
-        isAdminResult: isAdmin()
-      });
-    }
-  }, [user, isLoading, isAdmin]);
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -79,170 +66,162 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Check if user is admin - safe version
   const userIsAdmin = isAdmin && isAdmin();
 
   return (
     <>
-      <nav className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-red-900 shadow-lg' : 'bg-red-900'
+      {/* 1. Header locked to Red (#8B1A1A) with height transition only */}
+      <nav className={`fixed w-full z-50 transition-all duration-300 bg-[#8B1A1A] ${
+        isScrolled ? 'py-3 shadow-2xl' : 'py-5'
       }`}>
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
             
-            <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity flex-shrink-0">
+            {/* LOGO AREA: White text on Red background */}
+            <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
               <Image 
                 src="https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg"
                 alt={CHURCH_INFO.name}
-                width={72}
-                height={72}
-                className="rounded-full object-cover border-2 border-white"
+                width={48}
+                height={48}
+                className="rounded-full object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
-                <h1 className="font-bold text-lg text-white leading-tight">
+                <h1 className="font-black text-sm md:text-base tracking-tighter uppercase leading-none text-white">
                   {CHURCH_INFO.name}
                 </h1>
-                <p className="text-white/90 text-sm font-semibold">{CHURCH_INFO.location}</p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/80">
+                  {CHURCH_INFO.location}
+                </p>
               </div>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-8 flex-grow justify-center">
-              <div className="flex gap-6 items-center">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    href={link.path}
-                    className={`font-medium transition-colors duration-200 ${
-                      isActivePath(link.path) 
-                        ? 'text-white font-bold border-b-2 border-white pb-1' 
-                        : 'text-white/80 hover:text-white'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+            {/* DESKTOP NAVIGATION: Modern Typography, White Text */}
+            <div className="hidden lg:flex items-center gap-7">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  href={link.path}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:text-white/100 ${
+                    isActivePath(link.path) ? 'text-white border-b-2 border-white pb-1' : 'text-white/70'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
 
-                <div className="relative group">
-                  <button
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className={`font-medium transition-colors duration-200 flex items-center gap-2 pb-1 ${
-                      isDropdownActive() 
-                        ? 'text-white font-bold border-b-2 border-white' 
-                        : 'text-white/80 hover:text-white'
-                    }`}
-                  >
-                    Content
-                    <ChevronDown 
-                      size={18} 
-                      className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+              <div className="relative group/content">
+                <button
+                  onMouseEnter={() => setShowDropdown(true)}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-1.5 hover:text-white ${
+                    isDropdownActive() ? 'text-white border-b-2 border-white pb-1' : 'text-white/70'
+                  }`}
+                >
+                  Content
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''}`} />
+                </button>
 
-                  <div className={`absolute left-0 mt-0 w-48 bg-red-900 rounded-lg shadow-lg border border-red-800 overflow-hidden transition-all duration-200 origin-top ${
-                    showDropdown 
-                      ? 'opacity-100 visible scale-y-100' 
-                      : 'opacity-0 invisible scale-y-95'
-                  }`}>
-                    <div className="py-2">
-                      {dropdownLinks.map((link) => (
-                        <Link
-                          key={link.path}
-                          href={link.path}
-                          onClick={() => setShowDropdown(false)}
-                          className={`block px-4 py-2.5 font-medium transition-all duration-200 ${
-                            isActivePath(link.path)
-                              ? 'bg-red-800 text-white border-l-4 border-white'
-                              : 'text-white/90 hover:bg-red-800 hover:text-white'
-                          }`}
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
+                <div 
+                  onMouseLeave={() => setShowDropdown(false)}
+                  className={`absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl overflow-hidden transition-all duration-300 ${
+                    showDropdown ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
+                  }`}
+                >
+                  <div className="py-2">
+                    {dropdownLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        href={link.path}
+                        onClick={() => setShowDropdown(false)}
+                        className={`flex items-center px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                          isActivePath(link.path) ? 'bg-slate-50 text-[#8B1A1A]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#8B1A1A]'
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
                   </div>
                 </div>
-
-                {navLinksAfterDropdown.map((link) => (
-                  <Link
-                    key={link.path}
-                    href={link.path}
-                    className={`font-medium transition-colors duration-200 ${
-                      isActivePath(link.path) 
-                        ? 'text-white font-bold border-b-2 border-white pb-1' 
-                        : 'text-white/80 hover:text-white'
-                        }`}
-                    >
-                        {link.label}
-                    </Link>
-                    ))}
-                    </div>
-                </div>
-
-                <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
-          {user ? (
-            <div className="flex items-center gap-4 border-l border-white/30 pl-6">
-              <div className="flex flex-col items-end">
-                <span className="text-sm text-white font-semibold">{user.name}</span>
-                <span className="text-xs text-white/70 capitalize">{user.role}</span>
               </div>
-              
-              {/* ADMIN BUTTON - Only show if user is admin */}
-              {userIsAdmin && (
+
+              {navLinksAfterDropdown.map((link) => (
                 <Link
-                  href="/admin"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
-                  title="Go to Admin Dashboard"
+                  key={link.path}
+                  href={link.path}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:text-white/100 ${
+                    isActivePath(link.path) ? 'text-white border-b-2 border-white pb-1' : 'text-white/70'
+                  }`}
                 >
-                  <Settings size={16} /> Admin
+                  {link.label}
                 </Link>
+              ))}
+            </div>
+
+            {/* AUTH ACTIONS */}
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="flex items-center gap-3 pl-6 border-l border-white/20">
+                  <div className="hidden md:flex flex-col items-end">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white">{user.name}</span>
+                    <span className="text-[9px] font-bold text-white/60 uppercase">{user.role}</span>
+                  </div>
+                  
+                  {userIsAdmin && (
+                    <Link
+                      href="/admin"
+                      className="size-9 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-[#8B1A1A] transition-all shadow-lg"
+                      title="Admin Dashboard"
+                    >
+                      <Settings size={16} />
+                    </Link>
+                  )}
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="size-9 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-red-600 transition-all"
+                    title="Logout"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleAuthClick}
+                  className="hidden lg:flex items-center gap-2 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] bg-white text-[#8B1A1A] hover:bg-slate-100 transition-all shadow-md"
+                >
+                  Sign In
+                </button>
               )}
-              
+
               <button
-                onClick={handleLogout}
-                className="text-white hover:text-white/80 transition-colors font-medium flex items-center gap-2 p-2 hover:bg-red-800 rounded-lg"
-                title="Logout"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden p-2 text-white bg-white/10 rounded-lg"
               >
-                <LogOut size={20} />
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
-          ) : (
-            <button
-              onClick={handleAuthClick}
-              className="bg-blue-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <LogIn size={18} /> Sign In
-            </button>
-          )}
+          </div>
         </div>
 
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="lg:hidden text-white p-2 hover:bg-red-800 rounded-lg transition-colors ml-auto"
-        >
-          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-      </div>
-    </div>
+        <MobileMenu
+          isOpen={isMobileMenuOpen}
+          user={user}
+          isAdmin={userIsAdmin}
+          onAuthClick={handleAuthClick}
+          onLogout={handleLogout}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      </nav>
 
-    <MobileMenu
-      isOpen={isMobileMenuOpen}
-      user={user}
-      isAdmin={userIsAdmin}
-      onAuthClick={handleAuthClick}
-      onLogout={handleLogout}
-      onClose={() => setIsMobileMenuOpen(false)}
-    />
-  </nav>
-
-  {showAuthModal && (
-    <AuthModal
-      mode={authMode}
-      onClose={() => setShowAuthModal(false)}
-      onSwitchMode={(mode) => setAuthMode(mode)}
-    />
-  )}
-</>
-);
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => setShowAuthModal(false)}
+          onSwitchMode={(mode) => setAuthMode(mode)}
+        />
+      )}
+    </>
+  );
 };
 
 export default Header;

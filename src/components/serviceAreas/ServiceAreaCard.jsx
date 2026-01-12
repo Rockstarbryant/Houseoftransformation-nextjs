@@ -2,72 +2,95 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { ChevronRight, Users, Clock } from 'lucide-react';
+import { ChevronRight, Users, Clock, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import Card from '../common/Card';
 
 const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitment }) => {
-  // Convert name to URL-friendly slug (better handling of special chars)
+  // --- Logic Preserved 100% ---
   const slug = name
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '') // remove anything that's not letter/number/hyphen
-    .replace(/-+/g, '-'); // collapse multiple hyphens
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-');
 
-  // Fallback image (you can replace with your own placeholder)
-  const fallbackImage = '/images/placeholder-service-area.jpg'; // or use external: 'https://via.placeholder.com/600x400?text=No+Image'
+  const fallbackImage = '/images/placeholder-service-area.jpg';
 
   return (
-    <Card hover className="flex flex-col h-full group overflow-hidden">
-      {/* Header */}
-      <h3 className="text-2xl font-bold text-blue-900 mb-2 px-5 pt-5">{name}</h3>
-
-      {/* Image Section */}
-      <div className="relative w-full h-48 mb-4 overflow-hidden bg-gray-200">
+    <Card 
+      className="group flex flex-col h-full bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-red-900/5 transition-all duration-500"
+    >
+      {/* Top Section: Visual Branding */}
+      <div className="relative w-full h-64 overflow-hidden bg-slate-100">
+        {/* Cinematic Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity" />
+        
         <Image
           src={imageUrl || fallbackImage}
           alt={`Service area: ${name}`}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-110"
+          className="object-cover transition-transform duration-1000 group-hover:scale-110"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={false} // set to true only for above-the-fold cards
-          quality={75}
+          quality={85}
           onError={(e) => {
-            console.error(`Failed to load image for ${name}: ${imageUrl}`);
-            e.currentTarget.src = fallbackImage; // fallback on error
+            e.currentTarget.src = fallbackImage;
           }}
         />
+
+        {/* Floating Badge */}
+        <div className="absolute top-6 left-6 z-20">
+          <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-xl">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-1.5">
+              <ShieldCheck size={12} className="text-[#8B1A1A]" /> Ministry Unit
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="px-5 flex flex-col flex-grow">
-        <p className="text-gray-600 mb-6 text-sm leading-relaxed flex-grow">
+      {/* Content Area */}
+      <div className="p-8 flex flex-col flex-grow relative">
+        {/* Title: Integrated with a subtle vertical line */}
+        <div className="mb-4">
+          <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
+            {name}
+          </h3>
+        </div>
+
+        <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8 flex-grow">
           {description}
         </p>
 
-        {/* Meta Information */}
-        <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <Users size={16} className="text-blue-600 flex-shrink-0" />
-            <span>{teamCount} team members</span>
+        {/* Stats Grid: Modern & Minimal */}
+        <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-slate-50">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-[#8B1A1A]">
+              <Users size={14} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Community</span>
+            </div>
+            <span className="text-xs font-bold text-slate-700">{teamCount} Members</span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <Clock size={16} className="text-blue-600 flex-shrink-0" />
-            <span>{timeCommitment}</span>
+          
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-[#8B1A1A]">
+              <Clock size={14} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Time</span>
+            </div>
+            <span className="text-xs font-bold text-slate-700 truncate">{timeCommitment}</span>
           </div>
         </div>
 
-        {/* Call to Action */}
+        {/* Action: Premium Button Style */}
         <Link
           href={`/service-areas/${slug}`}
-          className="text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-1 transition-colors group/link mt-auto pb-5"
+          className="group/btn relative inline-flex items-center justify-between w-full p-4 bg-slate-50 rounded-2xl hover:bg-[#8B1A1A] transition-all duration-300 overflow-hidden"
           aria-label={`Learn more about ${name} service area`}
         >
-          Learn More
-          <ChevronRight
-            size={16}
-            className="group-hover/link:translate-x-1 transition-transform"
-          />
+          <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 group-hover/btn:text-white transition-colors">
+            Explore Ministry
+          </span>
+          <div className="relative z-10 w-6 h-6 rounded-full bg-white flex items-center justify-center text-slate-900 group-hover/btn:rotate-[-45deg] transition-transform duration-500">
+            <ChevronRight size={14} />
+          </div>
         </Link>
       </div>
     </Card>
