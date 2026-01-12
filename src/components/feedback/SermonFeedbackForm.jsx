@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader, Star } from 'lucide-react';
+import { ArrowLeft, Loader, Star, Calendar, MessageSquare, Heart, Info, Send } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -9,31 +9,25 @@ import StarRating from './StarRating';
 import { feedbackService } from '@/services/api/feedbackService';
 
 const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
+  // --- LOGIC PRESERVED: State Hooks ---
   const [formData, setFormData] = useState({
-    // Personal info
     name: '',
     email: '',
     phone: '',
-    
-    // Sermon details
     sermonTitle: '',
     sermonDate: '',
-    
-    // Feedback
     rating: 0,
     resonatedMost: '',
     application: '',
     questions: '',
     wouldRecommend: null,
-    
-    // Preferences
     allowFollowUp: false
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-fill user data if not anonymous
+  // --- LOGIC PRESERVED: Auto-fill Effect ---
   useEffect(() => {
     if (!isAnonymous && user) {
       setFormData(prev => ({
@@ -44,83 +38,48 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     } else if (isAnonymous) {
       setFormData(prev => ({
         ...prev,
-        name: '',
-        email: '',
-        phone: '',
-        allowFollowUp: false
+        name: '', email: '', phone: '', allowFollowUp: false
       }));
     }
   }, [isAnonymous, user]);
 
+  // --- LOGIC PRESERVED: Handlers ---
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleRatingChange = (rating) => {
     setFormData(prev => ({ ...prev, rating }));
-    if (errors.rating) {
-      setErrors(prev => ({ ...prev, rating: '' }));
-    }
+    if (errors.rating) setErrors(prev => ({ ...prev, rating: '' }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    // Validate contact info if follow-up requested and not anonymous
-    if (!isAnonymous && formData.allowFollowUp) {
-      if (!formData.email) {
-        newErrors.email = 'Email is required for follow-up';
-      }
+    if (!isAnonymous && formData.allowFollowUp && !formData.email) {
+      newErrors.email = 'Email is required for follow-up';
     }
-
-    // Sermon details
-    if (!formData.sermonTitle.trim()) {
-      newErrors.sermonTitle = 'Please specify which sermon';
-    }
-
-    if (!formData.sermonDate) {
-      newErrors.sermonDate = 'Please select the date you attended';
-    }
-
-    // Rating required
-    if (formData.rating === 0) {
-      newErrors.rating = 'Please provide a rating';
-    }
-
-    // Feedback required
+    if (!formData.sermonTitle.trim()) newErrors.sermonTitle = 'Please specify which sermon';
+    if (!formData.sermonDate) newErrors.sermonDate = 'Please select the date';
+    if (formData.rating === 0) newErrors.rating = 'Please provide a rating';
     if (!formData.resonatedMost.trim()) {
-      newErrors.resonatedMost = 'Please share what resonated with you';
+      newErrors.resonatedMost = 'Please share what resonated';
     } else if (formData.resonatedMost.trim().length < 20) {
       newErrors.resonatedMost = 'Please provide at least 20 characters';
     }
-
-    // Would recommend required
-    if (formData.wouldRecommend === null) {
-      newErrors.wouldRecommend = 'Please answer this question';
-    }
-
+    if (formData.wouldRecommend === null) newErrors.wouldRecommend = 'Please answer this';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-
     try {
       const submissionData = {
         category: 'sermon',
@@ -136,202 +95,215 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           wouldRecommend: formData.wouldRecommend
         }
       };
-
-      // Add contact info if not anonymous
       if (!isAnonymous) {
         submissionData.name = formData.name;
         submissionData.email = formData.email;
         submissionData.phone = formData.phone;
       }
-
       const response = await feedbackService.submitFeedback(submissionData);
-
-      if (response.success) {
-        onSuccess(response);
-      }
+      if (response.success) onSuccess(response);
     } catch (error) {
-      console.error('Submission error:', error);
-      setErrors({ submit: error.response?.data?.message || 'Failed to submit feedback' });
+      setErrors({ submit: error.response?.data?.message || 'Failed to submit' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card>
-      <div className="mb-6">
+    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
+      
+      {/* Header Section: Editorial Styling */}
+      <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-4 transition"
+          className="flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6 transition-all"
         >
-          <ArrowLeft size={20} />
-          Back to Categories
+          <ArrowLeft size={16} /> Back to Categories
         </button>
-        <h2 className="text-3xl font-bold text-blue-900">Sermon Feedback</h2>
-        <p className="text-gray-600 mt-2">Help us understand how God's Word is impacting your life</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+              Sermon <br/>Feedback.
+            </h2>
+            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-4 max-w-sm leading-relaxed">
+              Help us understand how God's Word is impacting your life.
+            </p>
+          </div>
+          {isAnonymous && (
+            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 text-[9px] font-black uppercase tracking-widest">
+              Anonymous Mode
+            </div>
+          )}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
+        
         {/* Personal Information (if not anonymous) */}
         {!isAnonymous && (
-          <div className="space-y-4 pb-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-800">Your Information</h3>
-            
-            <Input
-              name="name"
-              label="Name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Your name (optional)"
-              disabled={isSubmitting}
-            />
-
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-slate-200"></span>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Your Identity</h3>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input
+                name="name"
+                label="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Optional"
+                disabled={isSubmitting}
+                className="bg-white border-slate-100"
+              />
+              <Input
+                name="phone"
+                label="Phone Number"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Optional"
+                disabled={isSubmitting}
+                className="bg-white border-slate-100"
+              />
+            </div>
             <Input
               name="email"
               type="email"
-              label="Email"
+              label="Email Address"
               value={formData.email}
               onChange={handleChange}
-              placeholder="your.email@example.com"
+              placeholder="email@example.com"
               error={errors.email}
               disabled={isSubmitting}
-            />
-
-            <Input
-              name="phone"
-              label="Phone (Optional)"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+254 700 000 000"
-              disabled={isSubmitting}
+              className="bg-white border-slate-100"
             />
           </div>
         )}
 
         {/* Sermon Details */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Sermon Details</h3>
-          
-          <div>
-            <Input
-              name="sermonTitle"
-              label="Which sermon are you providing feedback on?"
-              value={formData.sermonTitle}
-              onChange={handleChange}
-              placeholder="e.g., Walking in Faith, The Power of Prayer"
-              required
-              error={errors.sermonTitle}
-              disabled={isSubmitting}
-            />
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-slate-200"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">The Message</h3>
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Date Attended <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="date"
-              name="sermonDate"
-              value={formData.sermonDate}
-              onChange={handleChange}
-              max={new Date().toISOString().split('T')[0]}
-              required
-              disabled={isSubmitting}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-            {errors.sermonDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.sermonDate}</p>
-            )}
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <Input
+                name="sermonTitle"
+                label="Sermon Title"
+                value={formData.sermonTitle}
+                onChange={handleChange}
+                placeholder="Which sermon spoke to you?"
+                required
+                error={errors.sermonTitle}
+                disabled={isSubmitting}
+                className="bg-white border-slate-100"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">
+                Date Attended <span className="text-[#8B1A1A]">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  name="sermonDate"
+                  value={formData.sermonDate}
+                  onChange={handleChange}
+                  max={new Date().toISOString().split('T')[0]}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none"
+                />
+              </div>
+              {errors.sermonDate && <p className="text-[#8B1A1A] text-[10px] font-bold mt-1 ml-1">{errors.sermonDate}</p>}
+            </div>
           </div>
         </div>
 
-        {/* Rating */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Your Feedback</h3>
+        {/* Feedback Section */}
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-slate-200"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Your Experience</h3>
+          </div>
           
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Overall Rating <span className="text-red-600">*</span>
+          {/* Rating */}
+          <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 text-center">
+            <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-4">
+              How would you rate this message?
             </label>
-            <StarRating
-              rating={formData.rating}
-              onRatingChange={handleRatingChange}
-              size={40}
-            />
-            {errors.rating && (
-              <p className="text-red-600 text-sm mt-2">{errors.rating}</p>
-            )}
+            <div className="flex justify-center scale-110">
+              <StarRating
+                rating={formData.rating}
+                onRatingChange={handleRatingChange}
+                size={32}
+              />
+            </div>
+            {errors.rating && <p className="text-[#8B1A1A] text-[10px] font-bold mt-4">{errors.rating}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              What part of the sermon resonated most with you? <span className="text-red-600">*</span>
-            </label>
-            <textarea
-              name="resonatedMost"
-              value={formData.resonatedMost}
-              onChange={handleChange}
-              rows="4"
-              required
-              disabled={isSubmitting}
-              placeholder="Share what spoke to your heart..."
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              {formData.resonatedMost.length} characters (minimum 20)
-            </p>
-            {errors.resonatedMost && (
-              <p className="text-red-600 text-sm mt-1">{errors.resonatedMost}</p>
-            )}
+          {/* Text Areas */}
+          <div className="space-y-6">
+            <div className="group">
+              <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">
+                What resonated most? <span className="text-[#8B1A1A]">*</span>
+              </label>
+              <textarea
+                name="resonatedMost"
+                value={formData.resonatedMost}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Share what spoke to your heart..."
+                className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
+              />
+              <div className="flex justify-between mt-2 px-1">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase">{formData.resonatedMost.length} / 20 Min Char</p>
+                 {errors.resonatedMost && <p className="text-[#8B1A1A] text-[10px] font-bold">{errors.resonatedMost}</p>}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">Application Steps</label>
+                <textarea
+                  name="application"
+                  value={formData.application}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="How will you apply this? (optional)"
+                  className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">Any Questions?</label>
+                <textarea
+                  name="questions"
+                  value={formData.questions}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="Clarification needed? (optional)"
+                  className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
+                />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              How will you apply this message to your life?
+          {/* Recommendation Buttons */}
+          <div className="bg-slate-900 p-8 rounded-[32px] text-white">
+            <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-6 text-center opacity-80">
+              Would you recommend this sermon?
             </label>
-            <textarea
-              name="application"
-              value={formData.application}
-              onChange={handleChange}
-              rows="3"
-              disabled={isSubmitting}
-              placeholder="What steps will you take? (optional)"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Do you have any questions about the message?
-            </label>
-            <textarea
-              name="questions"
-              value={formData.questions}
-              onChange={handleChange}
-              rows="3"
-              disabled={isSubmitting}
-              placeholder="Any areas you'd like clarification on? (optional)"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Would you recommend this sermon to others? <span className="text-red-600">*</span>
-            </label>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setFormData(prev => ({ ...prev, wouldRecommend: true }));
                   if (errors.wouldRecommend) setErrors(prev => ({ ...prev, wouldRecommend: '' }));
                 }}
-                disabled={isSubmitting}
-                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition ${
-                  formData.wouldRecommend === true
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } disabled:opacity-50`}
+                className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  formData.wouldRecommend === true ? 'bg-[#8B1A1A] text-white shadow-lg' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
               >
                 Yes, Definitely!
               </button>
@@ -341,77 +313,72 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   setFormData(prev => ({ ...prev, wouldRecommend: false }));
                   if (errors.wouldRecommend) setErrors(prev => ({ ...prev, wouldRecommend: '' }));
                 }}
-                disabled={isSubmitting}
-                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition ${
-                  formData.wouldRecommend === false
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } disabled:opacity-50`}
+                className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  formData.wouldRecommend === false ? 'bg-[#8B1A1A] text-white shadow-lg' : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
               >
                 Not Really
               </button>
             </div>
-            {errors.wouldRecommend && (
-              <p className="text-red-600 text-sm mt-2">{errors.wouldRecommend}</p>
-            )}
+            {errors.wouldRecommend && <p className="text-red-400 text-[10px] font-bold mt-4 text-center uppercase tracking-widest">{errors.wouldRecommend}</p>}
           </div>
         </div>
 
-        {/* Follow-up Option (if not anonymous) */}
-        {!isAnonymous && (
-          <div className="pt-4 border-t">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="allowFollowUp"
-                checked={formData.allowFollowUp}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="mt-1 w-5 h-5 text-blue-900 border-gray-300 rounded focus:ring-blue-900"
-              />
-              <span className="text-sm text-gray-700">
-                I would like the pastor to follow up with me about this feedback
+        {/* Preferences & Submit */}
+        <div className="pt-8 border-t border-slate-100 space-y-8">
+          {!isAnonymous && (
+            <label className="flex items-center gap-4 cursor-pointer group bg-slate-50 p-4 rounded-2xl transition-all hover:bg-slate-100">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  name="allowFollowUp"
+                  checked={formData.allowFollowUp}
+                  onChange={handleChange}
+                  className="peer h-6 w-6 opacity-0 absolute cursor-pointer"
+                />
+                <div className="h-6 w-6 border-2 border-slate-300 rounded-lg bg-white peer-checked:bg-[#8B1A1A] peer-checked:border-[#8B1A1A] transition-all flex items-center justify-center">
+                  <div className="h-2 w-2 bg-white rounded-sm opacity-0 peer-checked:opacity-100 transition-all"></div>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                Request follow-up from the pastor
               </span>
             </label>
-          </div>
-        )}
+          )}
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-            {errors.submit}
-          </div>
-        )}
+          {errors.submit && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-xs font-bold">
+               <Info size={16} /> {errors.submit}
+            </div>
+          )}
 
-        {/* Submit Button */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={20} />
-                Submitting...
-              </span>
-            ) : (
-              'Submit Feedback'
-            )}
-          </Button>
+          <div className="flex flex-col md:flex-row gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all order-2 md:order-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] shadow-xl transition-all duration-300 active:scale-95 disabled:opacity-50 order-1 md:order-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader className="animate-spin" size={18} /> Submitting...
+                </>
+              ) : (
+                <>
+                  <Send size={18} /> Submit Feedback
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
 

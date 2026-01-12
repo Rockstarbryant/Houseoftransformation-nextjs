@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Phone, Calendar, Users, Loader } from 'lucide-react';
+import { Search, MapPin, Phone, Calendar, Users, Loader, Shield, Music, Heart, User } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 import api from '@/services/api/authService';
 import Card from '@/components/common/Card';
@@ -16,6 +16,7 @@ export default function UsersPortalPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // --- Logic Kept Intact ---
   const roles = [
     { value: 'all', label: 'All Members' },
     { value: 'pastor', label: 'Pastors' },
@@ -48,11 +49,9 @@ export default function UsersPortalPage() {
 
   useEffect(() => {
     let result = users;
-
     if (roleFilter !== 'all') {
       result = result.filter(u => u.role === roleFilter);
     }
-
     if (search.trim()) {
       result = result.filter(u =>
         u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -61,162 +60,164 @@ export default function UsersPortalPage() {
         (u.location && u.location.toLowerCase().includes(search.toLowerCase()))
       );
     }
-
     setFilteredUsers(result);
   }, [search, roleFilter, users]);
 
-  const getRoleColor = (role) => {
-    const colors = {
-      admin: 'bg-purple-100 text-purple-800',
-      pastor: 'bg-red-100 text-red-800',
-      bishop: 'bg-blue-100 text-blue-800',
-      worship_team: 'bg-yellow-100 text-yellow-800',
-      usher: 'bg-green-100 text-green-800',
-      volunteer: 'bg-indigo-100 text-indigo-800',
-      member: 'bg-gray-100 text-gray-800'
+  // --- Style Helper (Updated for Premium Palette) ---
+  const getRoleStyle = (role) => {
+    const styles = {
+      admin: 'bg-slate-900 text-white',
+      pastor: 'bg-[#8B1A1A] text-white',
+      bishop: 'bg-[#8B1A1A] text-white',
+      worship_team: 'bg-amber-500 text-black',
+      usher: 'bg-emerald-600 text-white',
+      volunteer: 'bg-sky-600 text-white',
+      member: 'bg-slate-100 text-slate-600'
     };
-    return colors[role] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getRoleIcon = (role) => {
-    if (role === 'pastor' || role === 'bishop') return '👨‍⛪';
-    if (role === 'worship_team') return '🎵';
-    if (role === 'usher') return '🤝';
-    if (role === 'volunteer') return '❤️';
-    return '👤';
+    return styles[role] || 'bg-slate-100 text-slate-600';
   };
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-12">
-          <h1 className="text-5xl font-bold text-blue-900 mb-3">Church Members Portal</h1>
-          <p className="text-lg text-gray-600">Connect with {users.length} members in our community</p>
+    <div className="pt-32 pb-20 min-h-screen bg-[#F8F9FA]">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header Section: Editorial Style */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-px w-12 bg-[#8B1A1A]"></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#8B1A1A]">Community</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter uppercase leading-none">
+              Members<br/><span className="text-[#8B1A1A]">Directory.</span>
+            </h1>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-6">
+            <div className="text-center">
+              <p className="text-3xl font-black text-slate-900 leading-none">{users.length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Total</p>
+            </div>
+            <div className="h-10 w-px bg-slate-100"></div>
+            <div className="text-center">
+              <p className="text-3xl font-black text-[#8B1A1A] leading-none">{filteredUsers.length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Filtered</p>
+            </div>
+          </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-800 rounded">
-            {error}
+          <div className="mb-8 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-sm font-bold flex items-center gap-3">
+            <Shield size={18} /> {error}
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <div className="md:col-span-2">
-            <Input
-              name="search"
-              placeholder="Search by name, email, location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              icon={Search}
-            />
+        {/* Filter Bar: Clean & Focused */}
+        <div className="bg-white p-3 rounded-3xl shadow-xl shadow-slate-200/50 mb-12 grid md:grid-cols-4 gap-3">
+          <div className="md:col-span-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#8B1A1A] transition-colors" size={20} />
+              <input
+                type="text"
+                placeholder="Search the community..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#8B1A1A]/20 transition-all text-sm font-bold tracking-tight"
+              />
+            </div>
           </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-900 focus:outline-none font-medium"
+            className="w-full px-4 py-4 bg-slate-900 text-white rounded-2xl focus:outline-none text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors"
           >
             {roles.map(role => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
+              <option key={role.value} value={role.value}>{role.label}</option>
             ))}
           </select>
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-gray-700 font-medium">
-            {filteredUsers.length} member{filteredUsers.length !== 1 ? 's' : ''} found
-          </p>
-          <div className="flex gap-2">
-            <Users size={20} className="text-blue-900" />
-            <span className="text-blue-900 font-bold">{users.length}</span>
-          </div>
-        </div>
-
+        {/* User Grid: High-End Profile Cards */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader size={40} className="animate-spin text-blue-900" />
+          <div className="flex flex-col justify-center items-center py-32 gap-4">
+            <Loader size={48} className="animate-spin text-[#8B1A1A]" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Directory</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <Card className="text-center py-12">
-            <Users size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-600 text-lg">No members found</p>
-          </Card>
+          <div className="text-center py-32 bg-white rounded-[40px] border border-dashed border-slate-200">
+            <Users size={64} className="mx-auto text-slate-200 mb-6" />
+            <p className="text-slate-400 font-bold uppercase tracking-widest">No members match your search</p>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredUsers.map((user) => (
-              <Card key={user._id} hover className="flex flex-col">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-14 h-14 bg-blue-900 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                        {getRoleIcon(user.role)} {user.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-blue-900">{user.name}</h3>
-                        <p className="text-xs text-gray-500">@{user.username || user.email.split('@')[0]}</p>
-                      </div>
+              <div 
+                key={user._id} 
+                className="group relative bg-white rounded-[32px] p-6 transition-all duration-500 hover:shadow-2xl hover:shadow-[#8B1A1A]/10 border border-slate-100 flex flex-col"
+              >
+                {/* Profile Header */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                      <span className="text-2xl font-black text-slate-300">
+                        {user.name.charAt(0)}
+                      </span>
                     </div>
+                    <div className={`absolute -bottom-2 -right-2 p-1.5 rounded-lg shadow-lg ${getRoleStyle(user.role)}`}>
+                      <User size={12} />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-900 uppercase tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
+                      {user.name}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      @{user.username || user.email.split('@')[0]}
+                    </p>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getRoleColor(user.role)}`}>
-                    {user.role.replace('_', ' ').toUpperCase()}
+                {/* Bio / Stats */}
+                <div className="mb-6 flex-1">
+                  <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-4 ${getRoleStyle(user.role)}`}>
+                    {user.role.replace('_', ' ')}
                   </span>
+                  {user.bio && (
+                    <p className="text-xs leading-relaxed text-slate-500 line-clamp-2 italic">
+                      "{user.bio}"
+                    </p>
+                  )}
                 </div>
 
-                {user.bio && (
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {user.bio}
-                  </p>
-                )}
-
-                <div className="space-y-2 mb-4 text-sm">
+                {/* Contact Info: Modern Icons */}
+                <div className="space-y-3 pt-6 border-t border-slate-50 mb-6">
                   {user.location && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin size={16} className="text-blue-900 flex-shrink-0" />
-                      <span>{user.location}</span>
+                    <div className="flex items-center gap-3 text-slate-500">
+                      <MapPin size={14} className="text-[#8B1A1A]" />
+                      <span className="text-[10px] font-bold uppercase tracking-tight">{user.location}</span>
                     </div>
                   )}
                   {user.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone size={16} className="text-blue-900 flex-shrink-0" />
-                      <a href={`tel:${user.phone}`} className="hover:text-blue-900 transition">
-                        {user.phone}
-                      </a>
+                    <div className="flex items-center gap-3 text-slate-500">
+                      <Phone size={14} className="text-[#8B1A1A]" />
+                      <span className="text-[10px] font-bold tracking-tight">{user.phone}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar size={16} className="text-blue-900 flex-shrink-0" />
-                    <span className="text-xs">
-                      Joined {new Date(user.createdAt).toLocaleDateString()}
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Calendar size={14} />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">
+                      Member since {new Date(user.createdAt).getFullYear()}
                     </span>
                   </div>
                 </div>
 
-                {(user.blogsCreated || user.testimonyCount) && (
-                  <div className="flex gap-4 mb-4 py-3 border-t border-gray-200">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-blue-900">{user.blogsCreated || 0}</p>
-                      <p className="text-xs text-gray-500">Posts</p>
-                    </div>
-                    <div className="text-center border-l border-r border-gray-200 flex-1">
-                      <p className="text-lg font-bold text-blue-900">{user.testimonyCount || 0}</p>
-                      <p className="text-xs text-gray-500">Stories</p>
-                    </div>
-                  </div>
-                )}
-
-                <Button
+                {/* Action */}
+                <button
                   onClick={() => window.location.href = `/profile/${user._id}`}
-                  variant="outline"
-                  fullWidth
-                  className="mt-auto"
+                  className="w-full py-4 bg-slate-50 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] group-hover:bg-[#8B1A1A] group-hover:text-white transition-all duration-300"
                 >
-                  View Profile
-                </Button>
-              </Card>
+                  View Full Profile
+                </button>
+              </div>
             ))}
           </div>
         )}
