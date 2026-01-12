@@ -40,7 +40,8 @@ const AboutSection = ({ preview = false }) => {
       <section className="py-12 md:py-20 bg-slate-50 w-full">
         <div className="w-full px-0 md:px-6 lg:px-8">
           <div className="
-            bg-white 
+            bg-white
+            dark:bg-slate-900 dark:text-white 
             rounded-none md:rounded-[2.5rem] 
             overflow-hidden 
             shadow-sm border border-slate-100 
@@ -79,11 +80,11 @@ const AboutSection = ({ preview = false }) => {
 
   // FULL ABOUT PAGE - improved mobile responsiveness
   return (
-    <div className="bg-[#F8FAFC] pb-16 md:pb-32">
+    <div className="bg-[#F8FAFC] dark:bg-slate-900 dark:text-white pb-16 md:pb-32">
       {/* 1. MODULAR HERO SECTION */}
       <section className="pt-16 pb-8 md:pt-20 md:pb-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 bg-white p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center">
             <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 tracking-tighter leading-none mb-4 md:mb-6">
               THE <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
             </h1>
@@ -107,13 +108,13 @@ const AboutSection = ({ preview = false }) => {
           <div className="lg:col-span-4 rounded-2xl md:rounded-[3rem] overflow-hidden shadow-sm h-[300px] md:h-[500px]">
             <img src={churchImages[0].url} className="w-full h-full object-cover" alt="Worship" />
           </div>
-          <div className="lg:col-span-8 bg-white p-8 md:p-12 lg:p-16 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 md:space-y-8">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-8 md:p-12 lg:p-16 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 md:space-y-8">
             <h2 className="text-3xl md:text-4xl font-black text-slate-900 flex items-center gap-4">
               <div className="w-2 h-10 bg-[#8B1A1A] rounded-full" />
               The H.O.T Heartbeat
             </h2>
-            <div className="grid md:grid-cols-2 gap-8 text-slate-600 leading-relaxed text-base md:text-lg">
-              <p className="font-bold text-slate-900">
+            <div className="grid md:grid-cols-2 gap-8 text-slate-600 dark:text-slate-300 leading-relaxed text-base md:text-lg">
+              <p className="font-bold text-slate-900 dark:text-white">
                 House of Transformation Ministries (H.O.T) is a dynamic community located in Busia County, Kenya. We are a ministry outreach with deep roots in Nairobi.
               </p>
               <p>
@@ -133,21 +134,21 @@ const AboutSection = ({ preview = false }) => {
       {/* 3. MISSION & VISION MODULES */}
       <section className="px-4 sm:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-6">
-          <div className="bg-white p-8 md:p-12 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 hover:border-[#8B1A1A]/30 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 hover:border-[#8B1A1A]/30 transition-colors">
             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
               <Compass size={32} />
             </div>
-            <h3 className="text-2xl md:text-3xl font-black text-slate-900">Our Mission</h3>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed italic">
+            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">Our Mission</h3>
+            <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed italic">
               "To transform the lives of God's people for spiritual and physical prosperity by preaching the Kingdom of God and those things which concern the Lord Jesus Christ (Acts 28:31)."
             </p>
           </div>
-          <div className="bg-white p-8 md:p-12 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 hover:border-[#8B1A1A]/30 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 space-y-6 hover:border-[#8B1A1A]/30 transition-colors">
             <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
               <Target size={32} />
             </div>
-            <h3 className="text-2xl md:text-3xl font-black text-slate-900">Our Vision</h3>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed italic">
+            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">Our Vision</h3>
+            <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed italic">
               "To see the church flourishing and holistically transforming people's lives through the anointed Gospel globally (Matthew 28:19-20)."
             </p>
           </div>
@@ -180,23 +181,23 @@ const AboutSection = ({ preview = false }) => {
       {/* 5. HISTORY (Split Narrative) */}
       <section className="px-4 sm:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl md:rounded-[3rem] p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3rem] p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100">
             <div className="grid lg:grid-cols-12 gap-10 md:gap-16">
               <div className="lg:col-span-4 space-y-4">
                 <History size={40} className="text-[#8B1A1A]" />
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900">Our History</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">A Legacy of Grace</p>
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Our History</h2>
+                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">A Legacy of Grace</p>
               </div>
               <div className="lg:col-span-8 space-y-8 md:space-y-12">
                 <div className="space-y-4 border-l-4 border-slate-50 pl-6 md:pl-8">
                   <h4 className="text-lg md:text-xl font-black text-[#8B1A1A]">The Birth in Nairobi (1989)</h4>
-                  <p className="text-slate-600 text-base md:text-lg leading-relaxed">
+                  <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed">
                     Founded around 1989 as Nairobi Gospel Assembly Church, House of Transformation Ministries began as a place of vibrant worship and community outreach in Nairobi, Kenya.
                   </p>
                 </div>
                 <div className="space-y-4 border-l-4 border-[#8B1A1A] pl-6 md:pl-8">
                   <h4 className="text-lg md:text-xl font-black text-[#8B1A1A]">Expansion to Busia</h4>
-                  <p className="text-slate-600 text-base md:text-lg leading-relaxed">
+                  <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed">
                     The Busia Main Campus was established as a key outreach in western Kenya, addressing the unique needs of diverse communities including the Luhya and Iteso people.
                   </p>
                 </div>
@@ -209,14 +210,14 @@ const AboutSection = ({ preview = false }) => {
       {/* 6. LEADERSHIP (Clean Grid) */}
       <section className="px-4 sm:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-black text-slate-900 text-center mb-10 md:mb-16">Our Leadership</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white text-center mb-10 md:mb-16">Our Leadership</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { name: "Apostle Aloys A. Rutivi", role: "Founding Pastor", img: churchImages[2].url },
               { name: "Lavern Rutivi", role: "Worship Coordinator", img: churchImages[0].url },
               { name: "The Dedicated Team", role: "Pastors & Volunteers", img: churchImages[1].url }
             ].map((leader, i) => (
-              <div key={i} className="bg-white rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-100 text-center space-y-4">
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-100 text-center space-y-4">
                 <img src={leader.img} className="w-28 h-28 md:w-32 md:h-32 mx-auto rounded-2xl md:rounded-3xl object-cover shadow-md" alt={leader.name} />
                 <div>
                   <h4 className="text-lg md:text-xl font-black text-slate-900">{leader.name}</h4>
@@ -231,7 +232,7 @@ const AboutSection = ({ preview = false }) => {
       {/* 7. JOIN CALL-TO-ACTION */}
       <section className="px-4 sm:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl md:rounded-[3rem] p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100 text-center space-y-8 md:space-y-10">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl md:rounded-[3rem] p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100 text-center space-y-8 md:space-y-10">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900">
               Experience the <br /><span className="text-[#8B1A1A]">Transformation</span>
             </h2>
