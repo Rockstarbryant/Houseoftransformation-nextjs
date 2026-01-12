@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader, MessageSquare, Send, Mail, User, Phone } from 'lucide-react';
+import { ArrowLeft, Loader, Send, Mail, User, Phone, MessageSquare } from 'lucide-react';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- CORE LOGIC PRESERVED ---
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', feedbackType: '',
     subject: '', message: '', allowFollowUp: false
@@ -17,8 +16,13 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isAnonymous && user) {
-      setFormData(prev => ({ ...prev, name: user.name || '', email: user.email || '' }));
+    // STABILIZED LOGIC: Safe check for user object
+    if (!isAnonymous && user && typeof user === 'object') {
+      setFormData(prev => ({ 
+        ...prev, 
+        name: user?.name ?? '', 
+        email: user?.email ?? '' 
+      }));
     } else if (isAnonymous) {
       setFormData(prev => ({ ...prev, name: '', email: '', phone: '', allowFollowUp: false }));
     }
@@ -35,13 +39,9 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
     if (!isAnonymous && formData.allowFollowUp && !formData.email) {
       newErrors.email = 'Email is required for response';
     }
-    if (!formData.feedbackType) newErrors.feedbackType = 'Select a feedback type';
+    if (!formData.feedbackType) newErrors.feedbackType = 'Select a type';
     if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    } else if (formData.message.trim().length < 20) {
-      newErrors.message = 'Minimum 20 characters required';
-    }
+    if (formData.message.trim().length < 20) newErrors.message = 'Minimum 20 characters';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -75,134 +75,55 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
     }
   };
 
-  const feedbackTypes = ['Compliment', 'Question', 'Concern', 'General Comment'];
-
   return (
-    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500 border border-slate-100">
-      
-      {/* Bold Header Section */}
-      <div className="bg-[#1A1A1A] p-8 md:p-12 text-white relative overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12">
-            <MessageSquare size={260} fill="currentColor" />
-        </div>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-white/50 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-8 transition-all relative z-10"
-        >
-          <ArrowLeft size={16} /> Back to Categories
+    // FULL-WIDTH MOBILE WRAPPER
+    <div className="w-full bg-white md:rounded-[40px] md:shadow-2xl overflow-hidden border-b md:border-2 border-slate-100">
+      <div className="bg-[#1A1A1A] p-6 md:p-12 text-white relative">
+        <button onClick={onBack} className="flex items-center gap-2 text-white/50 text-[10px] font-black uppercase tracking-widest mb-6">
+          <ArrowLeft size={16} /> Back
         </button>
-        <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight relative z-10">
-          General <br/>Feedback.
-        </h2>
-        <p className="text-[#8B1A1A] text-[10px] font-black uppercase tracking-[0.3em] mt-6 relative z-10">
-          Your voice shapes our community
-        </p>
+        <h2 className="text-3xl md:text-6xl font-black uppercase tracking-tighter">General Feedback.</h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
-        
+      <form onSubmit={handleSubmit} className="p-4 md:p-12 space-y-8 bg-[#FCFDFD]">
         {/* Type Selection */}
-        <div className="space-y-4">
-          <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">What kind of feedback? *</label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {feedbackTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setFormData(p => ({ ...p, feedbackType: type }))}
-                className={`py-4 px-2 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border-2 ${
-                  formData.feedbackType === type 
-                  ? 'bg-slate-900 border-slate-900 text-white shadow-lg' 
-                  : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:text-slate-600'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-          {errors.feedbackType && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.feedbackType}</p>}
-        </div>
-
-        {/* User Info (Conditional) */}
-        {!isAnonymous && (
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><User size={12}/> Name</label>
-                <input name="name" value={formData.name} onChange={handleChange} placeholder="Optional" className="w-full bg-transparent border-b-2 border-slate-100 py-2 text-sm font-bold outline-none focus:border-slate-900 transition-colors" />
-            </div>
-            <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> Email</label>
-                <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Required for reply" className={`w-full bg-transparent border-b-2 py-2 text-sm font-bold outline-none transition-colors ${errors.email ? 'border-[#8B1A1A]' : 'border-slate-100 focus:border-slate-900'}`} />
-            </div>
-            <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Phone size={12}/> Phone</label>
-                <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional" className="w-full bg-transparent border-b-2 border-slate-100 py-2 text-sm font-bold outline-none focus:border-slate-900 transition-colors" />
-            </div>
-          </div>
-        )}
-
-        {/* Subject & Message */}
-        <div className="space-y-6">
-          <Input 
-            label="Subject Line" 
-            name="subject" 
-            value={formData.subject} 
-            onChange={handleChange} 
-            error={errors.subject} 
-            placeholder="What is this about?" 
-            className="bg-white"
-          />
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Your Message *</label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              rows="6"
-              placeholder="Tell us more..."
-              className="w-full px-6 py-5 rounded-[30px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-4 focus:ring-slate-900/5 transition-all resize-none shadow-sm"
-            />
-            <div className="flex justify-between px-2">
-                {errors.message && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase">{errors.message}</p>}
-                <p className="text-[9px] text-slate-300 font-bold ml-auto uppercase">{formData.message.length} characters</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Interaction Preference */}
-        {!isAnonymous && (
-          <label className={`flex items-center gap-4 p-6 rounded-[28px] border-2 transition-all cursor-pointer group ${formData.allowFollowUp ? 'border-[#8B1A1A] bg-[#8B1A1A]/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-            <div className="relative">
-                <input type="checkbox" name="allowFollowUp" checked={formData.allowFollowUp} onChange={handleChange} className="sr-only peer" />
-                <div className="w-10 h-5 bg-slate-100 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
-                <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
-            </div>
-            <div className="flex flex-col">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">I would like a response</span>
-                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter mt-0.5">We'll reach out to your provided email</span>
-            </div>
-          </label>
-        )}
-
-        {/* Footer Actions */}
-        <div className="pt-8 space-y-6">
-          {errors.submit && <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl text-center">{errors.submit}</div>}
-          
-          <div className="flex flex-col md:flex-row gap-4">
-            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {['Compliment', 'Question', 'Concern', 'Comment'].map((type) => (
             <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-[2] py-5 bg-slate-900 text-white rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] transition-all shadow-xl disabled:opacity-50"
+              key={type}
+              type="button"
+              onClick={() => setFormData(p => ({ ...p, feedbackType: type }))}
+              className={`py-3 rounded-xl text-[9px] font-black uppercase transition-all border-2 ${
+                formData.feedbackType === type ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-100 text-slate-400'
+              }`}
             >
-              {isSubmitting ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Send Feedback</>}
+              {type}
             </button>
-          </div>
+          ))}
         </div>
+
+        {/* Info Fields */}
+        {!isAnonymous && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input label="Name" name="name" value={formData.name} onChange={handleChange} />
+            <Input label="Email" name="email" value={formData.email} onChange={handleChange} error={errors.email} />
+          </div>
+        )}
+
+        <Input label="Subject" name="subject" value={formData.subject} onChange={handleChange} error={errors.subject} />
+
+        <textarea
+          name="message"
+          value={formData.message}
+          onChange={handleChange}
+          placeholder="Your message..."
+          className="w-full p-4 rounded-2xl border border-slate-100 min-h-[150px] text-sm font-bold focus:ring-2 focus:ring-slate-900"
+        />
+
+        <Button type="submit" disabled={isSubmitting} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest">
+          {isSubmitting ? <Loader className="animate-spin" /> : 'Send Feedback'}
+        </Button>
       </form>
     </div>
   );
 };
-
-export default GeneralFeedbackForm;
