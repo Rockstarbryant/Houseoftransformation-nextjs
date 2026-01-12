@@ -1,103 +1,96 @@
 'use client';
 
 import React from 'react';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, ShieldOff, Eye, EyeOff, CheckCircle2, Info } from 'lucide-react';
 
 const AnonymousToggle = ({ isAnonymous, onToggle }) => {
   return (
-    <div className={`bg-white rounded-xl p-6 shadow-md border-2 transition-all ${
-      isAnonymous ? 'border-green-500 bg-green-50' : 'border-gray-200'
-    }`}>
-      <div className="flex items-start gap-4">
-        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-          isAnonymous ? 'bg-green-500' : 'bg-gray-300'
-        }`}>
-          <Shield className="text-white" size={24} />
-        </div>
+    <div 
+      className={`rounded-[32px] p-8 border-2 transition-all duration-500 overflow-hidden relative ${
+        isAnonymous 
+          ? 'bg-slate-900 border-slate-900 shadow-2xl scale-[1.02]' 
+          : 'bg-white border-slate-100 shadow-sm'
+      }`}
+    >
+      {/* Background Decorative Icon */}
+      <div className={`absolute -right-6 -bottom-6 transition-opacity duration-500 ${isAnonymous ? 'opacity-10' : 'opacity-0'}`}>
+        <Shield size={180} color="white" />
+      </div>
 
-        <div className="flex-grow">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-gray-900">
-              Submit Anonymously
-            </h3>
-            
-            {/* Toggle Switch */}
-            <button
-              onClick={() => onToggle(!isAnonymous)}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                isAnonymous ? 'bg-green-500' : 'bg-gray-300'
-              }`}
-              role="switch"
-              aria-checked={isAnonymous}
-            >
-              <span className="sr-only">Enable anonymous mode</span>
-              <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
-                  isAnonymous ? 'translate-x-7' : 'translate-x-1'
-                }`}
-              >
-                {isAnonymous ? (
-                  <EyeOff className="w-4 h-4 text-green-600 m-1" />
-                ) : (
-                  <Eye className="w-4 h-4 text-gray-600 m-1" />
-                )}
-              </span>
-            </button>
-          </div>
-
-          {/* Description */}
-          <p className={`text-sm transition-colors ${
-            isAnonymous ? 'text-green-800' : 'text-gray-600'
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex items-center gap-5">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+            isAnonymous ? 'bg-[#8B1A1A] rotate-[10deg]' : 'bg-slate-100 rotate-0'
           }`}>
             {isAnonymous ? (
-              <>
-                <strong>Anonymous mode is ON.</strong> Your identity will remain private. 
-                Personal information fields will be hidden.
-              </>
+              <ShieldOff className="text-white" size={32} strokeWidth={2.5} />
             ) : (
-              <>
-                Your feedback will include your contact information. 
-                Toggle to submit anonymously with complete privacy.
-              </>
+              <Shield className="text-slate-400" size={32} strokeWidth={2.5} />
             )}
-          </p>
+          </div>
 
-          {/* Benefits List */}
-          {isAnonymous && (
-            <div className="mt-3 space-y-1">
-              <div className="flex items-center gap-2 text-sm text-green-700">
-                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>No personal information collected</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-green-700">
-                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Your feedback stays completely private</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-green-700">
-                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Help us improve without revealing identity</span>
-              </div>
-            </div>
-          )}
-
-          {/* Warning when not anonymous */}
-          {!isAnonymous && (
-            <div className="mt-3 flex items-start gap-2 text-sm text-blue-700 bg-blue-50 p-3 rounded-lg">
-              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <span>
-                Providing contact info allows us to follow up and may result in a faster response.
-              </span>
-            </div>
-          )}
+          <div>
+            <h3 className={`text-[11px] font-black uppercase tracking-[0.3em] mb-1 ${
+              isAnonymous ? 'text-[#8B1A1A]' : 'text-slate-400'
+            }`}>
+              Submission Mode
+            </h3>
+            <p className={`text-2xl font-black uppercase tracking-tighter ${
+              isAnonymous ? 'text-white' : 'text-slate-900'
+            }`}>
+              {isAnonymous ? 'Identity Hidden' : 'Public Profile'}
+            </p>
+          </div>
         </div>
+
+        {/* Tactile Switch */}
+        <button
+          onClick={() => onToggle(!isAnonymous)}
+          className={`group relative h-12 w-24 rounded-full transition-all duration-500 outline-none p-1 ${
+            isAnonymous ? 'bg-[#8B1A1A]' : 'bg-slate-200'
+          }`}
+          role="switch"
+          aria-checked={isAnonymous}
+        >
+          <div className={`h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all duration-500 transform ${
+            isAnonymous ? 'translate-x-12' : 'translate-x-0'
+          }`}>
+            {isAnonymous ? (
+              <EyeOff className="text-[#8B1A1A]" size={20} strokeWidth={3} />
+            ) : (
+              <Eye className="text-slate-400" size={20} strokeWidth={3} />
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Narrative Section */}
+      <div className={`mt-8 pt-8 border-t transition-colors duration-500 ${
+        isAnonymous ? 'border-white/10' : 'border-slate-100'
+      }`}>
+        {isAnonymous ? (
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+            <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest leading-relaxed">
+              Anonymous mode is active. Your data will be encrypted and stripped of personal identifiers before reaching our team.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              {['No data tracking', 'Private processing', 'Secured IP'].map((benefit) => (
+                <div key={benefit} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+                  <CheckCircle2 size={14} className="text-[#8B1A1A]" />
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest">{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2">
+            <Info className="text-slate-900 mt-1" size={18} />
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+              Submitting as <span className="text-slate-900">{user?.name || 'Guest'}</span>. 
+              This allows us to reach out via email for updates or follow-up conversations.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

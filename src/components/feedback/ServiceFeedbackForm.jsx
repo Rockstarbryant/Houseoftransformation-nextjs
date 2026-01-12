@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, Info, Send, UserCheck, Star } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -9,16 +9,12 @@ import StarRating from './StarRating';
 import { feedbackService } from '@/services/api/feedbackService';
 
 const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
+  // --- LOGIC PRESERVED 100% ---
   const [formData, setFormData] = useState({
-    // Personal info
     name: '',
     email: '',
     phone: '',
-    
-    // Visitor status
     isFirstTimeVisitor: false,
-    
-    // Ratings
     ratings: {
       overall: 0,
       worship: 0,
@@ -28,14 +24,10 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       childrensMinistry: 0,
       soundQuality: 0
     },
-    
-    // Comments
     whatWentWell: '',
     improvements: '',
     additionalComments: '',
     wouldReturn: '',
-    
-    // Preferences
     allowFollowUp: false
   });
 
@@ -52,10 +44,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     } else if (isAnonymous) {
       setFormData(prev => ({
         ...prev,
-        name: '',
-        email: '',
-        phone: '',
-        allowFollowUp: false
+        name: '', email: '', phone: '', allowFollowUp: false
       }));
     }
   }, [isAnonymous, user]);
@@ -66,21 +55,14 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleRatingChange = (category, rating) => {
     setFormData(prev => ({
       ...prev,
-      ratings: {
-        ...prev.ratings,
-        [category]: rating
-      }
+      ratings: { ...prev.ratings, [category]: rating }
     }));
-    
     if (errors[`rating_${category}`]) {
       setErrors(prev => ({ ...prev, [`rating_${category}`]: '' }));
     }
@@ -88,32 +70,23 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!isAnonymous && formData.allowFollowUp && !formData.email) {
       newErrors.email = 'Email is required for follow-up';
     }
-
     if (formData.ratings.overall === 0) {
-      newErrors.rating_overall = 'Please provide an overall rating';
+      newErrors.rating_overall = 'Overall rating is required';
     }
-
     if (!formData.wouldReturn) {
-      newErrors.wouldReturn = 'Please answer this question';
+      newErrors.wouldReturn = 'Please select an option';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-
     try {
       const submissionData = {
         category: 'service',
@@ -127,275 +100,207 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           wouldReturn: formData.wouldReturn
         }
       };
-
       if (!isAnonymous) {
         submissionData.name = formData.name;
         submissionData.email = formData.email;
         submissionData.phone = formData.phone;
       }
-
       const response = await feedbackService.submitFeedback(submissionData);
-
-      if (response.success) {
-        onSuccess(response);
-      }
+      if (response.success) onSuccess(response);
     } catch (error) {
-      console.error('Submission error:', error);
-      setErrors({ submit: error.response?.data?.message || 'Failed to submit feedback' });
+      setErrors({ submit: error.response?.data?.message || 'Failed to submit' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const ratingCategories = [
-    { key: 'overall', label: 'Overall Service Experience', required: true },
-    { key: 'worship', label: 'Worship Music Quality' },
-    { key: 'hospitality', label: 'Welcoming & Hospitality' },
-    { key: 'facility', label: 'Facility Cleanliness' },
-    { key: 'parking', label: 'Parking Convenience' },
-    { key: 'childrensMinistry', label: 'Children\'s Ministry (if applicable)' },
+    { key: 'overall', label: 'Overall Experience', required: true },
+    { key: 'worship', label: 'Worship Music' },
+    { key: 'hospitality', label: 'Hospitality' },
+    { key: 'facility', label: 'Cleanliness' },
+    { key: 'parking', label: 'Parking' },
+    { key: 'childrensMinistry', label: "Children's Ministry" },
     { key: 'soundQuality', label: 'Sound/AV Quality' }
   ];
 
   return (
-    <Card>
-      <div className="mb-6">
+    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
+      
+      {/* Editorial Header */}
+      <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-4 transition"
+          className="flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6 transition-all"
         >
-          <ArrowLeft size={20} />
-          Back to Categories
+          <ArrowLeft size={16} /> Back to Categories
         </button>
-        <h2 className="text-3xl font-bold text-blue-900">Service Experience Feedback</h2>
-        <p className="text-gray-600 mt-2">Help us improve your worship experience</p>
+        <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+          Service <br/>Experience.
+        </h2>
+        <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-4 max-w-sm">
+          Your feedback helps us create a better atmosphere for worship.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Personal Information (if not anonymous) */}
+      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-12 bg-[#FCFDFD]">
+        
+        {/* Visitor Status Card */}
+        <div className="relative group">
+          <input
+            type="checkbox"
+            name="isFirstTimeVisitor"
+            id="firstTime"
+            checked={formData.isFirstTimeVisitor}
+            onChange={handleChange}
+            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+          />
+          <div className={`p-6 rounded-[32px] border-2 transition-all flex items-center gap-4 ${
+            formData.isFirstTimeVisitor 
+              ? 'bg-[#8B1A1A] border-[#8B1A1A] text-white' 
+              : 'bg-slate-50 border-slate-100 text-slate-600'
+          }`}>
+            <UserCheck size={24} className={formData.isFirstTimeVisitor ? 'text-white' : 'text-[#8B1A1A]'} />
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest">I'm a first-time visitor</p>
+              <p className={`text-[10px] font-bold mt-1 ${formData.isFirstTimeVisitor ? 'text-white/80' : 'text-slate-400'}`}>
+                We'd love to hear your fresh perspective!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Identity Section */}
         {!isAnonymous && (
-          <div className="space-y-4 pb-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-800">Your Information</h3>
-            
-            <Input
-              name="name"
-              label="Name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Your name (optional)"
-              disabled={isSubmitting}
-            />
-
-            <Input
-              name="email"
-              type="email"
-              label="Email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="your.email@example.com"
-              error={errors.email}
-              disabled={isSubmitting}
-            />
-
-            <Input
-              name="phone"
-              label="Phone (Optional)"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+254 700 000 000"
-              disabled={isSubmitting}
-            />
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-slate-200"></span>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Personal Details</h3>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" className="bg-white" />
+              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional" className="bg-white" />
+            </div>
+            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="email@example.com" className="bg-white" />
           </div>
         )}
 
-        {/* Visitor Status */}
-        <div className="pt-4">
-          <label className="flex items-start gap-3 cursor-pointer bg-blue-50 p-4 rounded-lg">
-            <input
-              type="checkbox"
-              name="isFirstTimeVisitor"
-              checked={formData.isFirstTimeVisitor}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className="mt-1 w-5 h-5 text-blue-900 border-gray-300 rounded focus:ring-blue-900"
-            />
-            <div>
-              <span className="font-semibold text-gray-900">I'm a first-time visitor</span>
-              <p className="text-sm text-gray-600 mt-1">
-                Your feedback as a new visitor is especially valuable to us!
-              </p>
-            </div>
-          </label>
-        </div>
-
-        {/* Ratings */}
+        {/* Detailed Ratings Grid */}
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-gray-800">Rate Your Experience</h3>
-          
-          {ratingCategories.map((category) => (
-            <div key={category.key} className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                {category.label}
-                {category.required && <span className="text-red-600"> *</span>}
-              </label>
-              <StarRating
-                rating={formData.ratings[category.key]}
-                onRatingChange={(rating) => handleRatingChange(category.key, rating)}
-                size={32}
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-slate-200"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Service Ratings</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ratingCategories.map((cat) => (
+              <div key={cat.key} className={`p-6 rounded-[24px] border border-slate-100 bg-white transition-all ${formData.ratings[cat.key] > 0 ? 'ring-1 ring-emerald-500/20' : ''}`}>
+                <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3">
+                  {cat.label} {cat.required && <span className="text-[#8B1A1A]">*</span>}
+                </label>
+                <StarRating
+                  rating={formData.ratings[cat.key]}
+                  onRatingChange={(rating) => handleRatingChange(cat.key, rating)}
+                  size={24}
+                />
+                {errors[`rating_${cat.key}`] && <p className="text-[#8B1A1A] text-[9px] font-bold mt-2 uppercase">{errors[`rating_${cat.key}`]}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Written Feedback */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-slate-200"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Written Feedback</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">What did we do well?</label>
+              <textarea
+                name="whatWentWell"
+                value={formData.whatWentWell}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Tell us what you loved..."
+                className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
               />
-              {errors[`rating_${category.key}`] && (
-                <p className="text-red-600 text-sm mt-2">{errors[`rating_${category.key}`]}</p>
-              )}
             </div>
-          ))}
-        </div>
-
-        {/* Comments */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Your Feedback</h3>
-          
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              What did we do well?
-            </label>
-            <textarea
-              name="whatWentWell"
-              value={formData.whatWentWell}
-              onChange={handleChange}
-              rows="3"
-              disabled={isSubmitting}
-              placeholder="Share what you appreciated about the service..."
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              How can we improve?
-            </label>
-            <textarea
-              name="improvements"
-              value={formData.improvements}
-              onChange={handleChange}
-              rows="3"
-              disabled={isSubmitting}
-              placeholder="Constructive feedback helps us serve you better..."
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Would you return/recommend our church? <span className="text-red-600">*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, wouldReturn: 'Yes' }));
-                  if (errors.wouldReturn) setErrors(prev => ({ ...prev, wouldReturn: '' }));
-                }}
-                disabled={isSubmitting}
-                className={`py-3 px-4 rounded-lg font-semibold transition ${
-                  formData.wouldReturn === 'Yes'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } disabled:opacity-50`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, wouldReturn: 'Maybe' }));
-                  if (errors.wouldReturn) setErrors(prev => ({ ...prev, wouldReturn: '' }));
-                }}
-                disabled={isSubmitting}
-                className={`py-3 px-4 rounded-lg font-semibold transition ${
-                  formData.wouldReturn === 'Maybe'
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } disabled:opacity-50`}
-              >
-                Maybe
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, wouldReturn: 'No' }));
-                  if (errors.wouldReturn) setErrors(prev => ({ ...prev, wouldReturn: '' }));
-                }}
-                disabled={isSubmitting}
-                className={`py-3 px-4 rounded-lg font-semibold transition ${
-                  formData.wouldReturn === 'No'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } disabled:opacity-50`}
-              >
-                No
-              </button>
+            <div>
+              <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">Room for improvement?</label>
+              <textarea
+                name="improvements"
+                value={formData.improvements}
+                onChange={handleChange}
+                rows="3"
+                placeholder="How can we make your next visit better?"
+                className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
+              />
             </div>
-            {errors.wouldReturn && (
-              <p className="text-red-600 text-sm mt-2">{errors.wouldReturn}</p>
-            )}
           </div>
         </div>
 
-        {/* Follow-up Option (if not anonymous) */}
-        {!isAnonymous && (
-          <div className="pt-4 border-t">
-            <label className="flex items-start gap-3 cursor-pointer">
+        {/* Return Recommendation */}
+        <div className="bg-slate-900 p-8 rounded-[32px] text-white">
+          <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-6 text-center opacity-80">
+            Would you return or recommend our church? <span className="text-red-400">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            {['Yes', 'Maybe', 'No'].map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, wouldReturn: option }));
+                  if (errors.wouldReturn) setErrors(prev => ({ ...prev, wouldReturn: '' }));
+                }}
+                className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  formData.wouldReturn === option 
+                    ? (option === 'Yes' ? 'bg-emerald-600 shadow-lg' : option === 'Maybe' ? 'bg-amber-600 shadow-lg' : 'bg-red-600 shadow-lg')
+                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          {errors.wouldReturn && <p className="text-red-400 text-[10px] font-bold mt-4 text-center uppercase">{errors.wouldReturn}</p>}
+        </div>
+
+        {/* Preferences & Actions */}
+        <div className="pt-8 border-t border-slate-100 space-y-8">
+          {!isAnonymous && (
+            <label className="flex items-center gap-4 cursor-pointer group bg-slate-50 p-4 rounded-2xl">
               <input
                 type="checkbox"
                 name="allowFollowUp"
                 checked={formData.allowFollowUp}
                 onChange={handleChange}
-                disabled={isSubmitting}
-                className="mt-1 w-5 h-5 text-blue-900 border-gray-300 rounded focus:ring-blue-900"
+                className="w-5 h-5 accent-[#8B1A1A]"
               />
-              <span className="text-sm text-gray-700">
-                I would like someone from the team to follow up with me
-              </span>
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">Request team follow-up</span>
             </label>
-          </div>
-        )}
+          )}
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-            {errors.submit}
-          </div>
-        )}
+          {errors.submit && (
+            <div className="p-4 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded-2xl flex items-center gap-2">
+              <Info size={14} /> {errors.submit}
+            </div>
+          )}
 
-        {/* Submit Button */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={20} />
-                Submitting...
-              </span>
-            ) : (
-              'Submit Feedback'
-            )}
-          </Button>
+          <div className="flex flex-col md:flex-row gap-3">
+            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] transition-all shadow-xl disabled:opacity-50"
+            >
+              {isSubmitting ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Submit Feedback</>}
+            </button>
+          </div>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
 

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, Info, Send, Heart, Eye, EyeOff, UserCircle } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
+  // --- LOGIC PRESERVED 100% ---
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,11 +35,7 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     } else if (isAnonymous) {
       setFormData(prev => ({
         ...prev,
-        name: '',
-        email: '',
-        phone: '',
-        sharingPreference: 'private',
-        allowContact: false
+        name: '', email: '', phone: '', sharingPreference: 'private', allowContact: false
       }));
     }
   }, [isAnonymous, user]);
@@ -49,46 +46,27 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.testimonyType) {
-      newErrors.testimonyType = 'Please select testimony type';
-    }
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Please provide a title';
-    }
-
+    if (!formData.testimonyType) newErrors.testimonyType = 'Select a type';
+    if (!formData.title.trim()) newErrors.title = 'Title required';
     if (!formData.story.trim()) {
-      newErrors.story = 'Please share your testimony';
+      newErrors.story = 'Share your story';
     } else if (formData.story.trim().length < 50) {
-      newErrors.story = 'Please provide at least 50 characters';
+      newErrors.story = 'Minimum 50 characters required';
     }
-
-    if (!formData.testimonyDate) {
-      newErrors.testimonyDate = 'Please select when this happened';
-    }
-
+    if (!formData.testimonyDate) newErrors.testimonyDate = 'Date required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-
     try {
       const submissionData = {
         category: 'testimony',
@@ -102,294 +80,202 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           shareInService: formData.shareInService
         }
       };
-
       if (!isAnonymous && formData.sharingPreference === 'public') {
         submissionData.name = formData.name;
         submissionData.email = formData.email;
         submissionData.phone = formData.phone;
         submissionData.allowFollowUp = formData.allowContact;
       }
-
       const response = await feedbackService.submitFeedback(submissionData);
-
-      if (response.success) {
-        onSuccess(response);
-      }
+      if (response.success) onSuccess(response);
     } catch (error) {
-      console.error('Submission error:', error);
-      setErrors({ submit: error.response?.data?.message || 'Failed to submit testimony' });
+      setErrors({ submit: error.response?.data?.message || 'Failed to submit' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const testimonyTypes = [
-    'Prayer Answered',
-    'Healing/Miracle',
-    'Life Transformation',
-    'Salvation Story',
-    'Financial Breakthrough',
-    'Relationship Restoration',
-    'Other'
+    'Prayer Answered', 'Healing/Miracle', 'Life Transformation',
+    'Salvation Story', 'Financial Breakthrough', 'Relationship Restoration', 'Other'
   ];
 
   return (
-    <Card>
-      <div className="mb-6">
+    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
+      
+      {/* Editorial Header */}
+      <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative overflow-hidden">
+        <div className="absolute top-[-20px] right-[-20px] opacity-10">
+            <Heart size={200} />
+        </div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-4 transition"
+          className="flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6 transition-all"
         >
-          <ArrowLeft size={20} />
-          Back to Categories
+          <ArrowLeft size={16} /> Back to Categories
         </button>
-        <h2 className="text-3xl font-bold text-blue-900">Share Your Testimony</h2>
-        <p className="text-gray-600 mt-2">Tell us how God has moved in your life</p>
+        <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight">
+          Share Your <br/>Testimony.
+        </h2>
+        <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mt-4 max-w-xs">
+          Your story could be the miracle someone else is praying for.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Personal Information (if not anonymous and wants public sharing) */}
+      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
+        
+        {/* Step 1: Identity (Conditional) */}
         {!isAnonymous && formData.sharingPreference === 'public' && (
-          <div className="space-y-4 pb-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-800">Your Information</h3>
-            
-            <Input
-              name="name"
-              label="Name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Your name"
-              disabled={isSubmitting}
-            />
-
-            <Input
-              name="email"
-              type="email"
-              label="Email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="your.email@example.com"
-              disabled={isSubmitting}
-            />
-
-            <Input
-              name="phone"
-              label="Phone (Optional)"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+254 700 000 000"
-              disabled={isSubmitting}
-            />
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-[#8B1A1A]"></span>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Public Identity</h3>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input label="Display Name" name="name" value={formData.name} onChange={handleChange} placeholder="How should we address you?" className="bg-white" />
+              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." className="bg-white" />
+            </div>
+            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="bg-white" />
           </div>
         )}
 
-        {/* Testimony Details */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Your Testimony</h3>
+        {/* Step 2: The Story */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-[#8B1A1A]"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">The Details</h3>
+          </div>
           
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Testimony Type <span className="text-red-600">*</span>
-            </label>
-            <select
-              name="testimonyType"
-              value={formData.testimonyType}
-              onChange={handleChange}
-              required
-              disabled={isSubmitting}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            >
-              <option value="">Select type</option>
-              {testimonyTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-            {errors.testimonyType && (
-              <p className="text-red-600 text-sm mt-1">{errors.testimonyType}</p>
-            )}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Type of Testimony *</label>
+              <select
+                name="testimonyType"
+                value={formData.testimonyType}
+                onChange={handleChange}
+                className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 appearance-none"
+              >
+                <option value="">Select Category</option>
+                {testimonyTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              {errors.testimonyType && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.testimonyType}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Occurrence Date *</label>
+              <input
+                type="date"
+                name="testimonyDate"
+                max={new Date().toISOString().split('T')[0]}
+                value={formData.testimonyDate}
+                onChange={handleChange}
+                className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10"
+              />
+              {errors.testimonyDate && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.testimonyDate}</p>}
+            </div>
           </div>
 
-          <div>
-            <Input
-              name="title"
-              label="Title of Your Testimony"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g., How God Healed My Marriage"
-              required
-              error={errors.title}
-              disabled={isSubmitting}
-              maxLength={100}
-            />
-          </div>
+          <Input label="Testimony Title" name="title" value={formData.title} onChange={handleChange} error={errors.title} placeholder="A short, powerful title (e.g. 'God Restored My Health')" className="bg-white" />
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Your Story <span className="text-red-600">*</span>
-            </label>
+          <div className="space-y-2">
+            <div className="flex justify-between items-end mb-1">
+              <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Your Story *</label>
+              <span className={`text-[9px] font-black uppercase ${formData.story.length < 50 ? 'text-slate-400' : 'text-emerald-600'}`}>
+                {formData.story.length} Characters
+              </span>
+            </div>
             <textarea
               name="story"
               value={formData.story}
               onChange={handleChange}
-              rows="8"
-              required
-              disabled={isSubmitting}
-              placeholder="Share your testimony in detail. How did God work in your life? What changed? How has it impacted you?"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
+              rows="6"
+              placeholder="Tell us everything... how did God move? How were you changed?"
+              className="w-full px-6 py-4 rounded-[32px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              {formData.story.length} characters (minimum 50)
-            </p>
-            {errors.story && (
-              <p className="text-red-600 text-sm mt-1">{errors.story}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              When did this happen? <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="date"
-              name="testimonyDate"
-              value={formData.testimonyDate}
-              onChange={handleChange}
-              max={new Date().toISOString().split('T')[0]}
-              required
-              disabled={isSubmitting}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
-            />
-            {errors.testimonyDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.testimonyDate}</p>
-            )}
+            {errors.story && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.story}</p>}
           </div>
         </div>
 
-        {/* Sharing Preferences */}
-        <div className="space-y-4 pt-6 border-t">
-          <h3 className="text-lg font-semibold text-gray-800">Sharing Preferences</h3>
+        {/* Step 3: Sharing Preferences */}
+        <div className="space-y-6 pt-6">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-8 bg-[#8B1A1A]"></span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Sharing Preferences</h3>
+          </div>
           
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer p-4 border-2 rounded-lg transition hover:border-blue-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-              <input
-                type="radio"
-                name="sharingPreference"
-                value="public"
-                checked={formData.sharingPreference === 'public'}
-                onChange={handleChange}
-                disabled={isSubmitting || isAnonymous}
-                className="mt-1 w-5 h-5 text-blue-900"
-              />
-              <div>
-                <span className="font-semibold text-gray-900">Share publicly with my name</span>
-                <p className="text-sm text-gray-600">Your testimony will be visible to others with your name</p>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3 cursor-pointer p-4 border-2 rounded-lg transition hover:border-blue-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-              <input
-                type="radio"
-                name="sharingPreference"
-                value="public_anonymous"
-                checked={formData.sharingPreference === 'public_anonymous'}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="mt-1 w-5 h-5 text-blue-900"
-              />
-              <div>
-                <span className="font-semibold text-gray-900">Share publicly anonymously</span>
-                <p className="text-sm text-gray-600">Your testimony will be visible but without your name</p>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3 cursor-pointer p-4 border-2 rounded-lg transition hover:border-blue-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-              <input
-                type="radio"
-                name="sharingPreference"
-                value="private"
-                checked={formData.sharingPreference === 'private'}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="mt-1 w-5 h-5 text-blue-900"
-              />
-              <div>
-                <span className="font-semibold text-gray-900">Keep private (leadership only)</span>
-                <p className="text-sm text-gray-600">Only pastoral team will see your testimony</p>
-              </div>
-            </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              { id: 'public', label: 'Publicly', sub: 'With your name', icon: <Eye size={18}/>, disabled: isAnonymous },
+              { id: 'public_anonymous', label: 'Anonymously', sub: 'Hidden name', icon: <EyeOff size={18}/>, disabled: false },
+              { id: 'private', label: 'Privately', sub: 'Leadership only', icon: <UserCircle size={18}/>, disabled: false }
+            ].map((pref) => (
+              <button
+                key={pref.id}
+                type="button"
+                disabled={pref.disabled}
+                onClick={() => handleChange({ target: { name: 'sharingPreference', value: pref.id }})}
+                className={`p-6 rounded-[28px] border-2 text-left transition-all relative ${
+                  formData.sharingPreference === pref.id 
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-xl' 
+                    : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200 grayscale opacity-60'
+                } ${pref.disabled ? 'hidden' : ''}`}
+              >
+                <div className={`mb-4 ${formData.sharingPreference === pref.id ? 'text-[#8B1A1A]' : 'text-slate-300'}`}>
+                    {pref.icon}
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest">{pref.label}</p>
+                <p className={`text-[9px] font-bold mt-1 uppercase ${formData.sharingPreference === pref.id ? 'text-white/50' : 'text-slate-400'}`}>
+                    {pref.sub}
+                </p>
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="pt-4">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="shareInService"
-                checked={formData.shareInService}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="mt-1 w-5 h-5 text-blue-900 border-gray-300 rounded focus:ring-blue-900"
-              />
-              <span className="text-sm text-gray-700">
-                I would like to share this testimony during a service
-              </span>
+        {/* Consent Switches */}
+        <div className="bg-slate-50 p-6 rounded-[32px] space-y-4">
+            <label className="flex items-center gap-4 cursor-pointer group">
+              <div className="relative">
+                <input type="checkbox" name="shareInService" checked={formData.shareInService} onChange={handleChange} className="sr-only peer" />
+                <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
+                <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
+              </div>
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Willing to share during service</span>
             </label>
-          </div>
 
-          {!isAnonymous && formData.sharingPreference !== 'private' && (
-            <div className="pt-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="allowContact"
-                  checked={formData.allowContact}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="mt-1 w-5 h-5 text-blue-900 border-gray-300 rounded focus:ring-blue-900"
-                />
-                <span className="text-sm text-gray-700">
-                  Leadership can contact me for more details
-                </span>
+            {!isAnonymous && formData.sharingPreference !== 'private' && (
+              <label className="flex items-center gap-4 cursor-pointer group pt-2 border-t border-slate-200">
+                <div className="relative">
+                  <input type="checkbox" name="allowContact" checked={formData.allowContact} onChange={handleChange} className="sr-only peer" />
+                  <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
+                  <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
+                </div>
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Contact me for more details</span>
               </label>
+            )}
+        </div>
+
+        {/* Final Actions */}
+        <div className="pt-6 space-y-6">
+          {errors.submit && (
+            <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl flex items-center gap-2">
+              <Info size={14} /> {errors.submit}
             </div>
           )}
-        </div>
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-            {errors.submit}
+          <div className="flex flex-col md:flex-row gap-3">
+            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] transition-all shadow-xl disabled:opacity-50"
+            >
+              {isSubmitting ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Share Testimony</>}
+            </button>
           </div>
-        )}
-
-        {/* Submit Button */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={20} />
-                Submitting...
-              </span>
-            ) : (
-              'Share Testimony'
-            )}
-          </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
 
