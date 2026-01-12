@@ -1,16 +1,16 @@
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation'; // ✅ Changed
-import Link from 'next/link'; // ✅ Changed
-import { ArrowLeft, Heart, Calendar, User, Share2, AlertCircle } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, Heart, Calendar, User, Share2, AlertCircle, Quote, Sparkles, BookOpen } from 'lucide-react';
 import Card from '@/components/common/Card';
 import Loader from '@/components/common/Loader';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export default function TestimonyDetailPage() {
-  const params = useParams(); // ✅ Changed
-  const router = useRouter(); // ✅ Changed
-  const id = params.id; // ✅ Get id from params
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id;
   
   const [testimony, setTestimony] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +22,6 @@ export default function TestimonyDetailPage() {
     try {
       setIsLoading(true);
       const response = await feedbackService.getFeedbackById(id);
-      
       if (response.success) {
         setTestimony(response.feedback);
       } else {
@@ -30,7 +29,7 @@ export default function TestimonyDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching testimony:', err);
-      setError('Failed to load testimony. Please try again.');
+      setError('System Link Failure: Could not retrieve report.');
     } finally {
       setIsLoading(false);
     }
@@ -39,7 +38,6 @@ export default function TestimonyDetailPage() {
   const fetchRelatedTestimonies = useCallback(async () => {
     try {
       const response = await feedbackService.getPublicTestimonies();
-      
       if (response.success) {
         const related = response.testimonies
           .filter(t => t._id !== id)
@@ -48,7 +46,7 @@ export default function TestimonyDetailPage() {
         setRelatedTestimonies(related);
       }
     } catch (err) {
-      console.error('Error fetching related testimonies:', err);
+      console.error('Error fetching related:', err);
     }
   }, [id]);
 
@@ -59,222 +57,127 @@ export default function TestimonyDetailPage() {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
   const handleShare = () => {
     const url = window.location.href;
-    const title = testimony?.feedbackData?.title || 'Read this testimony';
-    
+    const title = testimony?.feedbackData?.title || 'Victory Report';
     if (navigator.share) {
-      navigator.share({
-        title: title,
-        text: 'Check out this inspiring testimony!',
-        url: url
-      }).catch(err => console.log('Error sharing:', err));
+      navigator.share({ title, text: 'Check out this victory report!', url });
     } else {
       navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      alert('Transmission Link Copied!');
     }
   };
 
-  const handleLike = () => {
-    setLiked(!liked);
-  };
+  if (isLoading) return <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center"><Loader /><p className="mt-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Decoding Grace Report</p></div>;
 
-  if (isLoading) {
-    return (
-      <div className="pt-20 min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (error || !testimony) {
-    return (
-      <div className="pt-20 min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <button
-            onClick={() => router.push('/feedback')} // ✅ Changed
-            className="inline-flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-8 transition"
-          >
-            <ArrowLeft size={20} />
-            Back to Testimonies
+  if (error || !testimony) return (
+    <div className="min-h-screen bg-slate-50 py-20 px-4">
+      <div className="max-w-xl mx-auto text-center">
+        <div className="bg-white border-2 border-slate-900 p-12 rounded-[40px] shadow-xl">
+          <AlertCircle className="mx-auto text-red-600 mb-6" size={80} />
+          <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 mb-4">Entry Not Found</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-8">{error || 'Data packet missing'}</p>
+          <button onClick={() => router.push('/feedback')} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-red-600 transition-all">
+             Return to Archives
           </button>
-
-          <Card className="p-12 text-center">
-            <AlertCircle className="mx-auto text-red-500 mb-4" size={64} />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Testimony Not Found</h2>
-            <p className="text-gray-600 mb-6">{error || 'This testimony could not be found.'}</p>
-            <button
-              onClick={() => router.push('/feedback')} // ✅ Changed
-              className="bg-blue-900 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-800 transition"
-            >
-              View All Testimonies
-            </button>
-          </Card>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="pt-20 min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 pb-12">
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        
-        {/* Back Button */}
-        <button
-          onClick={() => router.push('/feedback')} // ✅ Changed
-          className="inline-flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-8 transition hover:gap-3"
-        >
-          <ArrowLeft size={20} />
-          Back to Testimonies
-        </button>
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
+      {/* GLOBAL TOP NAV */}
+      <div className="bg-white border-b border-slate-200 py-6 px-6 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <button onClick={() => router.push('/feedback')} className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all">
+            <ArrowLeft size={14} /> Back to Archives
+          </button>
+          <div className="flex gap-4">
+             <button onClick={handleShare} className="p-3 bg-slate-50 rounded-xl hover:bg-slate-900 hover:text-white transition-all"><Share2 size={18}/></button>
+             <button onClick={() => setLiked(!liked)} className={`p-3 rounded-xl transition-all ${liked ? 'bg-red-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-red-600'}`}>
+                <Heart size={18} className={liked ? 'fill-current' : ''} />
+             </button>
+          </div>
+        </div>
+      </div>
 
-        {/* Main Content */}
-        <Card className="mb-8 overflow-hidden">
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-red-500 to-pink-600 p-8 text-white">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex-grow">
-                <div className="inline-block px-3 py-1 bg-white/30 backdrop-blur-sm text-white text-sm font-semibold rounded-full mb-3">
-                  {testimony.feedbackData?.testimonyType || 'Testimony'}
-                </div>
-                
-                <h1 className="text-4xl font-bold leading-tight mb-2">
-                  {testimony.feedbackData?.title || 'Untitled Testimony'}
-                </h1>
-
-                <p className="text-white/90 text-lg">
-                  A powerful story of faith and transformation
-                </p>
-              </div>
-
-              {/* Like & Share Buttons */}
-              <div className="flex gap-3 flex-shrink-0">
-                <button
-                  onClick={handleLike}
-                  className={`p-3 rounded-full backdrop-blur-sm transition-all transform hover:scale-110 ${
-                    liked
-                      ? 'bg-white/40 text-red-500'
-                      : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
-                  title="Like this testimony"
-                >
-                  <Heart size={24} className={liked ? 'fill-current' : ''} />
-                </button>
-                
-                <button
-                  onClick={handleShare}
-                  className="p-3 bg-white/20 text-white rounded-full hover:bg-white/30 transition-all transform hover:scale-110"
-                  title="Share this testimony"
-                >
-                  <Share2 size={24} />
-                </button>
-              </div>
+      <div className="max-w-4xl mx-auto px-6 mt-12">
+        {/* HERO SECTION */}
+        <div className="relative bg-slate-900 rounded-[48px] p-10 md:p-16 overflow-hidden mb-12 shadow-2xl shadow-slate-900/20">
+          <Quote className="absolute -right-10 -bottom-10 text-white/5 rotate-12" size={300} />
+          
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-full mb-8">
+               <Sparkles size={10} /> {testimony.feedbackData?.testimonyType || 'Grace Report'}
             </div>
+            
+            <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">
+              {testimony.feedbackData?.title || 'Victory Report'}
+            </h1>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-6 text-white/90 text-sm">
-              {testimony.feedbackData?.testimonyDate && (
-                <div className="flex items-center gap-2">
-                  <Calendar size={18} />
-                  <span>{formatDate(testimony.feedbackData.testimonyDate)}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <User size={18} />
-                <span>
-                  {testimony.isAnonymous ? 'Anonymous' : (testimony.name || 'Community Member')}
+            <div className="flex flex-wrap gap-8 pt-8 border-t border-white/10">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Source</span>
+                <span className="text-white font-black uppercase tracking-tight flex items-center gap-2">
+                  <User size={14} className="text-red-500"/> {testimony.isAnonymous ? 'Restricted' : (testimony.name || 'Community Member')}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Logged Date</span>
+                <span className="text-white font-black uppercase tracking-tight flex items-center gap-2">
+                  <Calendar size={14} className="text-red-500"/> {testimony.feedbackData?.testimonyDate ? formatDate(testimony.feedbackData.testimonyDate) : 'Archive Date'}
                 </span>
               </div>
             </div>
           </div>
-
-          {/* Story Content */}
-          <div className="p-8 md:p-12">
-            <div className="prose prose-lg max-w-none">
-              <p className="text-xl text-gray-800 leading-relaxed whitespace-pre-wrap font-light text-justify">
-                {testimony.feedbackData?.story || 'No story content available.'}
-              </p>
-            </div>
-
-            {/* Additional Details */}
-            {testimony.feedbackData && Object.entries(testimony.feedbackData).map(([key, value]) => {
-              if (!value || typeof value === 'object' || ['title', 'story', 'testimonyType', 'testimonyDate'].includes(key)) {
-                return null;
-              }
-
-              const label = key
-                .replace(/([A-Z])/g, ' $1')
-                .replace(/^./, str => str.toUpperCase());
-
-              return (
-                <div key={key} className="mt-8 pt-8 border-t border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{label}</h3>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {String(value)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* Call to Action */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-2xl p-8 mb-12 text-center">
-          <h3 className="text-2xl font-bold mb-3">Inspired by this testimony?</h3>
-          <p className="text-blue-100 mb-6">Share your own story of faith and transformation with our community.</p>
-          <Link
-            href="/feedback?category=testimony" // ✅ Changed to href
-            className="inline-block bg-white text-blue-900 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors"
-          >
-            Share Your Testimony
-          </Link>
         </div>
 
-        {/* Related Testimonies */}
+        {/* STORY BODY */}
+        <div className="bg-white border-2 border-slate-100 rounded-[48px] p-8 md:p-16 mb-12 shadow-sm">
+          <div className="max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-slate-800 leading-relaxed font-medium mb-12 first-letter:text-6xl first-letter:font-black first-letter:text-red-600 first-letter:mr-3 first-letter:float-left">
+              {testimony.feedbackData?.story || 'Report content not initialized.'}
+            </p>
+
+            {/* DYNAMIC DATA PODS */}
+            <div className="space-y-4">
+              {Object.entries(testimony.feedbackData || {}).map(([key, value]) => {
+                if (!value || typeof value === 'object' || ['title', 'story', 'testimonyType', 'testimonyDate'].includes(key)) return null;
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return (
+                  <div key={key} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-slate-900 transition-colors">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-red-600 transition-colors">{label}</p>
+                    <p className="text-slate-900 font-bold leading-relaxed">{String(value)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* RELATED STORIES POD */}
         {relatedTestimonies.length > 0 && (
-          <div>
-            <h2 className="text-3xl font-bold text-blue-900 mb-8 flex items-center gap-3">
-              <Heart className="text-red-500" size={32} />
-              More Inspiring Stories
-            </h2>
+          <div className="mt-20">
+            <div className="flex items-center gap-4 mb-10">
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900">Explore <span className="text-red-600">Others</span></h2>
+              <div className="h-[2px] flex-1 bg-slate-100" />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedTestimonies.map((relatedTestimony) => (
-                <Link
-                  key={relatedTestimony._id}
-                  href={`/testimony/${relatedTestimony._id}`} // ✅ Changed to href
-                  className="group"
-                >
-                  <Card className="h-full hover:shadow-lg transition-shadow">
-                    <div className="mb-4">
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full mb-2">
-                        {relatedTestimony.feedbackData?.testimonyType || 'Testimony'}
-                      </span>
-                      
-                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-900 transition-colors line-clamp-2">
-                        {relatedTestimony.feedbackData?.title || 'Untitled'}
-                      </h3>
-                    </div>
-
-                    <p className="text-gray-700 text-sm line-clamp-3 mb-4">
-                      {relatedTestimony.feedbackData?.story || ''}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-600 group-hover:text-blue-600 transition-colors">
-                      <span className="flex-grow">
-                        {relatedTestimony.isAnonymous ? 'Anonymous' : (relatedTestimony.name || 'Member')}
-                      </span>
-                      <span className="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">→</span>
-                    </div>
-                  </Card>
+              {relatedTestimonies.map((related) => (
+                <Link key={related._id} href={`/testimony/${related._id}`} className="group bg-white p-6 rounded-[32px] border-2 border-slate-100 hover:border-slate-900 transition-all">
+                  <span className="text-[8px] font-black text-red-600 uppercase tracking-widest mb-3 block">Archive Ref: {related._id.slice(-6)}</span>
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter group-hover:text-red-600 transition-colors line-clamp-2 mb-4 leading-tight">
+                    {related.feedbackData?.title || 'Victory Report'}
+                  </h3>
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase text-slate-400">
+                    <span>Read Report</span>
+                    <ArrowLeft className="rotate-180 group-hover:translate-x-1 transition-transform" size={14} />
+                  </div>
                 </Link>
               ))}
             </div>
