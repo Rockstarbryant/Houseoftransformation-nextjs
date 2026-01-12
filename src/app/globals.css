@@ -222,3 +222,28 @@ img {
     margin: 1.25rem 0 2rem 0 !important;
   }
 }
+
+/* Light mode (default) - CSS variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+}
+
+/* Dark mode - CSS variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --border: #334155;
+  }
+}
+
+/* Optional: Global dark mode class (for html.dark) */
+html.dark {
+  color-scheme: dark;
+}
