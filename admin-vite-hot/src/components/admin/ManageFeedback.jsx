@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, MessageSquare, Filter, RefreshCw, Eye,
-  CheckCircle, XCircle, Clock, AlertCircle, Send,
-  ShieldAlert, UserCheck, Calendar, Info, Search, Zap,
-  Download, Trash2, CheckSquare, Square
+  ArrowLeft,
+  MessageSquare,
+  Filter,
+  RefreshCw,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Send
 } from 'lucide-react';
-
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
@@ -24,167 +29,587 @@ const ManageFeedback = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [responseText, setResponseText] = useState('');
-  
-  // NEW: Bulk Actions State
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [filters, setFilters] = useState({ category: 'all', status: 'all', search: '' });
 
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => { applyFilters(); }, [feedback, filters]);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    status: 'all',
+    anonymous: 'all'
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [feedback, filters]);
 
   const fetchData = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const [fRes, sRes] = await Promise.all([
+      console.log('Fetching feedback data...');
+      
+      // Fetch both feedback and stats
+      const [feedbackRes, statsRes] = await Promise.all([
         feedbackService.getAllFeedback(),
         feedbackService.getStats()
       ]);
-      if (fRes.success) setFeedback(fRes.feedback || []);
-      if (sRes.success) setStats(sRes.stats);
-    } catch (err) {
-      setError('Database Connection Lost');
-    } finally { setIsLoading(false); }
+
+      console.log('Feedback response:', feedbackRes);
+      console.log('Stats response:', statsRes);
+
+      if (feedbackRes.success) {
+        setFeedback(feedbackRes.feedback || []);
+      } else {
+        setError('Failed to load feedback');
+      }
+
+      if (statsRes.success) {
+        setStats(statsRes.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError(error.response?.data?.message || 'Failed to load feedback data. Please check your connection.');
+      
+      // Set empty data to prevent crashes
+      setFeedback([]);
+      setStats({
+        total: 0,
+        pending: 0,
+        urgentPrayers: 0,
+        anonymous: 0,
+        thisWeek: 0
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const applyFilters = () => {
     let filtered = [...feedback];
-    if (filters.category !== 'all') filtered = filtered.filter(f => f.category === filters.category);
-    if (filters.status !== 'all') filtered = filtered.filter(f => f.status === filters.status);
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      filtered = filtered.filter(f => f.name?.toLowerCase().includes(s) || f.category?.toLowerCase().includes(s));
+
+    if (filters.category !== 'all') {
+      filtered = filtered.filter(item => item.category === filters.category);
     }
+
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(item => item.status === filters.status);
+    }
+
+    if (filters.anonymous === 'true') {
+      filtered = filtered.filter(item => item.isAnonymous === true);
+    } else if (filters.anonymous === 'false') {
+      filtered = filtered.filter(item => item.isAnonymous === false);
+    }
+
     setFilteredFeedback(filtered);
   };
 
-  // NEW: Export Functionality
-  const exportToCSV = () => {
-    const headers = ["Date", "Name", "Category", "Status", "Message"];
-    const rows = filteredFeedback.map(f => [
-      new Date(f.createdAt).toLocaleDateString(),
-      f.isAnonymous ? "Anonymous" : f.name,
-      f.category,
-      f.status,
-      JSON.stringify(f.feedbackData).replace(/"/g, '')
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(e => e.join(",")).join("\n");
-    window.open(encodeURI(csvContent));
+  const handleViewDetails = (item) => {
+    setSelectedFeedback(item);
+    setResponseText('');
+    setIsModalOpen(true);
   };
 
-  // NEW: Bulk Actions Logic
-  const toggleSelect = (id) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
+  const handleUpdateStatus = async (status) => {
+    if (!selectedFeedback) return;
 
-  const handleBulkArchive = async () => {
-    if (!window.confirm(`Archive ${selectedIds.length} items?`)) return;
     setIsSubmitting(true);
     try {
-      await Promise.all(selectedIds.map(id => feedbackService.updateStatus(id, { status: 'archived' })));
-      setSelectedIds([]);
-      fetchData();
-    } finally { setIsSubmitting(false); }
+      const response = await feedbackService.updateStatus(selectedFeedback._id, { status });
+
+      if (response.success) {
+        await fetchData();
+        setIsModalOpen(false);
+        setSelectedFeedback(null);
+      }
+    } catch (error) {
+      console.error('Update status error:', error);
+      alert('Failed to update status: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const getStatusColor = (s) => {
-    const colors = { pending: "bg-amber-100 text-amber-600", reviewed: "bg-blue-100 text-blue-600", published: "bg-emerald-100 text-emerald-600" };
-    return colors[s] || "bg-slate-100 text-slate-500";
+  const handlePublishTestimony = async () => {
+    if (!selectedFeedback || selectedFeedback.category !== 'testimony') return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await feedbackService.publishTestimony(selectedFeedback._id);
+
+      if (response.success) {
+        await fetchData();
+        setIsModalOpen(false);
+        setSelectedFeedback(null);
+      }
+    } catch (error) {
+      console.error('Publish error:', error);
+      alert('Failed to publish testimony: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader /></div>;
+  const handleSendResponse = async () => {
+    if (!selectedFeedback || !responseText.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await feedbackService.respondToFeedback(
+        selectedFeedback._id,
+        responseText
+      );
+
+      if (response.success) {
+        await fetchData();
+        setResponseText('');
+        alert('Response sent successfully!');
+      }
+    } catch (error) {
+      console.error('Send response error:', error);
+      alert(error.response?.data?.message || 'Failed to send response');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
+      reviewed: { bg: 'bg-blue-100', text: 'text-blue-800', icon: Eye },
+      published: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
+      responded: { bg: 'bg-purple-100', text: 'text-purple-800', icon: Send },
+      archived: { bg: 'bg-gray-100', text: 'text-gray-800', icon: XCircle }
+    };
+
+    const badge = badges[status] || badges.pending;
+    const Icon = badge.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
+        <Icon size={14} />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      sermon: '📖',
+      service: '⛪',
+      testimony: '🙏',
+      suggestion: '💡',
+      prayer: '🙌',
+      general: '💬'
+    };
+    return icons[category] || '📋';
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader />
+          <p className="mt-4 text-gray-600">Loading feedback data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && feedback.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-4 transition"
+        >
+          <ArrowLeft size={20} />
+          Back to Dashboard
+        </Link>
+
+        <Card className="p-12 text-center">
+          <AlertCircle className="mx-auto text-red-500 mb-4" size={64} />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Feedback</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">Possible issues:</p>
+            <ul className="text-sm text-gray-600 text-left max-w-md mx-auto space-y-2">
+              <li>• Backend server is not running (check if server is on port 5000)</li>
+              <li>• Feedback routes not registered in server.js</li>
+              <li>• Database connection issues</li>
+              <li>• Authentication token expired</li>
+            </ul>
+          </div>
+          <div className="mt-6 space-x-3">
+            <Button variant="primary" onClick={fetchData}>
+              <RefreshCw size={16} /> Try Again
+            </Button>
+            <Button variant="secondary" onClick={() => navigate('/admin')}>
+              Back to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {/* HEADER */}
-      <div className="bg-white border-b px-8 py-6 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter italic">HOT <span className="text-red-600">HQ</span></h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Feedback Management System</p>
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={exportToCSV} variant="secondary" className="flex gap-2 text-xs"><Download size={14}/> Export CSV</Button>
-            <button onClick={fetchData} className="p-3 bg-slate-900 text-white rounded-xl hover:bg-red-600 transition-all"><RefreshCw size={20}/></button>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-4 transition"
+        >
+          <ArrowLeft size={20} />
+          Back to Dashboard
+        </Link>
+
+        <div className="flex items-center gap-3 mb-2">
+          <MessageSquare size={40} className="text-blue-900" />
+          <h1 className="text-4xl font-bold text-blue-900">Feedback Management</h1>
         </div>
+        <p className="text-gray-600">Review and respond to community feedback</p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 mt-10">
-        {/* STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-[32px] border-2 border-slate-100 shadow-sm">
-            <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Active Logs</p>
-            <p className="text-5xl font-black tracking-tighter text-slate-900">{stats?.total || 0}</p>
-          </div>
-          <div className="bg-amber-500 p-6 rounded-[32px] text-white shadow-lg shadow-amber-200">
-            <p className="text-[10px] font-black uppercase text-white/60 mb-2">Awaiting Review</p>
-            <p className="text-5xl font-black tracking-tighter">{stats?.pending || 0}</p>
-          </div>
-          {/* Urgent Prayer Card */}
-          <div className="bg-red-600 p-6 rounded-[32px] text-white shadow-lg shadow-red-200 col-span-1 md:col-span-2 flex justify-between items-center overflow-hidden relative">
-            <div>
-              <p className="text-[10px] font-black uppercase text-white/60 mb-2">Urgent Intercession</p>
-              <p className="text-5xl font-black tracking-tighter">{stats?.urgentPrayers || 0}</p>
+      {/* Statistics Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Feedback</p>
+                <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.thisWeek} this week
+                </p>
+              </div>
+              <MessageSquare className="text-blue-900" size={40} />
             </div>
-            <AlertCircle size={100} className="absolute -right-5 opacity-20 rotate-12" />
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Pending Review</p>
+                <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
+              </div>
+              <Clock className="text-yellow-600" size={40} />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Urgent Prayers</p>
+                <p className="text-3xl font-bold text-red-600">{stats.urgentPrayers || 0}</p>
+              </div>
+              <AlertCircle className="text-red-600" size={40} />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Anonymous</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {stats.total > 0 ? Math.round((stats.anonymous / stats.total) * 100) : 0}%
+                </p>
+              </div>
+              <div className="text-4xl">🔒</div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Urgent Prayers Alert */}
+      {stats && stats.urgentPrayers > 0 && (
+        <div className="mb-8 bg-red-50 border-l-4 border-red-500 rounded-lg p-6">
+          <div className="flex items-center gap-4">
+            <AlertCircle className="text-red-600 flex-shrink-0" size={32} />
+            <div>
+              <h3 className="text-lg font-bold text-red-900 mb-1">
+                {stats.urgentPrayers} Urgent Prayer Request{stats.urgentPrayers !== 1 ? 's' : ''}
+              </h3>
+              <p className="text-sm text-red-700">
+                These requests need immediate attention from the prayer team
+              </p>
+            </div>
+            <button
+              onClick={() => setFilters({ category: 'prayer', status: 'all', anonymous: 'all' })}
+              className="ml-auto bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition flex-shrink-0"
+            >
+              Review Now
+            </button>
           </div>
         </div>
+      )}
 
-        {/* BULK ACTION BAR - Only shows when items are selected */}
-        {selectedIds.length > 0 && (
-          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-6 animate-bounce-in">
-            <span className="text-xs font-black uppercase tracking-widest">{selectedIds.length} Selected</span>
-            <div className="h-6 w-[1px] bg-white/20" />
-            <button onClick={handleBulkArchive} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-[10px] font-black uppercase"><Trash2 size={16}/> Bulk Archive</button>
-            <button onClick={() => setSelectedIds([])} className="text-white/40 hover:text-white text-[10px] font-black uppercase underline">Cancel</button>
+      {/* Filters */}
+      <Card className="mb-8">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Filter size={20} className="text-gray-600" />
+            <h3 className="text-lg font-semibold text-gray-800">Filter Feedback</h3>
           </div>
-        )}
 
-        {/* FILTER BAR */}
-        <div className="bg-white p-4 rounded-[24px] border-2 border-slate-100 mb-6 flex gap-4">
-           <div className="relative flex-1">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-             <input 
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl font-bold text-sm focus:ring-2 focus:ring-red-600"
-              placeholder="Search database..."
-              value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-             />
-           </div>
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
+            >
+              <option value="all">All Categories</option>
+              <option value="sermon">Sermon Feedback</option>
+              <option value="service">Service Experience</option>
+              <option value="testimony">Testimonies</option>
+              <option value="suggestion">Suggestions</option>
+              <option value="prayer">Prayer Requests</option>
+              <option value="general">General Feedback</option>
+            </select>
+
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="published">Published</option>
+              <option value="responded">Responded</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <select
+              value={filters.anonymous}
+              onChange={(e) => setFilters({ ...filters, anonymous: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
+            >
+              <option value="all">All Types</option>
+              <option value="false">With Contact</option>
+              <option value="true">Anonymous</option>
+            </select>
+
+            <Button variant="secondary" onClick={fetchData}>
+              <RefreshCw size={16} /> Refresh
+            </Button>
+          </div>
         </div>
+      </Card>
 
-        {/* FEED LIST */}
-        <div className="space-y-3">
-          {filteredFeedback.map(item => (
-            <div key={item._id} className={`bg-white p-5 rounded-[24px] border-2 transition-all flex items-center justify-between ${selectedIds.includes(item._id) ? 'border-red-600 bg-red-50' : 'border-slate-100'}`}>
-              <div className="flex items-center gap-5">
-                <button onClick={() => toggleSelect(item._id)} className="text-slate-300 hover:text-red-600 transition-colors">
-                  {selectedIds.includes(item._id) ? <CheckSquare size={24} className="text-red-600" /> : <Square size={24} />}
-                </button>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black uppercase text-slate-900 tracking-tight">{item.feedbackData?.subject || item.category}</h3>
-                    <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${getStatusColor(item.status)}`}>{item.status}</span>
+      {/* Feedback List */}
+      <Card>
+        <h3 className="text-xl font-bold text-blue-900 mb-6">
+          Feedback ({filteredFeedback.length})
+        </h3>
+
+        {filteredFeedback.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-semibold mb-2">No feedback found</p>
+            <p className="text-sm">
+              {feedback.length === 0 
+                ? 'No feedback has been submitted yet. Check back later!'
+                : 'Try adjusting your filters to see more results.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredFeedback.map((item) => (
+              <div
+                key={item._id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-2xl">{getCategoryIcon(item.category)}</span>
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-900">
+                          {item.category.charAt(0).toUpperCase() + item.category.slice(1)} Feedback
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          From: {item.isAnonymous ? '🔒 Anonymous' : (item.name || 'Unknown')} • {formatDate(item.submittedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {getStatusBadge(item.status)}
+                      {item.isAnonymous && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                          🔒 Anonymous
+                        </span>
+                      )}
+                      {item.category === 'prayer' && item.feedbackData?.urgency === 'Urgent' && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                          🚨 Urgent
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase italic">By: {item.isAnonymous ? "Anonymous" : item.name}</p>
+
+                  <Button variant="primary" onClick={() => handleViewDetails(item)}>
+                    <Eye size={16} /> View Details
+                  </Button>
                 </div>
               </div>
-              <button onClick={() => { setSelectedFeedback(item); setIsModalOpen(true); }} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase hover:bg-red-600 transition-all">Inspect</button>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Log Details">
+      {/* Details Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => !isSubmitting && setIsModalOpen(false)}
+        title={selectedFeedback ? `${selectedFeedback.category.charAt(0).toUpperCase() + selectedFeedback.category.slice(1)} Feedback` : 'Feedback Details'}
+        size="lg"
+      >
         {selectedFeedback && (
-            <div className="space-y-6">
-                 {Object.entries(selectedFeedback.feedbackData || {}).map(([key, value]) => (
-                    <div key={key} className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{key}</p>
-                        <p className="text-sm font-medium text-slate-700">{String(value)}</p>
-                    </div>
-                 ))}
+          <div className="space-y-6">
+            {/* Status & Info */}
+            <div className="flex items-center justify-between pb-4 border-b">
+              <div>
+                <p className="text-sm text-gray-600">Submitted {formatDate(selectedFeedback.submittedAt)}</p>
+                <p className="text-sm text-gray-600">
+                  {selectedFeedback.isAnonymous ? '🔒 Anonymous Submission' : `By: ${selectedFeedback.name || 'Unknown'}`}
+                </p>
+              </div>
+              {getStatusBadge(selectedFeedback.status)}
             </div>
+
+            {/* Contact Info (if not anonymous) */}
+            {!selectedFeedback.isAnonymous && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div>
+                  <label className="text-sm font-semibold text-gray-600">Name</label>
+                  <p className="text-gray-900">{selectedFeedback.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-600">Email</label>
+                  <p className="text-gray-900">{selectedFeedback.email || 'N/A'}</p>
+                </div>
+                {selectedFeedback.phone && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-600">Phone</label>
+                    <p className="text-gray-900">{selectedFeedback.phone}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Feedback Content */}
+            <div className="space-y-4">
+              {Object.entries(selectedFeedback.feedbackData || {}).map(([key, value]) => {
+                if (!value || typeof value === 'object') return null;
+
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+
+                return (
+                  <div key={key}>
+                    <label className="text-sm font-semibold text-gray-600 block mb-2">
+                      {label}
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">
+                      {String(value)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Response Section (if not anonymous and allows follow-up) */}
+            {!selectedFeedback.isAnonymous && selectedFeedback.allowFollowUp && selectedFeedback.status !== 'responded' && (
+              <div className="pt-4 border-t">
+                <label className="text-sm font-semibold text-gray-700 block mb-2">
+                  Send Response
+                </label>
+                <textarea
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  rows="4"
+                  disabled={isSubmitting}
+                  placeholder="Type your response here..."
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-100"
+                />
+                <Button
+                  variant="primary"
+                  onClick={handleSendResponse}
+                  disabled={isSubmitting || !responseText.trim()}
+                  className="mt-3"
+                >
+                  <Send size={16} />
+                  {isSubmitting ? 'Sending...' : 'Send Response'}
+                </Button>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              {selectedFeedback.status === 'pending' && (
+                <>
+                  <Button
+                    variant="primary"
+                    onClick={() => handleUpdateStatus('reviewed')}
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    <CheckCircle size={16} />
+                    {isSubmitting ? 'Processing...' : 'Mark Reviewed'}
+                  </Button>
+                  {selectedFeedback.category === 'testimony' && (
+                    <Button
+                      variant="primary"
+                      onClick={handlePublishTestimony}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle size={16} />
+                      Publish Testimony
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {selectedFeedback.status === 'reviewed' && selectedFeedback.category === 'testimony' && (
+                <Button
+                  variant="primary"
+                  onClick={handlePublishTestimony}
+                  disabled={isSubmitting}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle size={16} />
+                  {isSubmitting ? 'Publishing...' : 'Publish Testimony'}
+                </Button>
+              )}
+
+              <Button
+                variant="secondary"
+                onClick={() => handleUpdateStatus('archived')}
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                Archive
+              </Button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
