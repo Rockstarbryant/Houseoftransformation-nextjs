@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, MapPin, X, Calendar, User } from 'lucide-react';
+import { Clock, MapPin, X, Calendar, User, ArrowUpRight } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 
@@ -24,171 +24,128 @@ const EventCard = ({ event }) => {
     <>
       <Card 
         hover 
-        padding="lg" 
-        shadow="md"
-        border
-        className="border-slate-200"
+        padding="none" 
+        shadow="none"
+        className="group border-2 border-slate-100 hover:border-slate-900 rounded-[32px] overflow-hidden transition-all duration-300 bg-white"
       >
-        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-          {/* Date Badge */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-6 text-center min-w-[120px] flex flex-col justify-center h-32">
-            <p className="text-4xl font-bold leading-none">{dateInfo.day}</p>
-            <p className="text-sm font-bold mt-2 uppercase tracking-widest">{dateInfo.month}</p>
-            <p className="text-xs opacity-90 mt-1">{dateInfo.year}</p>
+        <div className="flex flex-col md:flex-row items-stretch">
+          {/* Date Block: HQ Style */}
+          <div className="bg-slate-900 text-white p-8 text-center md:min-w-[140px] flex flex-col justify-center border-b-4 border-red-600 md:border-b-0 md:border-r-4">
+            <p className="text-5xl font-black leading-none tracking-tighter">{dateInfo.day}</p>
+            <p className="text-xs font-black mt-2 uppercase tracking-[0.3em] text-red-500">{dateInfo.month}</p>
+            <p className="text-[10px] font-bold opacity-40 mt-1 uppercase tracking-widest">{dateInfo.year}</p>
           </div>
 
           {/* Event Details */}
-          <div className="flex-1">
-            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4 hover:text-blue-600 transition-colors">
-              {event.title}
-            </h3>
+          <div className="flex-1 p-8">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none group-hover:text-red-600 transition-colors">
+                {event.title}
+              </h3>
+              <ArrowUpRight className="text-slate-200 group-hover:text-slate-900 transition-colors shrink-0" size={24} />
+            </div>
             
-            <div className="space-y-2 mb-6">
+            <div className="flex flex-wrap gap-6 mb-6">
               {event.time && (
-                <div className="flex items-center gap-3 text-slate-700">
-                  <Clock size={20} className="text-blue-600 flex-shrink-0" />
-                  <span className="font-semibold">{event.time}</span>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Clock size={14} className="text-red-600" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{event.time}</span>
                 </div>
               )}
               
               {event.location && (
-                <div className="flex items-center gap-3 text-slate-700">
-                  <MapPin size={20} className="text-blue-600 flex-shrink-0" />
-                  <span className="font-semibold">{event.location}</span>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <MapPin size={14} className="text-red-600" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{event.location}</span>
                 </div>
               )}
 
               {event.category && (
-                <div className="flex items-center gap-3 text-slate-700">
-                  <Calendar size={20} className="text-blue-600 flex-shrink-0" />
-                  <span className="font-semibold uppercase text-sm tracking-wide">{event.category}</span>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Calendar size={14} className="text-red-600" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{event.category}</span>
                 </div>
               )}
             </div>
 
-            {/* Description Preview */}
             {event.description && (
-              <p className="text-slate-600 line-clamp-2 mb-6">
+              <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed">
                 {event.description}
               </p>
             )}
           </div>
 
-          {/* CTA Button */}
-          <div className="w-full md:w-auto">
+          {/* CTA Section */}
+          <div className="p-8 md:border-l border-slate-50 flex items-center">
             <Button 
               variant="secondary"
-              size="lg"
               onClick={() => setShowModal(true)}
-              fullWidth
+              className="md:w-auto w-full font-black uppercase tracking-widest text-[10px] py-4 px-8 border-2"
             >
-              Learn More
+              Access Intelligence
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* Event Details Modal */}
+      {/* Event Details Modal: Refactored for HQ Aesthetic */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          className="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4 backdrop-blur-md"
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white rounded-[40px] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button - Sticky Header */}
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex justify-between items-center rounded-t-3xl">
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Event Details</h2>
+            {/* Header */}
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-10 py-6 flex justify-between items-center z-20">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Operation Briefing</span>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 p-2 rounded-lg transition-colors"
-                aria-label="Close modal"
+                className="bg-slate-900 text-white p-2 rounded-xl hover:bg-red-600 transition-colors"
               >
-                <X size={28} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6 md:p-8">
-              {/* Date Badge */}
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-8 mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-6xl font-bold leading-none">{dateInfo.day}</div>
-                    <div className="text-xl font-bold uppercase tracking-wider mt-2">{dateInfo.month}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold">{dateInfo.year}</div>
-                    <div className="text-sm opacity-90 mt-1">{dateInfo.full.split(',')[0]}</div>
-                  </div>
+            <div className="px-10 pb-12">
+              <div className="mb-10">
+                <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-4">
+                  {event.title}
+                </h1>
+                <div className="h-2 w-20 bg-red-600" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Schedule</p>
+                  <p className="font-black text-slate-900 uppercase tracking-tight">{event.time}</p>
+                  <p className="text-[10px] font-bold text-slate-500 mt-1">{dateInfo.full}</p>
+                </div>
+                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
+                  <p className="font-black text-slate-900 uppercase tracking-tight">{event.location}</p>
+                  <p className="text-[10px] font-bold text-slate-500 mt-1">HQ Main Node</p>
                 </div>
               </div>
 
-              {/* Title */}
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-                {event.title}
-              </h1>
-
-              {/* Time */}
-              {event.time && (
-                <div className="flex items-center gap-4 text-slate-700 mb-4 text-lg">
-                  <Clock size={28} className="text-blue-600" />
-                  <span className="font-semibold">{event.time}</span>
-                </div>
-              )}
-
-              {/* Location */}
-              {event.location && (
-                <div className="flex items-center gap-4 text-slate-700 mb-6 text-lg">
-                  <MapPin size={28} className="text-blue-600" />
-                  <span className="font-semibold">{event.location}</span>
-                </div>
-              )}
-
-              {/* Category Badge */}
-              {event.category && (
-                <div className="mb-8">
-                  <span className="inline-block bg-blue-100 text-blue-900 px-6 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest">
-                    {event.category}
-                  </span>
-                </div>
-              )}
-
-              {/* Divider */}
-              <div className="border-t border-slate-200 my-8" />
-
-              {/* Description */}
               {event.description && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">About This Event</h3>
-                  <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-lg">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">Briefing Details</h3>
+                  <p className="text-slate-600 leading-relaxed font-medium">
                     {event.description}
                   </p>
                 </div>
               )}
 
-              {/* Additional Info */}
-              <div className="bg-slate-50 rounded-2xl p-6 mb-8">
-                <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <User size={20} className="text-blue-600" />
-                  Need Help?
-                </h4>
-                <p className="text-slate-700">
-                  If you have any questions about this event, please contact us at 
-                  <span className="font-semibold"> contact@church.com</span> or call us directly.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-colors transform hover:scale-105">
-                  Register Now
+              <div className="flex gap-4">
+                <button className="flex-1 bg-slate-900 hover:bg-red-600 text-white font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl">
+                  Register for Gathering
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-4 px-6 rounded-xl transition-colors"
+                  className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
                 >
                   Close
                 </button>

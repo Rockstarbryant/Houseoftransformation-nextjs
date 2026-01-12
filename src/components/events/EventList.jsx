@@ -26,19 +26,40 @@ const EventList = ({ limit, showViewAll = false }) => {
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center py-20">
+        <Loader />
+        <p className="mt-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 animate-pulse">
+          Synchronizing Schedule
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full">
+      {/* Container for the cards - strictly following your mapping logic */}
+      <div className="space-y-8 max-w-4xl mx-auto">
         {events.map(event => (
           <EventCard key={event._id || event.id} event={event} />
         ))}
       </div>
+
+      {/* View All Action - Preserved logic with updated styling */}
       {showViewAll && (
-        <div className="text-center mt-12">
-          <Link href="/events">  {/* ✅ CHANGED: to → href */}
-            <Button variant="primary">View All Events</Button>
+        <div className="flex justify-center mt-20 relative">
+          {/* Decorative line behind the button */}
+          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-100 -z-10" />
+          
+          <Link href="/events">
+            <div className="bg-[#F8FAFC] px-8">
+              <Button variant="primary">
+                <span className="flex items-center gap-2">
+                  View All Events
+                </span>
+              </Button>
+            </div>
           </Link>
         </div>
       )}
