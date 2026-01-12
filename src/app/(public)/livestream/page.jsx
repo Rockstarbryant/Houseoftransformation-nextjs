@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown } from 'lucide-react';
+import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
 const LiveStreamPage = () => {
@@ -13,7 +13,7 @@ const LiveStreamPage = () => {
   const [showCaptions, setShowCaptions] = useState(false);
 
   const streamTypes = [
-    { value: '', label: 'All Livestreams' },
+    { value: '', label: 'All Operations' },
     { value: 'sermon', label: '🎤 Sermons' },
     { value: 'praise_worship', label: '🎵 Praise & Worship' },
     { value: 'full_service', label: '⛪ Full Service' },
@@ -54,166 +54,198 @@ const LiveStreamPage = () => {
   };
 
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      {/* ACTIVE STREAM */}
+    <div className="pt-20 min-h-screen bg-[#F8FAFC]">
+      {/* ACTIVE STREAM: CINEMATIC COMMAND CENTER */}
       {activeStream && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-8 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-              <span className="font-bold uppercase tracking-widest text-sm">STREAMING NOW</span>
-            </div>
-            <h1 className="text-4xl font-bold mb-2">{activeStream.title}</h1>
-            <div className="flex flex-wrap gap-4 text-red-100 mb-6">
-              <span className="flex items-center gap-2 capitalize"><Play size={16} /> {activeStream.type.replace('_', ' ')}</span>
-              {activeStream.preacherNames?.length > 0 && (
-                <span className="flex items-center gap-2"><Users size={16} /> {activeStream.preacherNames.join(', ')}</span>
-              )}
-            </div>
-            {getEmbedUrl(activeStream) && (
-              <div className="aspect-video rounded-lg overflow-hidden shadow-xl mb-4">
-                <iframe
-                  src={getEmbedUrl(activeStream)}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay"
-                  title={activeStream.title}
-                />
+        <div className="bg-slate-900 text-white relative overflow-hidden">
+          {/* Background Decorative Element */}
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/10 skew-x-12 translate-x-32" />
+          
+          <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
+            <div className="flex flex-col lg:flex-row gap-12 items-center">
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="relative">
+                    <div className="w-3 h-3 bg-red-600 rounded-full animate-ping absolute inset-0" />
+                    <div className="w-3 h-3 bg-red-600 rounded-full relative" />
+                  </div>
+                  <span className="font-black uppercase tracking-[0.4em] text-[10px] text-red-500">Live Transmission</span>
+                </div>
+                
+                <h1 className="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tighter leading-none">
+                  {activeStream.title}
+                </h1>
+                
+                <div className="flex flex-wrap gap-6 mb-8">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
+                    <Monitor size={16} className="text-red-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{activeStream.type.replace('_', ' ')}</span>
+                  </div>
+                  {activeStream.preacherNames?.length > 0 && (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
+                      <Users size={16} className="text-red-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{activeStream.preacherNames.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+
+              <div className="w-full lg:w-2/3">
+                {getEmbedUrl(activeStream) && (
+                  <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black">
+                    <iframe
+                      src={getEmbedUrl(activeStream)}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="autoplay"
+                      title={activeStream.title}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* ARCHIVES SECTION */}
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">Livestream Archives</h2>
-          <p className="text-gray-600 text-lg">Catch up on all our past services and events</p>
-        </div>
+      <div className="max-w-7xl mx-auto px-6 py-24">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+          <div>
+            <h2 className="text-5xl md:text-7xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-4">
+              Mission <br /> <span className="text-red-600">Archives</span>
+            </h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">Strategic replay of past operations</p>
+          </div>
 
-        {/* FILTERS */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <select
-              value={filterType}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {streamTypes.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+          {/* REFACTORED FILTERS: HQ STYLE */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <select
+                value={filterType}
+                onChange={(e) => handleFilterChange(e.target.value)}
+                className="appearance-none bg-white border-2 border-slate-100 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest focus:border-slate-900 outline-none pr-12 cursor-pointer transition-all"
+              >
+                {streamTypes.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
+            </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => handleSortChange(e.target.value)}
-              className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="-startTime">Newest First</option>
-              <option value="startTime">Oldest First</option>
-              <option value="-viewCount">Most Watched</option>
-            </select>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="appearance-none bg-white border-2 border-slate-100 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest focus:border-slate-900 outline-none pr-12 cursor-pointer transition-all"
+              >
+                <option value="-startTime">Newest Dispatch</option>
+                <option value="startTime">Legacy Files</option>
+                <option value="-viewCount">High Engagement</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
+            </div>
 
             <button
               onClick={() => setGridView(!gridView)}
-              className="border rounded-lg px-4 py-2 hover:bg-gray-50"
+              className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-red-600 transition-all shadow-xl shadow-slate-200"
             >
-              {gridView ? '📋 List' : '📊 Grid'}
+              {gridView ? <List size={20} /> : <LayoutGrid size={20} />}
             </button>
           </div>
         </div>
 
         {/* ARCHIVES GRID/LIST */}
         {loading ? (
-          <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">Loading archives...</p>
+          <div className="flex flex-col items-center py-40">
+            <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Fetching Data Stream</p>
           </div>
         ) : archives.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">No archives available</p>
+          <div className="text-center py-40 bg-white rounded-[40px] border-2 border-dashed border-slate-200">
+            <p className="text-slate-400 font-black uppercase tracking-widest">No logs found in this sector</p>
           </div>
         ) : (
-          <div className={gridView ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+          <div className={gridView ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
             {archives.map((stream) => (
-              <div key={stream._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition group">
-                {/* Thumbnail */}
-                {getEmbedUrl(stream) && (
-                  <div
-                    className="relative aspect-video bg-black overflow-hidden cursor-pointer group-hover:opacity-90 transition"
-                    onClick={() => setSelectedStream(stream)}
-                  >
-                    <iframe
-                      src={getEmbedUrl(stream)}
-                      className="w-full h-full pointer-events-none"
-                      allow="autoplay"
-                    />
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
-                      <div className="bg-red-600 rounded-full p-4">
-                        <Play size={24} className="text-white fill-white" />
-                      </div>
+              <div 
+                key={stream._id} 
+                className="group relative bg-white border-2 border-slate-100 rounded-[40px] overflow-hidden hover:border-slate-900 transition-all duration-500 flex flex-col h-full shadow-sm hover:shadow-2xl hover:shadow-slate-200"
+              >
+                {/* Thumbnail Layer */}
+                <div 
+                  className="relative aspect-video bg-slate-900 overflow-hidden cursor-pointer"
+                  onClick={() => setSelectedStream(stream)}
+                >
+                  <div className="absolute inset-0 z-10 bg-slate-900/40 group-hover:bg-red-600/20 transition-all duration-500" />
+                  <div className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500">
+                      <Play size={24} className="text-slate-900 fill-current ml-1" />
                     </div>
                   </div>
-                )}
-
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded capitalize">
-                      {stream.type.replace('_', ' ')}
-                    </span>
-                    <span className="text-xs text-gray-500">{new Date(stream.startTime).toLocaleDateString()}</span>
+                  {getEmbedUrl(stream) && (
+                    <iframe
+                      src={getEmbedUrl(stream)}
+                      className="w-full h-full pointer-events-none grayscale group-hover:grayscale-0 transition-all duration-700"
+                      allow="autoplay"
+                    />
+                  )}
+                  {/* Category Float */}
+                  <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white text-slate-900 text-[9px] font-black uppercase tracking-widest rounded-lg">
+                    {stream.type.replace('_', ' ')}
                   </div>
+                </div>
 
+                {/* Content Block */}
+                <div className="p-8 flex flex-col flex-1">
+                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-3">
+                    {new Date(stream.startTime).toLocaleDateString()}
+                  </p>
+                  
                   <h3
-                    className="font-bold text-lg mb-3 line-clamp-2 cursor-pointer hover:text-blue-600"
+                    className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-6 group-hover:text-red-600 transition-colors line-clamp-2 cursor-pointer"
                     onClick={() => setSelectedStream(stream)}
                   >
                     {stream.title}
                   </h3>
 
-                  {/* Metadata */}
-                  <div className="space-y-2 mb-4 text-sm text-gray-600">
+                  {/* Metadata Nodes */}
+                  <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50">
                     {stream.preacherNames?.length > 0 && (
-                      <p className="flex items-center gap-2">
-                        <Users size={14} className="text-blue-600" />
-                        {stream.preacherNames.join(', ')}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <Users size={12} className="text-slate-400" />
+                        <span className="text-[9px] font-black uppercase text-slate-900 truncate">{stream.preacherNames[0]}</span>
+                      </div>
                     )}
-                    {stream.scriptures?.length > 0 && (
-                      <p className="flex items-center gap-2">
-                        <BookOpen size={14} className="text-green-600" />
-                        {stream.scriptures.slice(0, 2).join(', ')}
-                      </p>
-                    )}
-                    <p className="flex items-center gap-2">
-                      <TrendingUp size={14} className="text-orange-600" />
-                      {stream.viewCount || 0} views
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp size={12} className="text-slate-400" />
+                      <span className="text-[9px] font-black uppercase text-slate-900">{stream.viewCount || 0} Views</span>
+                    </div>
                   </div>
 
-                  {/* AI Summary */}
+                  {/* AI Snippet */}
                   {stream.aiSummary?.summary && (
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mb-4 rounded text-sm">
-                      <p className="font-semibold text-blue-900 mb-1">✨ Summary</p>
-                      <p className="text-blue-800 line-clamp-3">{stream.aiSummary.summary}</p>
+                    <div className="bg-slate-50 p-4 rounded-2xl mb-8 group-hover:bg-red-50 transition-colors">
+                      <p className="text-[11px] text-slate-600 font-medium line-clamp-2 italic leading-relaxed">
+                        "{stream.aiSummary.summary}"
+                      </p>
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
+                  {/* Actions Container */}
+                  <div className="mt-auto flex gap-3">
                     <button
                       onClick={() => setSelectedStream(stream)}
-                      className="flex-1 bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
+                      className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg active:scale-95"
                     >
-                      <Play size={16} /> Watch
+                      Initialize Playback
                     </button>
                     <button
                       onClick={() => handleShare(stream)}
-                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
-                      title="Share"
+                      className="p-4 bg-slate-100 text-slate-900 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"
                     >
-                      <Share2 size={16} />
+                      <Share2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -223,18 +255,15 @@ const LiveStreamPage = () => {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL: THE OPERATIONAL OVERLAY */}
       {selectedStream && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setSelectedStream(null)}>
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gray-100 border-b p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">{selectedStream.title}</h2>
-              <button onClick={() => setSelectedStream(null)} className="text-2xl font-bold">&times;</button>
-            </div>
-
-            <div className="p-6">
-              {getEmbedUrl(selectedStream) && (
-                <div className="aspect-video mb-6 rounded-lg overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/95 z-[100] flex items-center justify-center p-4 md:p-8 backdrop-blur-xl" onClick={() => setSelectedStream(null)}>
+          <div className="bg-white rounded-[48px] max-w-6xl w-full max-h-[90vh] overflow-hidden border-2 border-slate-900 flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
+            
+            {/* Left: Player Section */}
+            <div className="flex-1 bg-black flex flex-col">
+              <div className="aspect-video w-full">
+                {getEmbedUrl(selectedStream) && (
                   <iframe
                     src={getEmbedUrl(selectedStream)}
                     className="w-full h-full"
@@ -242,75 +271,67 @@ const LiveStreamPage = () => {
                     allow="autoplay"
                     title={selectedStream.title}
                   />
+                )}
+              </div>
+              <div className="p-10 text-white bg-slate-900 flex-1 overflow-y-auto">
+                 <div className="flex items-center gap-3 mb-6">
+                    <Zap size={16} className="text-red-600" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">Dispatch Details</span>
+                 </div>
+                 <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-6">
+                   {selectedStream.title}
+                 </h2>
+                 <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-2xl italic">
+                   {selectedStream.description || "No mission briefing provided."}
+                 </p>
+              </div>
+            </div>
+
+            {/* Right: Metadata & AI Intelligence */}
+            <div className="w-full md:w-[400px] border-l-2 border-slate-900 bg-white overflow-y-auto p-10">
+              <div className="flex justify-between items-center mb-10">
+                <div className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center">
+                  <Monitor size={20} />
                 </div>
-              )}
+                <button onClick={() => setSelectedStream(null)} className="p-3 bg-slate-100 rounded-xl hover:bg-slate-900 hover:text-white transition-all">
+                  <X size={24} />
+                </button>
+              </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600">Type</h3>
-                  <p className="capitalize text-lg">{selectedStream.type.replace('_', ' ')}</p>
-                </div>
-
-                {selectedStream.description && (
+              <div className="space-y-10">
+                {selectedStream.aiSummary?.keyPoints?.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-600">Description</h3>
-                    <p className="text-gray-700">{selectedStream.description}</p>
-                  </div>
-                )}
-
-                {selectedStream.preacherNames?.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-600">Preacher(s)</h3>
-                    <p className="text-lg">{selectedStream.preacherNames.join(', ')}</p>
-                  </div>
-                )}
-
-                {selectedStream.scriptures?.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-600">Scriptures</h3>
-                    <p className="text-lg">{selectedStream.scriptures.join(', ')}</p>
-                  </div>
-                )}
-
-                {selectedStream.aiSummary?.keyPoints && selectedStream.aiSummary.keyPoints.length > 0 && (
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Key Points</h3>
-                    <ul className="list-disc list-inside text-blue-800 text-sm space-y-1">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Key Intelligence</h3>
+                    <ul className="space-y-4">
                       {selectedStream.aiSummary.keyPoints.map((point, idx) => (
-                        <li key={idx}>{point}</li>
+                        <li key={idx} className="flex gap-3 text-sm font-bold text-slate-900 uppercase tracking-tight">
+                          <span className="text-red-600">/</span> {point}
+                        </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {selectedStream.aiSummary?.captions && selectedStream.aiSummary.captions.length > 0 && (
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-900">AI Captions</h3>
-                      <button
-                        onClick={() => setShowCaptions(!showCaptions)}
-                        className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition"
-                      >
-                        {showCaptions ? 'Hide' : 'Show'}
+                {selectedStream.aiSummary?.captions && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6 border-b pb-2">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Digital Transcript</h3>
+                      <button onClick={() => setShowCaptions(!showCaptions)} className="text-[9px] font-black text-red-600 uppercase underline">
+                        {showCaptions ? 'Secure' : 'Reveal'}
                       </button>
                     </div>
-
                     {showCaptions && (
-                      <div className="bg-gray-100 rounded-lg p-4 max-h-48 overflow-y-auto text-sm">
+                      <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
                         {selectedStream.aiSummary.captions.map((caption, idx) => (
-                          <div key={idx} className="mb-2 text-gray-800">
-                            <span className="font-semibold text-blue-600">[{caption.timestamp}] {caption.speaker}:</span>
-                            <p className="ml-4 text-gray-700">{caption.text}</p>
+                          <div key={idx} className="p-3 bg-slate-50 rounded-xl">
+                            <span className="text-[9px] font-black text-slate-400">[{caption.timestamp}]</span>
+                            <p className="text-[11px] font-bold text-slate-900 mt-1 uppercase tracking-tight">{caption.text}</p>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
-
-                <div className="text-sm text-gray-500 border-t pt-4">
-                  <p>{new Date(selectedStream.startTime).toLocaleString()} • {selectedStream.viewCount || 0} views</p>
-                </div>
               </div>
             </div>
           </div>
