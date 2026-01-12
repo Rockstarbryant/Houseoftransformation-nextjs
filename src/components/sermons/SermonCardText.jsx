@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Eye, Calendar } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Eye, Calendar, User, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
 import Card from '../common/Card';
@@ -11,6 +11,7 @@ const SermonCardText = ({ sermon }) => {
   const [likes, setLikes] = useState(sermon.likes || 0);
   const [expanded, setExpanded] = useState(false);
 
+  // --- LOGIC PRESERVED EXACTLY ---
   const handleLike = async () => {
     try {
       await sermonService.toggleLike(sermon._id);
@@ -21,144 +22,125 @@ const SermonCardText = ({ sermon }) => {
     }
   };
 
-  // Professional share handler – matches SermonCard exactly
   const handleShare = () => {
     const baseUrl = window.location.origin + window.location.pathname + window.location.search;
     const fragmentUrl = sermon._id ? `${baseUrl}#sermon-${sermon._id}` : baseUrl;
-
     const title = sermon.title || 'Inspiring Sermon';
-    const text = `Check out this sermon "${title}" by ${sermon.pastor || 'Pastor'} at Busia House of Transformatiion`;
+    const text = `Check out this sermon "${title}" by ${sermon.pastor || 'Pastor'} at Busia House of Transformation`;
 
     if (navigator.share) {
-      navigator.share({
-        title: title,
-        text: text,
-        url: fragmentUrl
-      }).catch(err => console.log('Error sharing:', err));
+      navigator.share({ title, text, url: fragmentUrl }).catch(err => console.log('Error sharing:', err));
     } else {
-      // Copy clean URL (without fragment) for better compatibility
-      navigator.clipboard.writeText(baseUrl);
+      navigator.clipboard.writeText(fragmentUrl); // Shared link with anchor for direct scroll
       alert('Sermons page link copied to clipboard!\nShare it to direct others to this powerful message.');
     }
   };
 
-  // Get preview text from HTML content (kept for potential future use)
-  const getPreviewText = (html, limit = 180) => {
-    if (!html) return '';
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    const text = temp.innerText || temp.textContent || '';
-    if (text.length <= limit) return text;
-    return text.substring(0, limit).trim() + '...';
-  };
-
-  // Use HTML directly from TipTap (safe and trusted source)
   const sanitizedHtml = sermon.descriptionHtml || sermon.description || '';
-
-  // Check if content has substantial text (more than preview length)
-  const hasMoreContent = (sermon.descriptionHtml || sermon.description || '').length > 180;
+  const hasMoreContent = sanitizedHtml.length > 180;
 
   return (
-    <>
-      {/* Anchor for direct scroll-to when shared link is opened */}
-      <div id={`sermon-${sermon._id}`}>
-        <Card className="flex flex-col hover:shadow-lg transition-shadow h-full bg-slate-300 text-left overflow-visible">
-          {/* Header */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-              {/* Category Badge */}
-              {sermon.category && (
-                <span className="inline-block px-3 py-1 bg-red-300 text-blue-800 text-xs font-semibold rounded-full">
-                  {sermon.category}
-                </span>
-              )}
-
-              {/* Date */}
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Calendar size={12} />
-                {formatDate(sermon.date, 'short')}
-              </span>
-            </div>   
-          </div>
-
-          {/* Pastor Info */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
+    <div id={`sermon-${sermon._id}`} className="w-full">
+      {/* MOBILE FIX: 
+          - mx-0.5 ensures the card stretches to the screen edge on mobile.
+          - bg-white (replacing bg-slate-300) for better reading legibility.
+      */}
+      <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
+        
+        {/* Header: Editorial Style */}
+        <div className="px-5 md:px-12 pt-8 pb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-9 md:size-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-[10px] md:text-xs font-black shadow-md">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-[#8B1A1A]">
+                {sermon.category || 'Transcript'}
+              </p>
+              <p className="text-xs md:text-sm font-bold text-slate-900 leading-tight">
                 {sermon.pastor || 'Pastor'}
               </p>
-              <p className="text-xs text-gray-500">@Busia_HOT</p>
             </div>
           </div>
+          <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <Calendar size={12} className="text-red-500" />
+            {formatDate(sermon.date, 'short')}
+          </div>
+        </div>
 
-          {/* Sermon Description */}
-          <div className="flex-grow mb-4 text-justify">
-            {/* Sermon Title */}
-            <h3 className="text-lg font-bold text-red-900 line-clamp-2 leading-snug underline text-center">
-              {sermon.title}
-            </h3>
+        {/* Sermon Title: Center-aligned editorial look */}
+        <div className="px-5 md:px-12 pb-6">
+          <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center underline decoration-[#8B1A1A]/10 underline-offset-8">
+            {sermon.title}
+          </h3>
+        </div>
 
-            {/* Show HTML content always, clamp height when collapsed */}
+        {/* Text Content: High Readability Reading Mode */}
+        <div className="px-5 md:px-14 flex-grow mb-6 relative">
+          {/* Subtle Quote Icon Watermark */}
+          <Quote className="absolute top-0 right-10 text-slate-50 opacity-10 pointer-events-none" size={80} />
+          
+          <div className="relative">
             <div
-            className={`prose prose-lg max-w-none text-gray-800 transition-all duration-300 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:border [&_img]:border-gray-200 [&_p]:leading-relaxed [&_p]:whitespace-pre-wrap [&_p]:font-light [&_p]:text-justify [&_p]:text-xl ${
-              expanded ? '' : 'max-h-60 overflow-hidden'
-               }`}
-             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+              className={`prose prose-slate max-w-none transition-all duration-700 ease-in-out font-serif text-lg md:text-xl text-slate-700 leading-relaxed
+                [&_p]:mb-6 [&_p]:text-justify [&_p]:font-light
+                ${expanded ? 'max-h-none' : 'max-h-64 overflow-hidden'}`}
+              dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
-
-            {/* Show "Read More" button only if content exceeds preview height */}
-            {hasMoreContent && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpanded(!expanded);
-                }}
-                className="text-blue-600 font-semibold text-sm hover:text-blue-700 mt-3 inline-block"
-              >
-                {expanded ? 'Show Less ↑' : 'Read More ↓'}
-              </button>
+            
+            {!expanded && hasMoreContent && (
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
             )}
           </div>
 
-          {/* Footer */}
-          <div className="pt-4 border-t border-gray-200 space-y-4 mt-auto">
-            {/* Stats Row */}
-            <div className="flex justify-between text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <MessageCircle size={16} />
-                <span>{sermon.comments || 0}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye size={16} />
-                <span>{sermon.views || 0}</span>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLike();
-                }}
-                className="flex items-center gap-1 text-red-500 hover:text-red-600 transition"
-              >
-                <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
-                <span>{likes}</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShare();
-                }}
-                className="flex items-center gap-1 text-gray-600 hover:text-green-600 transition"
-              >
-                <Share2 size={16} />
-              </button>
+          {hasMoreContent && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+              className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-slate-50 hover:bg-[#8B1A1A] hover:text-white text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border border-slate-100"
+            >
+              {expanded ? (
+                <>Close Transcript <ChevronUp size={14} /></>
+              ) : (
+                <>Read Full Transcript <ChevronDown size={14} /></>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Footer: Stats & Actions */}
+        <div className="px-5 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Eye size={18} />
+              <span className="text-[10px] md:text-xs font-bold text-slate-500">{sermon.views || 0}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <MessageCircle size={18} />
+              <span className="text-[10px] md:text-xs font-bold text-slate-500">{sermon.comments || 0}</span>
             </div>
           </div>
-        </Card>
-      </div>
-    </>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleLike(); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                liked ? 'bg-red-50 text-red-600 shadow-sm' : 'text-slate-400 hover:text-red-500'
+              }`}
+            >
+              <Heart size={20} fill={liked ? 'currentColor' : 'none'} className={liked ? 'scale-110' : ''} />
+              <span className="text-xs font-black">{likes}</span>
+            </button>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="p-2.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all"
+            >
+              <Share2 size={20} />
+            </button>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 };
 

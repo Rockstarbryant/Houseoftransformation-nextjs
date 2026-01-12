@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp, User } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
 import Card from '../common/Card';
@@ -13,6 +13,7 @@ const SermonCard = ({ sermon }) => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
+  // --- 1. FULL LOGIC PRESERVED ---
   const handleLike = async () => {
     try {
       await sermonService.toggleLike(sermon._id);
@@ -34,7 +35,7 @@ const SermonCard = ({ sermon }) => {
       navigator.share({ title, text, url: fragmentUrl }).catch((err) => console.log('Error sharing:', err));
     } else {
       navigator.clipboard.writeText(fragmentUrl).then(() => {
-        alert('Link copied to clipboard!');
+        alert('Sermons page link copied to clipboard!\nShare it to direct others to this powerful message.');
       });
     }
   }, [sermon]);
@@ -52,6 +53,7 @@ const SermonCard = ({ sermon }) => {
       const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
       return videoId ? `https://player.vimeo.com/video/${videoId}` : '';
     }
+    if (url.includes('tiktok.com')) return url;
     return '';
   }, []);
 
@@ -59,132 +61,181 @@ const SermonCard = ({ sermon }) => {
   const isVideo = sermon.type === 'video' && sermon.videoUrl;
   const hasThumbnail = Boolean(sermon.thumbnail);
   const videoEmbedUrl = isVideo ? getVideoEmbedUrl(sermon.videoUrl) : null;
+  const isFacebookVideo = isVideo && (sermon.videoUrl?.includes('facebook.com') || sermon.videoUrl?.includes('fb.watch'));
+
+  // --- 2. DEBUG LOGGING PRESERVED ---
+  useEffect(() => {
+    if (sermon._id) {
+      console.log(`🎤 SermonCard [${sermon.title}]:`, {
+        type: sermon.type,
+        hasVideoUrl: !!sermon.videoUrl,
+        isVideo,
+        hasThumbnail,
+        hasImages: contentHtml.includes('<img'),
+        contentLength: contentHtml.length,
+      });
+    }
+  }, [sermon._id, sermon.title, sermon.type, sermon.videoUrl, isVideo, contentHtml, hasThumbnail]);
 
   return (
     <div id={`sermon-${sermon._id}`} className="w-full">
-      {/* MOBILE TWEAK: 
-          - mx-1 on mobile makes the card fill almost the entire width.
-          - md:mx-0 allows the parent container to control centering on PC.
-          - rounded-xl on mobile vs rounded-[2.5rem] on PC for better edge-to-edge look.
-      */}
-      <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-1 md:mx-0">
+      <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
         
-        {/* Header: Reduced padding (px-4) for mobile */}
-        <div className="px-4 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between">
+        {/* Header: Desktop: px-10 | Mobile: px-4 */}
+        <div className="px-4 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] md:text-xs font-black">
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
             </div>
             <div>
-              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#8B1A1A]">
-                {sermon.category || 'Message'}
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-[#8B1A1A]">
+                {sermon.category || 'Ministry'}
               </p>
-              <p className="text-xs md:text-sm font-bold text-slate-900 leading-tight">
+              <p className="text-sm md:text-base font-bold text-slate-900 leading-tight">
                 {sermon.pastor || 'Pastor'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <Calendar size={12} />
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">
+            <Calendar size={12} className="text-red-500" />
             {formatDate(sermon.date, 'short')}
           </div>
         </div>
 
-        {/* Title: Full width responsive text size */}
-        <div className="px-4 md:px-10 pb-4">
-          <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center md:text-left">
+        {/* Title */}
+        <div className="px-5 md:px-10 py-4">
+          <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
 
-        {/* Media: Edge-to-edge on mobile */}
+        {/* Media: FULL WIDTH ON MOBILE */}
         {(isVideo || hasThumbnail) && (
           <div className="px-0 md:px-10 mb-6">
-            <div className="relative aspect-video md:rounded-3xl overflow-hidden bg-slate-100 shadow-lg md:shadow-2xl">
+            <div className="relative aspect-video md:rounded-3xl overflow-hidden bg-black shadow-2xl">
               {isVideo && !showVideoModal ? (
                 <button
                   onClick={() => setShowVideoModal(true)}
-                  className="w-full h-full relative flex items-center justify-center group"
+                  className="w-full h-full relative flex items-center justify-center group/btn"
+                  type="button"
                 >
                   <Image
-                    src={hasThumbnail ? sermon.thumbnail : 'https://via.placeholder.com/600x340?text=Sermon'}
+                    src={hasThumbnail ? sermon.thumbnail : 'https://via.placeholder.com/600x340?text=Video+Sermon'}
                     alt={sermon.title}
                     fill
-                    className="object-cover"
+                    className="object-cover opacity-80 group-hover/btn:opacity-100 transition-all duration-700"
                     sizes="(max-width: 768px) 100vw, 50vw"
+                    onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/600x340?text=Image+Error'; }}
                   />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />
-                  <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center shadow-2xl scale-90 md:scale-100">
-                    <Play size={28} className="text-[#8B1A1A] fill-current translate-x-1" />
+                  <div className="absolute inset-0 bg-black/20 group-hover/btn:bg-black/40 transition-all" />
+                  <div className="relative z-10 w-16 h-16 md:w-20 md:h-20 bg-white/95 backdrop-blur rounded-full flex items-center justify-center shadow-2xl group-hover/btn:scale-110 transition-transform">
+                    <Play size={30} className="text-[#8B1A1A] fill-current translate-x-1" />
                   </div>
+                  {isFacebookVideo && (
+                    <div className="absolute bottom-0 w-full bg-black/80 text-white text-[10px] font-bold uppercase py-3 tracking-widest text-center">
+                      Opens on Facebook
+                    </div>
+                  )}
                 </button>
               ) : isVideo && showVideoModal ? (
-                <div className="w-full h-full bg-black">
+                <div className="w-full h-full">
                   <button
                     onClick={() => setShowVideoModal(false)}
-                    className="absolute top-2 right-2 md:top-4 md:right-4 z-20 bg-black/50 text-white p-2 rounded-full"
+                    className="absolute top-4 right-4 z-20 bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full shadow-xl transition"
+                    type="button"
                   >
-                    <X size={18} />
+                    <X size={20} />
                   </button>
-                  <iframe className="w-full h-full" src={`${videoEmbedUrl}?autoplay=1`} allow="autoplay; encrypted-media" allowFullScreen />
+                  {videoEmbedUrl ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={videoEmbedUrl}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold uppercase tracking-widest">
+                      Video cannot be embedded
+                    </div>
+                  )}
                 </div>
               ) : (
-                <Image src={sermon.thumbnail} alt={sermon.title} fill className="object-cover" />
+                <Image 
+                  src={sermon.thumbnail} 
+                  alt={sermon.title} 
+                  fill 
+                  className="object-cover"
+                  onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/600x340?text=Image+Error'; }}
+                />
               )}
             </div>
           </div>
         )}
 
-        {/* Content Area: Adjusted for reading on small screens */}
-        <div className="px-4 md:px-12 flex-grow mb-6">
+        {/* Content Section: RICH READING STYLE */}
+        <div className="px-5 md:px-12 flex-grow mb-6">
           <div className="relative">
             <div
-              className={`prose prose-slate max-w-none font-serif text-base md:text-xl text-slate-700 leading-relaxed
-                [&_p]:mb-4 md:[&_p]:mb-6
-                ${expanded ? 'max-h-none' : 'max-h-48 md:max-h-60 overflow-hidden'}`}
+              className={`prose prose-slate max-w-none transition-all duration-500 ease-in-out font-serif text-lg md:text-xl text-slate-700 leading-relaxed
+                [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-6 [&_p]:mb-6
+                ${expanded ? 'max-h-none' : 'max-h-48 md:max-h-64 overflow-hidden'}`}
               dangerouslySetInnerHTML={{ __html: contentHtml }}
             />
-            {!expanded && (
-              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+            {!expanded && contentHtml.length > 180 && (
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none" />
             )}
           </div>
 
           {contentHtml.length > 180 && (
             <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-100"
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+              className="mt-2 flex items-center gap-2 text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
+              type="button"
             >
-              {expanded ? <><ChevronUp size={14} /> Show Less</> : <><ChevronDown size={14} /> Read Transcript</>}
+              {expanded ? <><ChevronUp size={16} /> Show Less</> : <><ChevronDown size={16} /> Read Full Message</>}
             </button>
           )}
         </div>
 
-        {/* Action Footer */}
-        <div className="px-4 md:px-10 py-5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-4 md:gap-6">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <Eye size={16} />
-              <span className="text-[10px] md:text-xs font-bold">{sermon.views || 0}</span>
+        {/* IMAGE WARNING PRESERVED */}
+        {contentHtml.includes('<img') && (
+          <div className="mx-5 md:mx-12 mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[10px] text-amber-700 font-medium flex items-center gap-2">
+            <div className="bg-amber-200 size-4 rounded-full flex items-center justify-center font-bold text-[8px]">!</div>
+            If images don&apos;t show, try opening in incognito mode.
+          </div>
+        )}
+
+        {/* Footer Actions: FULLY PRESERVED */}
+        <div className="px-5 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-1.5 text-slate-400 group/icon">
+              <Eye size={18} className="group-hover/icon:text-slate-600 transition-colors" />
+              <span className="text-xs font-bold text-slate-500">{sermon.views || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <MessageCircle size={16} />
-              <span className="text-[10px] md:text-xs font-bold">{sermon.comments || 0}</span>
+            <div className="flex items-center gap-1.5 text-slate-400 group/icon">
+              <MessageCircle size={18} className="group-hover/icon:text-slate-600 transition-colors" />
+              <span className="text-xs font-bold text-slate-500">{sermon.comments || 0}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${
-                liked ? 'bg-red-50 text-red-600' : 'text-slate-400 hover:text-red-500'
+              onClick={(e) => { e.stopPropagation(); handleLike(); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                liked ? 'bg-red-50 text-red-600 shadow-sm' : 'text-slate-400 hover:text-red-500 hover:bg-red-50/50'
               }`}
+              type="button"
             >
-              <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
-              <span className="text-[10px] md:text-xs font-black">{likes}</span>
+              <Heart size={20} fill={liked ? 'currentColor' : 'none'} className={liked ? 'scale-110' : ''} />
+              <span className="text-xs font-black">{likes}</span>
             </button>
 
-            <button onClick={handleShare} className="p-2 rounded-full text-slate-400 hover:bg-slate-100 transition-all">
-              <Share2 size={18} />
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="p-2.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all"
+              type="button"
+            >
+              <Share2 size={20} />
             </button>
           </div>
         </div>
