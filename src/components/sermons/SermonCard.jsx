@@ -89,12 +89,12 @@ const SermonCard = ({ sermon }) => {
               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-[#8B1A1A]">
                 {sermon.category || 'Ministry'}
               </p>
-              <p className="text-sm md:text-base font-bold text-slate-900 leading-tight">
+              <p className="text-sm md:text-base font-bold text-slate-900 dark:text-white leading-tight">
                 {sermon.pastor || 'Pastor'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">
             <Calendar size={12} className="text-red-500" />
             {formatDate(sermon.date, 'short')}
           </div>
@@ -102,7 +102,7 @@ const SermonCard = ({ sermon }) => {
 
         {/* Title */}
         <div className="px-4 md:px-10 py-4">
-          <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
+          <h3 className="text-xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
@@ -177,7 +177,7 @@ const SermonCard = ({ sermon }) => {
         <div className="px-2 xs:px-2.5 sm:px-3.5 md:px-10 lg:px-12 flex-grow mb-6">
           <div className="relative">
             <div
-              className={`prose prose-slate max-w-none w-full transition-all duration-500 ease-in-out font-serif text-[17px] sm:text-lg md:text-xl text-slate-700 leading-[1.68] md:leading-relaxed
+              className={`prose prose-slate max-w-none w-full transition-all duration-500 ease-in-out font-serif text-[17px] sm:text-lg md:text-xl text-slate-700 dark:text-slate-300 leading-[1.68] md:leading-relaxed
                 [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-6 [&_p]:mb-5 [&_p]:text-justify [&_p]:font-light
                 ${expanded ? 'max-h-none' : 'max-h-48 md:max-h-64 overflow-hidden'}`}
               dangerouslySetInnerHTML={{ __html: contentHtml }}
@@ -208,13 +208,13 @@ const SermonCard = ({ sermon }) => {
         {/* Footer */}
         <div className="px-4 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1.5 text-slate-400 group/icon">
-              <Eye size={18} className="group-hover/icon:text-slate-600 transition-colors" />
-              <span className="text-xs font-bold text-slate-500">{sermon.views || 0}</span>
+            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-300 group/icon">
+              <Eye size={18} className="group-hover/icon:text-slate-600 dark:text-slate-300 transition-colors" />
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{sermon.views || 0}</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-400 group/icon">
-              <MessageCircle size={18} className="group-hover/icon:text-slate-600 transition-colors" />
-              <span className="text-xs font-bold text-slate-500">{sermon.comments || 0}</span>
+              <MessageCircle size={18} className="group-hover/icon:text-slate-600 dark:text-slate-500 transition-colors" />
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{sermon.comments || 0}</span>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ const SermonCard = ({ sermon }) => {
             <button
               onClick={(e) => { e.stopPropagation(); handleLike(); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                liked ? 'bg-red-50 text-red-600 shadow-sm' : 'text-slate-400 hover:text-red-500 hover:bg-red-50/50'
+                liked ? 'bg-red-50 text-red-600 shadow-sm' : 'text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50/50'
               }`}
               type="button"
             >
@@ -232,7 +232,7 @@ const SermonCard = ({ sermon }) => {
 
             <button
               onClick={(e) => { e.stopPropagation(); handleShare(); }}
-              className="p-2.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all"
+              className="p-2.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-900 dark:text-white hover:shadow-md dark:shadow-slate-900 transition-all"
               type="button"
             >
               <Share2 size={20} />

@@ -47,7 +47,7 @@ const VolunteerPage = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen font-sans antialiased">
+    <div className="bg-white dark:bg-slate-400 dark:text-white transition-colors min-h-screen font-sans antialiased">
       {/* 1. MINIMALIST STRIPED HEADER */}
       <section className="pt-32 pb-20 border-b border-slate-100 px-6">
         <div className="max-w-7xl mx-auto">
@@ -58,7 +58,7 @@ const VolunteerPage = () => {
                 <span className="text-[10px] font-black uppercase tracking-[0.5em]">The H.O.T Portal</span>
               </div>
               <h1 className="text-7xl md:text-9xl font-black text-slate-900 tracking-tighter uppercase leading-[0.8]">
-                Serve <br /> <span className="text-slate-200">The Mission.</span>
+                Serve <br /> The Mission.
               </h1>
             </div>
             <p className="max-w-xs text-slate-500 font-bold uppercase tracking-widest text-[11px] leading-relaxed">
