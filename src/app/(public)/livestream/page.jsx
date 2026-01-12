@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
 const LiveStreamPage = () => {
@@ -12,8 +12,13 @@ const LiveStreamPage = () => {
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
 
+  // FIX: Load archives on component mount with default filters
+  useEffect(() => {
+    fetchArchives({ type: filterType, sortBy: sortBy, limit: 100 });
+  }, []);
+
   const streamTypes = [
-    { value: '', label: 'All Operations' },
+    { value: '', label: 'All Livestreams' },
     { value: 'sermon', label: '🎤 Sermons' },
     { value: 'praise_worship', label: '🎵 Praise & Worship' },
     { value: 'full_service', label: '⛪ Full Service' },
@@ -54,10 +59,10 @@ const LiveStreamPage = () => {
   };
 
   return (
-    <div className="pt-20 min-h-screen bg-[#F8FAFC]">
+    <div className="pt-20 min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
       {/* ACTIVE STREAM: CINEMATIC COMMAND CENTER */}
       {activeStream && (
-        <div className="bg-slate-900 text-white relative overflow-hidden">
+        <div className="bg-slate-900 dark:bg-slate-950 text-white relative overflow-hidden">
           {/* Background Decorative Element */}
           <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/10 skew-x-12 translate-x-32" />
           
@@ -113,43 +118,43 @@ const LiveStreamPage = () => {
       <div className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
           <div>
-            <h2 className="text-5xl md:text-7xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-4">
+            <h2 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-4">
               Mission <br /> <span className="text-red-600">Archives</span>
             </h2>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">Strategic replay of past operations</p>
+            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">Catch up on all past services and events</p>
           </div>
 
-          {/* REFACTORED FILTERS: HQ STYLE */}
+          {/* FILTERS */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <select
                 value={filterType}
                 onChange={(e) => handleFilterChange(e.target.value)}
-                className="appearance-none bg-white border-2 border-slate-100 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest focus:border-slate-900 outline-none pr-12 cursor-pointer transition-all"
+                className="appearance-none bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white outline-none pr-12 cursor-pointer transition-all"
               >
                 {streamTypes.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" size={16} />
             </div>
 
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value)}
-                className="appearance-none bg-white border-2 border-slate-100 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest focus:border-slate-900 outline-none pr-12 cursor-pointer transition-all"
+                className="appearance-none bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white outline-none pr-12 cursor-pointer transition-all"
               >
-                <option value="-startTime">Newest Dispatch</option>
-                <option value="startTime">Legacy Files</option>
-                <option value="-viewCount">High Engagement</option>
+                <option value="-startTime">Newest First</option>
+                <option value="startTime">Oldest First</option>
+                <option value="-viewCount">Most Watched</option>
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" size={16} />
             </div>
 
             <button
               onClick={() => setGridView(!gridView)}
-              className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-red-600 transition-all shadow-xl shadow-slate-200"
+              className="p-4 bg-slate-900 dark:bg-red-600 text-white rounded-2xl hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-xl shadow-slate-200 dark:shadow-slate-900"
             >
               {gridView ? <List size={20} /> : <LayoutGrid size={20} />}
             </button>
@@ -159,19 +164,19 @@ const LiveStreamPage = () => {
         {/* ARCHIVES GRID/LIST */}
         {loading ? (
           <div className="flex flex-col items-center py-40">
-            <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin mb-4" />
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Fetching Data Stream</p>
+            <div className="w-12 h-12 border-4 border-slate-100 dark:border-slate-700 border-t-red-600 rounded-full animate-spin mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">Loading archives...</p>
           </div>
         ) : archives.length === 0 ? (
-          <div className="text-center py-40 bg-white rounded-[40px] border-2 border-dashed border-slate-200">
-            <p className="text-slate-400 font-black uppercase tracking-widest">No logs found in this sector</p>
+          <div className="text-center py-40 bg-white dark:bg-slate-800 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-700">
+            <p className="text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">No archives available</p>
           </div>
         ) : (
           <div className={gridView ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
             {archives.map((stream) => (
               <div 
                 key={stream._id} 
-                className="group relative bg-white border-2 border-slate-100 rounded-[40px] overflow-hidden hover:border-slate-900 transition-all duration-500 flex flex-col h-full shadow-sm hover:shadow-2xl hover:shadow-slate-200"
+                className="group relative bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[40px] overflow-hidden hover:border-slate-900 dark:hover:border-white transition-all duration-500 flex flex-col h-full shadow-sm hover:shadow-2xl hover:shadow-slate-200 dark:hover:shadow-slate-900"
               >
                 {/* Thumbnail Layer */}
                 <div 
@@ -192,7 +197,7 @@ const LiveStreamPage = () => {
                     />
                   )}
                   {/* Category Float */}
-                  <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white text-slate-900 text-[9px] font-black uppercase tracking-widest rounded-lg">
+                  <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[9px] font-black uppercase tracking-widest rounded-lg">
                     {stream.type.replace('_', ' ')}
                   </div>
                 </div>
@@ -204,30 +209,30 @@ const LiveStreamPage = () => {
                   </p>
                   
                   <h3
-                    className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-6 group-hover:text-red-600 transition-colors line-clamp-2 cursor-pointer"
+                    className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-6 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors line-clamp-2 cursor-pointer"
                     onClick={() => setSelectedStream(stream)}
                   >
                     {stream.title}
                   </h3>
 
                   {/* Metadata Nodes */}
-                  <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50">
+                  <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50 dark:border-slate-700">
                     {stream.preacherNames?.length > 0 && (
                       <div className="flex items-center gap-2">
-                        <Users size={12} className="text-slate-400" />
-                        <span className="text-[9px] font-black uppercase text-slate-900 truncate">{stream.preacherNames[0]}</span>
+                        <Users size={12} className="text-slate-400 dark:text-slate-500" />
+                        <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white truncate">{stream.preacherNames[0]}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <TrendingUp size={12} className="text-slate-400" />
-                      <span className="text-[9px] font-black uppercase text-slate-900">{stream.viewCount || 0} Views</span>
+                      <TrendingUp size={12} className="text-slate-400 dark:text-slate-500" />
+                      <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white">{stream.viewCount || 0} Views</span>
                     </div>
                   </div>
 
                   {/* AI Snippet */}
                   {stream.aiSummary?.summary && (
-                    <div className="bg-slate-50 p-4 rounded-2xl mb-8 group-hover:bg-red-50 transition-colors">
-                      <p className="text-[11px] text-slate-600 font-medium line-clamp-2 italic leading-relaxed">
+                    <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl mb-8 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium line-clamp-2 italic leading-relaxed">
                         "{stream.aiSummary.summary}"
                       </p>
                     </div>
@@ -237,13 +242,13 @@ const LiveStreamPage = () => {
                   <div className="mt-auto flex gap-3">
                     <button
                       onClick={() => setSelectedStream(stream)}
-                      className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg active:scale-95"
+                      className="flex-1 bg-slate-900 dark:bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-lg active:scale-95"
                     >
-                      Initialize Playback
+                      Watch Now
                     </button>
                     <button
                       onClick={() => handleShare(stream)}
-                      className="p-4 bg-slate-100 text-slate-900 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"
+                      className="p-4 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
                     >
                       <Share2 size={18} />
                     </button>
@@ -255,10 +260,10 @@ const LiveStreamPage = () => {
         )}
       </div>
 
-      {/* MODAL: THE OPERATIONAL OVERLAY */}
+      {/* MODAL */}
       {selectedStream && (
-        <div className="fixed inset-0 bg-slate-900/95 z-[100] flex items-center justify-center p-4 md:p-8 backdrop-blur-xl" onClick={() => setSelectedStream(null)}>
-          <div className="bg-white rounded-[48px] max-w-6xl w-full max-h-[90vh] overflow-hidden border-2 border-slate-900 flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/95 dark:bg-slate-950/95 z-[100] flex items-center justify-center p-4 md:p-8 backdrop-blur-xl" onClick={() => setSelectedStream(null)}>
+          <div className="bg-white dark:bg-slate-800 rounded-[48px] max-w-6xl w-full max-h-[90vh] overflow-hidden border-2 border-slate-900 dark:border-white flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
             
             {/* Left: Player Section */}
             <div className="flex-1 bg-black flex flex-col">
@@ -273,65 +278,83 @@ const LiveStreamPage = () => {
                   />
                 )}
               </div>
-              <div className="p-10 text-white bg-slate-900 flex-1 overflow-y-auto">
-                 <div className="flex items-center gap-3 mb-6">
-                    <Zap size={16} className="text-red-600" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">Dispatch Details</span>
-                 </div>
-                 <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-6">
-                   {selectedStream.title}
-                 </h2>
-                 <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-2xl italic">
-                   {selectedStream.description || "No mission briefing provided."}
-                 </p>
+              <div className="p-10 text-white bg-slate-900 dark:bg-slate-950 flex-1 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-6">
+                  <Zap size={16} className="text-red-600" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Details</span>
+                </div>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-6">
+                  {selectedStream.title}
+                </h2>
+                <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-2xl italic">
+                  {selectedStream.description || "No description provided."}
+                </p>
               </div>
             </div>
 
             {/* Right: Metadata & AI Intelligence */}
-            <div className="w-full md:w-[400px] border-l-2 border-slate-900 bg-white overflow-y-auto p-10">
+            <div className="w-full md:w-[400px] border-l-2 border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-y-auto p-10">
               <div className="flex justify-between items-center mb-10">
-                <div className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-red-600 dark:bg-red-700 text-white rounded-2xl flex items-center justify-center">
                   <Monitor size={20} />
                 </div>
-                <button onClick={() => setSelectedStream(null)} className="p-3 bg-slate-100 rounded-xl hover:bg-slate-900 hover:text-white transition-all">
+                <button onClick={() => setSelectedStream(null)} className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all">
                   <X size={24} />
                 </button>
               </div>
 
               <div className="space-y-10">
+                {selectedStream.preacherNames?.length > 0 && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 border-b dark:border-slate-700 pb-2">Preacher(s)</h3>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedStream.preacherNames.join(', ')}</p>
+                  </div>
+                )}
+
+                {selectedStream.scriptures?.length > 0 && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 border-b dark:border-slate-700 pb-2">Scriptures</h3>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedStream.scriptures.join(', ')}</p>
+                  </div>
+                )}
+
                 {selectedStream.aiSummary?.keyPoints?.length > 0 && (
                   <div>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Key Intelligence</h3>
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 border-b dark:border-slate-700 pb-2">Key Points</h3>
                     <ul className="space-y-4">
                       {selectedStream.aiSummary.keyPoints.map((point, idx) => (
-                        <li key={idx} className="flex gap-3 text-sm font-bold text-slate-900 uppercase tracking-tight">
-                          <span className="text-red-600">/</span> {point}
+                        <li key={idx} className="flex gap-3 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                          <span className="text-red-600">•</span> {point}
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {selectedStream.aiSummary?.captions && (
+                {selectedStream.aiSummary?.captions?.length > 0 && (
                   <div>
-                    <div className="flex justify-between items-center mb-6 border-b pb-2">
-                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Digital Transcript</h3>
-                      <button onClick={() => setShowCaptions(!showCaptions)} className="text-[9px] font-black text-red-600 uppercase underline">
-                        {showCaptions ? 'Secure' : 'Reveal'}
+                    <div className="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-2">
+                      <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Captions</h3>
+                      <button onClick={() => setShowCaptions(!showCaptions)} className="text-[9px] font-black text-red-600 dark:text-red-500 uppercase">
+                        {showCaptions ? 'Hide' : 'Show'}
                       </button>
                     </div>
                     {showCaptions && (
                       <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
                         {selectedStream.aiSummary.captions.map((caption, idx) => (
-                          <div key={idx} className="p-3 bg-slate-50 rounded-xl">
-                            <span className="text-[9px] font-black text-slate-400">[{caption.timestamp}]</span>
-                            <p className="text-[11px] font-bold text-slate-900 mt-1 uppercase tracking-tight">{caption.text}</p>
+                          <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500">[{caption.timestamp}]</span>
+                            <p className="text-[11px] font-bold text-slate-900 dark:text-white mt-1">{caption.text}</p>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
+
+                <div className="text-sm text-slate-500 dark:text-slate-400 border-t dark:border-slate-700 pt-4">
+                  <p>{new Date(selectedStream.startTime).toLocaleString()} • {selectedStream.viewCount || 0} views</p>
+                </div>
               </div>
             </div>
           </div>
