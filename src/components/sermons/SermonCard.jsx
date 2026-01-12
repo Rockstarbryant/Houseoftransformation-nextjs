@@ -77,7 +77,7 @@ const SermonCard = ({ sermon }) => {
 
   return (
     <div id={`sermon-${sermon._id}`} className="w-full">
-      <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
+      <Card className="flex flex-col bg-white dark:bg-slate-900 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
         
         {/* Header */}
         <div className="px-4 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">

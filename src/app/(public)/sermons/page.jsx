@@ -82,7 +82,7 @@ export default function SermonsPage() {
   if (loading) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB]">
+    <div className="min-h-screen bg-white dark:bg-slate-900 dark:text-white transition-colors">
       
       {/* 1. HERO SECTION - Adjusted padding for mobile */}
       <section className="relative pt-24 pb-12 md:pt-32 md:pb-20 overflow-hidden">

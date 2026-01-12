@@ -43,7 +43,7 @@ const SermonCardText = ({ sermon }) => {
       <Card 
         className="
           flex flex-col 
-          bg-white 
+          bg-white dark:bg-slate-900 
           rounded-xl md:rounded-[2.5rem] 
           border border-slate-100 
           shadow-sm hover:shadow-xl 
@@ -62,12 +62,12 @@ const SermonCardText = ({ sermon }) => {
               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-[#8B1A1A]">
                 {sermon.category || 'Transcript'}
               </p>
-              <p className="text-xs md:text-sm font-bold text-slate-900 leading-tight">
+              <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-slate-400 leading-tight">
                 {sermon.pastor || 'Pastor'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-200 uppercase tracking-widest">
             <Calendar size={12} className="text-red-500" />
             {formatDate(sermon.date, 'short')}
           </div>
@@ -75,7 +75,7 @@ const SermonCardText = ({ sermon }) => {
 
         {/* Title */}
         <div className="px-4 sm:px-5 md:px-12 pb-5 md:pb-6">
-          <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center underline decoration-[#8B1A1A]/10 underline-offset-8">
+          <h3 className="text-xl md:text-4xl font-black text-slate-900 dark:text-slate-400 tracking-tighter leading-tight text-center underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
@@ -96,7 +96,7 @@ const SermonCardText = ({ sermon }) => {
                 transition-all duration-700 ease-in-out
                 font-serif 
                 text-[17px] sm:text-lg md:text-xl 
-                text-slate-700 
+                text-slate-700 dark:text-slate-300 
                 leading-[1.65] md:leading-relaxed
                 [&_p]:mb-5 [&_p]:text-justify [&_p]:font-light
                 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4
@@ -139,13 +139,13 @@ const SermonCardText = ({ sermon }) => {
         {/* Footer */}
         <div className="px-4 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-200">
               <Eye size={18} />
-              <span className="text-[10px] md:text-xs font-bold text-slate-500">{sermon.views || 0}</span>
+              <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-200">{sermon.views || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-200">
               <MessageCircle size={18} />
-              <span className="text-[10px] md:text-xs font-bold text-slate-500">{sermon.comments || 0}</span>
+              <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-200">{sermon.comments || 0}</span>
             </div>
           </div>
 
