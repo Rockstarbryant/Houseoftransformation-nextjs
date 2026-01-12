@@ -11,7 +11,6 @@ const SermonCardText = ({ sermon }) => {
   const [likes, setLikes] = useState(sermon.likes || 0);
   const [expanded, setExpanded] = useState(false);
 
-  // --- LOGIC PRESERVED EXACTLY ---
   const handleLike = async () => {
     try {
       await sermonService.toggleLike(sermon._id);
@@ -31,7 +30,7 @@ const SermonCardText = ({ sermon }) => {
     if (navigator.share) {
       navigator.share({ title, text, url: fragmentUrl }).catch(err => console.log('Error sharing:', err));
     } else {
-      navigator.clipboard.writeText(fragmentUrl); // Shared link with anchor for direct scroll
+      navigator.clipboard.writeText(fragmentUrl);
       alert('Sermons page link copied to clipboard!\nShare it to direct others to this powerful message.');
     }
   };
@@ -41,14 +40,20 @@ const SermonCardText = ({ sermon }) => {
 
   return (
     <div id={`sermon-${sermon._id}`} className="w-full">
-      {/* MOBILE FIX: 
-          - mx-0.5 ensures the card stretches to the screen edge on mobile.
-          - bg-white (replacing bg-slate-300) for better reading legibility.
-      */}
-      <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
-        
-        {/* Header: Editorial Style */}
-        <div className="px-5 md:px-12 pt-8 pb-4 flex items-center justify-between">
+      <Card 
+        className="
+          flex flex-col 
+          bg-white 
+          rounded-xl md:rounded-[2.5rem] 
+          border border-slate-100 
+          shadow-sm hover:shadow-xl 
+          transition-all duration-500 
+          overflow-hidden 
+          mx-0.5 md:mx-0
+        "
+      >
+        {/* Header */}
+        <div className="px-4 sm:px-5 md:px-12 pt-6 md:pt-8 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="size-9 md:size-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-[10px] md:text-xs font-black shadow-md">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
@@ -68,47 +73,71 @@ const SermonCardText = ({ sermon }) => {
           </div>
         </div>
 
-        {/* Sermon Title: Center-aligned editorial look */}
-        <div className="px-5 md:px-12 pb-6">
+        {/* Title */}
+        <div className="px-4 sm:px-5 md:px-12 pb-5 md:pb-6">
           <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
 
-        {/* Text Content: High Readability Reading Mode */}
-        <div className="px-5 md:px-14 flex-grow mb-6 relative">
-          {/* Subtle Quote Icon Watermark */}
-          <Quote className="absolute top-0 right-10 text-slate-50 opacity-10 pointer-events-none" size={80} />
-          
-          <div className="relative">
+        {/* Main Content - maximized width on mobile */}
+        <div className="px-3 xs:px-4 sm:px-5 md:px-14 flex-grow mb-6 md:mb-8 relative">
+          {/* Decorative Quote watermark */}
+          <Quote 
+            className="absolute top-1 right-3 sm:right-6 md:right-10 text-slate-50 opacity-10 pointer-events-none" 
+            size={60} 
+          />
+
+          <div className="relative w-full">
             <div
-              className={`prose prose-slate max-w-none transition-all duration-700 ease-in-out font-serif text-lg md:text-xl text-slate-700 leading-relaxed
-                [&_p]:mb-6 [&_p]:text-justify [&_p]:font-light
-                ${expanded ? 'max-h-none' : 'max-h-64 overflow-hidden'}`}
+              className={`
+                prose prose-slate 
+                max-w-none w-full
+                transition-all duration-700 ease-in-out
+                font-serif 
+                text-[17px] sm:text-lg md:text-xl 
+                text-slate-700 
+                leading-[1.65] md:leading-relaxed
+                [&_p]:mb-5 [&_p]:text-justify [&_p]:font-light
+                [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4
+                [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3
+                ${expanded ? 'max-h-none' : 'max-h-64 sm:max-h-80 overflow-hidden'}
+              `}
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
-            
+
             {!expanded && hasMoreContent && (
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-32 bg-gradient-to-t from-white via-white/85 to-transparent pointer-events-none" />
             )}
           </div>
 
           {hasMoreContent && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-slate-50 hover:bg-[#8B1A1A] hover:text-white text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border border-slate-100"
-            >
-              {expanded ? (
-                <>Close Transcript <ChevronUp size={14} /></>
-              ) : (
-                <>Read Full Transcript <ChevronDown size={14} /></>
-              )}
-            </button>
+            <div className="mt-6 px-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+                className="
+                  flex items-center gap-2 
+                  px-6 py-2.5 
+                  bg-slate-50 hover:bg-[#8B1A1A] hover:text-white 
+                  text-[#8B1A1A] 
+                  rounded-full 
+                  text-[10px] font-black uppercase tracking-widest 
+                  transition-all 
+                  shadow-sm border border-slate-100
+                "
+              >
+                {expanded ? (
+                  <>Close Transcript <ChevronUp size={14} /></>
+                ) : (
+                  <>Read Full Transcript <ChevronDown size={14} /></>
+                )}
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Footer: Stats & Actions */}
-        <div className="px-5 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
+        {/* Footer */}
+        <div className="px-4 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400">
               <Eye size={18} />
