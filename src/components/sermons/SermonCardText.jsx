@@ -81,7 +81,7 @@ const SermonCardText = ({ sermon }) => {
         </div>
 
         {/* Main Content - maximized width on mobile */}
-        <div className="px-3 xs:px-4 sm:px-5 md:px-14 flex-grow mb-6 md:mb-8 relative">
+        <div className=" px-1.5 xs:px-2 sm:px-3 md:px-10 lg:px-14 flex-grow mb-6 md:mb-8 relative">
           {/* Decorative Quote watermark */}
           <Quote 
             className="absolute top-1 right-3 sm:right-6 md:right-10 text-slate-50 opacity-10 pointer-events-none" 

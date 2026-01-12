@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
 import Card from '../common/Card';
@@ -13,7 +13,6 @@ const SermonCard = ({ sermon }) => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  // --- 1. FULL LOGIC PRESERVED ---
   const handleLike = async () => {
     try {
       await sermonService.toggleLike(sermon._id);
@@ -63,7 +62,6 @@ const SermonCard = ({ sermon }) => {
   const videoEmbedUrl = isVideo ? getVideoEmbedUrl(sermon.videoUrl) : null;
   const isFacebookVideo = isVideo && (sermon.videoUrl?.includes('facebook.com') || sermon.videoUrl?.includes('fb.watch'));
 
-  // --- 2. DEBUG LOGGING PRESERVED ---
   useEffect(() => {
     if (sermon._id) {
       console.log(`🎤 SermonCard [${sermon.title}]:`, {
@@ -81,7 +79,7 @@ const SermonCard = ({ sermon }) => {
     <div id={`sermon-${sermon._id}`} className="w-full">
       <Card className="flex flex-col bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
         
-        {/* Header: Desktop: px-10 | Mobile: px-4 */}
+        {/* Header */}
         <div className="px-4 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
@@ -103,13 +101,13 @@ const SermonCard = ({ sermon }) => {
         </div>
 
         {/* Title */}
-        <div className="px-5 md:px-10 py-4">
+        <div className="px-4 md:px-10 py-4">
           <h3 className="text-xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
 
-        {/* Media: FULL WIDTH ON MOBILE */}
+        {/* Media */}
         {(isVideo || hasThumbnail) && (
           <div className="px-0 md:px-10 mb-6">
             <div className="relative aspect-video md:rounded-3xl overflow-hidden bg-black shadow-2xl">
@@ -172,12 +170,15 @@ const SermonCard = ({ sermon }) => {
           </div>
         )}
 
-        {/* Content Section: RICH READING STYLE */}
-        <div className="px-5 md:px-12 flex-grow mb-6">
+        {/* 
+          MAIN TEXT CONTENT – now much closer to the edges on mobile 
+          px-2 → px-3 → px-4 progression (very tight on small screens)
+        */}
+        <div className="px-2 xs:px-2.5 sm:px-3.5 md:px-10 lg:px-12 flex-grow mb-6">
           <div className="relative">
             <div
-              className={`prose prose-slate max-w-none transition-all duration-500 ease-in-out font-serif text-lg md:text-xl text-slate-700 leading-relaxed
-                [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-6 [&_p]:mb-6
+              className={`prose prose-slate max-w-none w-full transition-all duration-500 ease-in-out font-serif text-[17px] sm:text-lg md:text-xl text-slate-700 leading-[1.68] md:leading-relaxed
+                [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-6 [&_p]:mb-5 [&_p]:text-justify [&_p]:font-light
                 ${expanded ? 'max-h-none' : 'max-h-48 md:max-h-64 overflow-hidden'}`}
               dangerouslySetInnerHTML={{ __html: contentHtml }}
             />
@@ -189,7 +190,7 @@ const SermonCard = ({ sermon }) => {
           {contentHtml.length > 180 && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="mt-2 flex items-center gap-2 text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
+              className="mt-3 flex items-center gap-2 text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
               type="button"
             >
               {expanded ? <><ChevronUp size={16} /> Show Less</> : <><ChevronDown size={16} /> Read Full Message</>}
@@ -197,16 +198,15 @@ const SermonCard = ({ sermon }) => {
           )}
         </div>
 
-        {/* IMAGE WARNING PRESERVED */}
         {contentHtml.includes('<img') && (
-          <div className="mx-5 md:mx-12 mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[10px] text-amber-700 font-medium flex items-center gap-2">
+          <div className="mx-3 md:mx-10 mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[10px] text-amber-700 font-medium flex items-center gap-2">
             <div className="bg-amber-200 size-4 rounded-full flex items-center justify-center font-bold text-[8px]">!</div>
-            If images don&apos;t show, try opening in incognito mode.
+            If images don't show, try opening in incognito mode.
           </div>
         )}
 
-        {/* Footer Actions: FULLY PRESERVED */}
-        <div className="px-5 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+        {/* Footer */}
+        <div className="px-4 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 group/icon">
               <Eye size={18} className="group-hover/icon:text-slate-600 transition-colors" />
