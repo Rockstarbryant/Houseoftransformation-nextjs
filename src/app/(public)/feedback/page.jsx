@@ -2,10 +2,8 @@
 
 import React, { useState } from 'react';
 import { 
-  MessageSquare, 
   Loader2, 
   ArrowLeft, 
-  CheckCircle2, 
   BookOpen, 
   Sparkles, 
   Heart, 
@@ -26,12 +24,10 @@ import TestimoniesWall from '@/components/feedback/TestimoniesWall';
 import { useAuthContext } from '@/context/AuthContext';
 
 const FeedbackPage = () => {
-  const { user, isLoading, error: authError } = useAuthContext();
+  const { user, isLoading } = useAuthContext();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // Updated categories with specific background and border colors for each card
   const categories = [
     {
       id: 'sermon',
@@ -56,7 +52,7 @@ const FeedbackPage = () => {
     {
       id: 'testimony',
       title: 'Share Testimony',
-      description: 'Witnessing God’s movement in your life.',
+      description: 'Witnessing God\'s movement in your life.',
       icon: <Users className="text-amber-600" size={28} />,
       bgColor: 'bg-amber-50/50',
       borderColor: 'border-amber-100',
@@ -92,7 +88,7 @@ const FeedbackPage = () => {
       borderColor: 'border-slate-200',
       hoverBorder: 'hover:border-slate-400',
       accent: 'text-slate-700'
-    },
+    }
   ];
 
   const handleCategorySelect = (id) => {
@@ -100,24 +96,30 @@ const FeedbackPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <Loader2 className="animate-spin text-[#8B1A1A]" size={40} />
-    </div>
-  );
+  const handleBackClick = () => {
+    setSelectedCategory(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#8B1A1A]" size={40} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] py-24 px-6">
-      <div className="max-w-7xl mx-auto">
-        
-        {!selectedCategory ? (
-          <div className="animate-in fade-in duration-700">
+    <div className="min-h-screen bg-[#FDFCFB]">
+      {!selectedCategory ? (
+        // Categories Grid View
+        <div className="py-24 px-6 animate-in fade-in duration-700">
+          <div className="max-w-7xl mx-auto">
             <header className="text-center mb-8">
               <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">
                 We Value Your <span className="text-[#8B1A1A]">Voice.</span>
               </h1>
               <p className="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
-                Your feedback is the catalyst for our transformation. Share your heart or testify of God’s goodness.
+                Your feedback is the catalyst for our transformation. Share your heart or testify of God&apos;s goodness.
               </p>
             </header>
 
@@ -145,31 +147,62 @@ const FeedbackPage = () => {
               <TestimoniesWall />
             </div>
           </div>
-        ) : (
-          <div className="max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
-            <button 
-              onClick={() => setSelectedCategory(null)}
-              className="flex items-center gap-2 text-slate-400 hover:text-[#8B1A1A] transition-colors mb-8 font-bold uppercase text-xs tracking-widest"
-            >
-              <ArrowLeft size={18} /> Change Type
-            </button>
-            
-            <div className="mb-10 flex justify-center">
-              <AnonymousToggle isAnonymous={isAnonymous} onToggle={setIsAnonymous} />
-            </div>
-
-            <div className="bg-white rounded-[3rem] p-12 shadow-2xl shadow-slate-200 border border-slate-50">
-               {/* Logic for rendering forms remains the same */}
-               {selectedCategory === 'sermon' && <SermonFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
-               {selectedCategory === 'service' && <ServiceFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
-               {selectedCategory === 'testimony' && <TestimonyForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
-               {selectedCategory === 'suggestion' && <SuggestionForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
-               {selectedCategory === 'prayer' && <PrayerRequestForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
-               {selectedCategory === 'general' && <GeneralFeedbackForm isAnonymous={isAnonymous} onBack={() => setSelectedCategory(null)} />}
+        </div>
+      ) : (
+        // Form View - Full width on mobile
+        <div className="w-full min-h-screen flex flex-col bg-[#FDFCFB] animate-in slide-in-from-bottom-8 duration-500">
+          
+          {/* Back Button */}
+          <div className="px-6 md:px-0 pt-6 md:pt-0">
+            <div className="max-w-3xl mx-auto">
+              <button 
+                onClick={handleBackClick}
+                className="flex items-center gap-2 text-slate-400 hover:text-[#8B1A1A] transition-colors mb-8 font-bold uppercase text-xs tracking-widest"
+              >
+                <ArrowLeft size={18} /> Change Type
+              </button>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Anonymous Toggle */}
+          <div className="px-6 md:px-0 mb-10 flex justify-center">
+            <div className="w-full max-w-3xl">
+              <AnonymousToggle isAnonymous={isAnonymous} onToggle={setIsAnonymous} user={user} />
+            </div>
+          </div>
+
+          {/* Forms - Full width on mobile, constrained on desktop */}
+          <div className="flex-1 w-full px-0 md:px-6 pb-12">
+            <div className="max-w-3xl mx-auto md:bg-white md:rounded-[3rem] md:p-12 md:shadow-2xl md:shadow-slate-200 md:border md:border-slate-50">
+              
+              {selectedCategory === 'sermon' && (
+                <SermonFeedbackForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+              
+              {selectedCategory === 'service' && (
+                <ServiceFeedbackForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+              
+              {selectedCategory === 'testimony' && (
+                <TestimonyForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+              
+              {selectedCategory === 'suggestion' && (
+                <SuggestionForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+              
+              {selectedCategory === 'prayer' && (
+                <PrayerRequestForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+              
+              {selectedCategory === 'general' && (
+                <GeneralFeedbackForm isAnonymous={isAnonymous} user={user} onSuccess={() => handleBackClick()} onBack={handleBackClick} />
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
