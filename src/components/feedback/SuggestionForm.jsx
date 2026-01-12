@@ -1,3 +1,4 @@
+// ===== SuggestionForm.jsx - FIXED =====
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,6 @@ import Input from '../common/Input';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- CORE LOGIC PRESERVED ---
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', suggestionType: '',
     suggestionTitle: '', description: '', importance: '',
@@ -20,7 +20,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   useEffect(() => {
     if (!isAnonymous && user) {
-      setFormData(prev => ({ ...prev, name: user.name || '', email: user.email || '' }));
+      setFormData(prev => ({ ...prev, name: user?.name || '', email: user?.email || '' }));
     } else if (isAnonymous) {
       setFormData(prev => ({
         ...prev, name: '', email: '', phone: '', allowFollowUp: false, willingToHelp: false
@@ -90,8 +90,6 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   return (
     <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500 border border-slate-100">
-      
-      {/* High-Impact Header */}
       <div className="bg-[#1A1A1A] p-8 md:p-12 text-white relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12">
             <Lightbulb size={240} />
@@ -111,8 +109,6 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
-        
-        {/* Step 1: Contributor Info */}
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -120,14 +116,13 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Contributor</h3>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <Input label="Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" className="bg-white" />
-              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." className="bg-white" />
+              <Input label="Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" disabled={isSubmitting} className="bg-white" />
+              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." disabled={isSubmitting} className="bg-white" />
             </div>
-            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="Required for follow-up" className="bg-white" />
+            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="Required for follow-up" disabled={isSubmitting} className="bg-white" />
           </div>
         )}
 
-        {/* Step 2: The Idea */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-[#8B1A1A]"></span>
@@ -140,6 +135,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               name="suggestionType"
               value={formData.suggestionType}
               onChange={handleChange}
+              disabled={isSubmitting}
               className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 appearance-none"
             >
               <option value="">Choose a Category</option>
@@ -148,7 +144,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             {errors.suggestionType && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.suggestionType}</p>}
           </div>
 
-          <Input label="Brief Title" name="suggestionTitle" value={formData.suggestionTitle} onChange={handleChange} error={errors.suggestionTitle} placeholder="e.g., Youth Mentorship Program" className="bg-white" />
+          <Input label="Brief Title" name="suggestionTitle" value={formData.suggestionTitle} onChange={handleChange} error={errors.suggestionTitle} placeholder="e.g., Youth Mentorship Program" disabled={isSubmitting} className="bg-white" />
 
           <div className="space-y-2">
             <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Detailed Description *</label>
@@ -157,6 +153,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               value={formData.description}
               onChange={handleChange}
               rows="4"
+              disabled={isSubmitting}
               placeholder="What is your idea? How does it work?"
               className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
             />
@@ -166,16 +163,15 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Importance</label>
-              <textarea name="importance" value={formData.importance} onChange={handleChange} rows="2" placeholder="Why should we do this?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
+              <textarea name="importance" value={formData.importance} onChange={handleChange} rows="2" disabled={isSubmitting} placeholder="Why should we do this?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Impact</label>
-              <textarea name="benefit" value={formData.benefit} onChange={handleChange} rows="2" placeholder="How will it benefit us?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
+              <textarea name="benefit" value={formData.benefit} onChange={handleChange} rows="2" disabled={isSubmitting} placeholder="How will it benefit us?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
             </div>
           </div>
         </div>
 
-        {/* Step 3: Priority & Engagement */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-[#8B1A1A]"></span>
@@ -190,11 +186,12 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   key={p}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, priority: p }))}
+                  disabled={isSubmitting}
                   className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
                     formData.priority === p 
                     ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
                     : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
-                  }`}
+                  } disabled:opacity-50`}
                 >
                   {p}
                 </button>
@@ -210,7 +207,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               ].map(item => (
                 <label key={item.id} className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-slate-100 hover:border-slate-200 cursor-pointer group transition-all">
                   <div className="relative">
-                    <input type="checkbox" name={item.id} checked={formData[item.id]} onChange={handleChange} className="sr-only peer" />
+                    <input type="checkbox" name={item.id} checked={formData[item.id]} onChange={handleChange} disabled={isSubmitting} className="sr-only peer" />
                     <div className="w-10 h-5 bg-slate-100 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
                     <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
                   </div>
@@ -224,7 +221,6 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           )}
         </div>
 
-        {/* Final Actions */}
         <div className="pt-8 space-y-6">
           {errors.submit && (
             <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl flex items-center gap-2">
@@ -233,7 +229,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           )}
 
           <div className="flex flex-col md:flex-row gap-3">
-            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-50">Cancel</button>
             <button
               type="submit"
               disabled={isSubmitting}

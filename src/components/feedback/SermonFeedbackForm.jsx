@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader, Star, Calendar, MessageSquare, Heart, Info, Send } from 'lucide-react';
+import { ArrowLeft, Loader, Calendar, Send, Info } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -9,7 +9,6 @@ import StarRating from './StarRating';
 import { feedbackService } from '@/services/api/feedbackService';
 
 const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- LOGIC PRESERVED: State Hooks ---
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,13 +26,12 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- LOGIC PRESERVED: Auto-fill Effect ---
   useEffect(() => {
     if (!isAnonymous && user) {
       setFormData(prev => ({
         ...prev,
-        name: user.name || '',
-        email: user.email || ''
+        name: user?.name || '',
+        email: user?.email || ''
       }));
     } else if (isAnonymous) {
       setFormData(prev => ({
@@ -43,7 +41,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     }
   }, [isAnonymous, user]);
 
-  // --- LOGIC PRESERVED: Handlers ---
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -111,8 +108,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   return (
     <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
-      
-      {/* Header Section: Editorial Styling */}
       <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative">
         <button
           onClick={onBack}
@@ -138,8 +133,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
-        
-        {/* Personal Information (if not anonymous) */}
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -180,7 +173,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         )}
 
-        {/* Sermon Details */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-slate-200"></span>
@@ -204,31 +196,27 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">
                 Date Attended <span className="text-[#8B1A1A]">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="sermonDate"
-                  value={formData.sermonDate}
-                  onChange={handleChange}
-                  max={new Date().toISOString().split('T')[0]}
-                  required
-                  disabled={isSubmitting}
-                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none"
-                />
-              </div>
+              <input
+                type="date"
+                name="sermonDate"
+                value={formData.sermonDate}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]}
+                required
+                disabled={isSubmitting}
+                className="w-full px-4 py-3.5 rounded-2xl border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none"
+              />
               {errors.sermonDate && <p className="text-[#8B1A1A] text-[10px] font-bold mt-1 ml-1">{errors.sermonDate}</p>}
             </div>
           </div>
         </div>
 
-        {/* Feedback Section */}
         <div className="space-y-8">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-slate-200"></span>
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Your Experience</h3>
           </div>
           
-          {/* Rating */}
           <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 text-center">
             <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-4">
               How would you rate this message?
@@ -243,7 +231,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             {errors.rating && <p className="text-[#8B1A1A] text-[10px] font-bold mt-4">{errors.rating}</p>}
           </div>
 
-          {/* Text Areas */}
           <div className="space-y-6">
             <div className="group">
               <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-2 ml-1">
@@ -255,6 +242,7 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 onChange={handleChange}
                 rows="4"
                 placeholder="Share what spoke to your heart..."
+                disabled={isSubmitting}
                 className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
               />
               <div className="flex justify-between mt-2 px-1">
@@ -272,6 +260,7 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   onChange={handleChange}
                   rows="3"
                   placeholder="How will you apply this? (optional)"
+                  disabled={isSubmitting}
                   className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
                 />
               </div>
@@ -283,13 +272,13 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   onChange={handleChange}
                   rows="3"
                   placeholder="Clarification needed? (optional)"
+                  disabled={isSubmitting}
                   className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all outline-none resize-none"
                 />
               </div>
             </div>
           </div>
 
-          {/* Recommendation Buttons */}
           <div className="bg-slate-900 p-8 rounded-[32px] text-white">
             <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-6 text-center opacity-80">
               Would you recommend this sermon?
@@ -301,9 +290,10 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   setFormData(prev => ({ ...prev, wouldRecommend: true }));
                   if (errors.wouldRecommend) setErrors(prev => ({ ...prev, wouldRecommend: '' }));
                 }}
+                disabled={isSubmitting}
                 className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   formData.wouldRecommend === true ? 'bg-[#8B1A1A] text-white shadow-lg' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
+                } disabled:opacity-50`}
               >
                 Yes, Definitely!
               </button>
@@ -313,9 +303,10 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   setFormData(prev => ({ ...prev, wouldRecommend: false }));
                   if (errors.wouldRecommend) setErrors(prev => ({ ...prev, wouldRecommend: '' }));
                 }}
+                disabled={isSubmitting}
                 className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   formData.wouldRecommend === false ? 'bg-[#8B1A1A] text-white shadow-lg' : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
+                } disabled:opacity-50`}
               >
                 Not Really
               </button>
@@ -324,7 +315,6 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Preferences & Submit */}
         <div className="pt-8 border-t border-slate-100 space-y-8">
           {!isAnonymous && (
             <label className="flex items-center gap-4 cursor-pointer group bg-slate-50 p-4 rounded-2xl transition-all hover:bg-slate-100">
@@ -334,6 +324,7 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   name="allowFollowUp"
                   checked={formData.allowFollowUp}
                   onChange={handleChange}
+                  disabled={isSubmitting}
                   className="peer h-6 w-6 opacity-0 absolute cursor-pointer"
                 />
                 <div className="h-6 w-6 border-2 border-slate-300 rounded-lg bg-white peer-checked:bg-[#8B1A1A] peer-checked:border-[#8B1A1A] transition-all flex items-center justify-center">
@@ -356,7 +347,8 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             <button
               type="button"
               onClick={onBack}
-              className="flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all order-2 md:order-1"
+              disabled={isSubmitting}
+              className="flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all order-2 md:order-1 disabled:opacity-50"
             >
               Cancel
             </button>

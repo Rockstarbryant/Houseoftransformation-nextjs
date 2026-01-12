@@ -1,7 +1,8 @@
+// ===== ServiceFeedbackForm.jsx - FIXED =====
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader, Info, Send, UserCheck, Star } from 'lucide-react';
+import { ArrowLeft, Loader, Info, Send, UserCheck } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -9,7 +10,6 @@ import StarRating from './StarRating';
 import { feedbackService } from '@/services/api/feedbackService';
 
 const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- LOGIC PRESERVED 100% ---
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,8 +38,8 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     if (!isAnonymous && user) {
       setFormData(prev => ({
         ...prev,
-        name: user.name || '',
-        email: user.email || ''
+        name: user?.name || '',
+        email: user?.email || ''
       }));
     } else if (isAnonymous) {
       setFormData(prev => ({
@@ -126,8 +126,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   return (
     <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
-      
-      {/* Editorial Header */}
       <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative">
         <button
           onClick={onBack}
@@ -144,8 +142,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-12 bg-[#FCFDFD]">
-        
-        {/* Visitor Status Card */}
         <div className="relative group">
           <input
             type="checkbox"
@@ -153,6 +149,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             id="firstTime"
             checked={formData.isFirstTimeVisitor}
             onChange={handleChange}
+            disabled={isSubmitting}
             className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
           />
           <div className={`p-6 rounded-[32px] border-2 transition-all flex items-center gap-4 ${
@@ -170,7 +167,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Identity Section */}
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -178,14 +174,13 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Personal Details</h3>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" className="bg-white" />
-              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional" className="bg-white" />
+              <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" disabled={isSubmitting} className="bg-white" />
+              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional" disabled={isSubmitting} className="bg-white" />
             </div>
-            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="email@example.com" className="bg-white" />
+            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="email@example.com" disabled={isSubmitting} className="bg-white" />
           </div>
         )}
 
-        {/* Detailed Ratings Grid */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-slate-200"></span>
@@ -208,7 +203,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Written Feedback */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-slate-200"></span>
@@ -222,6 +216,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 value={formData.whatWentWell}
                 onChange={handleChange}
                 rows="3"
+                disabled={isSubmitting}
                 placeholder="Tell us what you loved..."
                 className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
               />
@@ -233,6 +228,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 value={formData.improvements}
                 onChange={handleChange}
                 rows="3"
+                disabled={isSubmitting}
                 placeholder="How can we make your next visit better?"
                 className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
               />
@@ -240,7 +236,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Return Recommendation */}
         <div className="bg-slate-900 p-8 rounded-[32px] text-white">
           <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-6 text-center opacity-80">
             Would you return or recommend our church? <span className="text-red-400">*</span>
@@ -254,11 +249,12 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                   setFormData(prev => ({ ...prev, wouldReturn: option }));
                   if (errors.wouldReturn) setErrors(prev => ({ ...prev, wouldReturn: '' }));
                 }}
+                disabled={isSubmitting}
                 className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   formData.wouldReturn === option 
                     ? (option === 'Yes' ? 'bg-emerald-600 shadow-lg' : option === 'Maybe' ? 'bg-amber-600 shadow-lg' : 'bg-red-600 shadow-lg')
                     : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
+                } disabled:opacity-50`}
               >
                 {option}
               </button>
@@ -267,7 +263,6 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           {errors.wouldReturn && <p className="text-red-400 text-[10px] font-bold mt-4 text-center uppercase">{errors.wouldReturn}</p>}
         </div>
 
-        {/* Preferences & Actions */}
         <div className="pt-8 border-t border-slate-100 space-y-8">
           {!isAnonymous && (
             <label className="flex items-center gap-4 cursor-pointer group bg-slate-50 p-4 rounded-2xl">
@@ -276,6 +271,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 name="allowFollowUp"
                 checked={formData.allowFollowUp}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 className="w-5 h-5 accent-[#8B1A1A]"
               />
               <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">Request team follow-up</span>
@@ -289,7 +285,7 @@ const ServiceFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           )}
 
           <div className="flex flex-col md:flex-row gap-3">
-            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-50">Cancel</button>
             <button
               type="submit"
               disabled={isSubmitting}

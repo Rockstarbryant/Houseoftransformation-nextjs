@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader, Send, Mail, User, Phone, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Loader, Send } from 'lucide-react';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import Card from '../common/Card';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
@@ -21,7 +22,6 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // STABILIZED LOGIC: Safe check using optional chaining
     if (!isAnonymous && user) {
       setFormData(prev => ({
         ...prev,
@@ -153,9 +153,10 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
                   setFormData(prev => ({ ...prev, feedbackType: type }));
                   if (errors.feedbackType) setErrors(prev => ({ ...prev, feedbackType: '' }));
                 }}
+                disabled={isSubmitting}
                 className={`py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest border-2 transition-all ${
                   formData.feedbackType === type ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'
-                }`}
+                } disabled:opacity-50`}
               >
                 {type}
               </button>
@@ -164,7 +165,7 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
           {errors.feedbackType && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase">{errors.feedbackType}</p>}
         </div>
 
-        <Input name="subject" label="Subject" value={formData.subject} onChange={handleChange} error={errors.subject} required maxLength={150} />
+        <Input name="subject" label="Subject" value={formData.subject} onChange={handleChange} error={errors.subject} disabled={isSubmitting} required maxLength={150} />
 
         <div className="space-y-2">
           <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Message *</label>
@@ -173,6 +174,8 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
             value={formData.message}
             onChange={handleChange}
             rows="6"
+            disabled={isSubmitting}
+            placeholder="Share your thoughts..."
             className="w-full px-6 py-5 rounded-[30px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-4 focus:ring-slate-900/5 transition-all resize-none shadow-sm"
           />
           <div className="flex justify-between">
@@ -184,7 +187,7 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
         {/* Follow-up Toggle */}
         {!isAnonymous && (
           <label className={`flex items-center gap-4 p-6 rounded-[28px] border-2 transition-all cursor-pointer ${formData.allowFollowUp ? 'border-slate-900 bg-slate-50' : 'border-slate-100'}`}>
-            <input type="checkbox" name="allowFollowUp" checked={formData.allowFollowUp} onChange={handleChange} className="w-5 h-5 accent-slate-900" />
+            <input type="checkbox" name="allowFollowUp" checked={formData.allowFollowUp} onChange={handleChange} disabled={isSubmitting} className="w-5 h-5 accent-slate-900" />
             <div>
               <span className="text-[11px] font-black uppercase tracking-widest block">I would like a response</span>
               <span className="text-[9px] text-slate-400 uppercase font-bold">We will reach out via email</span>
@@ -195,7 +198,7 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
         {errors.submit && <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl text-center">{errors.submit}</div>}
 
         <div className="flex flex-col md:flex-row gap-4 pt-4">
-          <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Cancel</button>
+          <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 disabled:opacity-50">Cancel</button>
           <button type="submit" disabled={isSubmitting} className="flex-[2] py-5 bg-slate-900 text-white rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] transition-all shadow-xl disabled:opacity-50">
             {isSubmitting ? <Loader className="animate-spin" size={20} /> : <><Send size={18} /> Submit Feedback</>}
           </button>
@@ -204,3 +207,5 @@ export const GeneralFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) =>
     </div>
   );
 };
+
+export default GeneralFeedbackForm;

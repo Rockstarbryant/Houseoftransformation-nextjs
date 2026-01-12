@@ -1,13 +1,14 @@
+// ===== PrayerRequestForm.jsx - FIXED =====
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader, Heart, Send, Bell, ShieldCheck, Clock } from 'lucide-react';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import Card from '../common/Card';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- CORE LOGIC PRESERVED ---
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', prayerCategory: '',
     request: '', urgency: 'Regular', shareOnPrayerList: false,
@@ -19,7 +20,7 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   useEffect(() => {
     if (!isAnonymous && user) {
-      setFormData(prev => ({ ...prev, name: user.name || '', email: user.email || '' }));
+      setFormData(prev => ({ ...prev, name: user?.name || '', email: user?.email || '' }));
     } else if (isAnonymous) {
       setFormData(prev => ({
         ...prev, name: '', email: '', phone: '', shareOnPrayerList: false, prayerNeeded: false
@@ -88,8 +89,6 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   return (
     <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 border border-slate-100">
-      
-      {/* Editorial Header */}
       <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] opacity-10 rotate-12">
             <Heart size={280} fill="currentColor" />
@@ -109,8 +108,6 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-12 bg-[#FCFDFD]">
-        
-        {/* Urgency Toggle - High Visual Impact */}
         <div className="space-y-4">
           <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Urgency Level</label>
           <div className="flex p-1.5 bg-slate-100 rounded-[24px] gap-1">
@@ -122,24 +119,19 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 key={u.id}
                 type="button"
                 onClick={() => setFormData(p => ({ ...p, urgency: u.id }))}
+                disabled={isSubmitting}
                 className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all ${
                   formData.urgency === u.id 
                   ? 'bg-white text-slate-900 shadow-sm' 
                   : 'text-slate-400 hover:text-slate-600'
-                }`}
+                } disabled:opacity-50`}
               >
                 <span>{u.icon}</span> {u.label}
               </button>
             ))}
           </div>
-          <p className="text-[10px] italic text-slate-400 text-center px-4">
-            {formData.urgency === 'Urgent' 
-              ? "Urgent requests are forwarded to our intercessory team immediately." 
-              : "Regular requests are included in our weekly communal prayer cycles."}
-          </p>
         </div>
 
-        {/* The Content */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-[#8B1A1A]"></span>
@@ -153,13 +145,15 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 name="prayerCategory"
                 value={formData.prayerCategory}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 appearance-none"
                 >
                 <option value="">Select Category</option>
                 {prayerCategories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+                {errors.prayerCategory && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.prayerCategory}</p>}
             </div>
-            {!isAnonymous && <Input label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." className="bg-white" />}
+            {!isAnonymous && <Input label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." disabled={isSubmitting} className="bg-white" />}
           </div>
 
           <div className="space-y-2">
@@ -169,6 +163,7 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               value={formData.request}
               onChange={handleChange}
               rows="5"
+              disabled={isSubmitting}
               placeholder="What's on your heart?"
               className="w-full px-6 py-5 rounded-[30px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-4 focus:ring-[#8B1A1A]/5 transition-all resize-none shadow-sm"
             />
@@ -179,7 +174,6 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Confidentiality & Interaction */}
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -189,14 +183,14 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             
             <div className="grid md:grid-cols-2 gap-4">
                 <label className={`flex flex-col p-6 rounded-[28px] border-2 transition-all cursor-pointer ${formData.shareOnPrayerList ? 'border-[#8B1A1A] bg-[#8B1A1A]/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-                    <input type="checkbox" name="shareOnPrayerList" checked={formData.shareOnPrayerList} onChange={handleChange} className="sr-only" />
+                    <input type="checkbox" name="shareOnPrayerList" checked={formData.shareOnPrayerList} onChange={handleChange} disabled={isSubmitting} className="sr-only" />
                     <Bell className={formData.shareOnPrayerList ? 'text-[#8B1A1A]' : 'text-slate-300'} size={24} />
                     <span className="text-[11px] font-black uppercase tracking-widest mt-4">Church Prayer List</span>
                     <span className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-tighter">Share with the congregation</span>
                 </label>
 
                 <label className={`flex flex-col p-6 rounded-[28px] border-2 transition-all cursor-pointer ${formData.prayerNeeded ? 'border-[#8B1A1A] bg-[#8B1A1A]/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-                    <input type="checkbox" name="prayerNeeded" checked={formData.prayerNeeded} onChange={handleChange} className="sr-only" />
+                    <input type="checkbox" name="prayerNeeded" checked={formData.prayerNeeded} onChange={handleChange} disabled={isSubmitting} className="sr-only" />
                     <Heart className={formData.prayerNeeded ? 'text-[#8B1A1A]' : 'text-slate-300'} size={24} />
                     <span className="text-[11px] font-black uppercase tracking-widest mt-4">Pray With Me</span>
                     <span className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-tighter">Request a personal follow-up</span>
@@ -207,7 +201,7 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               <div className="grid md:grid-cols-2 gap-6 p-8 bg-slate-50 rounded-[32px] animate-in fade-in slide-in-from-top-2 duration-500">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Contact via</label>
-                  <select name="preferredContact" value={formData.preferredContact} onChange={handleChange} className="w-full bg-transparent border-b-2 border-slate-200 py-2 text-sm font-bold outline-none focus:border-[#8B1A1A]">
+                  <select name="preferredContact" value={formData.preferredContact} onChange={handleChange} disabled={isSubmitting} className="w-full bg-transparent border-b-2 border-slate-200 py-2 text-sm font-bold outline-none focus:border-[#8B1A1A]">
                     <option value="">Select Method</option>
                     <option value="Email">Email</option>
                     <option value="Phone">Phone</option>
@@ -216,19 +210,19 @@ export const PrayerRequestForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> Best Time</label>
-                  <input name="bestTimeToContact" value={formData.bestTimeToContact} onChange={handleChange} placeholder="e.g. Weekday evenings" className="w-full bg-transparent border-b-2 border-slate-200 py-2 text-sm font-bold outline-none focus:border-[#8B1A1A]" />
+                  <input name="bestTimeToContact" value={formData.bestTimeToContact} onChange={handleChange} disabled={isSubmitting} placeholder="e.g. Weekday evenings" className="w-full bg-transparent border-b-2 border-slate-200 py-2 text-sm font-bold outline-none focus:border-[#8B1A1A]" />
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Footer Actions */}
         <div className="pt-8 border-t border-slate-100">
           {errors.submit && <div className="mb-6 p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl text-center">{errors.submit}</div>}
+          {errors.contact && <div className="mb-6 p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl text-center">{errors.contact}</div>}
           
           <div className="flex flex-col md:flex-row gap-4">
-            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all order-2 md:order-1">Cancel</button>
+            <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-50 order-2 md:order-1">Cancel</button>
             <button
               type="submit"
               disabled={isSubmitting}

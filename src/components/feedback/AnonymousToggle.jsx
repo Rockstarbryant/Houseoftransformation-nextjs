@@ -3,7 +3,7 @@
 import React from 'react';
 import { Shield, ShieldOff, Eye, EyeOff, CheckCircle2, Info } from 'lucide-react';
 
-const AnonymousToggle = ({ isAnonymous, onToggle }) => {
+const AnonymousToggle = ({ isAnonymous, onToggle, user }) => {
   return (
     <div 
       className={`rounded-[32px] p-8 border-2 transition-all duration-500 overflow-hidden relative ${

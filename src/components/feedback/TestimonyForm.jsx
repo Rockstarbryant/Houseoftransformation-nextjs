@@ -1,3 +1,4 @@
+// ===== TestimonyForm.jsx - FIXED =====
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,6 @@ import Input from '../common/Input';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
-  // --- LOGIC PRESERVED 100% ---
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,8 +29,8 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     if (!isAnonymous && user) {
       setFormData(prev => ({
         ...prev,
-        name: user.name || '',
-        email: user.email || ''
+        name: user?.name || '',
+        email: user?.email || ''
       }));
     } else if (isAnonymous) {
       setFormData(prev => ({
@@ -102,8 +102,6 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
 
   return (
     <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
-      
-      {/* Editorial Header */}
       <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10">
             <Heart size={200} />
@@ -123,8 +121,6 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
-        
-        {/* Step 1: Identity (Conditional) */}
         {!isAnonymous && formData.sharingPreference === 'public' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center gap-3">
@@ -132,14 +128,13 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Public Identity</h3>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <Input label="Display Name" name="name" value={formData.name} onChange={handleChange} placeholder="How should we address you?" className="bg-white" />
-              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." className="bg-white" />
+              <Input label="Display Name" name="name" value={formData.name} onChange={handleChange} placeholder="How should we address you?" disabled={isSubmitting} className="bg-white" />
+              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." disabled={isSubmitting} className="bg-white" />
             </div>
-            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="bg-white" />
+            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="your@email.com" disabled={isSubmitting} className="bg-white" />
           </div>
         )}
 
-        {/* Step 2: The Story */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-[#8B1A1A]"></span>
@@ -153,6 +148,7 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 name="testimonyType"
                 value={formData.testimonyType}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 appearance-none"
               >
                 <option value="">Select Category</option>
@@ -169,13 +165,14 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
                 max={new Date().toISOString().split('T')[0]}
                 value={formData.testimonyDate}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10"
               />
               {errors.testimonyDate && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.testimonyDate}</p>}
             </div>
           </div>
 
-          <Input label="Testimony Title" name="title" value={formData.title} onChange={handleChange} error={errors.title} placeholder="A short, powerful title (e.g. 'God Restored My Health')" className="bg-white" />
+          <Input label="Testimony Title" name="title" value={formData.title} onChange={handleChange} error={errors.title} placeholder="A short, powerful title (e.g. 'God Restored My Health')" disabled={isSubmitting} className="bg-white" />
 
           <div className="space-y-2">
             <div className="flex justify-between items-end mb-1">
@@ -189,6 +186,7 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
               value={formData.story}
               onChange={handleChange}
               rows="6"
+              disabled={isSubmitting}
               placeholder="Tell us everything... how did God move? How were you changed?"
               className="w-full px-6 py-4 rounded-[32px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
             />
@@ -196,7 +194,6 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Step 3: Sharing Preferences */}
         <div className="space-y-6 pt-6">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-[#8B1A1A]"></span>
@@ -232,11 +229,10 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
         </div>
 
-        {/* Consent Switches */}
         <div className="bg-slate-50 p-6 rounded-[32px] space-y-4">
             <label className="flex items-center gap-4 cursor-pointer group">
               <div className="relative">
-                <input type="checkbox" name="shareInService" checked={formData.shareInService} onChange={handleChange} className="sr-only peer" />
+                <input type="checkbox" name="shareInService" checked={formData.shareInService} onChange={handleChange} disabled={isSubmitting} className="sr-only peer" />
                 <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
                 <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
               </div>
@@ -246,7 +242,7 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             {!isAnonymous && formData.sharingPreference !== 'private' && (
               <label className="flex items-center gap-4 cursor-pointer group pt-2 border-t border-slate-200">
                 <div className="relative">
-                  <input type="checkbox" name="allowContact" checked={formData.allowContact} onChange={handleChange} className="sr-only peer" />
+                  <input type="checkbox" name="allowContact" checked={formData.allowContact} onChange={handleChange} disabled={isSubmitting} className="sr-only peer" />
                   <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
                   <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
                 </div>
@@ -255,7 +251,6 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
             )}
         </div>
 
-        {/* Final Actions */}
         <div className="pt-6 space-y-6">
           {errors.submit && (
             <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl flex items-center gap-2">
@@ -264,7 +259,7 @@ export const TestimonyForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           )}
 
           <div className="flex flex-col md:flex-row gap-3">
-            <button type="button" onClick={onBack} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-50">Cancel</button>
             <button
               type="submit"
               disabled={isSubmitting}
