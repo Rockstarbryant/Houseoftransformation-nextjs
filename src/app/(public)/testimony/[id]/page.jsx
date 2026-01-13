@@ -19,10 +19,13 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function TestimonyDetailPage({ params }) {
-  // Fetch testimony and related testimonies on server
+  console.log('🔍 params.id:', params.id); // Log the ID
+  
   const testimony = await getTestimonyById(params.id);
+  console.log('🔍 testimony result:', testimony); // Log what we got
   
   if (!testimony) {
+    console.log('❌ Testimony not found, calling notFound()');
     notFound();
   }
 
