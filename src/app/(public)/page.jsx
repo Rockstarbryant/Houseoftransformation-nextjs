@@ -1,75 +1,44 @@
-'use client';
+// /app/(public)/page.jsx - Server Component
+import Link from 'next/link';
+import { ArrowRight, Pin, Calendar, Heart } from 'lucide-react';
 
-import React, { useEffect, useState } from 'react';
-import { Pin, ArrowRight, Sparkles, Calendar, Heart } from 'lucide-react';
 import HeroSection from '@/components/home/HeroSection';
 import QuickInfoBar from '@/components/home/QuickInfoBar';
 import AboutSection from '@/components/about/AboutSection';
 import LiveStreamSection from '@/components/home/LiveStreamSection';
 import EventList from '@/components/events/EventList';
 import ServiceAreaCard from '@/components/serviceAreas/ServiceAreaCard';
-import { serviceAreasData } from '@/data/serviceAreas';
 import DonationSection from '@/components/donations/DonationSection';
 import SermonCard from '@/components/sermons/SermonCard';
 import SermonCardText from '@/components/sermons/SermonCardText';
-import Loader from '@/components/common/Loader';
 import Button from '@/components/common/Button';
-import { sermonService } from '@/services/api/sermonService';
-import Link from 'next/link';
 
-export default function HomePage() {
-  const [featuredSermon, setFeaturedSermon] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { serviceAreasData } from '@/data/serviceAreas';
+import { getFeaturedSermon, detectSermonType } from '@/lib/sermons';
 
-  // --- LOGIC PRESERVED EXACTLY ---
-  useEffect(() => {
-    fetchSermons();
-  }, []);
-
-  const fetchSermons = async () => {
-    try {
-      setLoading(true);
-      const data = await sermonService.getSermons({ limit: 100 });
-      const allSermons = data.sermons || [];
-      const pinnedSermon = allSermons.find(s => s.pinned);
-      
-      if (pinnedSermon) {
-        setFeaturedSermon(pinnedSermon);
-      } else {
-        const recentSermon = allSermons
-          .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-        setFeaturedSermon(recentSermon);
-      }
-    } catch (error) {
-      console.error('Error fetching sermons:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const detectSermonType = (sermon) => {
-    if (sermon.videoUrl) return 'video';
-    if (sermon.thumbnail) return 'photo';
-    return 'text';
-  };
+// Server Component - runs on server, fetches data
+export default async function HomePage() {
+  // Fetch sermon data on the server
+  const featuredSermon = await getFeaturedSermon();
+  const sermonType = detectSermonType(featuredSermon);
 
   return (
     <div className="home-page bg-white dark:bg-slate-950 selection:bg-red-100 dark:selection:bg-red-900 transition-colors">
-      {/* 1. Hero & Initial Engagement */}
+      {/* All sections remain exactly the same - just removed client-side fetching */}
+      
       <HeroSection />
       <LiveStreamSection />
       <QuickInfoBar />
 
-      {/* 2. About Preview - Clean Minimalist wrapper */}
+      {/* About Section */}
       <section className="py-12 md:py-20 border-b border-slate-50 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <AboutSection preview />
         </div>
       </section>
 
-      {/* 3. Latest Sermon Section: High-End Feature Layout */}
+      {/* Featured Sermon Section */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 relative overflow-hidden transition-colors">
-        {/* Decorative Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(139,26,26,0.02)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle_at_center,_rgba(139,26,26,0.1)_0%,_transparent_70%)] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative">
@@ -90,16 +59,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-20"><Loader /></div>
-          ) : !featuredSermon ? (
+          {!featuredSermon ? (
             <div className="text-center py-20 bg-slate-50 dark:bg-slate-800 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-700">
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-sm">Waiting for the Word...</p>
             </div>
           ) : (
             <div className="max-w-5xl mx-auto">
               <div className="mb-12 transform hover:scale-[1.01] transition-transform duration-500">
-                {detectSermonType(featuredSermon) === 'text' ? (
+                {sermonType === 'text' ? (
                   <SermonCardText sermon={featuredSermon} />
                 ) : (
                   <SermonCard sermon={featuredSermon} />
@@ -119,7 +86,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. Upcoming Events: Modern Card Container */}
+      {/* Upcoming Events */}
       <section className="py-20 md:py-32 bg-slate-50 dark:bg-slate-800 relative transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 mb-12 md:mb-16">
@@ -143,7 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. Service Areas: Impact Grid */}
+      {/* Service Areas */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16 md:mb-24">
@@ -162,9 +129,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {serviceAreasData.slice(0, 6).map((area) => (
               <div key={area.name} className="hover:-translate-y-2 transition-transform duration-500">
-                <ServiceAreaCard
-                  {...area}
-                />
+                <ServiceAreaCard {...area} />
               </div>
             ))}
           </div>
@@ -179,7 +144,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. Donation Section */}
+      {/* Donation Section */}
       <div className="px-4 md:px-8 pb-12">
         <div className="max-w-7xl mx-auto rounded-[3rem] overflow-hidden shadow-2xl dark:shadow-slate-900">
           <DonationSection />
