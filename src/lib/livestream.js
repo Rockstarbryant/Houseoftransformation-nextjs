@@ -25,10 +25,15 @@ export async function getStreamArchives() {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!res.ok) throw new Error('Failed to fetch archives');
+    if (!res.ok) {
+      console.error('API error:', res.status, res.statusText);
+      return [];
+    }
 
     const data = await res.json();
-    return data.livestreams || [];
+    console.log('Livestreams response:', data);
+    
+    return data.livestreams || data || [];
   } catch (error) {
     console.error('Error fetching archives:', error);
     return [];
