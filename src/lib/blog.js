@@ -8,7 +8,10 @@ export async function getAllBlogs() {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!res.ok) throw new Error('Failed to fetch blogs');
+    if (!res.ok) {
+      console.error('Failed to fetch blogs:', res.status, res.statusText);
+      return [];
+    }
 
     const data = await res.json();
     return data.blogs || [];
@@ -20,17 +23,32 @@ export async function getAllBlogs() {
 
 export async function getBlogById(id) {
   try {
-    const res = await fetch(`${API_URL}/blogs/${id}`, {
+    if (!id) {
+      console.error('No blog ID provided');
+      return null;
+    }
+
+    const url = `${API_URL}/blogs/${id}`;
+    console.log('Fetching blog from:', url);
+
+    const res = await fetch(url, {
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!res.ok) throw new Error('Failed to fetch blog');
+    console.log('API response status:', res.status);
+
+    if (!res.ok) {
+      console.error('Failed to fetch blog:', res.status, res.statusText);
+      return null;
+    }
 
     const data = await res.json();
+    console.log('Blog fetched successfully:', data.blog?.title || 'Unknown');
+    
     return data.blog || data;
   } catch (error) {
-    console.error('Error fetching blog:', error);
+    console.error('Error fetching blog:', error.message);
     return null;
   }
 }
