@@ -3,7 +3,7 @@ import api from './authService';
 export const blogService = {
   async getBlogs() {
     try {
-      const response = await api.get('/blogs');  // ✅ Changed to /blogs
+      const response = await api.get('/blog');  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -12,7 +12,7 @@ export const blogService = {
 
   async getBlogsByCategory(category) {
     try {
-      const response = await api.get(`/blogs?category=${category}`);  // ✅ Changed to /blogs
+      const response = await api.get(`/blog?category=${category}`);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -21,7 +21,7 @@ export const blogService = {
 
   async getBlog(id) {
     try {
-      const response = await api.get(`/blogs/${id}`);  // ✅ Changed to /blogs
+      const response = await api.get(`/blog/${id}`);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -30,7 +30,7 @@ export const blogService = {
 
   async createBlog(blogData) {
     try {
-      const response = await api.post('/blogs', blogData);  // ✅ Changed to /blogs
+      const response = await api.post('/blog', blogData);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -39,7 +39,7 @@ export const blogService = {
 
   async updateBlog(id, blogData) {
     try {
-      const response = await api.put(`/blogs/${id}`, blogData);  // ✅ Changed to /blogs
+      const response = await api.put(`/blog/${id}`, blogData);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -48,7 +48,7 @@ export const blogService = {
 
   async deleteBlog(id) {
     try {
-      const response = await api.delete(`/blogs/${id}`);  // ✅ Changed to /blogs
+      const response = await api.delete(`/blog/${id}`);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -57,7 +57,7 @@ export const blogService = {
 
   async approveBlog(id) {
     try {
-      const response = await api.put(`/blogs/${id}/approve`);  // ✅ Changed to /blogs
+      const response = await api.put(`/blog/${id}/approve`);  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
@@ -66,7 +66,7 @@ export const blogService = {
 
   async getPendingBlogs() {
     try {
-      const response = await api.get('/blogs/pending');  // ✅ Changed to /blogs
+      const response = await api.get('/blog/pending');  // ✅ Reverted to /blog
       return response.data;
     } catch (error) {
       throw error;
