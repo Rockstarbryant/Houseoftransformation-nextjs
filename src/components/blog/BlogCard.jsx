@@ -10,20 +10,14 @@ import { useAuthContext } from '@/context/AuthContext';
 const BlogCard = ({ post, onDelete, onEdit }) => {
   const router = useRouter();
   const { canEditBlog, canDeleteBlog } = useAuthContext();
-/*
+
   // Robust navigation handler
   const handleReadMore = (e) => {
     if (e) e.stopPropagation(); // Stop click from triggering other elements
     router.push(`/blog/${post._id}`);
   };
-*/
-const handleReadMore = (e) => {
-  if (e) e.stopPropagation();
-  // Try different possible ID properties
-  const blogId = post._id || post.id || post.ID;
-  console.log('Blog ID:', blogId, 'Full post:', post);
-  router.push(`/blog/${blogId}`);
-};
+
+
 
   const handleDelete = (e) => {
     e.stopPropagation();
