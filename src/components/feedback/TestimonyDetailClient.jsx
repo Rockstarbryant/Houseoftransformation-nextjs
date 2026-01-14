@@ -28,24 +28,26 @@ export default function TestimonyDetailClient({ testimony, relatedTestimonies })
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans">
       {/* GLOBAL TOP NAV - 100% PRESERVED */}
-      <div className="bg-white border-b border-slate-200 py-6 px-6 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <div className="bg-white border-b border-slate-200 py-4 px-4 md:px-6 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button 
             onClick={() => router.push('/feedback')} 
             className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
           >
             <ArrowLeft size={14} /> Back to Archives
           </button>
-          <div className="flex gap-4">
+          <div className="flex gap-2 md:gap-4">
             <button 
               onClick={handleShare} 
-              className="p-3 bg-slate-50 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
+              className="p-2 md:p-3 bg-slate-50 rounded-lg md:rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center"
+              title="Share testimony"
             >
               <Share2 size={18}/>
             </button>
             <button 
               onClick={() => setLiked(!liked)} 
-              className={`p-3 rounded-xl transition-all ${liked ? 'bg-red-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-red-600'}`}
+              className={`p-2 md:p-3 rounded-lg md:rounded-xl transition-all flex items-center justify-center ${liked ? 'bg-red-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-red-600'}`}
+              title="Like testimony"
             >
               <Heart size={18} className={liked ? 'fill-current' : ''} />
             </button>
@@ -53,7 +55,8 @@ export default function TestimonyDetailClient({ testimony, relatedTestimonies })
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 mt-12">
+      {/* ✅ WIDER CONTAINER - Changed from max-w-4xl to max-w-7xl, reduced px on mobile */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 mt-12">
         {/* HERO SECTION - 100% PRESERVED */}
         <div className="relative bg-slate-900 rounded-[48px] p-10 md:p-16 overflow-hidden mb-12 shadow-2xl shadow-slate-900/20">
           <Quote className="absolute -right-10 -bottom-10 text-white/5 rotate-12" size={300} />
@@ -87,8 +90,9 @@ export default function TestimonyDetailClient({ testimony, relatedTestimonies })
         </div>
 
         {/* STORY BODY - 100% PRESERVED */}
-        <div className="bg-white border-2 border-slate-100 rounded-[48px] p-8 md:p-16 mb-12 shadow-sm">
-          <div className="max-w-2xl mx-auto">
+        {/* ✅ UPDATED: Removed inner max-w-2xl so text fills card width, adjusted padding for mobile */}
+        <div className="bg-white border-2 border-slate-100 rounded-[48px] p-6 md:p-16 mb-12 shadow-sm">
+          <div className="w-full">
             <p className="text-xl md:text-2xl text-slate-800 leading-relaxed font-medium mb-12 first-letter:text-6xl first-letter:font-black first-letter:text-red-600 first-letter:mr-3 first-letter:float-left">
               {testimony.feedbackData?.story || 'Report content not initialized.'}
             </p>
