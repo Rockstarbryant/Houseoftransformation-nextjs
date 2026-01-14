@@ -3,13 +3,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function getTestimonyById(id) {
   try {
-    // ✅ Change endpoint to public route
-    const res = await fetch(`${API_URL}/feedback/testimonies/public/${id}`, {
+    // ✅ Use /public/:id endpoint
+    const res = await fetch(`${API_URL}/feedback/public/${id}`, {
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error('Failed to fetch testimony:', res.status, res.statusText);
+      return null;
+    }
 
     const data = await res.json();
     return data.feedback || null;
