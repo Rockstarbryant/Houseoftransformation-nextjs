@@ -1,84 +1,109 @@
 /**
- * Secure token service using sessionStorage
- * Tokens are NOT persisted across browser restarts (security best practice)
+ * Token Service - Manages JWT storage and retrieval
+ * Stores tokens in localStorage
  */
+
+const TOKEN_KEY = 'supabase_access_token';
+const REFRESH_TOKEN_KEY = 'supabase_refresh_token';
+const TOKEN_EXPIRY_KEY = 'supabase_token_expiry';
 
 export const tokenService = {
   /**
-   * Store raw token string in sessionStorage (memory-based, cleared on browser close)
+   * Store access token
    */
-  setToken(token) {
-    if (!token) return false;
+  setToken: (token) => {
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token);
+    
+    // Decode token to get expiry (optional)
     try {
-      // Store as raw string (not JSON)
-      sessionStorage.setItem('authToken', token);
-      return true;
-    } catch (error) {
-      console.error('Error storing token:', error);
-      return false;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp) {
+        localStorage.setItem(TOKEN_EXPIRY_KEY, payload.exp * 1000);
+      }
+    } catch (e) {
+      console.warn('[TOKEN-SERVICE] Could not decode token expiry');
     }
+    
+    console.log('[TOKEN-SERVICE] Access token stored');
   },
 
   /**
-   * Get raw token string from sessionStorage
+   * Get access token
    */
-  getToken() {
-    try {
-      const token = sessionStorage.getItem('authToken');
-      return token; // Return raw string, not parsed
-    } catch (error) {
-      console.error('Error retrieving token:', error);
-      return null;
+  getToken: () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    // Check if token is expired
+    if (token) {
+      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+      if (expiry && Date.now() > parseInt(expiry)) {
+        console.log('[TOKEN-SERVICE] Token expired, removing');
+        tokenService.removeToken();
+        return null;
+      }
     }
+    
+    return token;
   },
 
   /**
-   * Remove token from sessionStorage
+   * Store refresh token
    */
-  removeToken() {
-    try {
-      sessionStorage.removeItem('authToken');
-      return true;
-    } catch (error) {
-      console.error('Error removing token:', error);
-      return false;
-    }
+  setRefreshToken: (refreshToken) => {
+    if (!refreshToken) return;
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    console.log('[TOKEN-SERVICE] Refresh token stored');
   },
 
   /**
-   * Check if token exists
+   * Get refresh token
    */
-  hasToken() {
-    return !!this.getToken();
+  getRefreshToken: () => {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
   },
 
   /**
-   * Check if token is expired (basic JWT expiry check)
+   * Remove tokens (logout)
    */
-  isTokenExpired() {
-    const token = this.getToken();
-    if (!token) return true;
-
-    try {
-      // JWT format: header.payload.signature
-      const parts = token.split('.');
-      if (parts.length !== 3) return true;
-
-      const decoded = JSON.parse(atob(parts[1]));
-      const expiryTime = decoded.exp * 1000; // Convert to milliseconds
-      return expiryTime < Date.now();
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return true;
-    }
+  removeToken: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXPIRY_KEY);
+    console.log('[TOKEN-SERVICE] Tokens removed');
   },
 
   /**
-   * Clear all auth data
+   * Remove refresh token specifically
    */
-  clearAuth() {
-    this.removeToken();
+  removeRefreshToken: () => {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    console.log('[TOKEN-SERVICE] Refresh token removed');
+  },
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated: () => {
+    return !!tokenService.getToken();
+  },
+
+  /**
+   * Get token expiry time remaining (in seconds)
+   */
+  getTokenExpiryIn: () => {
+    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    if (!expiry) return null;
+    
+    const remaining = parseInt(expiry) - Date.now();
+    return remaining > 0 ? Math.floor(remaining / 1000) : null;
+  },
+
+  /**
+   * Check if token is about to expire (within 5 minutes)
+   */
+  isTokenExpiringSoon: () => {
+    const expiryIn = tokenService.getTokenExpiryIn();
+    return expiryIn !== null && expiryIn < 300; // 5 minutes
   }
 };
-
-export default tokenService;

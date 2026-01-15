@@ -100,11 +100,16 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
     setIsSubmitting(true);
 
     try {
+      console.log('[SIGNUP] Attempting signup for:', formData.email);
+
       const result = await signup(formData);
 
       if (result.success) {
+        console.log('[SIGNUP] Success! User:', result.user.email);
         onSuccess();
       } else {
+        console.error('[SIGNUP] Failed:', result.error);
+        
         // Handle backend validation errors
         if (result.validationErrors && Array.isArray(result.validationErrors)) {
           const fieldErrors = {};
@@ -118,8 +123,15 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         }
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      setGeneralError('An unexpected error occurred. Please try again.');
+      console.error('[SIGNUP] Error:', error);
+      
+      if (error.message?.includes('already exists')) {
+        setGeneralError('Email already registered. Please login instead.');
+      } else if (error.message?.includes('rate limit')) {
+        setGeneralError('Too many signup attempts. Please try again later.');
+      } else {
+        setGeneralError(error.message || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

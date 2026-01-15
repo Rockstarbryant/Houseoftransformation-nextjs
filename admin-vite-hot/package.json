@@ -12,6 +12,7 @@
   "dependencies": {
     "@cloudinary/react": "^1.14.3",
     "@cloudinary/url-gen": "^1.22.0",
+    "@supabase/supabase-js": "^2.90.1",
     "@tiptap/extension-image": "^3.15.3",
     "@tiptap/extension-placeholder": "^3.15.3",
     "@tiptap/extension-text-align": "^3.15.3",
