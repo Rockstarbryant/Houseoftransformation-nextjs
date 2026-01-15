@@ -6,7 +6,7 @@ import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import ApplicationForm from './ApplicationForm';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { volunteerService } from '@/services/api/volunteerService';
 
 // eslint-disable-next-line no-unused-vars
@@ -14,7 +14,7 @@ const CHURCH_EMAIL = 'info@houseoftransformation.or.ke';
 
 const OpportunityCard = ({ opportunity, onApplicationSuccess }) => {
   // eslint-disable-next-line no-unused-vars
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });

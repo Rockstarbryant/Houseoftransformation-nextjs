@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import PermissionAlert from '../common/PermissionAlert';
 import { blogService } from '@/services/api/blogService';
 
 const CreateBlogForm = ({ onBlogCreated, onCancel }) => {
-  const { user, canPostBlog, getAllowedBlogCategories } = useAuthContext();
+  const { user, canPostBlog, getAllowedBlogCategories } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     content: '',

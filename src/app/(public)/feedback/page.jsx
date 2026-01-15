@@ -21,10 +21,10 @@ import SuggestionForm from '@/components/feedback/SuggestionForm';
 import PrayerRequestForm from '@/components/feedback/PrayerRequestForm';
 import GeneralFeedbackForm from '@/components/feedback/GeneralFeedbackForm';
 import TestimoniesWall from '@/components/feedback/TestimoniesWall';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 const FeedbackPage = () => {
-  const { user, isLoading } = useAuthContext();
+  const { user, isLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
 

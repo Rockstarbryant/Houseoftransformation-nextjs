@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, Edit, Trash2, Calendar, Newspaper } from 'lucide-react';
 import Card from '../common/Card';
 import { formatDate, truncateText } from '@/utils/helpers';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 const BlogCard = ({ post, onDelete, onEdit }) => {
   const router = useRouter();
-  const { canEditBlog, canDeleteBlog } = useAuthContext();
-
+  const { canEditBlog, canDeleteBlog } = useAuth();
   // Robust navigation handler
   const handleReadMore = (e) => {
     if (e) e.stopPropagation(); // Stop click from triggering other elements

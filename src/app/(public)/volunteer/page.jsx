@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, AlertCircle, CheckCircle, Clock, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import OpportunityCard from '@/components/volunteer/OpportunityCard';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { volunteerService } from '@/services/api/volunteerService';
 import { volunteerData } from '@/data/volunteers';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 
 const VolunteerPage = () => {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [existingApplication, setExistingApplication] = useState(null);
   const [loading, setLoading] = useState(true);
 

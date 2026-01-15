@@ -1,7 +1,7 @@
 // src/services/api/authService.js
 import axios from 'axios';
 import { tokenService } from './../tokenService';
-import { API_ENDPOINTS } from '../../utils/constants';
+//import { API_ENDPOINTS } from '../../utils/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -108,7 +108,7 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
+/*
 export const authService = {
   async login(email, password) {
     try {
@@ -215,6 +215,6 @@ export const authService = {
       throw error;
     }
   }
-};
+}; */
 
 export default api;

@@ -1,12 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import Loader from './Loader';
 import { useEffect } from 'react';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, isLoading } = useAuthContext();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

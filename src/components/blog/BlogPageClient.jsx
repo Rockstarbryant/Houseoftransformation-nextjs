@@ -5,13 +5,13 @@ import { Plus } from 'lucide-react';
 import BlogList from '@/components/blog/BlogList';
 import BlogFilter from '@/components/blog/BlogFilter';
 import CreateBlogForm from '@/components/blog/CreateBlogForm';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/common/Button';
 
 export default function BlogPageClient({ initialBlogs }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { canPostBlog } = useAuthContext();
+  const { canPostBlog } = useAuth();
 
   const handleBlogCreated = () => {
     setShowCreateForm(false);

@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Edit, Trash2, AlertCircle, Share2, Heart, Calendar, User, Quote } from 'lucide-react';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { blogService } from '@/services/api/blogService';
 import { formatDate } from '@/utils/helpers';
 
 export default function BlogDetailClient({ post }) {
   const router = useRouter();
-  const { canEditBlog, canDeleteBlog } = useAuthContext();
+  const { canEditBlog, canDeleteBlog } = useAuth();
 
   const [deleting, setDeleting] = useState(false);
   const [liked, setLiked] = useState(false);

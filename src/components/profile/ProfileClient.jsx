@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, MapPin, Calendar, Heart, MessageCircle, Edit, ArrowLeft, Share2 } from 'lucide-react';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api/authService';
 import VolunteerProfile from '@/components/volunteer/VolunteerProfile';
 import Card from '@/components/common/Card';
@@ -11,7 +11,7 @@ import Button from '@/components/common/Button';
 
 export default function ProfileClient({ profile: initialProfile, userId }) {
   const router = useRouter();
-  const { user: currentUser } = useAuthContext();
+  const { user: currentUser } = useAuth();
   
   const [profile, setProfile] = useState(initialProfile);
   const [isEditing, setIsEditing] = useState(false);

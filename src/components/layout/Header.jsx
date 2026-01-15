@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, LogIn, LogOut, Settings, ChevronDown } from 'lucide-react';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { CHURCH_INFO } from '@/utils/constants';
 import AuthModal from '@/components/auth/AuthModal';
 import MobileMenu from './MobileMenu';
@@ -17,7 +17,7 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   
-  const { user, isAdmin, logout, isLoading } = useAuthContext();
+  const { user, isAdmin, logout, isLoading } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {

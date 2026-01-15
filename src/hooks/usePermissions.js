@@ -1,7 +1,7 @@
-import { useAuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export const usePermissions = () => {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
 
   // Blog category permissions
   const canPostBlogCategory = (category) => {

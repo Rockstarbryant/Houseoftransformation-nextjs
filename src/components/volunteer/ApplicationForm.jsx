@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
-import { useAuthContext } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Loader } from 'lucide-react';
 import { volunteerService } from '@/services/api/volunteerService';
 
@@ -11,7 +11,7 @@ import { volunteerService } from '@/services/api/volunteerService';
 
 // eslint-disable-next-line no-unused-vars
 const ApplicationForm = ({ ministry, onSubmit, onClose, isSubmitting, onApplicationExists }) => {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     fullName: '',
