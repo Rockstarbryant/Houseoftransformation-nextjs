@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.90.1",
     "axios": "^1.13.2",
     "dompurify": "^3.3.1",
     "js-cookie": "^3.0.5",

@@ -160,7 +160,7 @@ const Header = () => {
             {/* AUTH ACTIONS */}
             <div className="flex items-center gap-4">
               {user ? (
-                <div className="flex items-center gap-3 pl-6 border-l border-white/20">
+                <div className="hidden lg:flex items-center gap-3 pl-6 border-l border-white/20">
                   <div className="hidden md:flex flex-col items-end">
                     <span className="text-[10px] font-black uppercase tracking-wider text-white">{user.name}</span>
                     <span className="text-[9px] font-bold text-white/60 uppercase">{user.role}</span>
