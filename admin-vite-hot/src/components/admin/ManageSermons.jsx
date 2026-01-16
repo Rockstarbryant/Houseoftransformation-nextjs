@@ -20,15 +20,15 @@ const Toast = ({ message, type, onClose }) => {
   };
 
   const colors = {
-    success: "border-emerald-100 bg-emerald-50/90",
-    error: "border-rose-100 bg-rose-50/90",
-    info: "border-blue-100 bg-blue-50/90"
+    success: "border-emerald-100 bg-emerald-50",
+    error: "border-rose-100 bg-rose-50",
+    info: "border-blue-100 bg-blue-50"
   };
 
   return (
-    <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-2xl animate-in slide-in-from-right-10 duration-300 ${colors[type]}`}>
+    <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-xl animate-in slide-in-from-right-10 duration-300 ${colors[type]}`}>
       {icons[type]}
-      <p className="text-sm font-semibold text-gray-800">{message}</p>
+      <p className="text-sm font-bold text-gray-800">{message}</p>
       <button onClick={onClose} className="ml-2 p-1 hover:bg-black/5 rounded-full transition-colors">
         <X size={14} className="text-gray-500" />
       </button>
@@ -45,7 +45,7 @@ const debounce = (func, delay) => {
   };
 };
 
-// ─── Toolbar (Refined Styles) ────────────────────────────────────────────────
+// ─── Toolbar (Modern Styling) ────────────────────────────────────────────────
 const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
   if (!editor) return null;
 
@@ -56,17 +56,17 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
   };
 
   const btnClass = (active) => `
-    p-2 rounded-lg transition-all duration-200 
-    ${active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}
+    p-2 rounded-xl transition-all duration-200 
+    ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'}
   `;
 
   return (
-    <div className="border border-gray-200 rounded-t-2xl bg-gray-50/50 p-3 space-y-3 backdrop-blur-sm">
+    <div className="border border-gray-200 rounded-t-3xl bg-gray-50/50 p-4 space-y-4">
       <div className="flex flex-wrap gap-2 items-center">
         <div className="flex gap-1.5 border-r border-gray-200 pr-3">
           {[
             { action: 'toggleBold', icon: <span className="font-bold">B</span>, active: 'bold' },
-            { action: 'toggleItalic', icon: <span className="italic font-serif">I</span>, active: 'italic' },
+            { action: 'toggleItalic', icon: <span className="italic">I</span>, active: 'italic' },
             { action: 'toggleStrike', icon: <span className="line-through">S</span>, active: 'strike' }
           ].map(btn => (
             <button key={btn.action} onClick={() => editor.chain().focus()[btn.action]().run()} className={btnClass(editor.isActive(btn.active))}>
@@ -78,7 +78,7 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
         <div className="flex gap-1.5 border-r border-gray-200 pr-3">
           {[2, 3].map(level => (
             <button key={level} onClick={() => editor.chain().focus().toggleHeading({ level }).run()} className={btnClass(editor.isActive('heading', { level }))}>
-              <span className="font-black">H{level}</span>
+              <span className="font-bold text-xs">H{level}</span>
             </button>
           ))}
         </div>
@@ -105,15 +105,15 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 items-center border-t border-gray-200 pt-3">
-        <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().chain().focus().undo().run()} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-30">
+      <div className="flex flex-wrap gap-2 items-center border-t border-gray-200 pt-4">
+        <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().chain().focus().undo().run()} className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-30">
           <RotateCcw size={18} />
         </button>
-        <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().chain().focus().redo().run()} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-30">
+        <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().chain().focus().redo().run()} className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-30">
           <RotateCw size={18} />
         </button>
 
-        <label className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-100 transition-all text-sm font-medium ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <label className={`flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 cursor-pointer hover:bg-blue-100 transition-all text-sm font-bold ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
           <ImageIcon size={18} />
           {uploading ? 'Uploading...' : 'Add Image'}
           <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
@@ -121,54 +121,52 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading }) => {
 
         <button
           onClick={() => window.confirm('Clear all content?') && editor.chain().focus().clearContent().run()}
-          className="ml-auto px-4 py-2 rounded-lg text-rose-600 hover:bg-rose-50 text-sm font-semibold transition-colors"
+          className="ml-auto px-5 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold transition-colors"
         >
-          Clear Canvas
+          Clear
         </button>
       </div>
     </div>
   );
 });
 
-// ─── Preview Modal (Sleek Redesign) ──────────────────────────────────────────
+// ─── Preview Modal ──────────────────────────────────────────────────────────
 const PreviewModal = ({ isOpen, onClose, formData, descriptionHtml }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-        <div className="px-8 py-5 border-b flex items-center justify-between bg-white/80 sticky top-0 backdrop-blur-md">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Sermon Preview</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-[32px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="px-8 py-5 border-b flex items-center justify-between bg-white sticky top-0">
+          <h2 className="text-xl font-black text-gray-900">Sermon Preview</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-8 md:p-12 overflow-y-auto space-y-10">
+        <div className="p-8 md:p-12 overflow-y-auto space-y-8">
           <header className="space-y-4">
-            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider">
-              {formData.category}
-            </span>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">{formData.title || 'Untitled Sermon'}</h1>
-            <div className="flex items-center gap-4 text-slate-500 font-medium italic">
+            <div className="flex gap-2">
+               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest">{formData.category}</span>
+            </div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-tight">{formData.title || 'Untitled Sermon'}</h1>
+            <div className="flex items-center gap-4 text-gray-500 font-bold text-sm uppercase tracking-tighter">
               <span>By {formData.pastor || 'Guest Speaker'}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-              <span>{formData.date ? new Date(formData.date).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'Date TBD'}</span>
+              <span>•</span>
+              <span>{formData.date ? new Date(formData.date).toLocaleDateString() : 'Date TBD'}</span>
             </div>
           </header>
 
           {formData.thumbnail && (
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
-              <img 
-                src={typeof formData.thumbnail === 'string' ? formData.thumbnail : URL.createObjectURL(formData.thumbnail)}
-                alt="Thumbnail" 
-                className="w-full h-[400px] object-cover" 
-              />
-            </div>
+            <img 
+              src={typeof formData.thumbnail === 'string' ? formData.thumbnail : URL.createObjectURL(formData.thumbnail)}
+              alt="Thumbnail" 
+              className="w-full h-80 object-cover rounded-[24px] shadow-xl" 
+            />
           )}
 
           {formData.videoUrl && (
-            <div className="aspect-video rounded-3xl overflow-hidden shadow-2xl bg-slate-900 ring-8 ring-slate-100">
+            <div className="aspect-video rounded-[24px] overflow-hidden shadow-xl bg-black">
               <iframe 
                 src={formData.videoUrl.replace('watch?v=', 'embed/')} 
                 className="w-full h-full" 
@@ -177,8 +175,8 @@ const PreviewModal = ({ isOpen, onClose, formData, descriptionHtml }) => {
             </div>
           )}
 
-          <article className="prose prose-indigo prose-lg max-w-none text-slate-700 leading-relaxed">
-            <div dangerouslySetInnerHTML={{ __html: descriptionHtml || '<p class="text-slate-400 italic">No content available...</p>' }} />
+          <article className="prose prose-blue prose-lg max-w-none text-gray-700">
+            <div dangerouslySetInnerHTML={{ __html: descriptionHtml || '<p class="italic text-gray-400">No content available...</p>' }} />
           </article>
         </div>
       </div>
@@ -216,7 +214,7 @@ export default function ManageSermons() {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
-      Image.configure({ HTMLAttributes: { class: 'max-w-full h-auto rounded-2xl my-6 shadow-lg' } }),
+      Image.configure({ HTMLAttributes: { class: 'max-w-full h-auto rounded-2xl my-6 shadow-md' } }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder: 'Share your inspiration...' })
     ],
@@ -258,7 +256,7 @@ export default function ManageSermons() {
       setUploading(true);
       const placeholderId = `upload-${Date.now()}`;
       editorInstance.chain().focus().setImage({ 
-          src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%236366f1"%3EUploading high quality image...%3C/text%3E%3C/svg%3E',
+          src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%233b82f6"%3EUploading...%3C/text%3E%3C/svg%3E',
           alt: placeholderId 
       }).run();
 
@@ -281,11 +279,11 @@ export default function ManageSermons() {
           }
         });
       } else {
-        showNotify('Image upload failed', 'error');
+        showNotify('Upload failed', 'error');
         editorInstance.chain().focus().deleteSelection().run();
       }
     } catch (error) {
-      showNotify('Error uploading image', 'error');
+      showNotify('Upload error', 'error');
       editorInstance.chain().focus().deleteSelection().run();
     } finally {
       setUploading(false);
@@ -304,8 +302,8 @@ export default function ManageSermons() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (sermonType === 'video' && !formData.videoUrl) return showNotify('Please add a video URL', 'info');
-    if (!descriptionHtml || descriptionHtml === '<p></p>') return showNotify('Sermon content is empty', 'info');
+    if (sermonType === 'video' && !formData.videoUrl) return showNotify('Video URL required', 'info');
+    if (!descriptionHtml || descriptionHtml === '<p></p>') return showNotify('Content is empty', 'info');
 
     try {
       setLoading(true);
@@ -313,17 +311,17 @@ export default function ManageSermons() {
 
       if (editingId) {
         await sermonService.updateSermon(editingId, dataToSubmit);
-        showNotify('Sermon updated successfully');
+        showNotify('Sermon updated');
       } else {
         await sermonService.createSermon(dataToSubmit);
-        showNotify('New sermon published');
+        showNotify('Sermon published');
       }
 
       setShowForm(false);
       resetForm();
       fetchSermons();
     } catch (error) {
-      showNotify(error.response?.data?.message || 'Error saving sermon', 'error');
+      showNotify('Save error', 'error');
     } finally {
       setLoading(false);
     }
@@ -343,127 +341,114 @@ export default function ManageSermons() {
     if (window.confirm('Are you sure you want to remove this sermon?')) {
       try {
         await sermonService.deleteSermon(id);
-        showNotify('Sermon permanently removed', 'success');
+        showNotify('Sermon removed');
         fetchSermons();
       } catch (error) {
-        showNotify('Failed to delete', 'error');
+        showNotify('Delete failed', 'error');
       }
     }
   };
 
   const handlePin = async (id) => {
     if (pinnedCount >= 3 && !sermons.find(s => s._id === id)?.pinned) {
-      return showNotify('Limit reached: Only 3 featured sermons allowed', 'info');
+      return showNotify('Limit reached: Max 3 pins', 'info');
     }
     try {
       const sermon = sermons.find(s => s._id === id);
       await sermonService.updateSermon(id, { pinned: !sermon.pinned });
-      showNotify(sermon.pinned ? 'Removed from featured' : 'Marked as featured');
+      showNotify(sermon.pinned ? 'Unpinned' : 'Pinned');
       fetchSermons();
     } catch (error) {
       showNotify('Update failed', 'error');
     }
   };
 
+  // ─── DEFINING FILTERED SERMONS (FIXED) ──────────────────────────────────
+  const pinnedSermons = sermons.filter(s => s.pinned);
+  const otherSermons = sermons.filter(s => !s.pinned);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
+    <div className="min-h-screen bg-gray-50/50 pb-20">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
-              Sermon <span className="text-indigo-600 underline decoration-indigo-200 decoration-8 underline-offset-4">Studio</span>
-            </h1>
-            <p className="text-slate-500 font-medium text-lg">Manage and curate your spiritual library</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Manage Sermons</h1>
+            <p className="text-gray-500 font-bold mt-1 text-sm uppercase tracking-widest">Library Administration</p>
           </div>
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="group flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100 hover:scale-105"
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
           >
-            <Plus size={22} /> Add New Entry
+            <Plus size={20} /> Add Sermon
           </button>
         </header>
 
-        {/* Featured Pulse Bar */}
-        <div className="mb-12 p-1 bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 rounded-3xl">
-          <div className="bg-white/80 backdrop-blur-md px-6 py-4 rounded-[22px] flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-amber-100 rounded-2xl text-amber-600 ring-4 ring-amber-50">
-                <Star size={24} fill="currentColor" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-widest font-black text-amber-700">Featured Spotlight</p>
-                <h3 className="font-bold text-slate-800 text-lg">
-                  {pinnedCount} of 3 Slots Occupied
-                </h3>
-              </div>
+        <div className="mb-10 p-6 bg-white border border-gray-200 rounded-[24px] flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-50 rounded-2xl text-amber-500">
+              <Star size={24} fill="currentColor" />
             </div>
-            <div className="hidden sm:block h-2 w-32 bg-gray-100 rounded-full overflow-hidden">
-               <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${(pinnedCount/3)*100}%` }} />
+            <div>
+              <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">Featured {pinnedCount}/3</h3>
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Homepage Spotlight Slots</p>
             </div>
+          </div>
+          <div className="hidden sm:block h-2 w-32 bg-gray-100 rounded-full overflow-hidden">
+             <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${(pinnedCount/3)*100}%` }} />
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-10 items-start">
-          {/* Form Section */}
+        <div className="grid lg:grid-cols-12 gap-10">
           {showForm && (
-            <div className="lg:col-span-4 animate-in fade-in slide-in-from-left-4 duration-500">
-              <div className="bg-white rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden sticky top-6">
-                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                  <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-                    {editingId ? 'Edit Draft' : 'New Creation'}
+            <div className="lg:col-span-4">
+              <div className="bg-white rounded-[32px] border border-gray-200 shadow-xl overflow-hidden sticky top-6 ring-1 ring-gray-100">
+                <div className="p-6 border-b flex items-center justify-between bg-gray-50/50">
+                  <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.2em]">
+                    {editingId ? 'Edit Draft' : 'New Entry'}
                   </h2>
-                  <button onClick={() => { setShowForm(false); resetForm(); }} className="p-2 hover:bg-white rounded-full transition-colors shadow-sm">
-                    <X size={20} className="text-slate-400" />
+                  <button onClick={() => { setShowForm(false); resetForm(); }} className="p-2 hover:bg-white rounded-full transition-colors">
+                    <X size={20} className="text-gray-400" />
                   </button>
                 </div>
 
-                <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                  {/* Type Selector (Gamified) */}
+                <div className="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
                   <div className="grid grid-cols-3 gap-3">
                     {['text', 'photo', 'video'].map(type => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => setSermonType(type)}
-                        className={`py-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
-                          sermonType === type 
-                            ? 'border-indigo-600 bg-indigo-50/50 shadow-inner' 
-                            : 'border-slate-100 bg-slate-50 hover:border-slate-200'
+                        className={`py-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 ${
+                          sermonType === type ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-50 bg-gray-50 text-gray-400'
                         }`}
                       >
-                        <span className="text-2xl">{type === 'text' ? '📖' : type === 'photo' ? '🖼️' : '🎥'}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{type}</span>
+                        <span className="text-xl">{type === 'text' ? '📖' : type === 'photo' ? '🖼️' : '🎥'}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{type}</span>
                       </button>
                     ))}
                   </div>
 
-                  <div className="space-y-5">
-                    {[
-                      { label: 'Sermon Title', key: 'title', type: 'text', placeholder: 'Enter a powerful title...' },
-                      { label: 'Lead Pastor', key: 'pastor', type: 'text', placeholder: 'Name of speaker...' },
-                      { label: 'Service Date', key: 'date', type: 'date' }
-                    ].map(field => (
-                      <div key={field.key}>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{field.label}</label>
+                  <div className="space-y-4">
+                    {['title', 'pastor', 'date'].map(key => (
+                      <div key={key}>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{key}</label>
                         <input
-                          type={field.type}
-                          value={formData[field.key]}
-                          placeholder={field.placeholder}
-                          onChange={e => setFormData({...formData, [field.key]: e.target.value})}
-                          className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none font-medium"
+                          type={key === 'date' ? 'date' : 'text'}
+                          value={formData[key]}
+                          onChange={e => setFormData({...formData, [key]: e.target.value})}
+                          className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none font-bold text-sm"
                         />
                       </div>
                     ))}
 
                     <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Category</label>
                       <select
                         value={formData.category}
                         onChange={e => setFormData({...formData, category: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none font-medium appearance-none"
+                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm appearance-none outline-none"
                       >
                         <option>Sunday Service</option>
                         <option>Bible Study</option>
@@ -471,14 +456,11 @@ export default function ManageSermons() {
                       </select>
                     </div>
 
-                    {sermonType !== 'text' && (
-                      <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative">
+                    {(sermonType !== 'text') && (
+                      <div className="p-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer text-center relative">
                          <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                         <div className="text-center">
-                            <ImageIcon className="mx-auto mb-2 text-slate-400" size={32} />
-                            <p className="text-sm font-bold text-slate-600">Upload Cover Image</p>
-                            <p className="text-[10px] text-slate-400 uppercase mt-1">PNG, JPG up to 10MB</p>
-                         </div>
+                         <ImageIcon className="mx-auto mb-2 text-gray-300" size={32} />
+                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cover Image</p>
                          {thumbnailPreview && <img src={thumbnailPreview} className="mt-4 rounded-xl h-24 w-full object-cover shadow-lg" />}
                       </div>
                     )}
@@ -488,18 +470,18 @@ export default function ManageSermons() {
                         type="url"
                         value={formData.videoUrl}
                         onChange={e => setFormData({...formData, videoUrl: e.target.value})}
-                        placeholder="Paste YouTube Link..."
-                        className="w-full px-5 py-4 bg-rose-50 border border-rose-100 rounded-2xl focus:ring-4 focus:ring-rose-500/10 outline-none"
+                        placeholder="YouTube URL"
+                        className="w-full px-5 py-4 bg-red-50 border border-red-100 rounded-2xl text-sm font-bold"
                       />
                     )}
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <button type="button" onClick={() => setShowPreview(true)} className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 font-black text-xs uppercase">
-                      <Eye size={16} /> Preview
+                    <button type="button" onClick={() => setShowPreview(true)} className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-[10px] uppercase tracking-widest">
+                      Preview
                     </button>
-                    <button onClick={handleSubmit} disabled={loading || uploading} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-black text-xs uppercase shadow-lg shadow-indigo-100 disabled:opacity-50">
-                      {loading ? 'Processing...' : editingId ? 'Update Entry' : 'Publish Entry'}
+                    <button onClick={handleSubmit} disabled={loading || uploading} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100">
+                      {loading ? 'Wait...' : editingId ? 'Update' : 'Publish'}
                     </button>
                   </div>
                 </div>
@@ -507,45 +489,37 @@ export default function ManageSermons() {
             </div>
           )}
 
-          {/* Feed Section */}
           <div className={showForm ? 'lg:col-span-8' : 'lg:col-span-12'}>
             {showForm && (
-              <div className="mb-12 animate-in slide-in-from-bottom-6 duration-700">
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl overflow-hidden ring-1 ring-slate-100">
-                  <TipTapToolbar editor={editor} onImageUpload={handleImageUpload} uploading={uploading} />
-                  <div className="min-h-[600px] bg-white">
-                    <EditorContent editor={editor} className="prose prose-indigo max-w-none p-10 focus:outline-none" />
-                  </div>
+              <div className="mb-12 bg-white rounded-[32px] border border-gray-200 shadow-xl overflow-hidden ring-1 ring-gray-50">
+                <TipTapToolbar editor={editor} onImageUpload={handleImageUpload} uploading={uploading} />
+                <div className="min-h-[500px]">
+                  <EditorContent editor={editor} className="prose prose-blue max-w-none p-10 focus:outline-none" />
                 </div>
               </div>
             )}
 
             {pinnedSermons.length > 0 && (
-              <section className="mb-16">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <h2 className="text-sm font-black text-amber-600 uppercase tracking-[0.2em] bg-amber-50 px-4 py-2 rounded-full">⭐ Featured Collection</h2>
-                  <div className="h-px flex-1 bg-slate-200" />
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <section className="mb-12">
+                <h2 className="text-xs font-black text-amber-600 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                  <div className="h-px w-8 bg-amber-200" /> Featured Entries
+                </h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {pinnedSermons.map(sermon => <SermonCard key={sermon._id} sermon={sermon} onEdit={handleEdit} onDelete={handleDelete} onPin={handlePin} isPinned />)}
                 </div>
               </section>
             )}
 
             <section>
-              <h2 className="text-2xl font-black text-slate-800 mb-8 px-2 flex items-center justify-between">
-                Sermon Archive
-                <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{otherSermons.length} Items</span>
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                <div className="h-px w-8 bg-gray-200" /> General Archive
               </h2>
               {otherSermons.length === 0 ? (
-                <div className="bg-slate-50 rounded-[40px] border-4 border-dashed border-slate-200 py-24 text-center">
-                  <div className="inline-flex p-8 bg-white rounded-full shadow-xl mb-6">📖</div>
-                  <h3 className="text-2xl font-black text-slate-700">Empty Library</h3>
-                  <p className="text-slate-400 mt-2">Time to add your first spiritual masterpiece.</p>
+                <div className="bg-white rounded-[40px] border-4 border-dashed border-gray-100 py-20 text-center">
+                  <p className="text-gray-300 font-black uppercase tracking-widest">No sermons found</p>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {otherSermons.map(sermon => <SermonCard key={sermon._id} sermon={sermon} onEdit={handleEdit} onDelete={handleDelete} onPin={handlePin} />)}
                 </div>
               )}
@@ -559,57 +533,44 @@ export default function ManageSermons() {
   );
 }
 
-// ─── Sermon Card Component (Premium Redesign) ────────────────────────────────
+// ─── Sermon Card Component ───────────────────────────────────────────────────
 function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
   const typeIcon = { text: '📖', photo: '🖼️', video: '🎥' }[sermon.type] || '📋';
 
   return (
-    <div className="group bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden ring-1 ring-slate-100/50 flex flex-col h-full">
-      <div className="relative h-56 bg-slate-100 overflow-hidden">
+    <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
+      <div className="relative h-48 bg-gray-50">
         {sermon.thumbnail ? (
-          <img src={sermon.thumbnail} alt={sermon.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+          <img src={sermon.thumbnail} alt={sermon.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-7xl opacity-20 grayscale">{typeIcon}</div>
+          <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-20 grayscale">{typeIcon}</div>
         )}
         
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-           <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-800 shadow-sm border border-white">
+           <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-900 border border-white">
               {typeIcon} {sermon.type}
            </span>
-           <button onClick={() => onPin(sermon._id)} className={`p-2.5 rounded-xl backdrop-blur-md transition-all shadow-lg ${isPinned ? 'bg-amber-400 text-white' : 'bg-white/80 text-slate-400 hover:text-amber-500'}`}>
-              <Star size={18} fill={isPinned ? "currentColor" : "none"} />
+           <button onClick={() => onPin(sermon._id)} className={`p-2 rounded-xl backdrop-blur-md shadow-sm transition-all ${isPinned ? 'bg-amber-400 text-white' : 'bg-white/80 text-gray-400 hover:text-amber-500'}`}>
+              <Star size={16} fill={isPinned ? "currentColor" : "none"} />
            </button>
         </div>
       </div>
 
-      <div className="p-7 flex flex-col flex-1">
-        <div className="mb-4">
-           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md mb-2 inline-block">
-             {sermon.category}
-           </span>
-           <h3 className="font-black text-xl text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
-             {sermon.title}
-           </h3>
-        </div>
+      <div className="p-6">
+        <span className="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded mb-2 inline-block">
+          {sermon.category}
+        </span>
+        <h3 className="font-black text-lg text-gray-900 leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
+          {sermon.title}
+        </h3>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-6">{sermon.pastor} • {new Date(sermon.date).toLocaleDateString()}</p>
         
-        <div className="flex items-center gap-3 mb-8">
-           <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-             {sermon.pastor.charAt(0)}
-           </div>
-           <div>
-             <p className="text-sm font-bold text-slate-700 leading-none">{sermon.pastor}</p>
-             <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-tighter">
-                {new Date(sermon.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-             </p>
-           </div>
-        </div>
-
-        <div className="mt-auto flex items-center gap-2">
-           <button onClick={() => onEdit(sermon)} className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
-              Edit Entry
+        <div className="flex gap-2">
+           <button onClick={() => onEdit(sermon)} className="flex-1 py-3 bg-gray-50 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+              Edit
            </button>
-           <button onClick={() => onDelete(sermon._id)} className="p-3 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm">
-              <Trash2 size={18} />
+           <button onClick={() => onDelete(sermon._id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+              <Trash2 size={16} />
            </button>
         </div>
       </div>
