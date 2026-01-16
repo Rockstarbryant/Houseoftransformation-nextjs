@@ -10,39 +10,64 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check authentication on mount and when token changes
   useEffect(() => {
     checkAuth();
   }, []);
+
+  /**
+   * Normalize user data - convert role to consistent object format
+   * Handles: string roles ('admin'), object roles ({_id, name, permissions}), etc.
+   */
+  const normalizeUser = (userData) => {
+    if (!userData) return null;
+
+    let role = null;
+
+    // Extract role information
+    if (userData.role) {
+      if (typeof userData.role === 'string') {
+        // Old format: role is just a string
+        role = {
+          name: userData.role,
+          permissions: []
+        };
+      } else if (typeof userData.role === 'object') {
+        // New format: role is an object
+        role = {
+          id: userData.role._id || userData.role.id,
+          name: userData.role.name || 'member',
+          permissions: Array.isArray(userData.role.permissions) 
+            ? userData.role.permissions 
+            : []
+        };
+      }
+    }
+
+    return {
+      id: userData.id || userData._id,
+      _id: userData._id || userData.id,
+      name: userData.name,
+      email: userData.email,
+      avatar: userData.avatar || null,
+      role: role || { name: 'member', permissions: [] }
+    };
+  };
 
   const checkAuth = async () => {
     try {
       console.log('[AUTH-CONTEXT] Checking authentication...');
       
-      // Check if we have a token stored
       const token = tokenService.getToken();
       
       if (token) {
         console.log('[AUTH-CONTEXT] Token found, verifying...');
         
-        // Verify token with backend
         try {
           const response = await api.get('/auth/verify');
           if (response.data.success && response.data.user) {
             console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
-            
-            // ===== UPDATED: Handle new role object structure =====
-            const userData = {
-              ...response.data.user,
-              role: response.data.user.role ? {
-                id: response.data.user.role._id || response.data.user.role.id,
-                name: response.data.user.role.name,
-                permissions: Array.isArray(response.data.user.role?.permissions) 
-                  ? response.data.user.role.permissions 
-                  : []
-              } : null
-            };
-            
+            const userData = normalizeUser(response.data.user);
+            console.log('[AUTH-CONTEXT] Normalized user:', userData);
             setUser(userData);
           } else {
             console.log('[AUTH-CONTEXT] Token verification failed');
@@ -71,27 +96,15 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('[AUTH-CONTEXT] Login attempt for:', email);
 
-      // Call backend login endpoint
       const response = await api.post('/auth/login', { email, password });
 
       if (response.data.success && response.data.token) {
         console.log('[AUTH-CONTEXT] Login successful');
         
-        // Store tokens
         tokenService.setToken(response.data.token);
         
-        // ===== UPDATED: Handle new role object structure =====
-        const userData = {
-          ...response.data.user,
-          role: response.data.user.role ? {
-            id: response.data.user.role._id || response.data.user.role.id,
-            name: response.data.user.role.name,
-            permissions: Array.isArray(response.data.user.role?.permissions) 
-              ? response.data.user.role.permissions 
-              : []
-          } : null
-        };
-        
+        const userData = normalizeUser(response.data.user);
+        console.log('[AUTH-CONTEXT] User logged in:', userData.email, 'Role:', userData.role?.name);
         setUser(userData);
         
         return { success: true, user: userData };
@@ -101,7 +114,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('[AUTH-CONTEXT] Login error:', error);
       
-      // Handle different error types
       if (error.response?.status === 429) {
         const errorMsg = 'Too many login attempts. Please try again in 15 minutes.';
         setError(errorMsg);
@@ -136,18 +148,12 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const { name, email, password } = userData;
-      
       console.log('[AUTH-CONTEXT] Signup attempt for:', email);
 
-      // Call backend signup endpoint
-      const response = await api.post('/auth/signup', {
-        name,
-        email,
-        password
-      });
+      const response = await api.post('/auth/signup', { name, email, password });
 
       if (response.data.success && response.data.user) {
-        console.log('[AUTH-CONTEXT] Signup successful, user created');
+        console.log('[AUTH-CONTEXT] Signup successful');
         return { success: true, user: response.data.user };
       }
       
@@ -155,7 +161,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('[AUTH-CONTEXT] Signup error:', error);
       
-      // Handle different error types
       if (error.response?.status === 429) {
         const errorMsg = 'Too many signup attempts. Please try again later.';
         setError(errorMsg);
@@ -194,10 +199,8 @@ export const AuthProvider = ({ children }) => {
       try {
         await api.post('/auth/logout');
       } catch (err) {
-        console.warn('[AUTH-CONTEXT] Backend logout failed, clearing local state anyway');
+        console.warn('[AUTH-CONTEXT] Backend logout failed');
       }
-    } catch (err) {
-      console.error('[AUTH-CONTEXT] Logout error:', err);
     } finally {
       tokenService.removeToken();
       setUser(null);
@@ -206,12 +209,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ===== PERMISSION HELPERS - NEW SYSTEM =====
+  // ===== PERMISSION HELPERS =====
 
   /**
-   * Check if user has a specific permission
-   * @param {string} permission - e.g., 'manage:events', 'view:analytics'
+   * Get role name - handles both string and object formats
    */
+  const getRoleName = () => {
+    if (!user || !user.role) return null;
+    return typeof user.role === 'string' ? user.role : user.role.name;
+  };
+
   const hasPermission = (permission) => {
     if (!user || !user.role || !Array.isArray(user.role.permissions)) {
       return false;
@@ -219,50 +226,41 @@ export const AuthProvider = ({ children }) => {
     return user.role.permissions.includes(permission);
   };
 
-  /**
-   * Check if user has ANY of the provided permissions
-   */
   const hasAnyPermission = (permissions) => {
     if (!Array.isArray(permissions)) return false;
     return permissions.some(p => hasPermission(p));
   };
 
-  /**
-   * Check if user has ALL of the provided permissions
-   */
   const hasAllPermissions = (permissions) => {
     if (!Array.isArray(permissions)) return false;
     return permissions.every(p => hasPermission(p));
   };
 
-  /**
-   * Get all user permissions
-   */
   const getPermissions = () => {
     return Array.isArray(user?.role?.permissions) ? user.role.permissions : [];
   };
 
-  /**
-   * Check if user is admin
-   */
   const isAdmin = () => {
-    return user?.role?.name === 'admin';
+    const roleName = getRoleName();
+    return roleName === 'admin';
   };
 
-  /**
-   * Check if user can manage a specific feature
-   * @param {string} feature - e.g., 'events', 'sermons', 'users'
-   */
   const canManage = (feature) => {
     return hasPermission(`manage:${feature}`);
   };
 
-  // ===== LEGACY BLOG PERMISSION HELPERS (for backward compatibility) =====
-  // These are used by ManageBlog and other blog-related components
+  const canViewAnalytics = () => hasPermission('view:analytics');
+  const canManageUsers = () => hasPermission('manage:users');
+  const canManageRoles = () => hasPermission('manage:roles');
+  const canViewAuditLogs = () => hasPermission('view:audit_logs');
+  const canManageSettings = () => hasPermission('manage:settings');
 
-  /**
-   * Check if user can post in a specific blog category
-   */
+  // Blog helpers
+  const canPostBlog = () => {
+    const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
+    return allowedRoles.includes(getRoleName());
+  };
+
   const canPostBlogCategory = (category) => {
     if (!user || !user.role) return false;
 
@@ -276,14 +274,11 @@ export const AuthProvider = ({ children }) => {
       admin: ['testimonies', 'events', 'teaching', 'news']
     };
 
-    const roleName = user.role?.name || user.role;
+    const roleName = getRoleName();
     const allowedCategories = permissions[roleName] || [];
     return allowedCategories.includes(category);
   };
 
-  /**
-   * Get all allowed blog categories for user
-   */
   const getAllowedBlogCategories = () => {
     if (!user || !user.role) return [];
 
@@ -297,52 +292,32 @@ export const AuthProvider = ({ children }) => {
       admin: ['testimonies', 'events', 'teaching', 'news']
     };
 
-    const roleName = user.role?.name || user.role;
+    const roleName = getRoleName();
     return permissions[roleName] || [];
   };
 
-  /**
-   * Check if user can create any blog post
-   */
-  const canPostBlog = () => {
-    const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
-    return allowedRoles.includes(user?.role?.name);
-  };
-
-
-  /**
-   * Check if user can post sermons (pastor/bishop/admin)
-   */
   const canPostSermon = () => {
-    return user && user.role && ['pastor', 'bishop', 'admin'].includes(user.role.name);
+    const roleName = getRoleName();
+    return roleName && ['pastor', 'bishop', 'admin'].includes(roleName);
   };
 
-  /**
-   * Check if user can upload photos (pastor/bishop/admin)
-   */
   const canUploadPhoto = () => {
-    return user && user.role && ['pastor', 'bishop', 'admin'].includes(user.role.name);
+    const roleName = getRoleName();
+    return roleName && ['pastor', 'bishop', 'admin'].includes(roleName);
   };
 
-  /**
-   * Check if user can edit a blog (author or admin)
-   */
   const canEditBlog = (authorId) => {
     if (!user) return false;
-    if (user.role?.name === 'admin') return true;
+    if (isAdmin()) return true;
     return user.id === authorId || user._id === authorId;
   };
 
-  /**
-   * Check if user can delete a blog (author or admin)
-   */
   const canDeleteBlog = (authorId) => {
     if (!user) return false;
-    if (user.role?.name === 'admin') return true;
+    if (isAdmin()) return true;
     return user.id === authorId || user._id === authorId;
   };
 
-  // Context value
   const value = {
     user,
     isLoading,
@@ -351,16 +326,18 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     checkAuth,
-    
-    // Permission helpers
+    getRoleName,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
     getPermissions,
     isAdmin,
     canManage,
-    
-    // Legacy blog helpers (backward compatibility)
+    canViewAnalytics,
+    canManageUsers,
+    canManageRoles,
+    canViewAuditLogs,
+    canManageSettings,
     canPostBlog,
     canPostBlogCategory,
     getAllowedBlogCategories,
@@ -381,10 +358,7 @@ export const useAuthContext = () => {
   const context = useContext(AuthContext);
   
   if (!context) {
-    throw new Error(
-      'useAuthContext must be used within an AuthProvider. ' +
-      'Make sure your component is wrapped with <AuthProvider> in App.jsx'
-    );
+    throw new Error('useAuthContext must be used within an AuthProvider');
   }
   
   return context;

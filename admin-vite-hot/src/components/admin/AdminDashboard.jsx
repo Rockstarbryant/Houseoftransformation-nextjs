@@ -146,6 +146,37 @@ const AdminDashboard = () => {
     ? Math.round((realStats.activeMembers / realStats.totalMembers) * 100) 
     : 0;
 
+    // Add this function at the top of AdminDashboard.jsx, before the component
+
+const getRoleDisplayName = (role) => {
+  // Handle different role formats
+  if (!role) return 'Unknown';
+  
+  // If role is an object
+  if (typeof role === 'object') {
+    return (role.name || 'member').replace('_', ' ').toUpperCase();
+  }
+  
+  // If role is a string
+  return role.replace('_', ' ').toUpperCase();
+};
+
+const getRoleColor = (role) => {
+  const roleName = typeof role === 'object' ? role.name : role;
+  
+  const colors = {
+    'admin': 'bg-purple-100 text-purple-800',
+    'pastor': 'bg-red-100 text-red-800',
+    'bishop': 'bg-orange-100 text-orange-800',
+    'volunteer': 'bg-indigo-100 text-indigo-800',
+    'usher': 'bg-blue-100 text-blue-800',
+    'worship_team': 'bg-pink-100 text-pink-800',
+    'member': 'bg-gray-100 text-gray-800'
+  };
+  
+  return colors[roleName] || 'bg-gray-100 text-gray-800';
+};
+
   return (
     <div className="w-full mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
@@ -456,30 +487,26 @@ const AdminDashboard = () => {
               </div>
 
               <div className="space-y-3">
-                {recentUsers.map((user) => (
-                  <div key={user._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                        user.role === 'pastor' ? 'bg-red-100 text-red-800' :
-                        user.role === 'volunteer' ? 'bg-indigo-100 text-indigo-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {user.role.replace('_', ' ').toUpperCase()}
-                      </span>
-                      <p className="text-xs text-gray-500 mt-1">Joined {formatDate(user.createdAt)}</p>
-                    </div>
-                  </div>
-                ))}
+                // To:
+{recentUsers.map((user) => (
+  <div key={user._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+        {user.name.charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">{user.name}</p>
+        <p className="text-sm text-gray-600">{user.email}</p>
+      </div>
+    </div>
+    <div className="text-right">
+      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>
+        {getRoleDisplayName(user.role)}
+      </span>
+      <p className="text-xs text-gray-500 mt-1">Joined {formatDate(user.createdAt)}</p>
+    </div>
+  </div>
+))}
               </div>
             </Card>
           )}
