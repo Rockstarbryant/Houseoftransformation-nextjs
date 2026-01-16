@@ -30,7 +30,20 @@ export const AuthProvider = ({ children }) => {
           const response = await api.get('/auth/verify');
           if (response.data.success && response.data.user) {
             console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
-            setUser(response.data.user);
+            
+            // ===== UPDATED: Handle new role object structure =====
+            const userData = {
+              ...response.data.user,
+              role: response.data.user.role ? {
+                id: response.data.user.role._id || response.data.user.role.id,
+                name: response.data.user.role.name,
+                permissions: Array.isArray(response.data.user.role?.permissions) 
+                  ? response.data.user.role.permissions 
+                  : []
+              } : null
+            };
+            
+            setUser(userData);
           } else {
             console.log('[AUTH-CONTEXT] Token verification failed');
             tokenService.removeToken();
@@ -38,40 +51,8 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (err) {
           console.error('[AUTH-CONTEXT] Verification error:', err);
-          // Token might be expired - try to refresh it
-          try {
-            const refreshToken = tokenService.getRefreshToken();
-            if (refreshToken) {
-              console.log('[AUTH-CONTEXT] Attempting token refresh...');
-              const refreshResponse = await api.post('/auth/refresh', { 
-                refreshToken 
-              });
-              
-              if (refreshResponse.data.token) {
-                tokenService.setToken(refreshResponse.data.token);
-                if (refreshResponse.data.refreshToken) {
-                  tokenService.setRefreshToken(refreshResponse.data.refreshToken);
-                }
-                
-                // Retry verification
-                const retryResponse = await api.get('/auth/verify');
-                if (retryResponse.data.user) {
-                  setUser(retryResponse.data.user);
-                  console.log('[AUTH-CONTEXT] Token refreshed and user verified');
-                }
-              } else {
-                tokenService.removeToken();
-                setUser(null);
-              }
-            } else {
-              tokenService.removeToken();
-              setUser(null);
-            }
-          } catch (refreshErr) {
-            console.error('[AUTH-CONTEXT] Token refresh failed:', refreshErr);
-            tokenService.removeToken();
-            setUser(null);
-          }
+          tokenService.removeToken();
+          setUser(null);
         }
       } else {
         console.log('[AUTH-CONTEXT] No token found');
@@ -90,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('[AUTH-CONTEXT] Login attempt for:', email);
 
-      // Call backend login endpoint (which uses Supabase)
+      // Call backend login endpoint
       const response = await api.post('/auth/login', { email, password });
 
       if (response.data.success && response.data.token) {
@@ -98,14 +79,22 @@ export const AuthProvider = ({ children }) => {
         
         // Store tokens
         tokenService.setToken(response.data.token);
-        if (response.data.refreshToken) {
-          tokenService.setRefreshToken(response.data.refreshToken);
-        }
         
-        // Set user
-        setUser(response.data.user);
+        // ===== UPDATED: Handle new role object structure =====
+        const userData = {
+          ...response.data.user,
+          role: response.data.user.role ? {
+            id: response.data.user.role._id || response.data.user.role.id,
+            name: response.data.user.role.name,
+            permissions: Array.isArray(response.data.user.role?.permissions) 
+              ? response.data.user.role.permissions 
+              : []
+          } : null
+        };
         
-        return { success: true, user: response.data.user };
+        setUser(userData);
+        
+        return { success: true, user: userData };
       }
       
       return { success: false, error: response.data.message || 'Login failed' };
@@ -150,7 +139,7 @@ export const AuthProvider = ({ children }) => {
       
       console.log('[AUTH-CONTEXT] Signup attempt for:', email);
 
-      // Call backend signup endpoint (which creates in Supabase + MongoDB)
+      // Call backend signup endpoint
       const response = await api.post('/auth/signup', {
         name,
         email,
@@ -159,13 +148,6 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success && response.data.user) {
         console.log('[AUTH-CONTEXT] Signup successful, user created');
-        
-        // Auto-login after signup (optional)
-        // You can uncomment this if you want to auto-login users after signup
-        // const loginResult = await login(email, password);
-        // return loginResult;
-
-        // Or just return success and let them login manually
         return { success: true, user: response.data.user };
       }
       
@@ -183,7 +165,6 @@ export const AuthProvider = ({ children }) => {
       if (error.response?.status === 400) {
         const data = error.response.data;
         
-        // Check for email already exists
         if (data.message?.includes('already') || data.message?.includes('Email')) {
           const errorMsg = 'Email already registered. Please login instead.';
           setError(errorMsg);
@@ -210,7 +191,6 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('[AUTH-CONTEXT] Logout initiated');
       
-      // Call backend logout endpoint
       try {
         await api.post('/auth/logout');
       } catch (err) {
@@ -219,31 +199,73 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('[AUTH-CONTEXT] Logout error:', err);
     } finally {
-      // Always clear local state
       tokenService.removeToken();
-      tokenService.removeRefreshToken();
       setUser(null);
       setError(null);
       console.log('[AUTH-CONTEXT] User logged out');
     }
   };
 
-  // Permission helper methods (unchanged)
-  const canPostBlog = () => {
-    return user && [
-      'member', 
-      'volunteer', 
-      'usher', 
-      'worship_team', 
-      'pastor', 
-      'bishop', 
-      'admin'
-    ].includes(user.role);
+  // ===== PERMISSION HELPERS - NEW SYSTEM =====
+
+  /**
+   * Check if user has a specific permission
+   * @param {string} permission - e.g., 'manage:events', 'view:analytics'
+   */
+  const hasPermission = (permission) => {
+    if (!user || !user.role || !Array.isArray(user.role.permissions)) {
+      return false;
+    }
+    return user.role.permissions.includes(permission);
   };
 
+  /**
+   * Check if user has ANY of the provided permissions
+   */
+  const hasAnyPermission = (permissions) => {
+    if (!Array.isArray(permissions)) return false;
+    return permissions.some(p => hasPermission(p));
+  };
+
+  /**
+   * Check if user has ALL of the provided permissions
+   */
+  const hasAllPermissions = (permissions) => {
+    if (!Array.isArray(permissions)) return false;
+    return permissions.every(p => hasPermission(p));
+  };
+
+  /**
+   * Get all user permissions
+   */
+  const getPermissions = () => {
+    return Array.isArray(user?.role?.permissions) ? user.role.permissions : [];
+  };
+
+  /**
+   * Check if user is admin
+   */
+  const isAdmin = () => {
+    return user?.role?.name === 'admin';
+  };
+
+  /**
+   * Check if user can manage a specific feature
+   * @param {string} feature - e.g., 'events', 'sermons', 'users'
+   */
+  const canManage = (feature) => {
+    return hasPermission(`manage:${feature}`);
+  };
+
+  // ===== LEGACY BLOG PERMISSION HELPERS (for backward compatibility) =====
+  // These are used by ManageBlog and other blog-related components
+
+  /**
+   * Check if user can post in a specific blog category
+   */
   const canPostBlogCategory = (category) => {
-    if (!user) return false;
-    
+    if (!user || !user.role) return false;
+
     const permissions = {
       member: ['testimonies'],
       volunteer: ['testimonies', 'events'],
@@ -253,13 +275,18 @@ export const AuthProvider = ({ children }) => {
       bishop: ['testimonies', 'events', 'teaching', 'news'],
       admin: ['testimonies', 'events', 'teaching', 'news']
     };
-    
-    return (permissions[user.role] || []).includes(category);
+
+    const roleName = user.role?.name || user.role;
+    const allowedCategories = permissions[roleName] || [];
+    return allowedCategories.includes(category);
   };
 
+  /**
+   * Get all allowed blog categories for user
+   */
   const getAllowedBlogCategories = () => {
-    if (!user) return [];
-    
+    if (!user || !user.role) return [];
+
     const permissions = {
       member: ['testimonies'],
       volunteer: ['testimonies', 'events'],
@@ -269,32 +296,50 @@ export const AuthProvider = ({ children }) => {
       bishop: ['testimonies', 'events', 'teaching', 'news'],
       admin: ['testimonies', 'events', 'teaching', 'news']
     };
-    
-    return permissions[user.role] || [];
+
+    const roleName = user.role?.name || user.role;
+    return permissions[roleName] || [];
   };
 
+  /**
+   * Check if user can create any blog post
+   */
+  const canPostBlog = () => {
+    const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
+    return allowedRoles.includes(user?.role?.name);
+  };
+
+
+  /**
+   * Check if user can post sermons (pastor/bishop/admin)
+   */
   const canPostSermon = () => {
-    return user && ['pastor', 'bishop', 'admin'].includes(user.role);
+    return user && user.role && ['pastor', 'bishop', 'admin'].includes(user.role.name);
   };
 
+  /**
+   * Check if user can upload photos (pastor/bishop/admin)
+   */
   const canUploadPhoto = () => {
-    return user && ['pastor', 'bishop', 'admin'].includes(user.role);
+    return user && user.role && ['pastor', 'bishop', 'admin'].includes(user.role.name);
   };
 
+  /**
+   * Check if user can edit a blog (author or admin)
+   */
   const canEditBlog = (authorId) => {
     if (!user) return false;
-    if (user.role === 'admin') return true;
+    if (user.role?.name === 'admin') return true;
     return user.id === authorId || user._id === authorId;
   };
 
+  /**
+   * Check if user can delete a blog (author or admin)
+   */
   const canDeleteBlog = (authorId) => {
     if (!user) return false;
-    if (user.role === 'admin') return true;
+    if (user.role?.name === 'admin') return true;
     return user.id === authorId || user._id === authorId;
-  };
-
-  const isAdmin = () => {
-    return user && user.role === 'admin';
   };
 
   // Context value
@@ -306,14 +351,23 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     checkAuth,
+    
+    // Permission helpers
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    getPermissions,
+    isAdmin,
+    canManage,
+    
+    // Legacy blog helpers (backward compatibility)
     canPostBlog,
     canPostBlogCategory,
     getAllowedBlogCategories,
     canPostSermon,
     canUploadPhoto,
     canEditBlog,
-    canDeleteBlog,
-    isAdmin
+    canDeleteBlog
   };
 
   return (

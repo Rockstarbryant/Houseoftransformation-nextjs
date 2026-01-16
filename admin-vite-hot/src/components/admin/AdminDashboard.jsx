@@ -74,7 +74,7 @@ const AdminDashboard = () => {
       const users = usersResponse.data?.users || [];
       const activeCount = users.filter(u => u.isActive).length;
       const inactiveCount = users.filter(u => !u.isActive).length;
-      const adminCount = users.filter(u => u.role === 'admin').length;
+      const adminCount = users.filter(u => u.role?.name === 'admin').length;
       const recentUsersData = users
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);

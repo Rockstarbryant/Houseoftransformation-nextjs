@@ -243,17 +243,23 @@ const ManageUsers = () => {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const getRoleColor = (role) => ({
+  const getRoleColor = (roleObj) => {
+  const roleName = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+  return {
     admin: 'bg-purple-100 text-purple-800', pastor: 'bg-red-100 text-red-800',
     bishop: 'bg-blue-100 text-blue-800', usher: 'bg-green-100 text-green-800',
     worship_team: 'bg-yellow-100 text-yellow-800', volunteer: 'bg-indigo-100 text-indigo-800',
     member: 'bg-gray-100 text-gray-800'
-  }[role] || 'bg-gray-100 text-gray-800');
+  }[roleName] || 'bg-gray-100 text-gray-800';
+};
 
-  const getRoleIcon = (role) => ({
+  const getRoleIcon = (roleObj) => {
+  const role = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+  return {
     admin: '👑', pastor: '👨‍⛪', bishop: '👨‍⛪', worship_team: '🎵',
     usher: '🤝', volunteer: '❤️', member: '👤'
-  }[role] || '👤');
+  }[role] || '👤';
+};
 
   const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
@@ -377,7 +383,9 @@ const ManageUsers = () => {
                     <div className="flex-grow">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-bold text-blue-900">{user.name}</h3>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>{user.role.replace('_', ' ').toUpperCase()}</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>
+  {(typeof user.role === 'string' ? user.role : user.role?.name)?.replace('_', ' ').toUpperCase()}
+</span>
                         <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>{user.isActive ? 'Active' : 'Inactive'}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">@{user.username || user.email.split('@')[0]}</p>
@@ -390,7 +398,7 @@ const ManageUsers = () => {
                     </div>
                     <div className="ml-4 flex-shrink-0 w-48">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Change Role</label>
-                      <select value={user.role} onChange={(e) => updateRole(user._id, e.target.value)} className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:border-blue-900 text-sm font-semibold">
+                      <select value={typeof user.role === 'string' ? user.role : user.role?.name || ''} onChange={(e) => updateRole(user._id, e.target.value)} className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:border-blue-900 text-sm font-semibold">
                         {roles.slice(1).map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
                     </div>
@@ -446,7 +454,7 @@ const ManageUsers = () => {
                     <td className="p-4"><input type="checkbox" checked={selectedUsers.has(user._id)} onChange={() => handleSelectUser(user._id)} className="w-4 h-4 rounded" /></td>
                     <td className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center text-white text-sm font-bold">{user.name.charAt(0)}</div><div><p className="font-semibold text-blue-900">{user.name}</p><p className="text-xs text-gray-500">@{user.username || user.email.split('@')[0]}</p></div></div></td>
                     <td className="p-4 text-sm text-gray-700">{user.email}</td>
-                    <td className="p-4"><select value={user.role} onChange={(e) => updateRole(user._id, e.target.value)} className="px-3 py-1 rounded-lg border-2 border-gray-300 focus:border-blue-900 text-sm font-semibold">{roles.slice(1).map(r => <option key={r.value} value={r.value}>{r.label}</option>)}</select></td>
+                    <td className="p-4"><select value={typeof user.role === 'string' ? user.role : user.role?.name || ''} onChange={(e) => updateRole(user._id, e.target.value)} className="px-3 py-1 rounded-lg border-2 border-gray-300 focus:border-blue-900 text-sm font-semibold">{roles.slice(1).map(r => <option key={r.value} value={r.value}>{r.label}</option>)}</select></td>
                     <td className="p-4 text-sm text-gray-700">{user.phone || '-'}</td>
                     <td className="p-4"><span className={`text-xs font-bold px-3 py-1 rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>{user.isActive ? 'Active' : 'Inactive'}</span></td>
                     <td className="p-4 text-sm text-gray-700">{formatDate(user.createdAt)}</td>

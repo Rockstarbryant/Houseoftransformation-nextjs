@@ -162,15 +162,19 @@ const Header = () => {
               {user ? (
                 <div className="hidden lg:flex items-center gap-3 pl-6 border-l border-white/20">
                   <div className="hidden md:flex flex-col items-end">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-white">{user.name}</span>
-                    <span className="text-[9px] font-bold text-white/60 uppercase">{user.role}</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                      {user?.name || 'User'}
+                    </span>
+                    <span className="text-[9px] font-bold text-white/60 uppercase">
+                      {user?.role?.name || 'Member'}
+                    </span>
                   </div>
                   
                   {userIsAdmin && (
                     <Link
-                      href="/admin"
+                      href="/portal"
                       className="size-9 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-[#8B1A1A] transition-all shadow-lg"
-                      title="Admin Dashboard"
+                      title="Portal Dashboard"
                     >
                       <Settings size={16} />
                     </Link>
@@ -204,13 +208,16 @@ const Header = () => {
         </div>
 
         <MobileMenu
-          isOpen={isMobileMenuOpen}
-          user={user}
-          isAdmin={userIsAdmin}
-          onAuthClick={handleAuthClick}
-          onLogout={handleLogout}
-          onClose={() => setIsMobileMenuOpen(false)}
-        />
+  isOpen={isMobileMenuOpen}
+  user={{
+    ...user,
+    role: user?.role?.name || 'Member' // Pass only the role name
+  }}
+  isAdmin={userIsAdmin}
+  onAuthClick={handleAuthClick}
+  onLogout={handleLogout}
+  onClose={() => setIsMobileMenuOpen(false)}
+/>
       </nav>
 
       {showAuthModal && (

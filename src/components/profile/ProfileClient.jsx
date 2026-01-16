@@ -57,7 +57,7 @@ export default function ProfileClient({ profile: initialProfile, userId }) {
 
   const isOwnProfile = currentUser && (currentUser.id === userId || currentUser._id === userId);
   const canEdit = isOwnProfile || (currentUser && currentUser.role === 'admin');
-
+/*
   const getRoleColor = (role) => {
     const colors = {
       admin: 'bg-purple-100 text-purple-800 border-purple-300',
@@ -69,7 +69,20 @@ export default function ProfileClient({ profile: initialProfile, userId }) {
       member: 'bg-gray-100 text-gray-800 border-gray-300'
     };
     return colors[profile.role] || 'bg-gray-100 text-gray-800 border-gray-300';
-  };
+  }; */
+
+  const getRoleColor = (role) => {
+  const roleName = typeof role === 'string' ? role : role?.name;
+  return {
+    admin: 'bg-purple-100 text-purple-800',
+    pastor: 'bg-red-100 text-red-800',
+    bishop: 'bg-blue-100 text-blue-800',
+    usher: 'bg-green-100 text-green-800',
+    worship_team: 'bg-yellow-100 text-yellow-800',
+    volunteer: 'bg-indigo-100 text-indigo-800',
+    member: 'bg-gray-100 text-gray-800'
+  }[roleName] || 'bg-gray-100 text-gray-800';
+};
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -137,9 +150,9 @@ export default function ProfileClient({ profile: initialProfile, userId }) {
 
               {/* Role Badge */}
               <div className="mb-6">
-                <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold border-2 ${getRoleColor(profile.role)}`}>
-                  {profile.role.replace('_', ' ').toUpperCase()}
-                </span>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(profile.role)}`}>
+  {(typeof profile.role === 'string' ? profile.role : profile.role?.name)?.replace('_', ' ').toUpperCase()}
+</span>
               </div>
 
               {/* Stats */}

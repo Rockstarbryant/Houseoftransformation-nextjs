@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Phone, Calendar, Users, Loader, Shield, User } from 'lucide-react';
 
+
 export default function UsersClient({ initialUsers }) {
   const [users] = useState(initialUsers);
   const [filteredUsers, setFilteredUsers] = useState(initialUsers);
@@ -114,7 +115,7 @@ export default function UsersClient({ initialUsers }) {
               {/* Bio / Stats - 100% PRESERVED */}
               <div className="mb-6 flex-1">
                 <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-4 ${getRoleStyle(user.role)}`}>
-                  {user.role.replace('_', ' ')}
+                 {user?.role?.name || 'Member'}
                 </span>
                 {user.bio && (
                   <p className="text-xs leading-relaxed text-slate-500 line-clamp-2 italic">

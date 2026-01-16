@@ -13,12 +13,18 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check authentication on mount
+  // Check authentication on mount - client-side only
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
+    // Only run in browser
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return false;
+    }
+
     try {
       console.log('[AUTH-CONTEXT] Checking authentication...');
 
@@ -28,17 +34,33 @@ export const AuthProvider = ({ children }) => {
         console.log('[AUTH-CONTEXT] Token found, verifying...');
 
         try {
-          const response = await api.get('/auth/verify');
+          const response = await api.get('/auth/me');
           if (response.data.success && response.data.user) {
             console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
-            setUser(response.data.user);
+            
+            // Ensure role.permissions is always an array
+            const userData = {
+              ...response.data.user,
+              role: {
+                ...response.data.user.role,
+                permissions: Array.isArray(response.data.user.role?.permissions) 
+                  ? response.data.user.role.permissions 
+                  : []
+              }
+            };
+            
+            setUser(userData);
+            return true;
           } else {
             console.log('[AUTH-CONTEXT] Token verification failed');
             tokenService.removeToken();
             setUser(null);
+            return false;
           }
         } catch (err) {
           console.error('[AUTH-CONTEXT] Verification error:', err);
+          
+          // Try to refresh token
           try {
             const refreshToken = tokenService.getRefreshToken();
             if (refreshToken) {
@@ -51,32 +73,43 @@ export const AuthProvider = ({ children }) => {
                   tokenService.setRefreshToken(refreshResponse.data.refreshToken);
                 }
 
-                const retryResponse = await api.get('/auth/verify');
+                const retryResponse = await api.get('/auth/me');
                 if (retryResponse.data.user) {
-                  setUser(retryResponse.data.user);
+                  const userData = {
+                    ...retryResponse.data.user,
+                    role: {
+                      ...retryResponse.data.user.role,
+                      permissions: Array.isArray(retryResponse.data.user.role?.permissions) 
+                        ? retryResponse.data.user.role.permissions 
+                        : []
+                    }
+                  };
+                  setUser(userData);
                   console.log('[AUTH-CONTEXT] Token refreshed and user verified');
+                  return true;
                 }
-              } else {
-                tokenService.removeToken();
-                setUser(null);
               }
-            } else {
-              tokenService.removeToken();
-              setUser(null);
             }
+            
+            tokenService.removeToken();
+            setUser(null);
+            return false;
           } catch (refreshErr) {
             console.error('[AUTH-CONTEXT] Token refresh failed:', refreshErr);
             tokenService.removeToken();
             setUser(null);
+            return false;
           }
         }
       } else {
         console.log('[AUTH-CONTEXT] No token found');
         setUser(null);
+        return false;
       }
     } catch (err) {
       console.error('[AUTH-CONTEXT] Auth check error:', err);
       setUser(null);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -97,9 +130,18 @@ export const AuthProvider = ({ children }) => {
           tokenService.setRefreshToken(response.data.refreshToken);
         }
 
-        setUser(response.data.user);
+        const userData = {
+          ...response.data.user,
+          role: {
+            ...response.data.user.role,
+            permissions: Array.isArray(response.data.user.role?.permissions) 
+              ? response.data.user.role.permissions 
+              : []
+          }
+        };
 
-        return { success: true, user: response.data.user };
+        setUser(userData);
+        return { success: true, user: userData };
       }
 
       return { success: false, error: response.data.message || 'Login failed' };
@@ -151,7 +193,6 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success && response.data.user) {
         console.log('[AUTH-CONTEXT] Signup successful, user created');
-
         return { success: true, user: response.data.user };
       }
 
@@ -212,64 +253,68 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Permission helpers
+  const hasPermission = (permission) => {
+    if (!user || !user.role || !Array.isArray(user.role.permissions)) {
+      return false;
+    }
+    return user.role.permissions.includes(permission);
+  };
+
+  const hasAnyPermission = (permissions) => {
+    if (!Array.isArray(permissions)) return false;
+    return permissions.some(p => hasPermission(p));
+  };
+
+  const hasAllPermissions = (permissions) => {
+    if (!Array.isArray(permissions)) return false;
+    return permissions.every(p => hasPermission(p));
+  };
+
+  const getPermissions = () => {
+    return Array.isArray(user?.role?.permissions) ? user.role.permissions : [];
+  };
+
+  const isAdmin = () => {
+    return user?.role?.name === 'admin';
+  };
+
+  const canManage = (feature) => {
+    return hasPermission(`manage:${feature}`);
+  };
+
+  // Blog-specific helpers
   const canPostBlog = () => {
-    return user && ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'].includes(user.role);
-  };
-
-  const canPostBlogCategory = (category) => {
     if (!user) return false;
-
-    const permissions = {
-      member: ['testimonies'],
-      volunteer: ['testimonies', 'events'],
-      usher: ['testimonies', 'events'],
-      worship_team: ['testimonies', 'events'],
-      pastor: ['testimonies', 'events', 'teaching', 'news'],
-      bishop: ['testimonies', 'events', 'teaching', 'news'],
-      admin: ['testimonies', 'events', 'teaching', 'news']
-    };
-
-    return (permissions[user.role] || []).includes(category);
-  };
-
-  const getAllowedBlogCategories = () => {
-    if (!user) return [];
-
-    const permissions = {
-      member: ['testimonies'],
-      volunteer: ['testimonies', 'events'],
-      usher: ['testimonies', 'events'],
-      worship_team: ['testimonies', 'events'],
-      pastor: ['testimonies', 'events', 'teaching', 'news'],
-      bishop: ['testimonies', 'events', 'teaching', 'news'],
-      admin: ['testimonies', 'events', 'teaching', 'news']
-    };
-
-    return permissions[user.role] || [];
-  };
-
-  const canPostSermon = () => {
-    return user && ['pastor', 'bishop', 'admin'].includes(user.role);
-  };
-
-  const canUploadPhoto = () => {
-    return user && ['pastor', 'bishop', 'admin'].includes(user.role);
+    const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
+    return allowedRoles.includes(user.role?.name);
   };
 
   const canEditBlog = (authorId) => {
     if (!user) return false;
-    if (user.role === 'admin') return true;
-    return user.id === authorId || user._id === authorId;
+    // Can edit if: you're the author OR you're an admin
+    return user._id === authorId || isAdmin();
   };
 
   const canDeleteBlog = (authorId) => {
     if (!user) return false;
-    if (user.role === 'admin') return true;
-    return user.id === authorId || user._id === authorId;
+    // Can delete if: you're the author OR you're an admin
+    return user._id === authorId || isAdmin();
   };
 
-  const isAdmin = () => {
-    return user && user.role === 'admin';
+  const getAllowedBlogCategories = () => {
+    if (!user) return [];
+    
+    const categoryPermissions = {
+      'member': ['testimonies'],
+      'volunteer': ['testimonies', 'events'],
+      'usher': ['testimonies', 'events'],
+      'worship_team': ['testimonies', 'events'],
+      'pastor': ['testimonies', 'events', 'teaching', 'news'],
+      'bishop': ['testimonies', 'events', 'teaching', 'news'],
+      'admin': ['testimonies', 'events', 'teaching', 'news']
+    };
+    
+    return categoryPermissions[user.role?.name] || [];
   };
 
   const value = {
@@ -280,14 +325,23 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     checkAuth,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    getPermissions,
+    isAdmin,
+    canManage,
+    canViewAnalytics: () => hasPermission('view:analytics'),
+    canManageEvents: () => hasPermission('manage:events'),
+    canManageSermons: () => hasPermission('manage:sermons'),
+    canManageUsers: () => hasPermission('manage:users'),
+    canManageRoles: () => hasPermission('manage:roles'),
     canPostBlog,
-    canPostBlogCategory,
-    getAllowedBlogCategories,
-    canPostSermon,
-    canUploadPhoto,
+    canPostSermon: () => hasPermission('manage:sermons'),
+    canUploadPhoto: () => hasPermission('manage:gallery'),
     canEditBlog,
     canDeleteBlog,
-    isAdmin
+    getAllowedBlogCategories
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -297,7 +351,7 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider. Make sure your app is wrapped with <AuthProvider>');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
 
   return context;

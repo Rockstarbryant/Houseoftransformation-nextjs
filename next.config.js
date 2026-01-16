@@ -5,29 +5,40 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        port: '',           // optional, leave empty
-        pathname: '/**',    // allow any path under your Cloudinary account
+        port: '',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'pbs.twimg.com',
         pathname: '/**',
       },
-      // Optional: if you have other sources (YouTube thumbnails, etc.)
-       {
-         protocol: 'https',
-         hostname: 'img.youtube.com',
-         pathname: '/**',
-       },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        pathname: '/**',
+      },
+      // ✅ ADD THIS - via.placeholder.com
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        pathname: '/**',
+      },
+      // ✅ ADD THIS - images.unsplash.com (if you use it)
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
     ],
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   },
   eslint: {
-  ignoreDuringBuilds: true,
-},
-rewrites: async () => {
+    ignoreDuringBuilds: true,
+  },
+  rewrites: async () => {
     return {
       beforeFiles: [
         {
