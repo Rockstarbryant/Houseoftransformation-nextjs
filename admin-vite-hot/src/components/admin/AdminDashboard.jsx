@@ -146,23 +146,33 @@ const AdminDashboard = () => {
     ? Math.round((realStats.activeMembers / realStats.totalMembers) * 100) 
     : 0;
 
-    // Add this function at the top of AdminDashboard.jsx, before the component
+   // Add these utility functions at the TOP of AdminDashboard.jsx, BEFORE the component definition
 
 const getRoleDisplayName = (role) => {
-  // Handle different role formats
   if (!role) return 'Unknown';
   
-  // If role is an object
-  if (typeof role === 'object') {
-    return (role.name || 'member').replace('_', ' ').toUpperCase();
+  // If role is an object with a 'name' property
+  if (typeof role === 'object' && role.name) {
+    return role.name.replace(/_/g, ' ').toUpperCase();
   }
   
   // If role is a string
-  return role.replace('_', ' ').toUpperCase();
+  if (typeof role === 'string') {
+    return role.replace(/_/g, ' ').toUpperCase();
+  }
+  
+  return 'Unknown';
 };
 
 const getRoleColor = (role) => {
-  const roleName = typeof role === 'object' ? role.name : role;
+  // Extract role name from object or string
+  let roleName = '';
+  
+  if (typeof role === 'object' && role.name) {
+    roleName = role.name;
+  } else if (typeof role === 'string') {
+    roleName = role;
+  }
   
   const colors = {
     'admin': 'bg-purple-100 text-purple-800',
@@ -474,42 +484,48 @@ const getRoleColor = (role) => {
           </div>
 
           {/* Recently Joined Members */}
-          {recentUsers.length > 0 && (
-            <Card>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <TrendingUp size={24} className="text-blue-600" />
-                  Recently Joined Members
-                </h3>
-                <Link to="/users" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  View All →
-                </Link>
-              </div>
+          {/* Recently Joined Members */}
+{recentUsers.length > 0 && (
+  <Card>
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <TrendingUp size={24} className="text-blue-600" />
+        Recently Joined Members
+      </h3>
+      <Link to="/users" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        View All →
+      </Link>
+    </div>
 
-              <div className="space-y-3">
-                // To:
-{recentUsers.map((user) => (
-  <div key={user._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-        {user.name.charAt(0).toUpperCase()}
-      </div>
-      <div>
-        <p className="font-semibold text-gray-900">{user.name}</p>
-        <p className="text-sm text-gray-600">{user.email}</p>
-      </div>
-    </div>
-    <div className="text-right">
-      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>
-        {getRoleDisplayName(user.role)}
-      </span>
-      <p className="text-xs text-gray-500 mt-1">Joined {formatDate(user.createdAt)}</p>
-    </div>
-  </div>
-))}
+    <div className="space-y-3">
+      {recentUsers.map((user) => {
+        // Safely extract role display info
+        const roleDisplay = getRoleDisplayName(user.role);
+        const roleColor = getRoleColor(user.role);
+        
+        return (
+          <div key={user._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {user.name.charAt(0).toUpperCase()}
               </div>
-            </Card>
-          )}
+              <div>
+                <p className="font-semibold text-gray-900">{user.name}</p>
+                <p className="text-sm text-gray-600">{user.email}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${roleColor}`}>
+                {roleDisplay}
+              </span>
+              <p className="text-xs text-gray-500 mt-1">Joined {formatDate(user.createdAt)}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </Card>
+)}
         </>
       )}
     </div>
