@@ -74,10 +74,19 @@ const AdminDashboard = () => {
       const users = usersResponse.data?.users || [];
       const activeCount = users.filter(u => u.isActive).length;
       const inactiveCount = users.filter(u => !u.isActive).length;
-      const adminCount = users.filter(u => u.role?.name === 'admin').length;
       const recentUsersData = users
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
+      // Helper to safely get role name
+      const getRoleName = (role) => {
+      if (!role) return null;
+      if (typeof role === 'string') return role;
+      if (typeof role === 'object' && role.name) return role.name;
+      return null;
+      };
+
+      const adminCount = users.filter(u => getRoleName(u.role) === 'admin').length;
+      
 
       // Process volunteer stats
       const volunteerStats = volStatsData.success && volStatsData.stats ? {

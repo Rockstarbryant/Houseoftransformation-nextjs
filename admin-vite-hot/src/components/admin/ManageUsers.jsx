@@ -31,21 +31,48 @@ const ManageUsers = () => {
 
   const [notificationData, setNotificationData] = useState({ role: 'all', message: '' });
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState([
+  { value: 'all', label: 'All Roles' }
+  ]);
 
-  /*
-  const roles = [
-    { value: 'all', label: 'All Roles' },
-    { value: 'admin', label: 'Admin' },
-    { value: 'pastor', label: 'Pastor' },
-    { value: 'bishop', label: 'Bishop' },
-    { value: 'usher', label: 'Usher' },
-    { value: 'worship_team', label: 'Worship Team' },
-    { value: 'volunteer', label: 'Volunteer' },
-    { value: 'member', label: 'Member' }
-  ];
-   */
+    // Fetch available roles from backend
+    useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+      const response = await api.get('/roles');
+      if (response.data.success && response.data.roles) {
+        const roleOptions = response.data.roles.map(role => ({
+          value: role.name,
+          label: role.name.replace(/_/g, ' ').toUpperCase()
+        }));
+        setAvailableRoles([
+          { value: 'all', label: 'All Roles' },
+          ...roleOptions
+        ]);
+        }
+        } catch (err) {
+        console.error('Failed to fetch roles:', err);
+        // Fallback to hardcoded roles
+        setAvailableRoles([
+        { value: 'all', label: 'All Roles' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'pastor', label: 'Pastor' },
+        { value: 'bishop', label: 'Bishop' },
+        { value: 'usher', label: 'Usher' },
+        { value: 'worship_team', label: 'Worship Team' },
+        { value: 'volunteer', label: 'Volunteer' },
+        { value: 'member', label: 'Member' }
+        ]);
+        }
+          };
+  
+          fetchRoles();
+          }, []);
 
-  const fetchUsers = useCallback(async (page = 1) => {
+        // Use availableRoles instead of hardcoded roles
+      const roles = availableRoles;
+
+    const fetchUsers = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       setError(null);

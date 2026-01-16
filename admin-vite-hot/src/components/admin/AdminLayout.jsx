@@ -119,7 +119,11 @@ const AdminLayout = ({ children }) => {
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{user?.name || 'Admin'}</p>
-                  <p className="text-xs text-blue-200 truncate">{user?.role || 'Administrator'}</p>
+                  <p className="text-xs text-blue-200 truncate">
+                      {typeof user?.role === 'object' && user?.role?.name 
+                       ? user.role.name.replace(/_/g, ' ').toUpperCase()
+                     : user?.role || 'Administrator'}
+                  </p>
                 </div>
               </div>
 

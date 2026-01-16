@@ -6,7 +6,7 @@ import api from '../services/api/authService';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined); // undefined = we don't know yet, null = confirmed no user
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,134 +15,180 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
-   * Normalize user data - convert role to consistent object format
-   * Handles: string roles ('admin'), object roles ({_id, name, permissions}), etc.
-   */
-  const normalizeUser = (userData) => {
-    if (!userData) return null;
+ * Normalize user data - convert role to consistent object format
+ * Handles: string roles ('admin'), object roles ({_id, name, permissions}), etc.
+ */
+const normalizeUser = (userData) => {
+  if (!userData) {
+    console.log('[AUTH-CONTEXT] normalizeUser: userData is null/undefined');
+    return null;
+  }
 
-    let role = null;
+  console.log('[AUTH-CONTEXT] normalizeUser: Input userData:', JSON.stringify(userData, null, 2));
 
-    // Extract role information
-    if (userData.role) {
-      if (typeof userData.role === 'string') {
-        // Old format: role is just a string
-        role = {
-          name: userData.role,
-          permissions: []
-        };
-      } else if (typeof userData.role === 'object') {
-        // New format: role is an object
-        role = {
-          id: userData.role._id || userData.role.id,
-          name: userData.role.name || 'member',
-          permissions: Array.isArray(userData.role.permissions) 
-            ? userData.role.permissions 
-            : []
-        };
-      }
+  let role = null;
+
+  // Extract role information
+  if (userData.role) {
+    if (typeof userData.role === 'string') {
+      // Old format: role is just a string
+      console.log('[AUTH-CONTEXT] normalizeUser: Role is string:', userData.role);
+      role = {
+        name: userData.role,
+        permissions: []
+      };
+    } else if (typeof userData.role === 'object' && userData.role !== null) {
+      // New format: role is an object
+      console.log('[AUTH-CONTEXT] normalizeUser: Role is object:', userData.role);
+      role = {
+        id: userData.role.id || userData.role._id,
+        name: userData.role.name || 'member',
+        permissions: Array.isArray(userData.role.permissions) 
+          ? userData.role.permissions 
+          : []
+      };
     }
+  } else {
+    console.warn('[AUTH-CONTEXT] normalizeUser: No role found, defaulting to member');
+    role = { name: 'member', permissions: [] };
+  }
 
-    return {
-      id: userData.id || userData._id,
-      _id: userData._id || userData.id,
-      name: userData.name,
-      email: userData.email,
-      avatar: userData.avatar || null,
-      role: role || { name: 'member', permissions: [] }
-    };
+  const normalized = {
+    id: userData.id || userData._id,
+    _id: userData._id || userData.id,
+    name: userData.name,
+    email: userData.email,
+    avatar: userData.avatar || null,
+    role: role
   };
 
+  console.log('[AUTH-CONTEXT] normalizeUser: Output normalized user:', JSON.stringify(normalized, null, 2));
+  
+  return normalized;
+};
+
+  /**
+   * Check authentication status
+   */
+
   const checkAuth = async () => {
-    try {
-      console.log('[AUTH-CONTEXT] Checking authentication...');
+  try {
+    console.log('[AUTH-CONTEXT] ========== Starting Auth Check ==========');
+    
+    const token = tokenService.getToken();
+    
+    if (token) {
+      console.log('[AUTH-CONTEXT] Token found, verifying...');
+      console.log('[AUTH-CONTEXT] Token (first 20 chars):', token.substring(0, 20) + '...');
       
-      const token = tokenService.getToken();
-      
-      if (token) {
-        console.log('[AUTH-CONTEXT] Token found, verifying...');
+      try {
+        console.log('[AUTH-CONTEXT] Calling /auth/verify endpoint...');
+        const response = await api.get('/auth/verify');
         
-        try {
-          const response = await api.get('/auth/verify');
-          if (response.data.success && response.data.user) {
-            console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
-            const userData = normalizeUser(response.data.user);
-            console.log('[AUTH-CONTEXT] Normalized user:', userData);
-            setUser(userData);
-          } else {
-            console.log('[AUTH-CONTEXT] Token verification failed');
-            tokenService.removeToken();
-            setUser(null);
-          }
-        } catch (err) {
-          console.error('[AUTH-CONTEXT] Verification error:', err);
+        console.log('[AUTH-CONTEXT] Verify response received');
+        console.log('[AUTH-CONTEXT] Response status:', response.status);
+        console.log('[AUTH-CONTEXT] Response data:', JSON.stringify(response.data, null, 2));
+        
+        if (response.data.success && response.data.user) {
+          console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
+          console.log('[AUTH-CONTEXT] Raw user data from API:', response.data.user);
+          
+          const userData = normalizeUser(response.data.user);
+          
+          console.log('[AUTH-CONTEXT] Normalized user data:', userData);
+          console.log('[AUTH-CONTEXT] User role after normalization:', userData?.role);
+          
+          setUser(userData);
+          console.log('[AUTH-CONTEXT] ✅ User state updated successfully');
+        } else {
+          console.log('[AUTH-CONTEXT] Token verification failed - invalid response');
+          console.log('[AUTH-CONTEXT] Response:', response.data);
           tokenService.removeToken();
           setUser(null);
         }
-      } else {
-        console.log('[AUTH-CONTEXT] No token found');
+      } catch (err) {
+        console.error('[AUTH-CONTEXT] ❌ Verification error:', err);
+        console.error('[AUTH-CONTEXT] Error details:', {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data
+        });
+        tokenService.removeToken();
         setUser(null);
       }
-    } catch (err) {
-      console.error('[AUTH-CONTEXT] Auth check error:', err);
+    } else {
+      console.log('[AUTH-CONTEXT] No token found in storage');
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    console.error('[AUTH-CONTEXT] ❌ Auth check error:', err);
+    setUser(null);
+  } finally {
+    setIsLoading(false);
+    console.log('[AUTH-CONTEXT] ========== Auth Check Complete ==========');
+    console.log('[AUTH-CONTEXT] isLoading set to false');
+  }
+};
 
   const login = async (email, password) => {
-    setError(null);
-    try {
-      console.log('[AUTH-CONTEXT] Login attempt for:', email);
+  setError(null);
+  try {
+    console.log('[AUTH-CONTEXT] ========== Login Attempt ==========');
+    console.log('[AUTH-CONTEXT] Login attempt for:', email);
 
-      const response = await api.post('/auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
 
-      if (response.data.success && response.data.token) {
-        console.log('[AUTH-CONTEXT] Login successful');
-        
-        tokenService.setToken(response.data.token);
-        
-        const userData = normalizeUser(response.data.user);
-        console.log('[AUTH-CONTEXT] User logged in:', userData.email, 'Role:', userData.role?.name);
-        setUser(userData);
-        
-        return { success: true, user: userData };
-      }
+    console.log('[AUTH-CONTEXT] Login response received');
+    console.log('[AUTH-CONTEXT] Response data:', JSON.stringify(response.data, null, 2));
+
+    if (response.data.success && response.data.token) {
+      console.log('[AUTH-CONTEXT] Login successful');
       
-      return { success: false, error: response.data.message || 'Login failed' };
-    } catch (error) {
-      console.error('[AUTH-CONTEXT] Login error:', error);
+      tokenService.setToken(response.data.token);
+      console.log('[AUTH-CONTEXT] Token saved to storage');
       
-      if (error.response?.status === 429) {
-        const errorMsg = 'Too many login attempts. Please try again in 15 minutes.';
-        setError(errorMsg);
-        return { success: false, error: errorMsg, rateLimited: true };
-      }
+      const userData = normalizeUser(response.data.user);
+      console.log('[AUTH-CONTEXT] User logged in:', userData.email, 'Role:', userData.role);
       
-      if (error.response?.status === 401) {
-        const errorMsg = 'Invalid email or password';
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-      }
+      setUser(userData);
+      console.log('[AUTH-CONTEXT] ✅ User state updated');
       
-      if (error.response?.status === 400) {
-        const data = error.response.data;
-        if (data.errors && Array.isArray(data.errors)) {
-          const fieldErrors = data.errors.map(e => ({ 
-            field: e.param, 
-            message: e.msg 
-          }));
-          return { success: false, validationErrors: fieldErrors };
-        }
-        return { success: false, error: data.message || 'Login failed' };
-      }
-      
-      const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+      return { success: true, user: userData };
+    }
+    
+    return { success: false, error: response.data.message || 'Login failed' };
+  } catch (error) {
+    console.error('[AUTH-CONTEXT] ❌ Login error:', error);
+    
+    if (error.response?.status === 429) {
+      const errorMsg = 'Too many login attempts. Please try again in 15 minutes.';
+      setError(errorMsg);
+      return { success: false, error: errorMsg, rateLimited: true };
+    }
+    
+    if (error.response?.status === 401) {
+      const errorMsg = 'Invalid email or password';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }
-  };
+    
+    if (error.response?.status === 400) {
+      const data = error.response.data;
+      if (data.errors && Array.isArray(data.errors)) {
+        const fieldErrors = data.errors.map(e => ({ 
+          field: e.param, 
+          message: e.msg 
+        }));
+        return { success: false, validationErrors: fieldErrors };
+      }
+      return { success: false, error: data.message || 'Login failed' };
+    }
+    
+    const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+    setError(errorMsg);
+    return { success: false, error: errorMsg };
+  }
+};
 
   const signup = async (userData) => {
     setError(null);
