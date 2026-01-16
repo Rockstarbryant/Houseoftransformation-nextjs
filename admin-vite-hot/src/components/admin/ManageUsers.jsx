@@ -32,6 +32,7 @@ const ManageUsers = () => {
   const [notificationData, setNotificationData] = useState({ role: 'all', message: '' });
   const [showNotificationModal, setShowNotificationModal] = useState(false);
 
+  /*
   const roles = [
     { value: 'all', label: 'All Roles' },
     { value: 'admin', label: 'Admin' },
@@ -42,6 +43,7 @@ const ManageUsers = () => {
     { value: 'volunteer', label: 'Volunteer' },
     { value: 'member', label: 'Member' }
   ];
+   */
 
   const fetchUsers = useCallback(async (page = 1) => {
     try {
@@ -243,21 +245,46 @@ const ManageUsers = () => {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const getRoleColor = (roleObj) => {
+  const getRoleDisplayName = (roleObj) => {
+  if (!roleObj) return 'Member';
+  
   const roleName = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+  if (!roleName) return 'Member';
+  
+  return roleName.replace(/_/g, ' ').toUpperCase();
+};
+
+const getRoleColor = (roleObj) => {
+  if (!roleObj) return 'bg-gray-100 text-gray-800';
+  
+  const roleName = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+  if (!roleName) return 'bg-gray-100 text-gray-800';
+  
   return {
-    admin: 'bg-purple-100 text-purple-800', pastor: 'bg-red-100 text-red-800',
-    bishop: 'bg-blue-100 text-blue-800', usher: 'bg-green-100 text-green-800',
-    worship_team: 'bg-yellow-100 text-yellow-800', volunteer: 'bg-indigo-100 text-indigo-800',
-    member: 'bg-gray-100 text-gray-800'
+    'admin': 'bg-purple-100 text-purple-800',
+    'pastor': 'bg-red-100 text-red-800',
+    'bishop': 'bg-blue-100 text-blue-800',
+    'usher': 'bg-green-100 text-green-800',
+    'worship_team': 'bg-yellow-100 text-yellow-800',
+    'volunteer': 'bg-indigo-100 text-indigo-800',
+    'member': 'bg-gray-100 text-gray-800'
   }[roleName] || 'bg-gray-100 text-gray-800';
 };
 
-  const getRoleIcon = (roleObj) => {
+const getRoleIcon = (roleObj) => {
+  if (!roleObj) return '👤';
+  
   const role = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+  if (!role) return '👤';
+  
   return {
-    admin: '👑', pastor: '👨‍⛪', bishop: '👨‍⛪', worship_team: '🎵',
-    usher: '🤝', volunteer: '❤️', member: '👤'
+    'admin': '👑',
+    'pastor': '👨‍⛪',
+    'bishop': '👨‍⛪',
+    'worship_team': '🎵',
+    'usher': '🤝',
+    'volunteer': '❤️',
+    'member': '👤'
   }[role] || '👤';
 };
 
@@ -383,9 +410,9 @@ const ManageUsers = () => {
                     <div className="flex-grow">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-bold text-blue-900">{user.name}</h3>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>
-  {(typeof user.role === 'string' ? user.role : user.role?.name)?.replace('_', ' ').toUpperCase()}
-</span>
+                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(user.role)}`}>
+                          {getRoleDisplayName(user.role)}
+                        </span>
                         <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>{user.isActive ? 'Active' : 'Inactive'}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">@{user.username || user.email.split('@')[0]}</p>
