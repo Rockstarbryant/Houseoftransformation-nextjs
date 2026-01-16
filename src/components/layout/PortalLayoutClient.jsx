@@ -9,12 +9,12 @@ import PortalHeader from '@/components/layout/PortalHeader';
 
 /**
  * Portal Layout Client Component
- * Handles client-side interactivity
+ * Handles client-side interactivity with mobile-responsive sidebar
  */
 export default function PortalLayoutClient({ children }) {
   const { user, isLoading, checkAuth } = useAuth();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile
 
   useEffect(() => {
     // Re-verify user on client side
@@ -26,6 +26,25 @@ export default function PortalLayoutClient({ children }) {
       });
     }
   }, [user, isLoading, checkAuth, router]);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      // Auto-open sidebar on desktop (md breakpoint = 768px)
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Set initial state based on screen size
+    handleResize();
+
+    // Listen for window resize
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Show loading while checking auth
   if (isLoading) {
@@ -48,15 +67,16 @@ export default function PortalLayoutClient({ children }) {
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar - Mobile: Slides in from left, Desktop: Always visible */}
       <aside className={`
         fixed md:static left-0 top-0 h-full z-40
-        transition-all duration-300 ease-in-out
-        ${sidebarOpen ? 'w-64' : 'w-20'}
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        w-64
         bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
       `}>
         <PortalSidebar 
-          isOpen={sidebarOpen} 
+          isOpen={true} 
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
       </aside>
@@ -64,7 +84,7 @@ export default function PortalLayoutClient({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex-shrink-0">
           <PortalHeader 
             onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
             sidebarOpen={sidebarOpen}
@@ -79,7 +99,7 @@ export default function PortalLayoutClient({ children }) {
         </main>
       </div>
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile sidebar overlay - Click to close */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 md:hidden"

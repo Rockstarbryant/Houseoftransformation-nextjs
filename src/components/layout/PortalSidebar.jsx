@@ -4,18 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
-  User,
-  Calendar,
-  BookOpen,
-  ImageIcon,
-  Heart,
-  Users,
-  Shield,
-  BarChart3,
-  LogOut,
-  Menu,
-  X,
-  Home
+  User, Calendar, BookOpen, ImageIcon, Heart, Users, Shield, BarChart3, LogOut, Home
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -49,26 +38,18 @@ export default function PortalSidebar({ isOpen, onToggle }) {
   return (
     <div className="h-full flex flex-col">
       {/* Logo / Header */}
-      <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        {isOpen && (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#8B1A1A] flex items-center justify-center">
-              <span className="text-white font-black text-lg">H</span>
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-white">Portal</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isAdmin() ? 'Admin' : user?.role?.name || 'Member'}
-              </p>
-            </div>
+      <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#8B1A1A] flex items-center justify-center">
+            <span className="text-white font-black text-lg">H</span>
           </div>
-        )}
-        <button
-          onClick={onToggle}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors md:hidden"
-        >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+          <div>
+            <h2 className="text-sm font-black text-slate-900 dark:text-white">Portal</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {isAdmin() ? 'Admin' : user?.role?.name || 'Member'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -76,6 +57,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
         {/* Portal Home */}
         <Link
           href="/portal"
+          onClick={onToggle} // Close sidebar on mobile after click
           className={`
             flex items-center gap-3 px-4 py-3 rounded-lg transition-all block
             ${isActive('/portal') && pathname === '/portal'
@@ -85,7 +67,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
           `}
         >
           <Home size={20} />
-          {isOpen && <span className="text-sm font-semibold">Dashboard</span>}
+          <span className="text-sm font-semibold">Dashboard</span>
         </Link>
 
         {/* Menu Sections */}
@@ -98,6 +80,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
               <Link
                 key={section.href}
                 href={section.href}
+                onClick={onToggle} // Close sidebar on mobile after click
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg transition-all block
                   ${active
@@ -107,9 +90,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
                 `}
               >
                 {icon}
-                {isOpen && (
-                  <span className="text-sm font-semibold">{section.name}</span>
-                )}
+                <span className="text-sm font-semibold">{section.name}</span>
               </Link>
             );
           })
@@ -122,7 +103,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
 
       {/* User Section */}
       <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-2">
-        {isOpen && user && (
+        {user && (
           <div className="px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">
               {user?.name || 'User'}
@@ -138,14 +119,10 @@ export default function PortalSidebar({ isOpen, onToggle }) {
           onClick={async () => {
             await logout();
           }}
-          className={`
-            w-full flex items-center gap-3 px-4 py-3 rounded-lg
-            text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20
-            transition-all
-          `}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
         >
           <LogOut size={20} />
-          {isOpen && <span className="text-sm font-semibold">Logout</span>}
+          <span className="text-sm font-semibold">Logout</span>
         </button>
       </div>
     </div>
