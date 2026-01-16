@@ -48,7 +48,7 @@ const Header = () => {
 
   const navLinksAfterDropdown = [
     { path: '/volunteer', label: 'Volunteer' },
-    { path: '/users', label: 'Members' },
+    { path: '/portal', label: 'portal' },
     { path: '/contact', label: 'Contact' },
     { path: '/feedback', label: 'Feedback' }
   ];
@@ -208,17 +208,17 @@ const Header = () => {
         </div>
 
         <MobileMenu
-  isOpen={isMobileMenuOpen}
-  user={{
-    ...user,
-    role: user?.role?.name || 'Member' // Pass only the role name
-  }}
-  isAdmin={userIsAdmin}
-  onAuthClick={handleAuthClick}
-  onLogout={handleLogout}
-  onClose={() => setIsMobileMenuOpen(false)}
-/>
-      </nav>
+          isOpen={isMobileMenuOpen}
+          user={{
+          ...user,
+            role: user?.role?.name || 'Member' // Pass only the role name
+            }}
+            isAdmin={userIsAdmin}
+            onAuthClick={handleAuthClick}
+            onLogout={handleLogout}
+            onClose={() => setIsMobileMenuOpen(false)}
+            />
+        </nav>
 
       {showAuthModal && (
         <AuthModal
