@@ -30,40 +30,42 @@ const AuditLogsDashboard = () => {
   const [activeTab, setActiveTab] = useState('logs'); // logs, stats, security
 
   useEffect(() => {
-    fetchData();
-  }, [filters, pagination.page]);
+  fetchData();
+}, [filters, pagination.page, activeTab]); // Add activeTab here
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    setLoading(true);
+    setError(null);
 
-      if (activeTab === 'logs') {
-        const response = await auditService.getLogs(filters, {
-          page: pagination.page,
-          limit: pagination.limit,
-          sortBy: 'timestamp',
-          sortOrder: 'desc'
-        });
-        setLogs(response.logs || []);
-        setPagination(prev => ({ ...prev, ...response.pagination }));
-      } else if (activeTab === 'stats') {
-        const statsResponse = await auditService.getStats({
-          startDate: filters.startDate,
-          endDate: filters.endDate
-        });
-        setStats(statsResponse.stats);
-      } else if (activeTab === 'security') {
-        const alertsResponse = await auditService.getSecurityAlerts(24);
-        setSecurityAlerts(alertsResponse.alerts);
-      }
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching audit data:', err);
-    } finally {
-      setLoading(false);
+    if (activeTab === 'logs') {
+      const response = await auditService.getLogs(filters, {
+        page: pagination.page,
+        limit: pagination.limit,
+        sortBy: 'timestamp',
+        sortOrder: 'desc'
+      });
+      setLogs(response.logs || []);
+      setPagination(prev => ({ ...prev, ...response.pagination }));
+    } else if (activeTab === 'stats') {
+      const statsResponse = await auditService.getStats({
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      });
+      console.log('📊 Stats Response:', statsResponse); // Debug
+      setStats(statsResponse.stats);
+    } else if (activeTab === 'security') {
+      const alertsResponse = await auditService.getSecurityAlerts(24);
+      console.log('🔒 Security Response:', alertsResponse); // Debug
+      setSecurityAlerts(alertsResponse.alerts);
     }
-  };
+  } catch (err) {
+    console.error('❌ Fetch Error:', err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
