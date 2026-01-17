@@ -1,12 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, MapPin, X, Calendar, User, ArrowUpRight } from 'lucide-react';
+import { Clock, MapPin, X, Calendar, User, ArrowUpRight, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 
 const EventCard = ({ event }) => {
   const [showModal, setShowModal] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [error, setError] = useState(null);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [visitorDetails, setVisitorDetails] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    attendanceTime: event.time || ''
+  });
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -19,6 +29,95 @@ const EventCard = ({ event }) => {
   };
 
   const dateInfo = formatDate(event.date);
+
+  // Registration handler for authenticated users
+  const handleRegister = async () => {
+    try {
+      setRegistering(true);
+      setError(null);
+
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        // Show form for visitors
+        setShowRegistrationForm(true);
+        setRegistering(false);
+        return;
+      }
+
+      // For authenticated users - direct registration
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRegistered(true);
+        setTimeout(() => {
+          setShowModal(false);
+          setRegistered(false);
+        }, 2000);
+      } else {
+        setError(data.message || 'Registration failed');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError('Failed to register. Please try again.');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  // Registration handler for visitors
+  const handleVisitorRegistration = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setRegistering(true);
+      setError(null);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          visitorDetails: {
+            name: visitorDetails.name,
+            email: visitorDetails.email,
+            phone: visitorDetails.phone,
+            attendanceTime: visitorDetails.attendanceTime,
+            isVisitor: true
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRegistered(true);
+        setShowRegistrationForm(false);
+        setTimeout(() => {
+          setShowModal(false);
+          setRegistered(false);
+          setVisitorDetails({ name: '', email: '', phone: '', attendanceTime: event.time || '' });
+        }, 2000);
+      } else {
+        setError(data.message || 'Registration failed');
+      }
+    } catch (err) {
+      console.error('Visitor registration error:', err);
+      setError('Failed to register. Please try again.');
+    } finally {
+      setRegistering(false);
+    }
+  };
 
   return (
     <>
@@ -139,17 +238,137 @@ const EventCard = ({ event }) => {
                 </div>
               )}
 
-              <div className="flex gap-4">
-                <button className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 text-white dark:text-slate-900 font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl">
-                  Confirm your Attendance
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 dark:text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
-                >
-                  Close
-                </button>
-              </div>
+              {/* Registration Section */}
+              {!showRegistrationForm ? (
+                <div className="flex gap-4">
+                  {registered ? (
+                    <div className="flex-1 bg-green-600 text-white font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-2 shadow-xl">
+                      <CheckCircle size={20} />
+                      Registered Successfully!
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleRegister}
+                      disabled={registering}
+                      className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 text-white dark:text-slate-900 font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {registering ? (
+                        <>
+                          <Loader className="animate-spin" size={16} />
+                          Processing...
+                        </>
+                      ) : (
+                        'Confirm your Attendance'
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 dark:text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : null}
+
+              {/* Error Message */}
+              {error && (
+                <div className="mt-4 bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-center gap-3">
+                  <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+                  <p className="text-red-800 dark:text-red-200 text-sm font-semibold">{error}</p>
+                </div>
+              )}
+
+              {/* Visitor Registration Form */}
+              {showRegistrationForm && (
+                <div className="mt-6 space-y-4 border-t-2 border-slate-100 dark:border-slate-800 pt-6">
+                  <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">
+                    Visitor Registration
+                  </h3>
+                  <form onSubmit={handleVisitorRegistration} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={visitorDetails.name}
+                        onChange={(e) => setVisitorDetails({...visitorDetails, name: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                        placeholder="John Doe"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={visitorDetails.email}
+                        onChange={(e) => setVisitorDetails({...visitorDetails, email: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={visitorDetails.phone}
+                        onChange={(e) => setVisitorDetails({...visitorDetails, phone: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                        placeholder="+254 700 000 000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
+                        Expected Attendance Time *
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={visitorDetails.attendanceTime}
+                        onChange={(e) => setVisitorDetails({...visitorDetails, attendanceTime: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="submit"
+                        disabled={registering}
+                        className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 text-white dark:text-slate-900 font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {registering ? (
+                          <>
+                            <Loader className="animate-spin" size={16} />
+                            Registering...
+                          </>
+                        ) : (
+                          'Confirm Registration'
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRegistrationForm(false);
+                          setError(null);
+                        }}
+                        className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
