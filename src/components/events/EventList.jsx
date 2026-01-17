@@ -5,7 +5,8 @@ import Link from 'next/link';
 import EventCard from './EventCard';
 import Loader from '../common/Loader';
 import Button from '../common/Button';
-import { eventService } from '@/services/api/eventService';
+import { getEvents } from '@/services/api/eventService';
+
 
 const EventList = ({ limit, showViewAll = false }) => {
   const [events, setEvents] = useState([]);
@@ -17,10 +18,14 @@ const EventList = ({ limit, showViewAll = false }) => {
 
   const fetchEvents = async () => {
     try {
-      const data = await eventService.getEvents({ limit });
-      setEvents(data.events || data);
+      setLoading(true);
+      const data = await getEvents({ limit });
+      // Handle both response formats
+      const eventsList = data.events || data.data || data;
+      setEvents(Array.isArray(eventsList) ? eventsList : []);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching events:', err);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -41,13 +46,21 @@ const EventList = ({ limit, showViewAll = false }) => {
     <div className="w-full">
       {/* Container for the cards - strictly following your mapping logic */}
       <div className="space-y-8 max-w-4xl mx-auto">
-        {events.map(event => (
-          <EventCard key={event._id || event.id} event={event} />
-        ))}
+        {events.length > 0 ? (
+          events.map(event => (
+            <EventCard key={event._id || event.id} event={event} />
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-slate-600 dark:text-slate-400 font-semibold">
+              No events available at the moment
+            </p>
+          </div>
+        )}
       </div>
 
       {/* View All Action - Preserved logic with updated styling */}
-      {showViewAll && (
+      {showViewAll && events.length > 0 && (
         <div className="flex justify-center mt-20 relative">
           {/* Decorative line behind the button */}
           <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-100 -z-10" />
