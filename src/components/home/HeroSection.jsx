@@ -31,7 +31,7 @@ const HeroSection = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-0" />
+      <div className="absolute inset-0 bg-transparent" />
       
       {/* Animated accent glow */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full pointer-events-none" />
@@ -49,7 +49,7 @@ const HeroSection = () => {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
               H.O.T
               <span className="block text-[#8B1A1A] drop-shadow-sm">Transforming.</span>
-              <span className="text-white/40 italic font-serif font-light tracking-normal">Lives.</span>
+              <span className="text-white/40 font-semibold font-serif font-light tracking-normal">Lives.</span>
             </h1>
 
             <p className="max-w-lg text-lg md:text-xl text-slate-300 font-medium leading-relaxed mb-8 border-l-2 border-[#8B1A1A] pl-6">
@@ -61,7 +61,7 @@ const HeroSection = () => {
                 <Calendar size={18} className="text-[#8B1A1A]" />
               </div>
               <p className="text-xs md:text-sm font-bold uppercase tracking-widest">
-                Sunday Services: <span className="text-white">9:00AM · 11:00AM · 1:00PM</span>
+                Sunday Services: <span className="text-white">9:00AM - 12:00PM</span>
               </p>
             </div>
 
