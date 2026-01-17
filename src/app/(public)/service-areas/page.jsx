@@ -11,16 +11,16 @@ export const metadata = {
 
 export default function ServiceAreasPage() {
   return (
-    <div className="pt-20 pb-20 bg-gray-50 min-h-screen">
+    <div className="pt-20 pb-20 bg-gray-50 dark:bg-slate-900 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
-            <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-full">
+            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 px-4 py-2 rounded-full">
               House of Transformation Busia Campus
             </span>
           </div>
-          <h1 className="text-5xl font-bold text-blue-900 mb-4">Service Areas & Teams</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-5xl font-bold text-blue-900 dark:text-white mb-4">Service Areas & Teams</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Discover how you can use your God-given talents to serve and make a meaningful impact in our community
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function ServiceAreasPage() {
           ))}
         </div>
 
-        <div className="mt-20 bg-blue-900 rounded-2xl p-12 md:p-16 text-center text-white shadow-lg">
+        <div className="mt-20 bg-blue-900 dark:bg-blue-800 rounded-2xl p-12 md:p-16 text-center text-white shadow-lg">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">Are you willing to Serve?</h2>
           <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join our community of passionate volunteers and use your God-given talents to make a meaningful impact.

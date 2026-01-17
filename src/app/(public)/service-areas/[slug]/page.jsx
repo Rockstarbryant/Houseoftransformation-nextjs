@@ -75,7 +75,7 @@ export default function ServiceAreaDetailPage() {
   };
 
   return (
-    <div className="pt-20 pb-20 bg-gray-50 min-h-screen">
+    <div className="pt-20 pb-20 bg-gray-50 dark:bg-slate-900 min-h-screen">
       {/* Back Button */}
       <div className="max-w-5xl mx-auto px-4 pt-8">
         <Link href="/service-areas" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold mb-8">
@@ -100,20 +100,20 @@ export default function ServiceAreaDetailPage() {
               <div className="flex items-center gap-3">
                 <Users className="text-blue-600" size={28} />
                 <div>
-                  <p className="text-sm text-gray-600">Team Size</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Team Size</p>
                   <p className="text-2xl font-bold text-blue-900">{data.teamCount} Members</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="text-blue-600" size={28} />
                 <div>
-                  <p className="text-sm text-gray-600">Time Commitment</p>
-                  <p className="text-2xl font-bold text-blue-900">{data.timeCommitment}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Time Commitment</p>
+                  <p className="text-2xl font-bold text-blue-900 dark:text-white">{data.timeCommitment}</p>
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">Team Lead</p>
-                <p className="font-bold text-blue-900">{data.teamLead}</p>
+              <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Team Lead</p>
+                <p className="font-bold text-blue-900 dark:text-white">{data.teamLead}</p>
                 <p className="text-sm text-gray-600 mt-2">{data.email}</p>
               </div>
             </div>
@@ -137,25 +137,25 @@ export default function ServiceAreaDetailPage() {
               </ul>
             </div>
             {/* Requirements */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <h2 className="text-3xl font-bold text-blue-900 mb-6">Requirements</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg">
+              <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-6">Requirements</h2>
               <ul className="space-y-4">
                 {data.requirements.map((item, idx) => (
                   <li key={idx} className="flex gap-4">
                     <span className="text-blue-600 text-2xl mt-1">✓</span>
-                    <span className="text-gray-700">{item}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Schedule */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <h2 className="text-3xl font-bold text-blue-900 mb-6">Schedule</h2>
-              <div className="space-y-3 text-gray-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg">
+              <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-6">Schedule</h2>
+              <div className="space-y-3 text-gray-700 dark:text-gray-300">
                 {data.schedule.map((item, idx) => (
                   <p key={idx} className="flex items-center gap-2">
-                    <Clock size={20} className="text-blue-600" />
+                    <Clock size={20} className="text-blue-600 dark:text-blue-400" />
                     {item}
                   </p>
                 ))}
@@ -199,8 +199,8 @@ export default function ServiceAreaDetailPage() {
         </div>
 
         {/* Gallery Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-12">
-          <h2 className="text-3xl font-bold text-blue-900 mb-8">Team in Action</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
+          <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team in Action</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.galleryImages.map((image, idx) => (
               <img
@@ -214,15 +214,15 @@ export default function ServiceAreaDetailPage() {
         </div>
 
         {/* Testimonials Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-12">
-          <h2 className="text-3xl font-bold text-blue-900 mb-8">Team Member Testimonials</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
+          <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team Member Testimonials</h2>
           <div className="grid md:grid-cols-2 gap-8">
             {data.testimonials.map((testimonial, idx) => (
               <div key={idx} className="border-l-4 border-blue-600 pl-6 py-4">
-                <p className="text-gray-700 italic mb-4">"{testimonial.quote}"</p>
+                <p className="text-gray-700 dark:text-gray-300 italic mb-4">"{testimonial.quote}"</p>
                 <div>
-                  <p className="font-bold text-blue-900">{testimonial.name}</p>
-                  <p className="text-sm text-gray-600">{testimonial.role}</p>
+                  <p className="font-bold text-blue-900 dark:text-white">{testimonial.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
                 </div>
               </div>
             ))}
@@ -237,7 +237,7 @@ export default function ServiceAreaDetailPage() {
           </p>
           <button 
             onClick={handleApply}
-            className="bg-white text-blue-600 px-8 py-3 font-bold rounded-lg hover:bg-gray-100 transition"
+            className="bg-white dark:bg-slate-700 text-blue-600 dark:text-white px-8 py-3 font-bold rounded-lg hover:bg-gray-100 transition"
           >
             Get Involved
           </button>
