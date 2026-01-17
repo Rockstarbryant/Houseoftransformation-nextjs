@@ -12,7 +12,7 @@ export default async function GalleryPage() {
   const photos = await getAllPhotos();
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-900 dark:text-white transition-colors relative overflow-hidden">
       {/* Background Decoration */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-[radial-gradient(circle_at_center,_rgba(139,26,26,0.03)_0%,_transparent_70%)] pointer-events-none" />
 
@@ -21,15 +21,15 @@ export default async function GalleryPage() {
           
           {/* Static Header */}
           <div className="text-center mb-10 md:mb-16">
-            <div className="inline-block px-4 py-1.5 bg-red-50 rounded-full mb-4">
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-[#8B1A1A]">
+            <div className="inline-block px-4 py-1.5 bg-red-50 dark:bg-red-50 rounded-full mb-4">
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-[#8B1A1A] dark:text-red-400">
                 The Vision in Pictures
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter mb-6">
-              Photo <span className="text-[#8B1A1A]">Gallery</span>
+            <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-6">
+              Busia <span className="text-[#8B1A1A]">H.O.T Gallery</span>
             </h1>
-            <p className="text-base md:text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-base md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
               Capturing memories, moments, and milestones from our church family at Busia House of Transformation.
             </p>
           </div>

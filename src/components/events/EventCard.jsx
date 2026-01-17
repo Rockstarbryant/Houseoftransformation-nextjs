@@ -118,12 +118,12 @@ const EventCard = ({ event }) => {
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-10">
-                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Schedule</p>
-                  <p className="font-black text-slate-900 uppercase tracking-tight">{event.time}</p>
+                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
+                  <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">Schedule</p>
+                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{event.time}</p>
                   <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">{dateInfo.full}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100">
+                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
                   <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">Location</p>
                   <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{event.location}</p>
                   <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">H.O.T</p>

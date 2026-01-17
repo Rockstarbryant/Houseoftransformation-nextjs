@@ -87,13 +87,13 @@ export default function BlogDetailClient({ post }) {
           </h1>
 
           {/* Author & Meta Row - 100% PRESERVED */}
-          <div className="flex flex-wrap items-center justify-between gap-6 py-8 border-y border-slate-100">
+          <div className="flex flex-wrap items-center justify-between gap-6 py-8 border-y border-slate-100 dark:border-slate-700 mb-16">
             <div className="flex items-center gap-4">
-              <div className="size-12 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white font-black">
+              <div className="size-12 rounded-full bg-gradient-to-br from-slate-800 to-black dark:bg-slate-900 flex items-center justify-center text-white dark:text-white font-black">
                 {post.author?.name?.charAt(0) || 'A'}
               </div>
               <div>
-                <p className={`text-sm font-black ${roleColors[post.author?.role] || 'text-slate-900'}`}>
+                <p className={`text-sm font-black ${roleColors[post.author?.role] || 'text-slate-900 dark:text-white'}`}>
                   {post.author?.name || 'Church Admin'}
                 </p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -104,13 +104,13 @@ export default function BlogDetailClient({ post }) {
 
             <div className="flex items-center gap-6">
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Published</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1">Published</p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(post.createdAt, 'long')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button 
                   onClick={handleLike} 
-                  className={`p-3 rounded-full transition-all ${liked ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400 hover:text-red-500'}`}
+                  className={`p-3 rounded-full transition-all ${liked ? 'bg-red-50 text-red-600 dark:text-red-600' : 'bg-slate-50 text-slate-400 dark:text-slate-400 hover:text-red-500'}`}
                 >
                   <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
                 </button>

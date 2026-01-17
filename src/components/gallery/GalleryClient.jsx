@@ -33,12 +33,12 @@ export default function GalleryClient({ initialPhotos }) {
       {/* Gallery Grid */}
       <div className="relative">
         {filteredPhotos.length === 0 ? (
-          <div className="text-center py-20 md:py-32 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200 shadow-inner">
+          <div className="text-center py-20 md:py-32 bg-slate-50/50 dark:bg-slate-800/50 rounded-[2rem] border border-dashed border-slate-200 shadow-inner">
             <div className="text-6xl md:text-7xl mb-6 grayscale opacity-40">📸</div>
-            <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">
+            <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white mb-2">
               No Moments Found
             </h3>
-            <p className="text-slate-500 text-sm md:text-base max-w-xs mx-auto font-medium leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xs mx-auto font-medium leading-relaxed">
               {selectedCategory === 'All'
                 ? 'The gallery is currently empty. We are preparing to share our moments with you soon!'
                 : `We don't have any photos under "${selectedCategory}" yet.`}

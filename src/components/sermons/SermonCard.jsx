@@ -190,7 +190,7 @@ const SermonCard = ({ sermon }) => {
           {contentHtml.length > 180 && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="mt-3 flex items-center gap-2 text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
+              className="mt-3 flex items-center gap-2 bg-slate-50 hover:bg-[#8B1A1A] hover:text-white text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
               type="button"
             >
               {expanded ? <><ChevronUp size={16} /> Show Less</> : <><ChevronDown size={16} /> Read Full Message</>}
@@ -206,7 +206,7 @@ const SermonCard = ({ sermon }) => {
         )}
 
         {/* Footer */}
-        <div className="px-4 md:px-10 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+        <div className="px-4 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-300 group/icon">
               <Eye size={18} className="group-hover/icon:text-slate-600 dark:text-slate-300 transition-colors" />

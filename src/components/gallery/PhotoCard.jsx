@@ -17,8 +17,8 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
   return (
     <div
       className={`
-        bg-white rounded-xl border border-gray-200 shadow-sm 
-        hover:shadow-xl hover:border-gray-300 transition-all duration-300 
+        bg-white dark:bg-slate-900 dark:text-white transition-colors rounded-xl border border-gray-200 shadow-sm 
+        hover:shadow-xl hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 
         overflow-hidden group cursor-pointer
       `}
       onMouseEnter={() => setIsHovered(true)}
@@ -26,7 +26,7 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
       onClick={onViewFullSize}
     >
       {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-slate-800">
         <Image
           src={imageUrl}
           alt={photo.title || 'Gallery photo'}
@@ -49,7 +49,7 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
         {/* Hover Overlay */}
         {isHovered && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300">
-            <span className="px-6 py-3 bg-white text-gray-900 rounded-lg font-medium shadow-md hover:bg-gray-50 transition active:scale-95">
+            <span className="px-6 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg font-medium shadow-md hover:bg-gray-50 transition active:scale-95">
               View Full Size
             </span>
           </div>
@@ -57,7 +57,7 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
 
         {/* Category Badge */}
         <div className="absolute top-4 left-4 z-10">
-          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-medium rounded-full shadow-sm">
+          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 dark:text-white text-xs font-medium rounded-full shadow-sm">
             {photo.category || 'General'}
           </span>
         </div>
@@ -65,22 +65,22 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
 
       {/* Content */}
       <div className="p-5">
-        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2">
           {photo.title || 'Untitled'}
         </h3>
 
         {photo.description && (
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">
             {photo.description}
           </p>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <span>{formatDate(photo.createdAt || photo.date, 'short')}</span>
 
           <div className="flex items-center gap-2">
-            <Heart size={16} className="text-gray-400" />
+            <Heart size={16} className="text-gray-400 dark:text-gray-500" />
             <span>{photo.likes || 0}</span>
           </div>
         </div>
