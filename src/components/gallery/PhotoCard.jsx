@@ -57,7 +57,7 @@ const PhotoCard = ({ photo, onViewFullSize }) => {
 
         {/* Category Badge */}
         <div className="absolute top-4 left-4 z-10 dark:bg-black/50 bg-white/50 rounded-full">
-          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 dark:text-white text-xs font-medium rounded-full shadow-sm">
+          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 dark:text-red-500 text-xs font-medium rounded-full shadow-sm">
             {photo.category || 'General'}
           </span>
         </div>
