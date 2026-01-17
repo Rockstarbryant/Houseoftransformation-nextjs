@@ -37,7 +37,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }) {
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push('/');
+          router.push('/portal/dashboard');
         }
       } else {
         console.error('[LOGIN] Failed:', result.error);
