@@ -53,7 +53,7 @@ const EventList = ({ limit, showViewAll = false }) => {
           <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-100 -z-10" />
           
           <Link href="/events">
-            <div className="bg-[#F8FAFC] px-8">
+            <div className="bg-[#F8FAFC] dark:bg-slate-800 px-8">
               <Button variant="primary">
                 <span className="flex items-center gap-2">
                   View All Events

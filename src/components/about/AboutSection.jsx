@@ -37,7 +37,7 @@ const AboutSection = ({ preview = false }) => {
   if (preview) {
     // HOMEPAGE PREVIEW - full edge-to-edge on mobile
     return (
-      <section className="py-12 md:py-20 bg-slate-50 w-full">
+      <section className="py-12 md:py-20 bg-slate-50 dark:bg-slate-900 w-full">
         <div className="w-full px-0 md:px-6 lg:px-8">
           <div className="
             bg-white
@@ -52,10 +52,10 @@ const AboutSection = ({ preview = false }) => {
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest">
                 <ShieldCheck size={14} /> Our Identity
               </div>
-              <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
                 Welcome to <span className="text-[#8B1A1A]">H.O.T</span>
               </h2>
-              <p className="text-base md:text-lg text-slate-600 leading-relaxed">
+              <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
                 House of Transformation Ministries is a vibrant community in Busia County where the Gospel is preached with power and lives are genuinely changed.
               </p>
               <Link href="/about" className="inline-block">

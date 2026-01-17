@@ -18,10 +18,10 @@ const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitmen
 
   return (
     <Card 
-      className="group flex flex-col h-full bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-red-900/5 transition-all duration-500"
+      className="group flex flex-col h-full bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-2xl hover:shadow-red-900/5 transition-all duration-500"
     >
       {/* Top Section: Visual Branding */}
-      <div className="relative w-full h-64 overflow-hidden bg-slate-100">
+      <div className="relative w-full h-64 overflow-hidden bg-slate-100 dark:bg-slate-700">
         {/* Cinematic Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity" />
         
@@ -51,23 +51,23 @@ const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitmen
       <div className="p-8 flex flex-col flex-grow relative">
         {/* Title: Integrated with a subtle vertical line */}
         <div className="mb-4">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
             {name}
           </h3>
         </div>
 
-        <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8 flex-grow">
+        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed mb-8 flex-grow">
           {description}
         </p>
 
         {/* Stats Grid: Modern & Minimal */}
-        <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-slate-50">
+        <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-slate-50 dark:border-slate-700">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-[#8B1A1A]">
               <Users size={14} />
               <span className="text-[10px] font-black uppercase tracking-widest">Community</span>
             </div>
-            <span className="text-xs font-bold text-slate-700">{teamCount} Members</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{teamCount} Members</span>
           </div>
           
           <div className="flex flex-col gap-1">
@@ -75,20 +75,20 @@ const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitmen
               <Clock size={14} />
               <span className="text-[10px] font-black uppercase tracking-widest">Time</span>
             </div>
-            <span className="text-xs font-bold text-slate-700 truncate">{timeCommitment}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{timeCommitment}</span>
           </div>
         </div>
 
         {/* Action: Premium Button Style */}
         <Link
           href={`/service-areas/${slug}`}
-          className="group/btn relative inline-flex items-center justify-between w-full p-4 bg-slate-50 rounded-2xl hover:bg-[#8B1A1A] transition-all duration-300 overflow-hidden"
+          className="group/btn relative inline-flex items-center justify-between w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-[#8B1A1A] dark:hover:bg-[#8B1A1A] transition-all duration-300 overflow-hidden"
           aria-label={`Learn more about ${name} service area`}
         >
-          <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 group-hover/btn:text-white transition-colors">
+          <span className="bg-white dark:bg-slate-800 relative z-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white group-hover/btn:text-white transition-colors">
             Explore Ministry
           </span>
-          <div className="relative z-10 w-6 h-6 rounded-full bg-white flex items-center justify-center text-slate-900 group-hover/btn:rotate-[-45deg] transition-transform duration-500">
+          <div className="relative z-10 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white group-hover/btn:rotate-[-45deg] transition-transform duration-500">
             <ChevronRight size={14} />
           </div>
         </Link>
