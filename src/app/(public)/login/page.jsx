@@ -10,7 +10,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <LoginForm 
-          onSuccess={() => router.push('/')}
+          onSuccess={() => router.push('/portal')}
           onSwitchToSignup={() => router.push('/signup')}
         />
       </div>
