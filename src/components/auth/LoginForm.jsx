@@ -37,7 +37,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }) {
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push('/portal/dashboard');
+          router.push('/portal');
         }
       } else {
         console.error('[LOGIN] Failed:', result.error);
@@ -61,7 +61,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-blue-900 mb-6">Welcome Back Please Signin</h2>
+      <h2 className="text-2xl font-bold text-blue-900 mb-6">Welcome Back Please Login</h2>
 
       {error && (
         <div
