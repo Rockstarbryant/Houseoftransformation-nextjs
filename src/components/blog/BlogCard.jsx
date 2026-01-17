@@ -41,11 +41,11 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
     <div className="w-full h-full p-0.5 md:p-0">
       {/* 1. Added e to the Card onClick */}
       <Card 
-        className="group flex flex-col h-full bg-white rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0 cursor-pointer"
+        className="group flex flex-col h-full bg-white dark:bg-slate-800 rounded-xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0 cursor-pointer"
         onClick={(e) => handleReadMore(e)}
       >
         {/* Banner Section */}
-        <div className="relative h-48 md:h-56 overflow-hidden bg-slate-900">
+        <div className="relative h-48 md:h-56 overflow-hidden bg-slate-900 dark:bg-slate-700 group-hover:scale-105 transition-transform duration-500">
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-black opacity-90 group-hover:scale-110 transition-transform duration-700" />
           <div className="absolute inset-0 flex items-center justify-center text-6xl drop-shadow-2xl">
             {post.image || <Newspaper className="text-white/20 w-16 h-16" />}
@@ -65,11 +65,11 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
             {formatDate(post.createdAt || post.date, 'short')}
           </div>
 
-          <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-3 tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
+          <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter leading-tight group-hover:text-[#8B1A1A] transition-colors">
             {post.title}
           </h3>
 
-          <p className="text-sm md:text-base text-slate-500 font-medium leading-relaxed mb-6 flex-grow">
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6 flex-grow">
             {truncateText(post.excerpt || post.content, 110)}
           </p>
 
@@ -79,7 +79,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
                 {post.author?.name?.charAt(0) || 'U'}
               </div>
               <div className="flex flex-col">
-                <span className="text-[11px] font-black leading-none text-slate-900">
+                <span className="text-[11px] font-black leading-none text-slate-900 dark:text-white">
                   {post.author?.name || 'Unknown'}
                 </span>
               </div>

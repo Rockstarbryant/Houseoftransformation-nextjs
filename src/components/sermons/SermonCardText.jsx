@@ -59,10 +59,10 @@ const SermonCardText = ({ sermon }) => {
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
             </div>
             <div>
-              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-[#8B1A1A]">
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-[#8B1A1A] dark:text-red-400 leading-tight">
                 {sermon.category || 'Transcript'}
               </p>
-              <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-slate-400 leading-tight">
+              <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-white leading-tight">
                 {sermon.pastor || 'Pastor'}
               </p>
             </div>
@@ -137,7 +137,7 @@ const SermonCardText = ({ sermon }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between mt-auto">
+        <div className="px-4 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-200">
               <Eye size={18} />

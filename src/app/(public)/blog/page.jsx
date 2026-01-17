@@ -13,7 +13,7 @@ export default async function BlogPage() {
   const blogs = await getAllBlogs();
 
   return (
-    <div className="min-h-screen bg-white relative">
+    <div className="min-h-screen bg-white dark:bg-slate-900 relative">
       {/* Decorative Background */}
       <div className="absolute top-0 right-0 w-full h-[600px] bg-[radial-gradient(circle_at_top_right,_rgba(139,26,26,0.02)_0%,_transparent_50%)] pointer-events-none" />
 
@@ -27,7 +27,7 @@ export default async function BlogPage() {
                 <Newspaper size={14} className="text-[#8B1A1A]" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8B1A1A]">Insight Feed</span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none mb-6">
+              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-6">
                 Church <span className="text-[#8B1A1A]">News</span>
               </h1>
             </div>

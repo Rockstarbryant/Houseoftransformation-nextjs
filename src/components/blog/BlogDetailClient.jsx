@@ -60,7 +60,7 @@ export default function BlogDetailClient({ post }) {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white dark:bg-slate-900 pb-20">
       {/* Editorial Header Section - 100% PRESERVED */}
       <div className="relative pt-24 md:pt-32 pb-12 px-4">
         <div className="max-w-4xl mx-auto">
@@ -82,7 +82,7 @@ export default function BlogDetailClient({ post }) {
             )}
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-8">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-[1.1] mb-8">
             {post.title}
           </h1>
 
@@ -105,7 +105,7 @@ export default function BlogDetailClient({ post }) {
             <div className="flex items-center gap-6">
               <div className="text-right hidden sm:block">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Published</p>
-                <p className="text-sm font-bold text-slate-900">{formatDate(post.createdAt, 'long')}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(post.createdAt, 'long')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button 
@@ -116,7 +116,7 @@ export default function BlogDetailClient({ post }) {
                 </button>
                 <button 
                   onClick={handleShare} 
-                  className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-full transition-all"
+                  className="p-3 bg-slate-50 text-slate-400 dark:text-slate-500 hover:text-slate-900 rounded-full transition-all"
                 >
                   <Share2 size={20} />
                 </button>
@@ -143,7 +143,7 @@ export default function BlogDetailClient({ post }) {
 
           {post.description && (
             <div className="mb-12">
-              <p className="text-2xl md:text-3xl font-serif italic text-slate-800 leading-relaxed border-l-4 border-[#8B1A1A] pl-8">
+              <p className="text-2xl md:text-3xl font-serif italic text-slate-900 dark:text-white leading-relaxed border-l-4 border-[#8B1A1A] pl-8">
                 {post.description}
               </p>
             </div>
@@ -151,11 +151,11 @@ export default function BlogDetailClient({ post }) {
 
           <div className="prose prose-slate prose-lg md:prose-xl max-w-none">
             {post.content ? (
-              <div className="text-slate-700 leading-[1.8] font-serif whitespace-pre-wrap text-justify selection:bg-red-100">
+              <div className="text-slate-700 dark:text-slate-300 leading-[1.8] font-serif whitespace-pre-wrap text-justify selection:bg-red-100">
                 {post.content}
               </div>
             ) : (
-              <p className="text-slate-400 italic">This post contains no additional text content.</p>
+              <p className="text-slate-400 dark:text-white italic">This post contains no additional text content.</p>
             )}
           </div>
         </article>
@@ -181,7 +181,7 @@ export default function BlogDetailClient({ post }) {
         )}
 
         {/* Footer Call to Action - 100% PRESERVED */}
-        <div className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-slate-900 text-center relative overflow-hidden group">
+        <div className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-slate-900 dark:bg-white text-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-[#8B1A1A] to-transparent opacity-10 group-hover:opacity-20 transition-opacity" />
           <div className="relative z-10">
             <h3 className="text-2xl md:text-4xl font-black text-white mb-4 tracking-tighter leading-tight">

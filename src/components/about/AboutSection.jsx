@@ -85,10 +85,10 @@ const AboutSection = ({ preview = false }) => {
       <section className="pt-16 pb-8 md:pt-20 md:pb-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center">
-            <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 tracking-tighter leading-none mb-4 md:mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-4 md:mb-6">
               THE <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
             </h1>
-            <p className="text-lg md:text-xl text-slate-500 font-medium max-w-xl">
+            <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-xl">
               Touching and transforming lives through the anointed gospel since 1989.
             </p>
           </div>
@@ -233,10 +233,10 @@ const AboutSection = ({ preview = false }) => {
       <section className="px-4 sm:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white dark:bg-slate-800 rounded-2xl md:rounded-[3rem] p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100 text-center space-y-8 md:space-y-10">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900">
-              Experience the <br /><span className="text-[#8B1A1A]">Transformation</span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
+              Experience the <br /><span className="text-[#8B1A1A] dark:text-[#8B1A1A]">Transformation</span>
             </h2>
-            <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-slate-500 font-bold text-sm md:text-base">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-slate-500 dark:text-slate-400 font-bold text-sm md:text-base">
               <div className="flex items-center gap-2"><Clock size={20} className="text-[#8B1A1A]" /> 9:00 AM • 11:00 AM</div>
               <div className="flex items-center gap-2"><MapPin size={20} className="text-[#8B1A1A]" /> Busia Main Campus</div>
             </div>
