@@ -38,6 +38,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // If we get 503 (maintenance mode), redirect to maintenance page
+    if (error.response?.status === 503) {
+      console.log('[API] 503 Maintenance error detected - redirecting to maintenance page');
+      
+      // Check if we're in browser
+      if (typeof window !== 'undefined') {
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+          window.location.href = '/maintenance';
+        }, 100);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // Handle responses and token refresh
 api.interceptors.response.use(
   (response) => response,

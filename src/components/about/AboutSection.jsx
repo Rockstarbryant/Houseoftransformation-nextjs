@@ -38,7 +38,7 @@ const AboutSection = ({ preview = false }) => {
     // HOMEPAGE PREVIEW - full edge-to-edge on mobile
     return (
       <section className="py-12 md:py-20 bg-slate-50 dark:bg-slate-900 w-full">
-        <div className="w-full px-0 md:px-6 lg:px-8">
+        <div className="max-w-full px-0 md:px-6 lg:px-8">
           <div className="
             bg-white
             dark:bg-slate-900 dark:text-white 

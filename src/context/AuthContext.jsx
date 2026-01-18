@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { tokenService } from '@/lib/tokenService';
+import { tokenService } from '@/services/tokenService';
 
 const AuthContext = createContext(null);
 
@@ -14,7 +14,6 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Check authentication - ONLY called by protected routes
-  // No automatic checking on every page load
   const checkAuth = async () => {
     if (typeof window === 'undefined') {
       return false;
@@ -44,10 +43,13 @@ export const AuthProvider = ({ children }) => {
             };
             
             setUser(userData);
+            // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
+            tokenService.setRole(userData.role);
+            console.log('[AUTH-CONTEXT] User role cookie set:', userData.role.name);
             return true;
           } else {
             console.log('[AUTH-CONTEXT] Token verification failed');
-            tokenService.removeToken();
+            tokenService.clearAll();
             setUser(null);
             return false;
           }
@@ -79,18 +81,20 @@ export const AuthProvider = ({ children }) => {
                     }
                   };
                   setUser(userData);
+                  // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
+                  tokenService.setRole(userData.role);
                   console.log('[AUTH-CONTEXT] Token refreshed and user verified');
                   return true;
                 }
               }
             }
             
-            tokenService.removeToken();
+            tokenService.clearAll();
             setUser(null);
             return false;
           } catch (refreshErr) {
             console.error('[AUTH-CONTEXT] Token refresh failed:', refreshErr);
-            tokenService.removeToken();
+            tokenService.clearAll();
             setUser(null);
             return false;
           }
@@ -98,11 +102,13 @@ export const AuthProvider = ({ children }) => {
       } else {
         console.log('[AUTH-CONTEXT] No token found');
         setUser(null);
+        tokenService.removeRole();
         return false;
       }
     } catch (err) {
       console.error('[AUTH-CONTEXT] Auth check error:', err);
       setUser(null);
+      tokenService.removeRole();
       return false;
     }
   };
@@ -117,6 +123,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success && response.data.token) {
         console.log('[AUTH-CONTEXT] Login successful');
 
+        // Store tokens in localStorage + cookies
         tokenService.setToken(response.data.token);
         if (response.data.refreshToken) {
           tokenService.setRefreshToken(response.data.refreshToken);
@@ -133,6 +140,11 @@ export const AuthProvider = ({ children }) => {
         };
 
         setUser(userData);
+        
+        // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
+        tokenService.setRole(userData.role);
+        console.log('[AUTH-CONTEXT] User role cookie set:', userData.role.name);
+        
         return { success: true, user: userData };
       }
 
@@ -235,11 +247,11 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('[AUTH-CONTEXT] Logout error:', err);
     } finally {
-      tokenService.removeToken();
-      tokenService.removeRefreshToken();
+      // ===== CLEAR ALL AUTH DATA =====
+      tokenService.clearAll();
       setUser(null);
       setError(null);
-      console.log('[AUTH-CONTEXT] User logged out');
+      console.log('[AUTH-CONTEXT] User logged out and cookies cleared');
       router.push('/login');
     }
   };

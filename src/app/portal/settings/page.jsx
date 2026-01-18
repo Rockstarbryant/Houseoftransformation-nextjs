@@ -462,6 +462,49 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* MAINTENANCE MODE STATUS BADGE */}
+      {activeTab === 'maintenance' && settings.maintenanceMode.enabled && (
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 text-white shadow-lg animate-pulse">
+          <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <div className="absolute w-3 h-3 bg-white rounded-full animate-ping"></div>
+          <div className="w-3 h-3 bg-white rounded-full"></div>
+        </div>
+        <div>
+          <p className="font-black text-lg">🚨 MAINTENANCE MODE IS ACTIVE</p>
+          <p className="text-sm opacity-90">Non-admin users cannot access the site</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-xs font-semibold opacity-75">Status</p>
+        <p className="text-lg font-black">LIVE NOW</p>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* LIVE TEST - Show when maintenance is enabled */}
+{activeTab === 'maintenance' && settings.maintenanceMode.enabled && (
+  <div className="bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-6 space-y-4">
+    <div className="flex items-start gap-3">
+      <AlertCircle className="text-orange-600 flex-shrink-0 mt-1" size={20} />
+      <div className="space-y-2">
+        <h3 className="font-bold text-slate-900 dark:text-white">Quick Test</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Open this URL in a new incognito/private window to see how non-admin users experience the maintenance page:
+        </p>
+        <div className="bg-white dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-900 dark:text-white break-all">
+          {typeof window !== 'undefined' ? window.location.origin : 'https://yoursite.com'}
+        </div>
+        <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold">
+          ✓ You should see the maintenance page
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+
       {/* Success/Error Messages */}
       {success && (
         <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">

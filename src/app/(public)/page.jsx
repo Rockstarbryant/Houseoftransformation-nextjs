@@ -31,8 +31,8 @@ export default async function HomePage() {
       <QuickInfoBar />
 
       {/* About Section */}
-      <section className="py-12 md:py-20 border-b border-slate-50 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+      <section className="py-12 md:py-20 border-b border-slate-50 dark:border-slate-300">
+        <div className="max-w-full mx-auto px-4 md:px-8">
           <AboutSection preview />
         </div>
       </section>

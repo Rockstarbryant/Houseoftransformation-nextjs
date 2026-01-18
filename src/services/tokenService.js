@@ -1,23 +1,70 @@
 /**
  * Token Service - Manages JWT storage and retrieval
  * Works in browser only (client-side)
+ * Uses localStorage for storage + cookies for middleware
  */
 
 const TOKEN_KEY = 'supabase_access_token';
 const REFRESH_TOKEN_KEY = 'supabase_refresh_token';
 const TOKEN_EXPIRY_KEY = 'supabase_token_expiry';
+const ROLE_KEY = 'user_role';
 
+// ===== COOKIE HELPERS =====
+const setCookie = (name, value, days = 7) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax`;
+    console.log(`[TOKEN-SERVICE] Cookie set: ${name}`);
+  } catch (error) {
+    console.error(`[TOKEN-SERVICE] Error setting cookie ${name}:`, error);
+  }
+};
+
+const getCookie = (name) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const nameEQ = name + '=';
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(nameEQ)) {
+        return decodeURIComponent(cookie.substring(nameEQ.length));
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`[TOKEN-SERVICE] Error getting cookie ${name}:`, error);
+    return null;
+  }
+};
+
+const deleteCookie = (name) => {
+  if (typeof window === 'undefined') return;
+  try {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+    console.log(`[TOKEN-SERVICE] Cookie deleted: ${name}`);
+  } catch (error) {
+    console.error(`[TOKEN-SERVICE] Error deleting cookie ${name}:`, error);
+  }
+};
+
+// ===== MAIN TOKEN SERVICE =====
 export const tokenService = {
   /**
-   * Store access token
+   * Store access token in localStorage + cookie
    */
   setToken: (token) => {
-    if (typeof window === 'undefined') return; // SSR guard
+    if (typeof window === 'undefined') return;
     if (!token) return;
 
     localStorage.setItem(TOKEN_KEY, token);
+    // Also set as cookie for middleware
+    setCookie('auth_token', token, 7);
 
-    // Decode token to get expiry (optional)
+    // Decode token to get expiry
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.exp) {
@@ -31,10 +78,10 @@ export const tokenService = {
   },
 
   /**
-   * Get access token
+   * Get access token from localStorage
    */
   getToken: () => {
-    if (typeof window === 'undefined') return null; // SSR guard
+    if (typeof window === 'undefined') return null;
 
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -55,7 +102,7 @@ export const tokenService = {
    * Store refresh token
    */
   setRefreshToken: (refreshToken) => {
-    if (typeof window === 'undefined') return; // SSR guard
+    if (typeof window === 'undefined') return;
     if (!refreshToken) return;
 
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -66,19 +113,50 @@ export const tokenService = {
    * Get refresh token
    */
   getRefreshToken: () => {
-    if (typeof window === 'undefined') return null; // SSR guard
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem(REFRESH_TOKEN_KEY);
+  },
+
+  /**
+   * Set user role for middleware
+   */
+  setRole: (role) => {
+    if (typeof window === 'undefined') return;
+    
+    const roleName = role?.name || role || 'user';
+    setCookie(ROLE_KEY, roleName, 7);
+    localStorage.setItem(ROLE_KEY, roleName);
+    console.log('[TOKEN-SERVICE] User role set:', roleName);
+  },
+
+  /**
+   * Get user role from cookie
+   */
+  getRole: () => {
+    if (typeof window === 'undefined') return null;
+    return getCookie(ROLE_KEY) || localStorage.getItem(ROLE_KEY);
+  },
+
+  /**
+   * Remove role cookie
+   */
+  removeRole: () => {
+    if (typeof window === 'undefined') return;
+    deleteCookie(ROLE_KEY);
+    localStorage.removeItem(ROLE_KEY);
   },
 
   /**
    * Remove tokens (logout)
    */
   removeToken: () => {
-    if (typeof window === 'undefined') return; // SSR guard
+    if (typeof window === 'undefined') return;
 
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
+    deleteCookie('auth_token');
+    
     console.log('[TOKEN-SERVICE] Tokens removed');
   },
 
@@ -86,10 +164,18 @@ export const tokenService = {
    * Remove refresh token specifically
    */
   removeRefreshToken: () => {
-    if (typeof window === 'undefined') return; // SSR guard
-
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     console.log('[TOKEN-SERVICE] Refresh token removed');
+  },
+
+  /**
+   * Clear all auth data
+   */
+  clearAll: () => {
+    tokenService.removeToken();
+    tokenService.removeRefreshToken();
+    tokenService.removeRole();
   },
 
   /**
@@ -103,7 +189,7 @@ export const tokenService = {
    * Get token expiry time remaining (in seconds)
    */
   getTokenExpiryIn: () => {
-    if (typeof window === 'undefined') return null; // SSR guard
+    if (typeof window === 'undefined') return null;
 
     const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
     if (!expiry) return null;
@@ -118,70 +204,18 @@ export const tokenService = {
   isTokenExpiringSoon: () => {
     const expiryIn = tokenService.getTokenExpiryIn();
     return expiryIn !== null && expiryIn < 300; // 5 minutes
+  },
+
+  /**
+   * Debug: Get all cookies
+   */
+  getAllCookies: () => {
+    if (typeof window === 'undefined') return {};
+    const cookies = {};
+    document.cookie.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name) cookies[name] = decodeURIComponent(value || '');
+    });
+    return cookies;
   }
 };
-
-/*
-'use client';
-
-import Cookies from 'js-cookie';
-
-export const tokenService = {
-  getToken() {
-    if (typeof window === 'undefined') return null;
-    return Cookies.get('authToken') || sessionStorage.getItem('authToken');
-  },
-  
-  setToken(token) {
-    if (typeof window === 'undefined') return false;
-    if (!token) return false;
-    try {
-      Cookies.set('authToken', token, { expires: 7 });
-      sessionStorage.setItem('authToken', token);
-      return true;
-    } catch (error) {
-      console.error('Error storing token:', error);
-      return false;
-    }
-  },
-  
-  removeToken() {
-    if (typeof window === 'undefined') return false;
-    try {
-      Cookies.remove('authToken');
-      sessionStorage.removeItem('authToken');
-      return true;
-    } catch (error) {
-      console.error('Error removing token:', error);
-      return false;
-    }
-  },
-
-  hasToken() {
-    return !!this.getToken();
-  },
-
-  isTokenExpired() {
-    const token = this.getToken();
-    if (!token) return true;
-
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) return true;
-
-      const decoded = JSON.parse(atob(parts[1]));
-      const expiryTime = decoded.exp * 1000;
-      return expiryTime < Date.now();
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return true;
-    }
-  },
-
-  clearAuth() {
-    this.removeToken();
-  }
-};
-
-export default tokenService;
-*/
