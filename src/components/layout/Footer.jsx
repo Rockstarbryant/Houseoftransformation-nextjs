@@ -72,14 +72,16 @@ const Footer = () => {
             </p>
             <div className="flex gap-2">
               {[
-                { icon: Facebook, href: SOCIAL_LINKS.facebook },
-                { icon: Youtube, href: SOCIAL_LINKS.youtube },
-                { icon: Instagram, href: SOCIAL_LINKS.instagram }
+                { icon: Facebook, href: SOCIAL_LINKS.facebook, label: 'Visit us on Facebook' },
+                { icon: Youtube, href: SOCIAL_LINKS.youtube, label: 'Visit us on YouTube' },
+                { icon: Instagram, href: SOCIAL_LINKS.instagram, label: 'Follow us on Instagram' }
               ].map((social, i) => (
                 <a 
                   key={i}
                   href={social.href} 
-                  target="_blank" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
                   className="size-10 border border-slate-800 flex items-center justify-center hover:bg-[#8B1A1A] hover:border-[#8B1A1A] transition-all"
                 >
                   <social.icon size={18} />
@@ -127,9 +129,11 @@ const Footer = () => {
                   placeholder="EMAIL ADDRESS"
                   className="w-full px-6 py-5 bg-slate-900 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#8B1A1A] transition-colors font-black text-[10px] tracking-widest"
                   required
+                  aria-label="Email address for newsletter subscription"
                 />
                 <button
                   type="submit"
+                  aria-label="Subscribe to newsletter"
                   className="absolute right-0 top-0 h-full px-6 bg-[#8B1A1A] text-white hover:bg-white hover:text-slate-950 transition-all flex items-center justify-center"
                 >
                   <ArrowRight size={18} />

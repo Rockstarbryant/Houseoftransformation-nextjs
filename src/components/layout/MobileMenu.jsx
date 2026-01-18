@@ -77,6 +77,8 @@ const MobileMenu = ({
         <div className="flex flex-col">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
+            aria-label="Toggle content menu"
+            aria-expanded={showDropdown}
             className="flex items-center justify-between py-3 px-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/10 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <span>Content</span>
@@ -102,6 +104,7 @@ const MobileMenu = ({
                   href="/admin"
                   onClick={onClose}
                   className="flex items-center gap-2 py-3 px-8 text-[10px] font-black uppercase tracking-widest text-white/80 hover:text-white dark:hover:text-white transition-colors border-t border-white/10 dark:border-white/5"
+                  aria-label="Go to Admin Dashboard"
                 >
                   <Settings size={14} /> Admin Dashboard
                 </Link>
@@ -128,6 +131,7 @@ const MobileMenu = ({
               toggleTheme();
               onClose();
             }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             className="w-full flex items-center justify-center gap-2 py-3 px-4 text-[11px] font-black uppercase tracking-[0.2em] bg-white/10 dark:bg-white/5 text-white hover:bg-white/20 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
@@ -146,6 +150,7 @@ const MobileMenu = ({
               
               <button
                 onClick={() => { onLogout(); onClose(); }}
+                aria-label="Logout from account"
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/20 dark:border-white/10 text-white hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
               >
                 <LogOut size={16} /> Logout
@@ -154,6 +159,7 @@ const MobileMenu = ({
           ) : (
             <button
               onClick={() => { onAuthClick(); onClose(); }}
+              aria-label="Sign in to account"
               className="w-full bg-white dark:bg-slate-100 text-[#8B1A1A] py-4 rounded-xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-white transition-colors"
             >
               <LogIn size={16} /> Sign In

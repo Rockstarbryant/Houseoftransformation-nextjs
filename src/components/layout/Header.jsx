@@ -113,6 +113,8 @@ const Header = () => {
               <div className="relative group/content">
                 <button
                   onMouseEnter={() => setShowDropdown(true)}
+                  aria-label="Toggle content menu"
+                  aria-expanded={showDropdown}
                   className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-1.5 hover:text-white ${
                     isDropdownActive() ? 'text-white border-b-2 border-white pb-1' : 'text-white/70'
                   }`}
@@ -174,6 +176,7 @@ const Header = () => {
                     <Link
                       href="/portal"
                       className="size-9 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-[#8B1A1A] transition-all shadow-lg"
+                      aria-label="Go to Portal Dashboard"
                       title="Portal Dashboard"
                     >
                       <Settings size={16} />
@@ -182,6 +185,7 @@ const Header = () => {
                   
                   <button
                     onClick={handleLogout}
+                    aria-label="Logout from account"
                     className="size-9 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-red-600 transition-all"
                     title="Logout"
                   >
@@ -191,6 +195,7 @@ const Header = () => {
               ) : (
                 <button
                   onClick={handleAuthClick}
+                  aria-label="Sign in to account"
                   className="hidden lg:flex items-center gap-2 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] bg-white text-[#8B1A1A] hover:bg-slate-100 transition-all shadow-md"
                 >
                   Sign In
@@ -199,6 +204,8 @@ const Header = () => {
 
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? 'Close mobile menu' : 'Open mobile menu'}
+                aria-expanded={isMobileMenuOpen}
                 className="lg:hidden p-2 text-white bg-white/10 rounded-lg"
               >
                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
