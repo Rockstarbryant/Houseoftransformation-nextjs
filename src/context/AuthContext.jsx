@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { tokenService } from '@/lib/tokenService';
@@ -10,18 +10,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Check authentication on mount - client-side only
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
+  // Check authentication - ONLY called by protected routes
+  // No automatic checking on every page load
   const checkAuth = async () => {
-    // Only run in browser
     if (typeof window === 'undefined') {
-      setIsLoading(false);
       return false;
     }
 
@@ -38,7 +33,6 @@ export const AuthProvider = ({ children }) => {
           if (response.data.success && response.data.user) {
             console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
             
-            // Ensure role.permissions is always an array
             const userData = {
               ...response.data.user,
               role: {
@@ -110,8 +104,6 @@ export const AuthProvider = ({ children }) => {
       console.error('[AUTH-CONTEXT] Auth check error:', err);
       setUser(null);
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -282,7 +274,6 @@ export const AuthProvider = ({ children }) => {
     return hasPermission(`manage:${feature}`);
   };
 
-  // Blog-specific helpers
   const canPostBlog = () => {
     if (!user) return false;
     const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
@@ -291,13 +282,11 @@ export const AuthProvider = ({ children }) => {
 
   const canEditBlog = (authorId) => {
     if (!user) return false;
-    // Can edit if: you're the author OR you're an admin
     return user._id === authorId || isAdmin();
   };
 
   const canDeleteBlog = (authorId) => {
     if (!user) return false;
-    // Can delete if: you're the author OR you're an admin
     return user._id === authorId || isAdmin();
   };
 
@@ -341,7 +330,28 @@ export const AuthProvider = ({ children }) => {
     canUploadPhoto: () => hasPermission('manage:gallery'),
     canEditBlog,
     canDeleteBlog,
-    getAllowedBlogCategories
+    getAllowedBlogCategories,
+    canReadFeedbackSermon: () => hasAnyPermission(['read:feedback:sermon', 'manage:feedback']),
+    canRespondFeedbackSermon: () => hasAnyPermission(['respond:feedback:sermon', 'manage:feedback']),
+    canReadFeedbackService: () => hasAnyPermission(['read:feedback:service', 'manage:feedback']),
+    canRespondFeedbackService: () => hasAnyPermission(['respond:feedback:service', 'manage:feedback']),
+    canReadFeedbackTestimony: () => hasAnyPermission(['read:feedback:testimony', 'manage:feedback']),
+    canRespondFeedbackTestimony: () => hasAnyPermission(['respond:feedback:testimony', 'manage:feedback']),
+    canPublishFeedbackTestimony: () => hasAnyPermission(['publish:feedback:testimony', 'manage:feedback']),
+    canArchiveFeedbackTestimony: () => hasAnyPermission(['archive:feedback:testimony', 'manage:feedback']),
+    canReadFeedbackSuggestion: () => hasAnyPermission(['read:feedback:suggestion', 'manage:feedback']),
+    canRespondFeedbackSuggestion: () => hasAnyPermission(['respond:feedback:suggestion', 'manage:feedback']),
+    canArchiveFeedbackSuggestion: () => hasAnyPermission(['archive:feedback:suggestion', 'manage:feedback']),
+    canReadFeedbackPrayer: () => hasAnyPermission(['read:feedback:prayer', 'manage:feedback']),
+    canRespondFeedbackPrayer: () => hasAnyPermission(['respond:feedback:prayer', 'manage:feedback']),
+    canArchiveFeedbackPrayer: () => hasAnyPermission(['archive:feedback:prayer', 'manage:feedback']),
+    canReadFeedbackGeneral: () => hasAnyPermission(['read:feedback:general', 'manage:feedback']),
+    canRespondFeedbackGeneral: () => hasAnyPermission(['respond:feedback:general', 'manage:feedback']),
+    canArchiveFeedbackGeneral: () => hasAnyPermission(['archive:feedback:general', 'manage:feedback']),
+    canViewFeedbackStats: () => hasAnyPermission(['view:feedback:stats', 'manage:feedback']),
+    canReadAnyFeedback: () => hasAnyPermission(['read:feedback:sermon', 'read:feedback:service', 'read:feedback:testimony', 'read:feedback:suggestion', 'read:feedback:prayer', 'read:feedback:general', 'manage:feedback']),
+    canRespondAnyFeedback: () => hasAnyPermission(['respond:feedback:sermon', 'respond:feedback:service', 'respond:feedback:testimony', 'respond:feedback:suggestion', 'respond:feedback:prayer', 'respond:feedback:general', 'manage:feedback']),
+    canArchiveAnyFeedback: () => hasAnyPermission(['archive:feedback:sermon', 'archive:feedback:service', 'archive:feedback:testimony', 'archive:feedback:suggestion', 'archive:feedback:prayer', 'archive:feedback:general', 'manage:feedback'])
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -26,7 +26,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-slate-950">
-      {/* Background Image with optimized cinematic overlay */}
+      {/* Background Image - CRITICAL: loads immediately */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
@@ -91,25 +91,28 @@ const HeroSection = () => {
                 src={churchImages[0].url}
                 alt={churchImages[0].alt}
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
             </div>
 
-            {/* Top Floating Frame */}
+            {/* Top Floating Frame - LAZY LOAD */}
             <div className="absolute -top-10 -right-4 md:right-10 w-48 md:w-64 aspect-video rounded-3xl overflow-hidden border-4 border-slate-900 shadow-2xl z-30 hidden sm:block animate-bounce-slow">
               <img
                 src={churchImages[1].url}
                 alt={churchImages[1].alt}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
 
-            {/* Bottom Floating Frame */}
+            {/* Bottom Floating Frame - LAZY LOAD */}
             <div className="absolute -bottom-10 -left-4 md:-left-10 w-48 md:w-72 aspect-video rounded-3xl overflow-hidden border-4 border-slate-900 shadow-2xl z-30 hidden lg:block">
               <img
                 src={churchImages[2].url}
                 alt={churchImages[2].alt}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
           </div>
@@ -140,17 +143,6 @@ const HeroSection = () => {
           </div>
         </div>
       )}
-
-      {/* CSS for custom animation */}
-      <style jsx global>{`
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 6s ease-in-out infinite;
-        }
-      `}</style>
     </section>
   );
 };

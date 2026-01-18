@@ -20,12 +20,13 @@ const QuickInfoBar = () => {
       <div className="max-w-[1600px] mx-auto md:px-6">
         <div className="flex flex-col lg:flex-row bg-slate-900 dark:bg-slate-800 md:rounded-[4rem] overflow-hidden min-h-[800px] shadow-2xl">
           
-          {/* LEFT PANEL: High-Impact Visual */}
+          {/* LEFT PANEL: High-Impact Visual - LAZY LOAD */}
           <div className="lg:w-5/12 relative min-h-[400px] group">
             <img 
               src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg" 
               className="absolute inset-0 w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
-              alt="H.O.T Ministry" 
+              alt="H.O.T Ministry"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
             <div className="absolute bottom-16 left-12 right-12 space-y-4">

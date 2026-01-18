@@ -80,9 +80,43 @@ export const usePermissions = () => {
   const canManageLivestream = () => hasPermission('manage:livestream');
 
   /**
-   * Feedback Management
+   * Feedback Management - Granular by Category
    */
+  
+  // Broad permission (backward compatibility)
   const canManageFeedback = () => hasPermission('manage:feedback');
+
+  // Sermon Feedback
+  const canReadFeedbackSermon = () => hasAnyPermission(['read:feedback:sermon', 'manage:feedback']);
+  const canRespondFeedbackSermon = () => hasAnyPermission(['respond:feedback:sermon', 'manage:feedback']);
+
+  // Service Feedback
+  const canReadFeedbackService = () => hasAnyPermission(['read:feedback:service', 'manage:feedback']);
+  const canRespondFeedbackService = () => hasAnyPermission(['respond:feedback:service', 'manage:feedback']);
+
+  // Testimony Feedback
+  const canReadFeedbackTestimony = () => hasAnyPermission(['read:feedback:testimony', 'manage:feedback']);
+  const canRespondFeedbackTestimony = () => hasAnyPermission(['respond:feedback:testimony', 'manage:feedback']);
+  const canPublishFeedbackTestimony = () => hasAnyPermission(['publish:feedback:testimony', 'manage:feedback']);
+  const canArchiveFeedbackTestimony = () => hasAnyPermission(['archive:feedback:testimony', 'manage:feedback']);
+
+  // Suggestion Feedback
+  const canReadFeedbackSuggestion = () => hasAnyPermission(['read:feedback:suggestion', 'manage:feedback']);
+  const canRespondFeedbackSuggestion = () => hasAnyPermission(['respond:feedback:suggestion', 'manage:feedback']);
+  const canArchiveFeedbackSuggestion = () => hasAnyPermission(['archive:feedback:suggestion', 'manage:feedback']);
+
+  // Prayer Feedback
+  const canReadFeedbackPrayer = () => hasAnyPermission(['read:feedback:prayer', 'manage:feedback']);
+  const canRespondFeedbackPrayer = () => hasAnyPermission(['respond:feedback:prayer', 'manage:feedback']);
+  const canArchiveFeedbackPrayer = () => hasAnyPermission(['archive:feedback:prayer', 'manage:feedback']);
+
+  // General Feedback
+  const canReadFeedbackGeneral = () => hasAnyPermission(['read:feedback:general', 'manage:feedback']);
+  const canRespondFeedbackGeneral = () => hasAnyPermission(['respond:feedback:general', 'manage:feedback']);
+  const canArchiveFeedbackGeneral = () => hasAnyPermission(['archive:feedback:general', 'manage:feedback']);
+
+  // Feedback Stats
+  const canViewFeedbackStats = () => hasAnyPermission(['view:feedback:stats', 'manage:feedback']);
 
   /**
    * Volunteers Management
@@ -99,6 +133,69 @@ export const usePermissions = () => {
    */
   const canViewAnalytics = () => hasPermission('view:analytics');
   const canViewAuditLogs = () => hasPermission('view:audit_logs');
+
+  // ===== HELPER FUNCTIONS =====
+
+  /**
+   * Check if user can read feedback of any category
+   */
+  const canReadAnyFeedback = () => {
+    return hasAnyPermission([
+      'read:feedback:sermon',
+      'read:feedback:service',
+      'read:feedback:testimony',
+      'read:feedback:suggestion',
+      'read:feedback:prayer',
+      'read:feedback:general',
+      'manage:feedback'
+    ]);
+  };
+
+  /**
+   * Check if user can respond to feedback of any category
+   */
+  const canRespondAnyFeedback = () => {
+    return hasAnyPermission([
+      'respond:feedback:sermon',
+      'respond:feedback:service',
+      'respond:feedback:testimony',
+      'respond:feedback:suggestion',
+      'respond:feedback:prayer',
+      'respond:feedback:general',
+      'manage:feedback'
+    ]);
+  };
+
+  /**
+   * Check if user can archive feedback of any category
+   */
+  const canArchiveAnyFeedback = () => {
+    return hasAnyPermission([
+      'archive:feedback:sermon',
+      'archive:feedback:service',
+      'archive:feedback:testimony',
+      'archive:feedback:suggestion',
+      'archive:feedback:prayer',
+      'archive:feedback:general',
+      'manage:feedback'
+    ]);
+  };
+
+  /**
+   * Get feedback categories user can access (read)
+   */
+  const getAccessibleFeedbackCategories = () => {
+    const categories = [];
+    
+    if (canReadFeedbackSermon()) categories.push('sermon');
+    if (canReadFeedbackService()) categories.push('service');
+    if (canReadFeedbackTestimony()) categories.push('testimony');
+    if (canReadFeedbackSuggestion()) categories.push('suggestion');
+    if (canReadFeedbackPrayer()) categories.push('prayer');
+    if (canReadFeedbackGeneral()) categories.push('general');
+    
+    return categories;
+  };
 
   // ===== PORTAL ACCESS CONTROL =====
 
@@ -169,6 +266,33 @@ export const usePermissions = () => {
           href: '/portal/roles',
           icon: 'Shield',
           permission: 'manage:roles'
+        });
+      }
+
+      if (canReadAnyFeedback()) {
+        sections.push({
+          name: 'Feedback',
+          href: '/portal/feedback',
+          icon: 'MessageSquare',
+          permission: 'manage:feedback'
+        });
+      }
+
+      if (canManageLivestream()) {
+        sections.push({
+          name: 'Livestream',
+          href: '/portal/livestream',
+          icon: 'Play',
+          permission: 'manage:livestream'
+        });
+      }
+
+      if (canManageVolunteers()) {
+        sections.push({
+          name: 'Volunteers',
+          href: '/portal/volunteers',
+          icon: 'Users',
+          permission: 'manage:volunteers'
         });
       }
 
@@ -276,11 +400,41 @@ export const usePermissions = () => {
     canEditBlog,
     canDeleteBlog,
 
-    // Other features
+    // Livestream
     canManageLivestream,
+
+    // Feedback (Granular by Category)
     canManageFeedback,
+    canReadAnyFeedback,
+    canRespondAnyFeedback,
+    canArchiveAnyFeedback,
+    getAccessibleFeedbackCategories,
+    canReadFeedbackSermon,
+    canRespondFeedbackSermon,
+    canReadFeedbackService,
+    canRespondFeedbackService,
+    canReadFeedbackTestimony,
+    canRespondFeedbackTestimony,
+    canPublishFeedbackTestimony,
+    canArchiveFeedbackTestimony,
+    canReadFeedbackSuggestion,
+    canRespondFeedbackSuggestion,
+    canArchiveFeedbackSuggestion,
+    canReadFeedbackPrayer,
+    canRespondFeedbackPrayer,
+    canArchiveFeedbackPrayer,
+    canReadFeedbackGeneral,
+    canRespondFeedbackGeneral,
+    canArchiveFeedbackGeneral,
+    canViewFeedbackStats,
+
+    // Volunteers
     canManageVolunteers,
+
+    // Settings
     canManageSettings,
+
+    // Analytics & Reporting
     canViewAnalytics,
     canViewAuditLogs
   };

@@ -9,6 +9,7 @@ import { livestreamService } from '@/services/api/livestreamService';
 const LiveStreamSection = () => {
   const [activeStream, setActiveStream] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [iframeReady, setIframeReady] = useState(false);
 
   useEffect(() => {
     const fetchActiveStream = async () => {
@@ -36,6 +37,27 @@ const LiveStreamSection = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Intersection Observer to load iframe only when visible
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !iframeReady) {
+          setIframeReady(true);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const element = document.getElementById('livestream-container');
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => {
+      if (element) observer.unobserve(element);
+    };
+  }, [iframeReady]);
+
   const getEmbedUrl = () => {
     if (!activeStream) return null;
     
@@ -59,7 +81,7 @@ const LiveStreamSection = () => {
   const embedUrl = getEmbedUrl();
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-r from-red-600 to-red-700">
+    <section id="livestream-container" className="py-16 md:py-24 bg-gradient-to-r from-red-600 to-red-700">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Live Badge */}
         <div className="flex items-center gap-2 mb-4">
@@ -96,8 +118,8 @@ const LiveStreamSection = () => {
             </Link>
           </div>
           
-          {/* Right: Video Player */}
-          {embedUrl && (
+          {/* Right: Video Player - LAZY LOAD IFRAME */}
+          {embedUrl && iframeReady && (
             <div className="aspect-video rounded-lg overflow-hidden shadow-2xl">
               <iframe
                 src={embedUrl}
@@ -105,7 +127,18 @@ const LiveStreamSection = () => {
                 allowFullScreen
                 allow="autoplay; encrypted-media"
                 title={activeStream.title}
+                loading="lazy"
               />
+            </div>
+          )}
+
+          {/* Placeholder while iframe loads */}
+          {embedUrl && !iframeReady && (
+            <div className="aspect-video rounded-lg overflow-hidden shadow-2xl bg-black/50 flex items-center justify-center">
+              <div className="text-white text-center">
+                <div className="animate-spin w-12 h-12 border-4 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
+                <p className="text-sm">Loading stream...</p>
+              </div>
             </div>
           )}
         </div>

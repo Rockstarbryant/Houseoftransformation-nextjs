@@ -35,3 +35,46 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 # Houseoftransformation-nextjs
+
+
+General Pattern - Add these to ALL pages:
+jsx// Main container
+<div className="bg-white dark:bg-slate-900 dark:text-white transition-colors">
+
+// Sections with light backgrounds
+<section className="bg-slate-50 dark:bg-slate-800">
+
+// Text colors
+className="text-slate-900 dark:text-white"
+className="text-slate-600 dark:text-slate-300"
+className="text-slate-500 dark:text-slate-400"
+
+// Borders
+className="border-slate-200 dark:border-slate-700"
+
+// Cards/Boxes
+className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+
+// Buttons (non-primary)
+className="bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white"
+
+// Shadows
+className="shadow-md dark:shadow-slate-900"
+For Each Component:
+
+AboutSection.jsx - Add dark:bg-slate-900 dark:text-white to main div, dark:bg-slate-800 to cards
+HeroSection.jsx - Add dark:bg-slate-900 to background
+EventList.jsx - Add dark:bg-slate-800 to event cards, dark:text-white to text
+ServiceAreaCard.jsx - Add dark:bg-slate-800 dark:text-white
+SermonCard.jsx - Add dark:bg-slate-800 dark:text-white
+LiveStreamSection.jsx - Add dark:bg-slate-900
+DonationSection.jsx - Add dark:bg-slate-800
+
+Quick Find & Replace in VS Code:
+
+Search: bg-white → Replace with: bg-white dark:bg-slate-900
+Search: text-gray-900 → Replace with: text-gray-900 dark:text-white
+Search: text-slate-600 → Replace with: text-slate-600 dark:text-slate-300
+Search: border-slate-200 → Replace with: border-slate-200 dark:border-slate-700
+
+That's it! Follow this pattern consistently and all pages will support dark mode! 🌙

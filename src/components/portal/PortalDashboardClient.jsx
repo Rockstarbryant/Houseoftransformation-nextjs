@@ -120,25 +120,57 @@ export default function PortalDashboardClient() {
         <h3 className="font-bold text-slate-900 dark:text-white mb-4">
           Your Permissions
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {permissions.length > 0 ? (
-            permissions.map((perm) => (
-              <div 
-                key={perm}
-                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
-              >
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {perm}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              No special permissions (member default role)
-            </p>
-          )}
+        
+        {/* Broad Permissions */}
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+            Management Permissions
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {permissions.length > 0 ? (
+              permissions.filter(p => p.includes('manage:') || p.includes('view:'))
+                .map((perm) => (
+                  <div 
+                    key={perm}
+                    className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
+                  >
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {perm}
+                    </span>
+                  </div>
+                ))
+            ) : (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                No management permissions
+              </p>
+            )}
+          </div>
         </div>
+
+        {/* Granular Feedback Permissions */}
+        {permissions.some(p => p.includes('feedback')) && (
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+              Feedback Permissions (by Category)
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {permissions.filter(p => p.includes('feedback'))
+                .map((perm) => (
+                  <div 
+                    key={perm}
+                    className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-700 rounded-lg border border-blue-200 dark:border-blue-600"
+                  >
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {perm}
+                    </span>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contact Admin */}
