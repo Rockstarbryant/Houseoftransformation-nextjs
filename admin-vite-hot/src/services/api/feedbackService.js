@@ -1,5 +1,5 @@
 import api from './authService';
-import { API_ENDPOINTS } from '../../utils/constants';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 export const feedbackService = {
   /**
@@ -105,7 +105,46 @@ export const feedbackService = {
   },
 
   /**
-   * Admin: Delete feedback
+   * Admin: Archive feedback
+   */
+  async archiveFeedback(id) {
+    try {
+      const response = await api.put(`/feedback/${id}/archive`);
+      return response.data;
+    } catch (error) {
+      console.error('Archive feedback error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Unarchive feedback
+   */
+  async unarchiveFeedback(id) {
+    try {
+      const response = await api.put(`/feedback/${id}/unarchive`);
+      return response.data;
+    } catch (error) {
+      console.error('Unarchive feedback error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Soft delete feedback
+   */
+  async softDeleteFeedback(id) {
+    try {
+      const response = await api.put(`/feedback/${id}/soft-delete`);
+      return response.data;
+    } catch (error) {
+      console.error('Soft delete feedback error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Permanently delete feedback
    */
   async deleteFeedback(id) {
     try {
@@ -118,11 +157,37 @@ export const feedbackService = {
   },
 
   /**
+   * Admin: Get recycled feedback
+   */
+  async getRecycledFeedback() {
+    try {
+      const response = await api.get('/feedback/recycled/list');
+      return response.data;
+    } catch (error) {
+      console.error('Get recycled feedback error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Admin: Restore from recycle
+   */
+  async restoreFromRecycle(id) {
+    try {
+      const response = await api.put(`/feedback/${id}/restore`);
+      return response.data;
+    } catch (error) {
+      console.error('Restore feedback error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Admin: Get feedback statistics
    */
   async getStats() {
     try {
-      const response = await api.get('/feedback/stats');
+      const response = await api.get('/feedback/stats/overview');
       return response.data;
     } catch (error) {
       console.error('Get feedback stats error:', error);
