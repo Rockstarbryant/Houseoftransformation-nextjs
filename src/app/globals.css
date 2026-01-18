@@ -188,12 +188,21 @@ img {
   to { opacity: 1; transform: translateY(0); } 
 }
 
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
 .animate-fade-in { 
   animation: fadeIn 1s ease-out forwards; 
 }
 
 .animate-fade-up { 
   animation: fadeUp 0.8s ease-out forwards; 
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 6s ease-in-out infinite;
 }
 
 @media print {
