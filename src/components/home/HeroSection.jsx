@@ -41,7 +41,7 @@ const HeroSection = () => {
           
           {/* ========== LEFT: EDITORIAL CONTENT ========== */}
           <div className="text-white">
-            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 mb-8 animate-in fade-in slide-in-from-left-4 duration-700">
+            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
               <Sparkles size={14} className="text-[#8B1A1A]" />
               <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
             </div>
