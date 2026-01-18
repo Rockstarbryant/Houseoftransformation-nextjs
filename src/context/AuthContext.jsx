@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { tokenService } from '@/services/tokenService';
@@ -10,10 +10,26 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check authentication - ONLY called by protected routes
+  // ===== AUTO-CHECK AUTH ON APP LOAD =====
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        console.log('[AUTH-CONTEXT] Initializing authentication...');
+        await checkAuth();
+      } catch (error) {
+        console.error('[AUTH-CONTEXT] Initialization error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []); // Only run once on mount
+
+  // Check authentication - verifies token and sets user
   const checkAuth = async () => {
     if (typeof window === 'undefined') {
       return false;

@@ -8,6 +8,7 @@ const TOKEN_KEY = 'supabase_access_token';
 const REFRESH_TOKEN_KEY = 'supabase_refresh_token';
 const TOKEN_EXPIRY_KEY = 'supabase_token_expiry';
 const ROLE_KEY = 'user_role';
+const COOKIE_AUTH_TOKEN = 'auth_token';
 
 // ===== COOKIE HELPERS =====
 const setCookie = (name, value, days = 7) => {
@@ -54,17 +55,15 @@ const deleteCookie = (name) => {
 // ===== MAIN TOKEN SERVICE =====
 export const tokenService = {
   /**
-   * Store access token in localStorage + cookie
+   * Store access token in BOTH localStorage + cookies
    */
   setToken: (token) => {
     if (typeof window === 'undefined') return;
     if (!token) return;
 
     localStorage.setItem(TOKEN_KEY, token);
-    // Also set as cookie for middleware
-    setCookie('auth_token', token, 7);
+    setCookie(COOKIE_AUTH_TOKEN, token, 7);
 
-    // Decode token to get expiry
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.exp) {
@@ -85,7 +84,6 @@ export const tokenService = {
 
     const token = localStorage.getItem(TOKEN_KEY);
 
-    // Check if token is expired
     if (token) {
       const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
       if (expiry && Date.now() > parseInt(expiry)) {
@@ -118,36 +116,46 @@ export const tokenService = {
   },
 
   /**
-   * Set user role for middleware
+   * Set user role in BOTH cookie + localStorage
    */
   setRole: (role) => {
     if (typeof window === 'undefined') return;
     
     const roleName = role?.name || role || 'user';
-    setCookie(ROLE_KEY, roleName, 7);
+    
     localStorage.setItem(ROLE_KEY, roleName);
+    setCookie(ROLE_KEY, roleName, 7);
+    
     console.log('[TOKEN-SERVICE] User role set:', roleName);
   },
 
   /**
-   * Get user role from cookie
+   * Get user role - check both sources
    */
   getRole: () => {
     if (typeof window === 'undefined') return null;
-    return getCookie(ROLE_KEY) || localStorage.getItem(ROLE_KEY);
+    
+    const cookieRole = getCookie(ROLE_KEY);
+    if (cookieRole) return cookieRole;
+    
+    const storageRole = localStorage.getItem(ROLE_KEY);
+    if (storageRole) return storageRole;
+    
+    return null;
   },
 
   /**
-   * Remove role cookie
+   * Remove role from both sources
    */
   removeRole: () => {
     if (typeof window === 'undefined') return;
     deleteCookie(ROLE_KEY);
     localStorage.removeItem(ROLE_KEY);
+    console.log('[TOKEN-SERVICE] Role removed');
   },
 
   /**
-   * Remove tokens (logout)
+   * Remove tokens from both sources
    */
   removeToken: () => {
     if (typeof window === 'undefined') return;
@@ -155,7 +163,7 @@ export const tokenService = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
-    deleteCookie('auth_token');
+    deleteCookie(COOKIE_AUTH_TOKEN);
     
     console.log('[TOKEN-SERVICE] Tokens removed');
   },
@@ -176,6 +184,7 @@ export const tokenService = {
     tokenService.removeToken();
     tokenService.removeRefreshToken();
     tokenService.removeRole();
+    console.log('[TOKEN-SERVICE] All auth data cleared');
   },
 
   /**

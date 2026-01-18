@@ -134,9 +134,9 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
   };
 
   return (
-    <div className="border border-gray-300 rounded-lg bg-slate-300 p-3 space-y-3 shadow-sm">
-      <div className="flex flex-wrap gap-2 items-center border-b border-gray-200 pb-3">
-        <div className="flex gap-1 border-r border-gray-300 pr-3">
+    <div className="border border-gray-300 dark:border-gray-600 rounded-lg bg-slate-300 dark:bg-slate-700 p-3 space-y-3 shadow-sm">
+      <div className="flex flex-wrap gap-2 items-center border-b border-gray-200 dark:border-gray-600 pb-3">
+        <div className="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
           {[
             { action: 'toggleBold', label: 'B', active: 'bold' },
             { action: 'toggleItalic', label: 'I', active: 'italic' },
@@ -147,8 +147,8 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
               onClick={() => editor.chain().focus()[btn.action]().run()}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 editor.isActive(btn.active) 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 hover:bg-gray-200'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-white' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {btn.label}
@@ -156,15 +156,15 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
           ))}
         </div>
 
-        <div className="flex gap-1 border-r border-gray-300 pr-3">
+        <div className="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
           {[2, 3].map(level => (
             <button
               key={level}
               onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
               className={`px-3 py-1.5 rounded text-sm font-bold transition-colors ${
                 editor.isActive('heading', { level }) 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 hover:bg-gray-200'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-white' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               H{level}
@@ -172,11 +172,11 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
           ))}
         </div>
 
-        <div className="flex gap-1 border-r border-gray-300 pr-3">
+        <div className="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
           <button
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={`px-3 py-1.5 rounded transition-colors ${
-              editor.isActive('bulletList') ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              editor.isActive('bulletList') ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <List size={16} />
@@ -184,14 +184,14 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
           <button
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             className={`px-3 py-1.5 rounded transition-colors ${
-              editor.isActive('orderedList') ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              editor.isActive('orderedList') ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <ListOrdered size={16} />
           </button>
         </div>
 
-        <div className="flex gap-1 border-r border-gray-300 pr-3">
+        <div className="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
           {[
             { align: 'left', icon: AlignLeft },
             { align: 'center', icon: AlignCenter },
@@ -202,7 +202,7 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
               key={align}
               onClick={() => editor.chain().focus().setTextAlign(align).run()}
               className={`px-3 py-1.5 rounded transition-colors ${
-                editor.isActive({ textAlign: align }) ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                editor.isActive({ textAlign: align }) ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               <Icon size={16} />
@@ -212,24 +212,24 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="flex gap-1 border-r border-gray-300 pr-3">
+        <div className="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-3">
           <button
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().chain().focus().undo().run()}
-            className="p-2 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            className="p-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
           >
             <RotateCcw size={16} />
           </button>
           <button
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().chain().focus().redo().run()}
-            className="p-2 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+            className="p-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
           >
             <RotateCw size={16} />
           </button>
         </div>
 
-        <label className={`flex items-center gap-2 px-4 py-2 rounded bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors text-sm ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <label className={`flex items-center gap-2 px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
           <ImageIcon size={16} />
           {uploading ? 'Uploading...' : 'Image'}
           <input type="file" accept="image/*" onChange={handleImageFileUpload} disabled={uploading} className="hidden" />
@@ -237,7 +237,7 @@ const TipTapToolbar = React.memo(({ editor, onImageUpload, uploading, showClearC
 
         <button
           onClick={showClearConfirm}
-          className="ml-auto px-4 py-2 rounded bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium"
+          className="ml-auto px-4 py-2 rounded bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-100 hover:bg-red-100 dark:hover:bg-red-800 text-sm font-medium"
         >
           Clear
         </button>
@@ -252,22 +252,22 @@ const PreviewModal = ({ isOpen, onClose, formData, descriptionHtml }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full my-8">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-xl z-10">
-          <h2 className="text-2xl font-bold text-gray-900">Sermon Preview</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full my-8">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b px-6 py-4 flex items-center justify-between rounded-t-xl z-10">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sermon Preview</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
             <X size={24} />
           </button>
         </div>
 
         <div className="p-6 md:p-10 space-y-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{formData.title || 'Untitled Sermon'}</h1>
-            <div className="flex flex-wrap gap-4 text-gray-600 text-sm md:text-base">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">{formData.title || 'Untitled Sermon'}</h1>
+            <div className="flex flex-wrap gap-4 text-gray-600 dark:text-gray-300 text-sm md:text-base">
               <span className="font-medium">By {formData.pastor || 'Unknown Pastor'}</span>
               <span>•</span>
               <span>{formData.date ? new Date(formData.date).toLocaleDateString() : 'No date'}</span>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">{formData.category}</span>
+              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full font-medium">{formData.category}</span>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ const PreviewModal = ({ isOpen, onClose, formData, descriptionHtml }) => {
           )}
 
           {formData.videoUrl && (
-            <div className="aspect-video rounded-xl overflow-hidden shadow-md bg-black">
+            <div className="aspect-video rounded-xl overflow-hidden shadow-md bg-black dark:bg-gray-900">
               <iframe 
                 src={formData.videoUrl.replace('watch?v=', 'embed/')} 
                 className="w-full h-full" 
@@ -290,7 +290,7 @@ const PreviewModal = ({ isOpen, onClose, formData, descriptionHtml }) => {
             </div>
           )}
 
-          <div className="prose prose-lg max-w-none text-gray-800">
+          <div className="prose prose-lg max-w-none text-gray-800 dark:text-gray-200">
             <style jsx>{`
               .prose :global(p) {
                 margin-bottom: 1em;
@@ -569,7 +569,7 @@ export default function ManageSermons() {
   const otherSermons = sermons.filter(s => !s.pinned);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-white dark:bg-slate-900 dark:text-white transition-colors">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <ConfirmDialog
         {...confirmDialog}
@@ -579,23 +579,23 @@ export default function ManageSermons() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900">Manage Sermons</h1>
-            <p className="text-gray-600 text-center mt-1">Create, edit and organize your sermon collection</p>
+            <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900 dark:text-white">Manage Sermons</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-center mt-1">Create, edit and organize your sermon collection</p>
           </div>
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white dark:text-white rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors shadow-sm"
           >
             <Plus size={20} /> Add Sermon
           </button>
         </div>
 
-        <div className="mb-10 p-5 bg-blue-50 border border-blue-200 rounded-xl">
+        <div className="mb-10 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
           <div className="flex items-center gap-3">
             <Star className="text-amber-500" size={28} fill="currentColor" />
             <div>
-              <h3 className="font-semibold text-blue-900 text-lg">Featured: {pinnedCount}/3</h3>
-              <p className="text-blue-700 text-sm mt-0.5">Featured sermons appear on your homepage</p>
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-lg">Featured: {pinnedCount}/3</h3>
+              <p className="text-blue-700 dark:text-blue-300 text-sm mt-0.5">Featured sermons appear on your homepage</p>
             </div>
           </div>
         </div>
@@ -605,14 +605,14 @@ export default function ManageSermons() {
             <div className="grid lg:grid-cols-4 gap-8">
               {/* Form Sidebar */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl border border-gray-200 shadow-lg sticky top-6">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg sticky top-6">
                   <div className="p-6 border-b flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                       {editingId ? 'Edit Sermon' : 'New Sermon'}
                     </h2>
                     <button 
                       onClick={() => { setShowForm(false); resetForm(); }}
-                      className="p-2 hover:bg-gray-100 rounded-lg"
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                     >
                       <X size={20} />
                     </button>
@@ -620,7 +620,7 @@ export default function ManageSermons() {
 
                   <div className="p-6 space-y-6 max-h-[calc(100vh-140px)] overflow-y-auto">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">Type</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Type</label>
                       <div className="grid grid-cols-3 gap-3">
                         {['text', 'photo', 'video'].map(type => (
                           <button
@@ -629,8 +629,8 @@ export default function ManageSermons() {
                             onClick={() => setSermonType(type)}
                             className={`p-4 rounded-lg border-2 text-center transition-all ${
                               sermonType === type 
-                                ? 'border-blue-600 bg-blue-50' 
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-blue-600 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20' 
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                             }`}
                           >
                             <div className="text-3xl mb-2">
@@ -643,7 +643,7 @@ export default function ManageSermons() {
 
                     <div className="space-y-5">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Title *</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Title *</label>
                         <input
                           type="text"
                           value={formData.title}
@@ -654,7 +654,7 @@ export default function ManageSermons() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pastor *</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Pastor *</label>
                         <input
                           type="text"
                           value={formData.pastor}
@@ -665,22 +665,22 @@ export default function ManageSermons() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date *</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Date *</label>
                         <input
                           type="date"
                           value={formData.date}
                           onChange={e => setFormData({...formData, date: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
                         <select
                           value={formData.category}
                           onChange={e => setFormData({...formData, category: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option>Sunday Service</option>
                           <option>Bible Study</option>
@@ -692,12 +692,12 @@ export default function ManageSermons() {
 
                       {(sermonType === 'photo' || sermonType === 'video') && (
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Thumbnail</label>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Thumbnail</label>
                           <input
                             type="file"
                             accept="image/*"
                             onChange={handleThumbnailUpload}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                           />
                           {thumbnailPreview && (
                             <img src={thumbnailPreview} alt="preview" className="mt-3 h-32 w-full object-cover rounded-lg" />
@@ -707,13 +707,13 @@ export default function ManageSermons() {
 
                       {sermonType === 'video' && (
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Video URL *</label>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Video URL *</label>
                           <input
                             type="url"
                             value={formData.videoUrl}
                             onChange={e => setFormData({...formData, videoUrl: e.target.value})}
                             placeholder="https://www.youtube.com/watch?v=..."
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
                           />
                         </div>
@@ -724,14 +724,14 @@ export default function ManageSermons() {
                       <button
                         type="button"
                         onClick={() => setShowPreview(true)}
-                        className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 font-medium"
+                        className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium"
                       >
                         <Eye size={18} /> Preview
                       </button>
                       <button
                         onClick={handleSubmit}
                         disabled={loading || uploading}
-                        className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-60"
+                        className="flex-1 py-3 px-4 bg-blue-600 dark:bg-blue-700 text-white dark:text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors font-medium disabled:opacity-60"
                       >
                         {loading ? 'Saving...' : editingId ? 'Update' : 'Create'}
                       </button>
@@ -742,15 +742,15 @@ export default function ManageSermons() {
 
               {/* FULL WIDTH EDITOR */}
               <div className="lg:col-span-3">
-                <div className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden -mx-4 sm:-mx-6 lg:mx-0">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden -mx-4 sm:-mx-6 lg:mx-0">
                   <div className="p-6 border-b">
-                    <h3 className="text-lg font-bold text-gray-900">Sermon Content *</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Sermon Editor</h3>
                   </div>
                   <div className="p-0">
                     <div className="px-6 pt-6">
                       <TipTapToolbar editor={editor} onImageUpload={handleImageUpload} uploading={uploading} showClearConfirm={handleClearContent} />
                     </div>
-                    <div className="border-0 min-h-[500px] bg-white">
+                    <div className="border-0 min-h-[500px] bg-white dark:bg-gray-800">
                       <EditorContent editor={editor} className="prose max-w-none p-6" />
                     </div>
                   </div>
@@ -764,8 +764,8 @@ export default function ManageSermons() {
             <>
               {pinnedSermons.length > 0 && (
                 <div className="mb-12">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <Star className="text-amber-500" size={28} fill="currentColor" />
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                    <Star className="text-amber-500 dark:text-amber-400" size={28} fill="currentColor" />
                     Featured Sermons
                   </h2>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -784,14 +784,14 @@ export default function ManageSermons() {
               )}
 
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   All Sermons {pinnedSermons.length > 0 && `(${otherSermons.length})`}
                 </h2>
                 {otherSermons.length === 0 ? (
-                  <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center">
                     <div className="text-6xl mb-4 opacity-40">📖</div>
-                    <h3 className="text-xl font-medium text-gray-700">No sermons yet</h3>
-                    <p className="text-gray-500 mt-2">Start by clicking &quot;Add Sermon&quot;</p>
+                    <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300">No sermons yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mt-2">Start by clicking &quot;Add Sermon&quot;</p>
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -831,8 +831,8 @@ function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
   }[sermon.type] || '📋';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group">
-      <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+      <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
         {sermon.thumbnail ? (
           <img
             src={sermon.thumbnail}
@@ -846,11 +846,11 @@ function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
         )}
 
         <div className="absolute top-3 left-3 flex gap-2">
-          <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium shadow-sm">
+          <span className="px-2.5 py-1 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-full text-xs font-medium shadow-sm">
             {typeIcon} {sermon.type}
           </span>
           {isPinned && (
-            <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium shadow-sm flex items-center gap-1">
+            <span className="px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 rounded-full text-xs font-medium shadow-sm flex items-center gap-1">
               <Star size={12} fill="currentColor" /> Featured
             </span>
           )}
@@ -858,16 +858,16 @@ function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
       </div>
 
       <div className="p-5">
-        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors">
           {sermon.title}
         </h3>
-        <p className="text-gray-600 text-sm mb-4">{sermon.pastor}</p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{sermon.pastor}</p>
 
         <div className="flex flex-wrap gap-2">
-          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+          <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-100 rounded-full text-xs font-medium">
             {sermon.category}
           </span>
-          <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-xs">
             {new Date(sermon.date).toLocaleDateString()}
           </span>
         </div>
@@ -877,21 +877,21 @@ function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
             onClick={() => onPin(sermon._id)}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
               isPinned 
-                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' 
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                ? 'bg-amber-50 dark:bg-amber-900 text-amber-700 dark:text-amber-100 hover:bg-amber-100' 
+                : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100'
             }`}
           >
             {isPinned ? 'Unpin' : 'Pin'}
           </button>
           <button
             onClick={() => onEdit(sermon)}
-            className="flex-1 py-2 px-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+            className="flex-1 py-2 px-3 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-100 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(sermon._id)}
-            className="flex-1 py-2 px-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+            className="flex-1 py-2 px-3 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
           >
             Delete
           </button>
