@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
-  User, Calendar, BookOpen, ImageIcon, Heart, Users, Shield, BarChart3, LogOut, Home
+  User, Calendar, BookOpen, ImageIcon, Heart, Users, Shield, BarChart3, LogOut, Home, Play, Newspaper, DollarSign, FileText, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -28,7 +28,12 @@ export default function PortalSidebar({ isOpen, onToggle }) {
     'Heart': <Heart size={20} />,
     'Users': <Users size={20} />,
     'Shield': <Shield size={20} />,
-    'BarChart3': <BarChart3 size={20} />
+    'BarChart3': <BarChart3 size={20} />,
+    'Play': <Play size={20} />,
+    'Newspaper': <Newspaper size={20} />,
+    'DollarSign': <DollarSign size={20} />,
+    'FileText': <FileText size={20} />,
+    'MessageSquare': <MessageSquare size={20} />
   };
 
   const isActive = (href) => {
@@ -103,6 +108,15 @@ export default function PortalSidebar({ isOpen, onToggle }) {
 
       {/* User Section */}
       <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-2">
+        {/* Back to Site Button */}
+        <a
+          href="/"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all"
+        >
+          <Home size={20} />
+          <span className="text-sm font-semibold">Back to Site</span>
+        </a>
+
         {user && (
           <div className="px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">

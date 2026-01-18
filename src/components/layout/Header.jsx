@@ -168,7 +168,7 @@ const Header = () => {
                       {user?.name || 'User'}
                     </span>
                     <span className="text-[9px] font-bold text-white/60 uppercase">
-                      {user?.role?.name || 'Member'}
+                      {user?.role?.name}
                     </span>
                   </div>
                   

@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []); // Only run once on mount
+  }, []);
 
-  // Check authentication - verifies token and sets user
+  // ===== CHECK AUTHENTICATION =====
   const checkAuth = async () => {
     if (typeof window === 'undefined') {
       return false;
@@ -40,95 +40,115 @@ export const AuthProvider = ({ children }) => {
 
       const token = tokenService.getToken();
 
-      if (token) {
-        console.log('[AUTH-CONTEXT] Token found, verifying...');
+      // No token = not authenticated
+      if (!token) {
+        console.log('[AUTH-CONTEXT] ❌ No token found');
+        setUser(null);
+        tokenService.removeRole();
+        return false;
+      }
 
+      console.log('[AUTH-CONTEXT] ✅ Token found, verifying...');
+
+      try {
+        const response = await api.get('/auth/me');
+        
+        if (response.data.success && response.data.user) {
+          console.log('[AUTH-CONTEXT] ✅ User verified:', response.data.user.email);
+          
+          const userData = {
+            ...response.data.user,
+            role: {
+              ...response.data.user.role,
+              permissions: Array.isArray(response.data.user.role?.permissions) 
+                ? response.data.user.role.permissions 
+                : []
+            }
+          };
+          
+          setUser(userData);
+          tokenService.setRole(userData.role);
+          console.log('[AUTH-CONTEXT] ✅ User role set:', userData.role.name);
+          return true;
+        } else {
+          console.log('[AUTH-CONTEXT] ❌ Token verification failed');
+          tokenService.clearAll();
+          setUser(null);
+          return false;
+        }
+      } catch (verifyError) {
+        console.error('[AUTH-CONTEXT] ❌ Verification error:', verifyError.message);
+        
+        // Token is invalid or expired - try to refresh
         try {
-          const response = await api.get('/auth/me');
-          if (response.data.success && response.data.user) {
-            console.log('[AUTH-CONTEXT] User verified:', response.data.user.email);
-            
+          const refreshToken = tokenService.getRefreshToken();
+          
+          if (!refreshToken) {
+            console.log('[AUTH-CONTEXT] ❌ No refresh token available');
+            tokenService.clearAll();
+            setUser(null);
+            return false;
+          }
+
+          console.log('[AUTH-CONTEXT] 🔄 Attempting token refresh...');
+          const refreshResponse = await api.post('/auth/refresh', { refreshToken });
+
+          if (!refreshResponse.data.token) {
+            console.log('[AUTH-CONTEXT] ❌ Token refresh returned no token');
+            tokenService.clearAll();
+            setUser(null);
+            return false;
+          }
+
+          console.log('[AUTH-CONTEXT] ✅ Token refreshed successfully');
+          tokenService.setToken(refreshResponse.data.token);
+          
+          if (refreshResponse.data.refreshToken) {
+            tokenService.setRefreshToken(refreshResponse.data.refreshToken);
+          }
+
+          // Get user data with new token
+          const retryResponse = await api.get('/auth/me');
+          
+          if (retryResponse.data.user) {
             const userData = {
-              ...response.data.user,
+              ...retryResponse.data.user,
               role: {
-                ...response.data.user.role,
-                permissions: Array.isArray(response.data.user.role?.permissions) 
-                  ? response.data.user.role.permissions 
+                ...retryResponse.data.user.role,
+                permissions: Array.isArray(retryResponse.data.user.role?.permissions) 
+                  ? retryResponse.data.user.role.permissions 
                   : []
               }
             };
             
             setUser(userData);
-            // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
             tokenService.setRole(userData.role);
-            console.log('[AUTH-CONTEXT] User role cookie set:', userData.role.name);
+            console.log('[AUTH-CONTEXT] ✅ Token refreshed and user verified');
             return true;
           } else {
-            console.log('[AUTH-CONTEXT] Token verification failed');
+            console.log('[AUTH-CONTEXT] ❌ Could not fetch user after token refresh');
             tokenService.clearAll();
             setUser(null);
             return false;
           }
-        } catch (err) {
-          console.error('[AUTH-CONTEXT] Verification error:', err);
-          
-          // Try to refresh token
-          try {
-            const refreshToken = tokenService.getRefreshToken();
-            if (refreshToken) {
-              console.log('[AUTH-CONTEXT] Attempting token refresh...');
-              const refreshResponse = await api.post('/auth/refresh', { refreshToken });
 
-              if (refreshResponse.data.token) {
-                tokenService.setToken(refreshResponse.data.token);
-                if (refreshResponse.data.refreshToken) {
-                  tokenService.setRefreshToken(refreshResponse.data.refreshToken);
-                }
-
-                const retryResponse = await api.get('/auth/me');
-                if (retryResponse.data.user) {
-                  const userData = {
-                    ...retryResponse.data.user,
-                    role: {
-                      ...retryResponse.data.user.role,
-                      permissions: Array.isArray(retryResponse.data.user.role?.permissions) 
-                        ? retryResponse.data.user.role.permissions 
-                        : []
-                    }
-                  };
-                  setUser(userData);
-                  // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
-                  tokenService.setRole(userData.role);
-                  console.log('[AUTH-CONTEXT] Token refreshed and user verified');
-                  return true;
-                }
-              }
-            }
-            
-            tokenService.clearAll();
-            setUser(null);
-            return false;
-          } catch (refreshErr) {
-            console.error('[AUTH-CONTEXT] Token refresh failed:', refreshErr);
-            tokenService.clearAll();
-            setUser(null);
-            return false;
-          }
+        } catch (refreshError) {
+          console.error('[AUTH-CONTEXT] ❌ Token refresh failed:', refreshError.message);
+          // Refresh failed - clear everything
+          tokenService.clearAll();
+          setUser(null);
+          return false;
         }
-      } else {
-        console.log('[AUTH-CONTEXT] No token found');
-        setUser(null);
-        tokenService.removeRole();
-        return false;
       }
     } catch (err) {
-      console.error('[AUTH-CONTEXT] Auth check error:', err);
+      console.error('[AUTH-CONTEXT] ❌ Auth check error:', err);
+      tokenService.clearAll();
       setUser(null);
-      tokenService.removeRole();
       return false;
     }
   };
 
+  // ===== LOGIN =====
   const login = async (email, password) => {
     setError(null);
     try {
@@ -137,9 +157,8 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', { email, password });
 
       if (response.data.success && response.data.token) {
-        console.log('[AUTH-CONTEXT] Login successful');
+        console.log('[AUTH-CONTEXT] ✅ Login successful');
 
-        // Store tokens in localStorage + cookies
         tokenService.setToken(response.data.token);
         if (response.data.refreshToken) {
           tokenService.setRefreshToken(response.data.refreshToken);
@@ -156,17 +175,15 @@ export const AuthProvider = ({ children }) => {
         };
 
         setUser(userData);
-        
-        // ===== SET ROLE COOKIE FOR MIDDLEWARE =====
         tokenService.setRole(userData.role);
-        console.log('[AUTH-CONTEXT] User role cookie set:', userData.role.name);
+        console.log('[AUTH-CONTEXT] ✅ User role set:', userData.role.name);
         
         return { success: true, user: userData };
       }
 
       return { success: false, error: response.data.message || 'Login failed' };
     } catch (error) {
-      console.error('[AUTH-CONTEXT] Login error:', error);
+      console.error('[AUTH-CONTEXT] ❌ Login error:', error);
 
       if (error.response?.status === 429) {
         const errorMsg = 'Too many login attempts. Please try again in 15 minutes.';
@@ -198,6 +215,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ===== SIGNUP =====
   const signup = async (userData) => {
     setError(null);
     try {
@@ -212,13 +230,13 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success && response.data.user) {
-        console.log('[AUTH-CONTEXT] Signup successful, user created');
+        console.log('[AUTH-CONTEXT] ✅ Signup successful');
         return { success: true, user: response.data.user };
       }
 
       return { success: false, error: response.data.message || 'Signup failed' };
     } catch (error) {
-      console.error('[AUTH-CONTEXT] Signup error:', error);
+      console.error('[AUTH-CONTEXT] ❌ Signup error:', error);
 
       if (error.response?.status === 429) {
         const errorMsg = 'Too many signup attempts. Please try again later.';
@@ -251,6 +269,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ===== LOGOUT =====
   const logout = async () => {
     try {
       console.log('[AUTH-CONTEXT] Logout initiated');
@@ -263,16 +282,15 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('[AUTH-CONTEXT] Logout error:', err);
     } finally {
-      // ===== CLEAR ALL AUTH DATA =====
       tokenService.clearAll();
       setUser(null);
       setError(null);
-      console.log('[AUTH-CONTEXT] User logged out and cookies cleared');
+      console.log('[AUTH-CONTEXT] ✅ User logged out');
       router.push('/login');
     }
   };
 
-  // Permission helpers
+  // ===== PERMISSION HELPERS =====
   const hasPermission = (permission) => {
     if (!user || !user.role || !Array.isArray(user.role.permissions)) {
       return false;
