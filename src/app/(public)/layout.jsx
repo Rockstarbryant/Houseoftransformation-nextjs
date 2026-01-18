@@ -1,6 +1,6 @@
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import Chatbot from '@/components/chatbot/Chatbot';
+import DeferredChatbot from '@/components/chatbot/DeferredChatbot';
 
 export default function PublicLayout({ children }) {
   return (
@@ -10,7 +10,7 @@ export default function PublicLayout({ children }) {
         {children}
       </main>
       <Footer />
-      <Chatbot />
+      <DeferredChatbot />
     </>
   );
 }
