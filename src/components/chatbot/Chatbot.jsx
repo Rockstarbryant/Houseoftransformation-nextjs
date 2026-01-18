@@ -22,6 +22,7 @@ const Chatbot = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
+        aria-label="Open church assistant chatbot"
         className="fixed bottom-6 right-6 bg-blue-900 text-white p-4 rounded-full shadow-2xl hover:bg-blue-800 transition-all z-40 animate-bounce"
       >
         <MessageCircle size={28} />
@@ -36,7 +37,11 @@ const Chatbot = () => {
           <MessageCircle size={24} />
           <span className="font-bold">Church Assistant</span>
         </div>
-        <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded">
+        <button 
+          onClick={() => setIsOpen(false)} 
+          aria-label="Close chatbot"
+          className="hover:bg-white/20 p-1 rounded"
+        >
           <X size={20} />
         </button>
       </div>
@@ -56,9 +61,14 @@ const Chatbot = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type your question..."
+            aria-label="Type message to church assistant"
             className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900"
           />
-          <button onClick={handleSend} className="bg-blue-900 text-white p-2 rounded-lg hover:bg-blue-800">
+          <button 
+            onClick={handleSend} 
+            aria-label="Send message"
+            className="bg-blue-900 text-white p-2 rounded-lg hover:bg-blue-800"
+          >
             <Send size={20} />
           </button>
         </div>
