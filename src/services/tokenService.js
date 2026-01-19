@@ -1,7 +1,6 @@
 /**
  * Token Service - Manages JWT storage and retrieval
- * Works in browser only (client-side)
- * Uses localStorage for storage + cookies for middleware
+ * SSR-safe implementation
  */
 
 const TOKEN_KEY = 'supabase_access_token';
@@ -10,221 +9,226 @@ const TOKEN_EXPIRY_KEY = 'supabase_token_expiry';
 const ROLE_KEY = 'user_role';
 const COOKIE_AUTH_TOKEN = 'auth_token';
 
-// ===== COOKIE HELPERS =====
+// ===== SSR-SAFE CHECK =====
+const isBrowser = () => typeof window !== 'undefined';
+
+// ===== COOKIE HELPER FUNCTIONS =====
 const setCookie = (name, value, days = 7) => {
-  if (typeof window === 'undefined') return;
+  if (!isBrowser()) return;
   try {
     const date = new Date();
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
     const expires = `expires=${date.toUTCString()}`;
-    document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax`;
-    console.log(`[TOKEN-SERVICE] Cookie set: ${name}`);
+    
+    const cookieString = `${name}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax`;
+    document.cookie = cookieString;
+    
+    console.log(`[TOKEN-SERVICE] ✅ Cookie SET: ${name}`);
   } catch (error) {
-    console.error(`[TOKEN-SERVICE] Error setting cookie ${name}:`, error);
+    console.error(`[TOKEN-SERVICE] ❌ Error setting cookie ${name}:`, error);
   }
 };
 
 const getCookie = (name) => {
-  if (typeof window === 'undefined') return null;
+  if (!isBrowser()) return null;
   try {
     const nameEQ = name + '=';
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
       cookie = cookie.trim();
       if (cookie.startsWith(nameEQ)) {
-        return decodeURIComponent(cookie.substring(nameEQ.length));
+        const value = decodeURIComponent(cookie.substring(nameEQ.length));
+        return value;
       }
     }
     return null;
   } catch (error) {
-    console.error(`[TOKEN-SERVICE] Error getting cookie ${name}:`, error);
+    console.error(`[TOKEN-SERVICE] ❌ Error getting cookie ${name}:`, error);
     return null;
   }
 };
 
 const deleteCookie = (name) => {
-  if (typeof window === 'undefined') return;
+  if (!isBrowser()) return;
   try {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
-    console.log(`[TOKEN-SERVICE] Cookie deleted: ${name}`);
+    const cookieString = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+    document.cookie = cookieString;
+    console.log(`[TOKEN-SERVICE] ✅ Cookie DELETED: ${name}`);
   } catch (error) {
-    console.error(`[TOKEN-SERVICE] Error deleting cookie ${name}:`, error);
+    console.error(`[TOKEN-SERVICE] ❌ Error deleting cookie ${name}:`, error);
   }
 };
 
 // ===== MAIN TOKEN SERVICE =====
 export const tokenService = {
-  /**
-   * Store access token in BOTH localStorage + cookies
-   */
   setToken: (token) => {
-    if (typeof window === 'undefined') return;
-    if (!token) return;
-
-    localStorage.setItem(TOKEN_KEY, token);
-    setCookie(COOKIE_AUTH_TOKEN, token, 7);
+    if (!isBrowser() || !token) return;
 
     try {
+      localStorage.setItem(TOKEN_KEY, token);
+      setCookie(COOKIE_AUTH_TOKEN, token, 7);
+
+      // Decode and store expiry
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.exp) {
-        localStorage.setItem(TOKEN_EXPIRY_KEY, (payload.exp * 1000).toString());
+        const expiryTime = payload.exp * 1000;
+        localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
       }
     } catch (e) {
-      console.warn('[TOKEN-SERVICE] Could not decode token expiry');
+      console.warn('[TOKEN-SERVICE] ⚠️ Error storing token:', e);
     }
-
-    console.log('[TOKEN-SERVICE] Access token stored');
   },
 
-  /**
-   * Get access token from localStorage
-   */
   getToken: () => {
-    if (typeof window === 'undefined') return null;
+    if (!isBrowser()) return null;
 
-    const token = localStorage.getItem(TOKEN_KEY);
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
 
-    if (token) {
+      // Check if token is expired
       const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
       if (expiry && Date.now() > parseInt(expiry)) {
-        console.log('[TOKEN-SERVICE] Token expired, removing');
         tokenService.removeToken();
         return null;
       }
+
+      return token;
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error getting token:', error);
+      return null;
     }
-
-    return token;
   },
 
-  /**
-   * Store refresh token
-   */
   setRefreshToken: (refreshToken) => {
-    if (typeof window === 'undefined') return;
-    if (!refreshToken) return;
-
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    console.log('[TOKEN-SERVICE] Refresh token stored');
+    if (!isBrowser() || !refreshToken) return;
+    try {
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error setting refresh token:', error);
+    }
   },
 
-  /**
-   * Get refresh token
-   */
   getRefreshToken: () => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!isBrowser()) return null;
+    try {
+      return localStorage.getItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      return null;
+    }
   },
 
-  /**
-   * Set user role in BOTH cookie + localStorage
-   */
   setRole: (role) => {
-    if (typeof window === 'undefined') return;
+    if (!isBrowser()) return;
     
-    const roleName = role?.name || role || 'user';
-    
-    localStorage.setItem(ROLE_KEY, roleName);
-    setCookie(ROLE_KEY, roleName, 7);
-    
-    console.log('[TOKEN-SERVICE] User role set:', roleName);
+    try {
+      const roleName = role?.name || role || 'user';
+      localStorage.setItem(ROLE_KEY, roleName);
+      setCookie(ROLE_KEY, roleName, 7);
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error setting role:', error);
+    }
   },
 
-  /**
-   * Get user role - check both sources
-   */
   getRole: () => {
-    if (typeof window === 'undefined') return null;
+    if (!isBrowser()) return null;
     
-    const cookieRole = getCookie(ROLE_KEY);
-    if (cookieRole) return cookieRole;
-    
-    const storageRole = localStorage.getItem(ROLE_KEY);
-    if (storageRole) return storageRole;
-    
-    return null;
+    try {
+      const cookieRole = getCookie(ROLE_KEY);
+      if (cookieRole) return cookieRole;
+      
+      return localStorage.getItem(ROLE_KEY);
+    } catch (error) {
+      return null;
+    }
   },
 
-  /**
-   * Remove role from both sources
-   */
   removeRole: () => {
-    if (typeof window === 'undefined') return;
-    deleteCookie(ROLE_KEY);
-    localStorage.removeItem(ROLE_KEY);
-    console.log('[TOKEN-SERVICE] Role removed');
+    if (!isBrowser()) return;
+    try {
+      deleteCookie(ROLE_KEY);
+      localStorage.removeItem(ROLE_KEY);
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error removing role:', error);
+    }
   },
 
-  /**
-   * Remove tokens from both sources
-   */
   removeToken: () => {
-    if (typeof window === 'undefined') return;
+    if (!isBrowser()) return;
 
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(TOKEN_EXPIRY_KEY);
-    deleteCookie(COOKIE_AUTH_TOKEN);
-    
-    console.log('[TOKEN-SERVICE] Tokens removed');
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(TOKEN_EXPIRY_KEY);
+      deleteCookie(COOKIE_AUTH_TOKEN);
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error removing token:', error);
+    }
   },
 
-  /**
-   * Remove refresh token specifically
-   */
   removeRefreshToken: () => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    console.log('[TOKEN-SERVICE] Refresh token removed');
+    if (!isBrowser()) return;
+    try {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error('[TOKEN-SERVICE] Error removing refresh token:', error);
+    }
   },
 
-  /**
-   * Clear all auth data
-   */
   clearAll: () => {
+    if (!isBrowser()) return;
     tokenService.removeToken();
     tokenService.removeRefreshToken();
     tokenService.removeRole();
-    console.log('[TOKEN-SERVICE] All auth data cleared');
   },
 
-  /**
-   * Check if user is authenticated
-   */
   isAuthenticated: () => {
     return !!tokenService.getToken();
   },
 
-  /**
-   * Get token expiry time remaining (in seconds)
-   */
   getTokenExpiryIn: () => {
-    if (typeof window === 'undefined') return null;
+    if (!isBrowser()) return null;
 
-    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-    if (!expiry) return null;
+    try {
+      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+      if (!expiry) return null;
 
-    const remaining = parseInt(expiry) - Date.now();
-    return remaining > 0 ? Math.floor(remaining / 1000) : null;
+      const remaining = parseInt(expiry) - Date.now();
+      return remaining > 0 ? Math.floor(remaining / 1000) : null;
+    } catch (error) {
+      return null;
+    }
   },
 
-  /**
-   * Check if token is about to expire (within 5 minutes)
-   */
   isTokenExpiringSoon: () => {
     const expiryIn = tokenService.getTokenExpiryIn();
-    return expiryIn !== null && expiryIn < 300; // 5 minutes
+    return expiryIn !== null && expiryIn < 300;
   },
 
-  /**
-   * Debug: Get all cookies
-   */
   getAllCookies: () => {
-    if (typeof window === 'undefined') return {};
-    const cookies = {};
-    document.cookie.split(';').forEach(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      if (name) cookies[name] = decodeURIComponent(value || '');
-    });
-    return cookies;
+    if (!isBrowser()) return {};
+    try {
+      const cookies = {};
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name) cookies[name] = decodeURIComponent(value || '');
+      });
+      return cookies;
+    } catch (error) {
+      return {};
+    }
+  },
+
+  verifyCookies: () => {
+    if (!isBrowser()) return { authToken: false, userRole: false, bothSet: false };
+    
+    const authTokenExists = !!getCookie(COOKIE_AUTH_TOKEN);
+    const userRoleExists = !!getCookie(ROLE_KEY);
+    
+    return {
+      authToken: authTokenExists,
+      userRole: userRoleExists,
+      bothSet: authTokenExists && userRoleExists
+    };
   }
 };

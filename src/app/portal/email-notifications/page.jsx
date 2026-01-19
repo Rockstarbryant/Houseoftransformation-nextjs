@@ -539,183 +539,254 @@ export default function EmailNotificationsPage() {
                           type="checkbox"
                           checked={selectedUserIds.includes(user._id)}
                           onChange={() => handleUserToggle(user._id)}
-                          className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-2 focus:ring-[#8B1A1A]"
-                        />
-                        <div className="flex-1">
-                          <p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
-                        </div>
-                        <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                          {user.role?.name || 'No Role'}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
+                          className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+/>
+<div className="flex-1">
+<p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
+<p className="text-sm text-slate-600 dark:text-slate-400">
+{user.email} • {user.role?.name || 'No Role'}
+</p>
+</div>
+</label>
+))}
+</div>
+)}
+{sendMode === 'bulk' && (
+<p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+{selectedUserIds.length} user(s) selected
+</p>
+)}
+</div>
+)}
+
+{/* Email Composition */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Compose Email
+            </h2>
+            {templates.length > 0 && (
+              <select
+                onChange={(e) => {
+                  const template = templates.find(t => t._id === e.target.value);
+                  if (template) handleLoadTemplate(template);
+                }}
+                className="text-sm px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              >
+                <option value="">Load Template...</option>
+                {templates.map(template => (
+                  <option key={template._id} value={template._id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
             )}
+          </div>
 
-            {/* Email Compose */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                Compose Email
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="Enter email subject"
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
-                  />
-                </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Subject
+            </label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Email subject"
+              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]"
+            />
+          </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Enter email message"
-                    rows={8}
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
-                  />
-                </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Message
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message here..."
+              rows={8}
+              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]"
+            />
+          </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                    Schedule For (Optional)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={20} className="text-slate-600 dark:text-slate-400" />
-                    <input
-                      type="datetime-local"
-                      value={scheduledFor}
-                      onChange={(e) => setScheduledFor(e.target.value)}
-                      className="flex-1 px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Schedule Send (Optional)
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledFor}
+              onChange={(e) => setScheduledFor(e.target.value)}
+              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]"
+            />
+          </div>
 
-                {result && (
-                  <div className={`p-4 rounded-lg flex items-start gap-3 ${
-                    result.success 
-                      ? 'bg-green-50 dark:bg-green-900/20' 
-                      : 'bg-red-50 dark:bg-red-900/20'
-                  }`}>
-                    {result.success ? (
-                      <CheckCircle className="text-green-600 dark:text-green-400 mt-0.5" size={20} />
-                    ) : (
-                      <XCircle className="text-red-600 dark:text-red-400 mt-0.5" size={20} />
-                    )}
-                    <div>
-                      <p className={`font-semibold ${
-                        result.success 
-                          ? 'text-green-900 dark:text-green-100' 
-                          : 'text-red-900 dark:text-red-100'
-                      }`}>
-                        {result.success ? 'Success!' : 'Error'}
-                      </p>
-                      <p className={`text-sm ${
-                        result.success 
-                          ? 'text-green-800 dark:text-green-200' 
-                          : 'text-red-800 dark:text-red-200'
-                      }`}>
-                        {result.message || 'Email sent successfully'}
-                      </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSend}
+              disabled={sending || !subject || !message}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#8B1A1A] hover:bg-[#6d1414] disabled:bg-slate-400 text-white font-bold rounded-lg transition-all"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  Sending...
+                </>
+              ) : scheduledFor ? (
+                <>
+                  <Clock size={20} />
+                  Schedule Email
+                </>
+              ) : (
+                <>
+                  <Send size={20} />
+                  Send Email
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleSaveDraft}
+              disabled={!subject && !message}
+              className="px-6 py-3 border-2 border-slate-300 dark:border-slate-600 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A] text-slate-700 dark:text-slate-300 font-bold rounded-lg transition-all"
+            >
+              <Save size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Result */}
+        {result && (
+          <div className={`rounded-xl shadow-sm p-6 ${
+            result.success 
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+          }`}>
+            <div className="flex items-start gap-3">
+              {result.success ? (
+                <CheckCircle className="text-green-600 dark:text-green-400 flex-shrink-0" size={24} />
+              ) : (
+                <XCircle className="text-red-600 dark:text-red-400 flex-shrink-0" size={24} />
+              )}
+              <div className="flex-1">
+                <p className={`font-bold ${
+                  result.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
+                }`}>
+                  {result.success ? 'Success!' : 'Failed'}
+                </p>
+                <p className={`text-sm ${
+                  result.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                }`}>
+                  {result.message}
+                </p>
+
+                {result.emailLog && result.emailLog.successCount !== undefined && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      Details:
+                    </p>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-slate-600 dark:text-slate-400">Total</p>
+                        <p className="font-bold text-slate-900 dark:text-white">{result.emailLog.totalRecipients}</p>
+                      </div>
+                      <div>
+                        <p className="text-green-600 dark:text-green-400">Successful</p>
+                        <p className="font-bold text-green-700 dark:text-green-300">{result.emailLog.successCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-red-600 dark:text-red-400">Failed</p>
+                        <p className="font-bold text-red-700 dark:text-red-300">{result.emailLog.failedCount}</p>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={handleSend}
-                    disabled={sending}
-                    className="flex-1 bg-[#8B1A1A] hover:bg-[#6B1515] disabled:bg-slate-400 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all"
-                  >
-                    {sending ? (
-                      <>
-                        <Loader2 className="animate-spin" size={20} />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={20} />
-                        Send Email
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleSaveDraft}
-                    className="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all"
-                  >
-                    <Save size={20} />
-                    Save Draft
-                  </button>
-                </div>
               </div>
             </div>
           </div>
         )}
+      </div>
+    )}
 
-        {/* History Tab */}
+    {/* History Tab */}
         {activeTab === 'history' && (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               Email History
             </h2>
+
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin text-slate-400" size={32} />
               </div>
             ) : emailHistory.length === 0 ? (
-              <p className="text-center text-slate-600 dark:text-slate-400 py-8">No email history found</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No email history found
+              </p>
             ) : (
               <div className="space-y-3">
                 {emailHistory.map(log => (
-                  <div key={log._id} className="border border-slate-200 dark:border-slate-700 p-4 rounded-lg">
+                  <div
+                    key={log._id}
+                    className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
                     <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">{log.subject}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">To: {log.recipientEmail}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {new Date(log.sentAt).toLocaleString()}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-slate-900 dark:text-white">
+                            {log.subject}
+                          </h3>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            log.status === 'sent' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : log.status === 'scheduled'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : log.status === 'failed'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
+                          }`}>
+                            {log.status}
+                          </span>
+                          <span className="px-2 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400">
+                            {log.type}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                          {log.message.substring(0, 100)}...
                         </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {log.status === 'sent' ? (
-                          <CheckCircle className="text-green-600" size={20} />
-                        ) : (
-                          <XCircle className="text-red-600" size={20} />
-                        )}
+                        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
+                          <span>Sent by: {log.sentBy?.name || 'Unknown'}</span>
+                          <span>Recipients: {log.totalRecipients}</span>
+                          <span>✅ {log.successCount} | ❌ {log.failedCount}</span>
+                          <span>{new Date(log.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
-                <div className="flex gap-2 justify-center pt-4">
-                  <button
-                    onClick={() => setHistoryPage(Math.max(1, historyPage - 1))}
-                    disabled={historyPage === 1}
-                    className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-4 py-2 text-slate-600 dark:text-slate-400">
-                    Page {historyPage}
-                  </span>
-                  <button
-                    onClick={() => setHistoryPage(historyPage + 1)}
-                    disabled={historyPage * 10 >= historyTotal}
-                    className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
+
+                {/* Pagination */}
+                {historyTotal > 20 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      Page {historyPage} of {Math.ceil(historyTotal / 20)}
+                    </span>
+                    <button
+                      onClick={() => setHistoryPage(p => p + 1)}
+                      disabled={historyPage >= Math.ceil(historyTotal / 20)}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -724,27 +795,84 @@ export default function EmailNotificationsPage() {
         {/* Templates Tab */}
         {activeTab === 'templates' && (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Email Templates
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Email Templates
+              </h2>
+              <button
+                onClick={() => setShowTemplateForm(!showTemplateForm)}
+                className="px-4 py-2 bg-[#8B1A1A] hover:bg-[#6d1414] text-white font-semibold rounded-lg"
+              >
+                {showTemplateForm ? 'Cancel' : 'Create Template'}
+              </button>
+            </div>
+
+            {showTemplateForm && (
+              <CreateTemplateForm
+                onSuccess={() => {
+                  setShowTemplateForm(false);
+                  fetchTemplates();
+                }}
+              />
+            )}
+
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin text-slate-400" size={32} />
               </div>
             ) : templates.length === 0 ? (
-              <p className="text-center text-slate-600 dark:text-slate-400 py-8">No templates found</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No templates found. Create your first template!
+              </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 {templates.map(template => (
-                  <div key={template._id} className="border border-slate-200 dark:border-slate-700 p-4 rounded-lg hover:shadow-md transition-shadow">
-                    <p className="font-semibold text-slate-900 dark:text-white mb-2">{template.name}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{template.subject}</p>
-                    <button
-                      onClick={() => handleLoadTemplate(template)}
-                      className="w-full bg-[#8B1A1A] hover:bg-[#6B1515] text-white font-semibold py-2 rounded-lg transition-all"
-                    >
-                      Use Template
-                    </button>
+                  <div
+                    key={template._id}
+                    className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-slate-900 dark:text-white">
+                        {template.name}
+                      </h3>
+                      <span className="px-2 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400">
+                        {template.category}
+                      </span>
+                    </div>
+                    {template.description && (
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                        {template.description}
+                      </p>
+                    )}
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                      <strong>Subject:</strong> {template.subject}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          handleLoadTemplate(template);
+                          setActiveTab('compose');
+                        }}
+                        className="flex-1 px-3 py-2 bg-[#8B1A1A] hover:bg-[#6d1414] text-white text-sm font-semibold rounded-lg"
+                      >
+                        Use Template
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Delete this template?')) {
+                            try {
+                              await emailNotificationService.deleteTemplate(template._id);
+                              fetchTemplates();
+                            } catch (error) {
+                              alert('Failed to delete template');
+                            }
+                          }
+                        }}
+                        className="px-3 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 text-sm font-semibold rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -756,31 +884,60 @@ export default function EmailNotificationsPage() {
         {activeTab === 'drafts' && (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Saved Drafts
+              Draft Emails
             </h2>
+
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin text-slate-400" size={32} />
               </div>
             ) : drafts.length === 0 ? (
-              <p className="text-center text-slate-600 dark:text-slate-400 py-8">No drafts found</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No drafts found
+              </p>
             ) : (
               <div className="space-y-3">
                 {drafts.map(draft => (
-                  <div key={draft._id} className="border border-slate-200 dark:border-slate-700 p-4 rounded-lg flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900 dark:text-white">{draft.subject}</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">Recipients: {draft.recipients?.length || 0}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                        Saved {new Date(draft.createdAt).toLocaleString()}
-                      </p>
+                  <div
+                    key={draft._id}
+                    className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-2">
+                          {draft.subject || 'Untitled Draft'}
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                          {draft.message ? draft.message.substring(0, 100) + '...' : 'No message'}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-500">
+                          Last updated: {new Date(draft.updatedAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleLoadDraft(draft)}
+                          className="px-3 py-2 bg-[#8B1A1A] hover:bg-[#6d1414] text-white text-sm font-semibold rounded-lg"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm('Delete this draft?')) {
+                              try {
+                                await emailNotificationService.deleteDraft(draft._id);
+                                fetchDrafts();
+                              } catch (error) {
+                                alert('Failed to delete draft');
+                              }
+                            }
+                          }}
+                          className="px-3 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 text-sm font-semibold rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleLoadDraft(draft)}
-                      className="bg-[#8B1A1A] hover:bg-[#6B1515] text-white font-semibold px-4 py-2 rounded-lg transition-all whitespace-nowrap ml-4"
-                    >
-                      Continue
-                    </button>
                   </div>
                 ))}
               </div>
@@ -791,62 +948,100 @@ export default function EmailNotificationsPage() {
         {/* Inbox Tab */}
         {activeTab === 'inbox' && (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Inbox {unreadCount > 0 && `(${unreadCount} unread)`}
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Received Emails
+              </h2>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                {unreadCount} unread
+              </span>
+            </div>
+
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin text-slate-400" size={32} />
               </div>
             ) : inbox.length === 0 ? (
-              <p className="text-center text-slate-600 dark:text-slate-400 py-8">No emails in inbox</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No received emails
+              </p>
             ) : (
               <div className="space-y-3">
                 {inbox.map(email => (
-                  <div key={email._id} className={`border rounded-lg p-4 ${
-                    email.read 
-                      ? 'border-slate-200 dark:border-slate-700' 
-                      : 'border-[#8B1A1A] bg-[#8B1A1A]/5'
-                  }`}>
+                  <div
+                    key={email._id}
+                    className={`border rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all ${
+                      email.status === 'unread'
+                        ? 'border-[#8B1A1A] bg-[#8B1A1A]/5'
+                        : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className={`font-semibold ${
-                          email.read 
-                            ? 'text-slate-900 dark:text-white' 
-                            : 'text-[#8B1A1A] font-bold'
-                        }`}>
-                          {email.subject}
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-slate-900 dark:text-white">
+                            {email.subject}
+                          </h3>
+                          {email.status === 'unread' && (
+                            <span className="px-2 py-1 rounded text-xs font-semibold bg-[#8B1A1A] text-white">
+                              NEW
+                            </span>
+                          )}
+                          <span className="px-2 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400">
+                            {email.category}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                          <strong>From:</strong> {email.from.name || email.from.email}
                         </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">From: {email.senderEmail}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {new Date(email.receivedAt).toLocaleString()}
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                          {email.message.substring(0, 150)}...
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-500">
+                          {new Date(email.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      {!email.read && (
-                        <div className="w-3 h-3 rounded-full bg-[#8B1A1A] ml-4 mt-1"></div>
-                      )}
+                      <button
+                        onClick={async () => {
+                          try {
+                            await emailNotificationService.updateReceivedEmail(email._id, {
+                              status: email.status === 'unread' ? 'read' : 'unread'
+                            });
+                            fetchInbox();
+                          } catch (error) {
+                            alert('Failed to update email');
+                          }
+                        }}
+                        className="px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
+                        Mark as {email.status === 'unread' ? 'Read' : 'Unread'}
+                      </button>
                     </div>
                   </div>
                 ))}
-                <div className="flex gap-2 justify-center pt-4">
-                  <button
-                    onClick={() => setInboxPage(Math.max(1, inboxPage - 1))}
-                    disabled={inboxPage === 1}
-                    className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-4 py-2 text-slate-600 dark:text-slate-400">
-                    Page {inboxPage}
-                  </span>
-                  <button
-                    onClick={() => setInboxPage(inboxPage + 1)}
-                    disabled={inboxPage * 10 >= inboxTotal}
-                    className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
+
+                {/* Pagination */}
+                {inboxTotal > 20 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setInboxPage(p => Math.max(1, p - 1))}
+                      disabled={inboxPage === 1}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      Page {inboxPage} of {Math.ceil(inboxTotal / 20)}
+                    </span>
+                    <button
+                      onClick={() => setInboxPage(p => p + 1)}
+                      disabled={inboxPage >= Math.ceil(inboxTotal / 20)}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -854,39 +1049,214 @@ export default function EmailNotificationsPage() {
 
         {/* Statistics Tab */}
         {activeTab === 'statistics' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Email Statistics
-            </h2>
+          <div className="space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="animate-spin text-slate-400" size={32} />
               </div>
             ) : statistics ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10 p-6 rounded-lg">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total Sent</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">{statistics.totalSent}</p>
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        Total Sent
+                      </h3>
+                      <Send className="text-blue-500" size={20} />
+                    </div>
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">
+                      {statistics.totalSent}
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        Scheduled
+                      </h3>
+                      <Clock className="text-orange-500" size={20} />
+                    </div>
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">
+                      {statistics.totalScheduled}
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        Successful
+                      </h3>
+                      <CheckCircle className="text-green-500" size={20} />
+                    </div>
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">
+                      {statistics.successfulEmails}
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        Failed
+                      </h3>
+                      <XCircle className="text-red-500" size={20} />
+                    </div>
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">
+                      {statistics.failedEmails}
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 p-6 rounded-lg">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Opened</p>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{statistics.opened}</p>
+
+                {/* Recent Activity */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                    Recent Activity
+                  </h2>
+                  {statistics.recentActivity && statistics.recentActivity.length > 0 ? (
+                    <div className="space-y-3">
+                      {statistics.recentActivity.map((activity, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-700 rounded-lg"
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-white">
+                              {activity.subject}
+                            </p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              {activity.type} • {activity.totalRecipients} recipients • {activity.successCount} successful
+                            </p>
+                          </div>
+                          <span className="text-xs text-slate-500 dark:text-slate-500">
+                            {new Date(activity.sentAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-slate-500 dark:text-slate-400 py-4">
+                      No recent activity
+                    </p>
+                  )}
                 </div>
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/10 p-6 rounded-lg">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Pending</p>
-                  <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</p>
-                </div>
-                <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/10 p-6 rounded-lg">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Failed</p>
-                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">{statistics.failed}</p>
-                </div>
-              </div>
+              </>
             ) : (
-              <p className="text-center text-slate-600 dark:text-slate-400 py-8">No statistics available</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No statistics available
+              </p>
             )}
           </div>
         )}
+
       </div>
     </div>
+  );
+}
+
+// Create Template Form Component
+function CreateTemplateForm({ onSuccess }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    subject: '',
+    message: '',
+    category: 'announcement'
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setSaving(true);
+      await emailNotificationService.createTemplate(formData);
+      alert('Template created successfully!');
+      onSuccess();
+    } catch (error) {
+      alert('Failed to create template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-4 space-y-3">
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+          Template Name
+        </label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({...formData, name: e.target.value})}
+          required
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+          Category
+        </label>
+        <select
+          value={formData.category}
+          onChange={(e) => setFormData({...formData, category: e.target.value})}
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        >
+          <option value="announcement">Announcement</option>
+          <option value="event">Event</option>
+          <option value="newsletter">Newsletter</option>
+          <option value="reminder">Reminder</option>
+          <option value="welcome">Welcome</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+          Description (Optional)
+        </label>
+        <input
+          type="text"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+          Subject
+        </label>
+        <input
+          type="text"
+          value={formData.subject}
+          onChange={(e) => setFormData({...formData, subject: e.target.value})}
+          required
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+          Message
+        </label>
+        <textarea
+          value={formData.message}
+          onChange={(e) => setFormData({...formData, message: e.target.value})}
+          required
+          rows={4}
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={saving}
+        className="w-full px-4 py-2 bg-[#8B1A1A] hover:bg-[#6d1414] disabled:bg-slate-400 text-white font-bold rounded-lg"
+      >
+        {saving ? 'Saving...' : 'Create Template'}
+      </button>
+    </form>
   );
 }

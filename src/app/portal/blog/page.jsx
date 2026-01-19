@@ -6,7 +6,6 @@ import SimpleMDE from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import ReactDOMServer from 'react-dom/server';
 
 import { useAuth } from '@/context/AuthContext';
 import { blogService } from '@/services/api/blogService';
@@ -614,7 +613,7 @@ const ManageBlog = () => {
                       "preview", "side-by-side", "fullscreen"
                     ],
                     previewRender: (plainText) => {
-                      return ReactDOMServer.renderToString(
+                      return (
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
