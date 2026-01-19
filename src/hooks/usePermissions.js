@@ -78,6 +78,7 @@ export const usePermissions = () => {
    * Livestream Management
    */
   const canManageLivestream = () => hasPermission('manage:livestream');
+  const canSendEmailNotifications = () => hasPermission('manage:users') || isAdmin();
 
   /**
    * Feedback Management - Granular by Category
@@ -260,6 +261,24 @@ export const usePermissions = () => {
         });
       }
 
+      if (canSendEmailNotifications()) {
+      sections.push({
+          name: 'Email Notifications',
+          href: '/portal/email-notifications',
+          icon: 'Mail',
+          permission: 'manage:users'
+        });
+      }
+      
+      if (canManageBlog()) {
+        sections.push({
+          name: 'Blog',
+          href: '/portal/blog',
+          icon: 'Newspaper',
+          permission: 'manage:blog'
+        });
+      }
+
       if (canManageRoles()) {
         sections.push({
           name: 'Roles & Permissions',
@@ -427,6 +446,7 @@ export const usePermissions = () => {
     canRespondFeedbackGeneral,
     canArchiveFeedbackGeneral,
     canViewFeedbackStats,
+    canSendEmailNotifications,
 
     // Volunteers
     canManageVolunteers,
