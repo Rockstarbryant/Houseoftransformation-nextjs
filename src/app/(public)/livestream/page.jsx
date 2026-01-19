@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
-export const dynamic = 'force-dynamic';
+//export const dynamic = 'force-dynamic';
+
+//export const revalidate = 60; // Revalidate every 60 seconds instead of force-dynamic
+
 const LiveStreamPage = () => {
   const { activeStream, archives, loading, fetchArchives } = useLivestream();
   const [filterType, setFilterType] = useState('');

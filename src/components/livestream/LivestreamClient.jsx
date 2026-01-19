@@ -1,9 +1,12 @@
 'use client';
 
+export const revalidate = 360; // Revalidate every 60 seconds instead of force-dynamic
+
+
 import React, { useState } from 'react';
 import { Play, Calendar, Users, Share2, TrendingUp, ChevronDown, Monitor, X, Sparkles, Zap, LayoutGrid, List } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
+//export const dynamic = 'force-dynamic';
 export default function LivestreamClient({ activeStream, initialArchives }) {
   const [archives] = useState(initialArchives);
   const [filterType, setFilterType] = useState('');

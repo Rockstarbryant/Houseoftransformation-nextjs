@@ -33,7 +33,7 @@ const LiveStreamSection = () => {
     fetchActiveStream();
     
     // Refresh every 30 seconds
-    const interval = setInterval(fetchActiveStream, 30000);
+    const interval = setInterval(fetchActiveStream, 300000);
     return () => clearInterval(interval);
   }, []);
 
