@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Phone, Calendar, Users, Loader, Shield, User } from 'lucide-react';
 
-export const revalidate = 3600;
+//export const revalidate = 3600;
 export default function UsersClient({ initialUsers }) {
   const [users] = useState(initialUsers);
   const [filteredUsers, setFilteredUsers] = useState(initialUsers);

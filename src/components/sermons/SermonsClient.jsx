@@ -5,7 +5,7 @@ import { Search, Filter, BookOpen, Video, Image as ImageIcon } from 'lucide-reac
 import SermonCardText from '@/components/sermons/SermonCardText';
 import SermonCard from '@/components/sermons/SermonCard';
 
-export const revalidate = 360;
+//export const revalidate = 360;
 export default function SermonsClient({ initialSermons }) {
   const [allSermons, setAllSermons] = useState(initialSermons);
   const [filteredSermons, setFilteredSermons] = useState(initialSermons);

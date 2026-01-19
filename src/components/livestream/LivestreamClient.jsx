@@ -1,6 +1,6 @@
 'use client';
 
-export const revalidate = 360; // Revalidate every 60 seconds instead of force-dynamic
+//export const revalidate = 360; // Revalidate every 60 seconds instead of force-dynamic
 
 
 import React, { useState } from 'react';

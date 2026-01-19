@@ -1,9 +1,10 @@
-// livestream.js - FIXED
+// /lib/livestream.js
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function getActiveStream() {
   try {
     const res = await fetch(`${API_URL}/livestreams/active`, {
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
     });
 
@@ -20,6 +21,7 @@ export async function getActiveStream() {
 export async function getStreamArchives() {
   try {
     const res = await fetch(`${API_URL}/livestreams?limit=100&sortBy=-startTime`, {
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
     });
 
@@ -29,6 +31,8 @@ export async function getStreamArchives() {
     }
 
     const data = await res.json();
+    console.log('Livestreams response:', data);
+    
     return data.livestreams || data || [];
   } catch (error) {
     console.error('Error fetching archives:', error);

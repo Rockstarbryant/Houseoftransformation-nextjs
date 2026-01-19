@@ -1,6 +1,6 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
+//export const dynamic = 'force-dynamic';
 
 import dynamicLoad from 'next/dynamic';
 import React, { useState, useEffect } from 'react';

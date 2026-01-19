@@ -5,7 +5,7 @@ import GalleryGrid from '@/components/gallery/GalleryGrid';
 import GalleryFilter from '@/components/gallery/GalleryFilter';
 import PhotoModal from '@/components/gallery/PhotoModal';
 
-export const revalidate = 600; // Revalidate every 60 seconds instead of force-dynamic
+//export const revalidate = 600; // Revalidate every 60 seconds instead of force-dynamic
 export default function GalleryClient({ initialPhotos }) {
   const [photos] = useState(initialPhotos);
   const [filteredPhotos, setFilteredPhotos] = useState(initialPhotos);
