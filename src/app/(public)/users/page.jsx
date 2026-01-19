@@ -7,6 +7,8 @@ export const metadata = {
   description: 'Connect with our church community members and leaders.',
 };
 
+//export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 export default async function UsersPortalPage() {
   // Fetch all users on server
   const users = await getAllUsers();

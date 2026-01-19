@@ -15,8 +15,9 @@ import Button from '@/components/common/Button';
 
 import { serviceAreasData } from '@/data/serviceAreas';
 import { getFeaturedSermon, detectSermonType } from '@/lib/sermons';
-
+//export const revalidate = 3600; // revalidate every 3600 seconds (1 hour)
 // Server Component - runs on server, fetches data
+export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   // Fetch sermon data on the server
   const featuredSermon = await getFeaturedSermon();

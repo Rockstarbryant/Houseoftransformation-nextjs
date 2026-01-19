@@ -1,8 +1,14 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
+import dynamicLoad from 'next/dynamic';
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, Filter, X, Info, XCircle } from 'lucide-react';
-import SimpleMDE from 'react-simplemde-editor';
+
+// Lazy load SimpleMDE since it needs the browser
+const SimpleMDE = dynamicLoad(() => import('react-simplemde-editor'), { ssr: false });
+
 import 'easymde/dist/easymde.min.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -703,7 +709,7 @@ const ManageBlog = () => {
                         src={post.image}
                         alt={post.title}
                         className="w-full h-full object-cover"
-                        onError={e => (e.target.style.display = 'none')}
+                        
                       />
                     </div>
                   )}

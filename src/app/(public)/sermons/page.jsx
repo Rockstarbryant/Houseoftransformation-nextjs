@@ -8,7 +8,7 @@ export const metadata = {
   title: 'Sermons - House of Transformation Church',
   description: 'Biblically-centered messages for your spiritual growth. Watch and read sermons from our pastoral team.',
 };
-
+export const dynamic = 'force-dynamic';
 export default async function SermonsPage() {
   // Fetch all sermons on the server
   const allSermons = await getAllSermons();

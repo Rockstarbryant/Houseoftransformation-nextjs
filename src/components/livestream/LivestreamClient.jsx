@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Play, Calendar, Users, Share2, TrendingUp, ChevronDown, Monitor, X, Sparkles, Zap, LayoutGrid, List } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
 export default function LivestreamClient({ activeStream, initialArchives }) {
   const [archives] = useState(initialArchives);
   const [filterType, setFilterType] = useState('');

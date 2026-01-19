@@ -4,7 +4,7 @@ export const metadata = {
   title: 'Events - House of Transformation Church',
   description: 'Join us for upcoming events and special gatherings',
 };
-
+export const revalidate = 3600; // revalidate every 3600 seconds (1 hour)
 export default function EventsPage() {
   return (
     <div className="pt-24 pb-24 bg-[#F8FAFC] dark:bg-slate-900 min-h-screen font-sans">

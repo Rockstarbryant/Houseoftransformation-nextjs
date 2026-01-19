@@ -6,7 +6,8 @@ export const metadata = {
   title: 'Photo Gallery - House of Transformation Church',
   description: 'Browse photos from our services, events, and community gatherings.',
 };
-
+//export const revalidate = 3600; // revalidate every 3600 seconds (1 hour)
+export const dynamic = 'force-dynamic';
 export default async function GalleryPage() {
   // Fetch photos on server
   const photos = await getAllPhotos();
