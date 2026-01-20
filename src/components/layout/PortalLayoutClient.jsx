@@ -46,7 +46,18 @@ export default function PortalLayoutClient({ children }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
   // Show loading while checking auth
+  if (isLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+      </div>
+    );
+  }
+
+  // Show loading while checking auth
+  /*
   if (isLoading) {
     return (
       <Loader 
@@ -63,7 +74,7 @@ export default function PortalLayoutClient({ children }) {
         <p className="text-slate-600">Verifying credentials...</p>
       </div>
     );
-  }
+  }  */
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden">

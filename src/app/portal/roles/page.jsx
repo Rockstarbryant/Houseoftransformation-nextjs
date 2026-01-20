@@ -333,11 +333,11 @@ export default function RolesPage() {
   // ============================================
   // LOADING STATE
   // ============================================
-
+/*
   if (loading) {
     return <Loader fullScreen text="Loading roles..." />;
   }
-
+*/
   // ============================================
   // MAIN RENDER
   // ============================================
@@ -455,7 +455,11 @@ export default function RolesPage() {
           Roles ({filteredRoles.length})
         </h2>
 
-        {filteredRoles.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+          </div>
+        ) : filteredRoles.length === 0 ? (
           <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-12 text-center">
             <Shield className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <p className="text-slate-600 dark:text-slate-400 font-semibold">
