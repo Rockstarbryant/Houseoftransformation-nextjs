@@ -57,9 +57,13 @@ const Header = () => {
   const isDropdownActive = () => dropdownLinks.some(link => isActivePath(link.path));
 
   const handleAuthClick = () => {
-    setShowAuthModal(true);
-    setAuthMode('login');
-  };
+  // Store current page in sessionStorage for redirect after login
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('redirectAfterLogin', pathname);
+  }
+  setShowAuthModal(true);
+  setAuthMode('login');
+};
 
   const handleLogout = async () => {
     await logout();

@@ -33,12 +33,17 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }) {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        console.log('[LOGIN] Success! User:', result.user?.email);
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push('/portal');
-        }
+     console.log('[LOGIN] Success! User:', result.user?.email);
+  
+      // Get stored redirect path or default to portal
+      const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/portal';
+      sessionStorage.removeItem('redirectAfterLogin'); // Clean up
+  
+    if (onSuccess) {
+    onSuccess();
+    }
+    router.push(redirectTo);
+
       } else {
         console.error('[LOGIN] Failed:', result.error);
         setError(result.error || 'Login failed');

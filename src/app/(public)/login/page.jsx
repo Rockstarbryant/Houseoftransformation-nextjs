@@ -29,9 +29,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <LoginForm 
-          onSuccess={() => router.push('/portal')}
-          onSwitchToSignup={() => router.push('/signup')}
-        />
+        onSuccess={() => {
+        const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/portal';
+        sessionStorage.removeItem('redirectAfterLogin');
+        router.push(redirectTo);
+       }}
+      onSwitchToSignup={() => router.push('/signup')}
+      />
       </div>
     </div>
   );
