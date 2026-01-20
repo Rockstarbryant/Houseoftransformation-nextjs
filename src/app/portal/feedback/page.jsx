@@ -275,30 +275,38 @@ const fetchData = async () => {
   };
 
   const handleSendResponse = async () => {
-    if (!selectedFeedback || !responseText.trim()) return;
-    if (!canRespondCategory(selectedFeedback.category)) {
-      setError(`You don't have permission to respond to ${selectedFeedback.category} feedback`);
-      return;
-    }
+  if (!selectedFeedback || !responseText.trim()) return;
+  if (!canRespondCategory(selectedFeedback.category)) {
+    setError(`You don't have permission to respond to ${selectedFeedback.category} feedback`);
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const response = await feedbackService.respondToFeedback(
-        selectedFeedback._id,
-        responseText
-      );
+  setIsSubmitting(true);
+  try {
+    const response = await feedbackService.respondToFeedback(
+      selectedFeedback._id,
+      responseText
+    );
 
-      if (response.success) {
-        setSuccess('Response sent successfully!');
-        setResponseText('');
-        await fetchData();
-        setTimeout(() => setSuccess(null), 3000);
+    if (response.success) {
+      // Check if email was sent successfully
+      if (response.emailSent) {
+        setSuccess('✅ Response sent and email delivered successfully!');
+      } else if (response.emailError) {
+        setSuccess(`⚠️ Response saved but email failed: ${response.emailError || 'Unknown error'}. Please contact user directly.`);
+      } else {
+        setSuccess('✅ Response saved successfully');
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send response');
-    } finally {
-      setIsSubmitting(false);
+      
+      setResponseText('');
+      await fetchData();
+      setTimeout(() => setSuccess(null), 5000);
     }
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to send response');
+  } finally {
+    setIsSubmitting(false);
+  }
   };
 
   const handleDeleteFeedback = async () => {

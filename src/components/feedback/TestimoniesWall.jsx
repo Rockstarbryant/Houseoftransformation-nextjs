@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Heart, Calendar, User, ArrowRight, Quote, Sparkles } from 'lucide-react';
 import Card from '../common/Card';
 import Loader from '../common/Loader';
-import { feedbackService } from '@/services/api/feedbackService';
+import { getPublicTestimonies } from '@/lib/testimonies'; // ✅ Changed this import
 
 const TestimoniesWall = () => {
   const [testimonies, setTestimonies] = useState([]);
@@ -17,19 +17,27 @@ const TestimoniesWall = () => {
   }, []);
 
   const fetchTestimonies = async () => {
-    try {
-      setIsLoading(true);
-      const response = await feedbackService.getPublicTestimonies();
-      if (response.success) {
-        setTestimonies(response.testimonies.slice(0, 6)); 
-      }
-    } catch (err) {
-      console.error('Error fetching testimonies:', err);
-      setError('Failed to load testimonies');
-    } finally {
-      setIsLoading(false);
+  try {
+    setIsLoading(true);
+    console.log('🔍 Fetching testimonies...'); // Debug
+    const data = await getPublicTestimonies();
+    console.log('📦 Received data:', data); // Debug - check what you get
+    
+    if (data && data.length > 0) {
+      console.log('✅ Setting testimonies:', data.slice(0, 6)); // Debug
+      setTestimonies(data.slice(0, 6)); 
+    } else {
+      console.log('⚠️ No testimonies found or empty array'); // Debug
     }
-  };
+  } catch (err) {
+    console.error('❌ Error fetching testimonies:', err);
+    setError('Failed to load testimonies');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

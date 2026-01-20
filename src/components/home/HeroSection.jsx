@@ -15,11 +15,11 @@ const HeroSection = () => {
       alt: 'Church worship'
     },
     {
-      url: 'https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg',
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg',
       alt: 'Church community'
     },
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767445662/copy_of_ot_ibz2xp_6e0397.jpg',
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768895135/church-gallery/jy2zygpn8zqqddq7aqjv.jpg',
       alt: 'Church fellowship'
     }
   ];
@@ -31,7 +31,7 @@ const HeroSection = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
       />
-      <div className="absolute inset-0 bg-transparent" />
+      <div className="absolute inset-0 bg-white/5" />
       
       {/* Animated accent glow */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full pointer-events-none" />
@@ -48,8 +48,8 @@ const HeroSection = () => {
 
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
               H.O.T
-              <span className="block text-[#8B1A1A] drop-shadow-sm">Transforming.</span>
-              <span className="text-white/40 font-semibold font-serif font-light tracking-normal">Lives.</span>
+              <span className="block text-red-800 drop-shadow-sm">Transforming.</span>
+              <span className="text-red-800 font-semibold font-serif font-light tracking-normal">Lives.</span>
             </h1>
 
             <p className="max-w-lg text-lg md:text-xl text-slate-300 font-medium leading-relaxed mb-8 border-l-2 border-[#8B1A1A] pl-6">

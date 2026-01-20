@@ -84,7 +84,7 @@ const Header = () => {
             {/* LOGO AREA: White text on Red background */}
             <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
               <Image 
-                src="https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg"
+                src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg"
                 alt={CHURCH_INFO.name}
                 width={48}
                 height={48}
