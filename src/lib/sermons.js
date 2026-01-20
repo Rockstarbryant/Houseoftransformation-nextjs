@@ -1,7 +1,8 @@
 export async function getFeaturedSermon() {
   try {
     const res = await fetch(`${API_URL}/sermons?limit=100`, {
-      cache: 'no-store', // Always get fresh data
+       next: { revalidate: 60 }, // refresh every 60 seconds
+      //cache: 'no-store', // Always get fresh data
       headers: {
         'Content-Type': 'application/json',
       },
@@ -35,7 +36,8 @@ export async function getFeaturedSermon() {
 export async function getAllSermons() {
   try {
     const res = await fetch(`${API_URL}/sermons?limit=100`, {
-      cache: 'no-store',
+        next: { revalidate: 60 }, // refresh every 60 seconds
+      //cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
     });
 
