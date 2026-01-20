@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { tokenService } from '@/services/tokenService';
@@ -12,22 +12,55 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // ✅ Prevent multiple simultaneous auth checks
+  const isCheckingAuth = useRef(false);
 
-  // ===== AUTO-CHECK AUTH ON APP LOAD =====
+  // ✅ Helper: Decode JWT and check expiry locally (no network call)
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiryTime = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      
+      // Check if token expires in less than 5 minutes
+      if (expiryTime - now < 5 * 60 * 1000) {
+        console.log('[AUTH-CONTEXT] ⚠️ Token expires soon, will refresh');
+        return false;
+      }
+      
+      return expiryTime > now;
+    } catch (error) {
+      console.error('[AUTH-CONTEXT] ❌ Token decode error:', error);
+      return false;
+    }
+  };
+
+  // ===== AUTO-CHECK AUTH ON APP LOAD (RUNS ONCE) =====
   useEffect(() => {
     const initializeAuth = async () => {
+      // ✅ Prevent multiple simultaneous checks
+      if (isCheckingAuth.current) {
+        console.log('[AUTH-CONTEXT] ⏳ Auth check already in progress, skipping...');
+        return;
+      }
+
       try {
+        isCheckingAuth.current = true;
         console.log('[AUTH-CONTEXT] Initializing authentication...');
         await checkAuth();
       } catch (error) {
         console.error('[AUTH-CONTEXT] Initialization error:', error);
       } finally {
         setIsLoading(false);
+        isCheckingAuth.current = false;
       }
     };
 
     initializeAuth();
-  }, []);
+  }, []); // ✅ Empty dependency array - runs ONCE
 
   // ===== CHECK AUTHENTICATION =====
   const checkAuth = async () => {
@@ -48,8 +81,47 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      console.log('[AUTH-CONTEXT] ✅ Token found, verifying...');
+      // ✅ Check token validity locally FIRST (no network call)
+      if (!isTokenValid(token)) {
+        console.log('[AUTH-CONTEXT] ⚠️ Token invalid or expiring soon, attempting refresh...');
+        
+        const refreshToken = tokenService.getRefreshToken();
+        
+        if (!refreshToken) {
+          console.log('[AUTH-CONTEXT] ❌ No refresh token available');
+          tokenService.clearAll();
+          setUser(null);
+          return false;
+        }
 
+        try {
+          console.log('[AUTH-CONTEXT] 🔄 Refreshing token...');
+          const refreshResponse = await api.post('/auth/refresh', { refreshToken });
+
+          if (!refreshResponse.data.token) {
+            console.log('[AUTH-CONTEXT] ❌ Token refresh failed');
+            tokenService.clearAll();
+            setUser(null);
+            return false;
+          }
+
+          console.log('[AUTH-CONTEXT] ✅ Token refreshed');
+          tokenService.setToken(refreshResponse.data.token);
+          
+          if (refreshResponse.data.refreshToken) {
+            tokenService.setRefreshToken(refreshResponse.data.refreshToken);
+          }
+        } catch (refreshError) {
+          console.error('[AUTH-CONTEXT] ❌ Refresh failed:', refreshError.message);
+          tokenService.clearAll();
+          setUser(null);
+          return false;
+        }
+      }
+
+      // ✅ Token is valid, fetch user data (SINGLE API CALL)
+      console.log('[AUTH-CONTEXT] ✅ Token valid, fetching user...');
+      
       try {
         const response = await api.get('/auth/me');
         
@@ -71,75 +143,18 @@ export const AuthProvider = ({ children }) => {
           console.log('[AUTH-CONTEXT] ✅ User role set:', userData.role.name);
           return true;
         } else {
-          console.log('[AUTH-CONTEXT] ❌ Token verification failed');
+          console.log('[AUTH-CONTEXT] ❌ Invalid user data');
           tokenService.clearAll();
           setUser(null);
           return false;
         }
       } catch (verifyError) {
-        console.error('[AUTH-CONTEXT] ❌ Verification error:', verifyError.message);
-        
-        // Token is invalid or expired - try to refresh
-        try {
-          const refreshToken = tokenService.getRefreshToken();
-          
-          if (!refreshToken) {
-            console.log('[AUTH-CONTEXT] ❌ No refresh token available');
-            tokenService.clearAll();
-            setUser(null);
-            return false;
-          }
-
-          console.log('[AUTH-CONTEXT] 🔄 Attempting token refresh...');
-          const refreshResponse = await api.post('/auth/refresh', { refreshToken });
-
-          if (!refreshResponse.data.token) {
-            console.log('[AUTH-CONTEXT] ❌ Token refresh returned no token');
-            tokenService.clearAll();
-            setUser(null);
-            return false;
-          }
-
-          console.log('[AUTH-CONTEXT] ✅ Token refreshed successfully');
-          tokenService.setToken(refreshResponse.data.token);
-          
-          if (refreshResponse.data.refreshToken) {
-            tokenService.setRefreshToken(refreshResponse.data.refreshToken);
-          }
-
-          // Get user data with new token
-          const retryResponse = await api.get('/auth/me');
-          
-          if (retryResponse.data.user) {
-            const userData = {
-              ...retryResponse.data.user,
-              role: {
-                ...retryResponse.data.user.role,
-                permissions: Array.isArray(retryResponse.data.user.role?.permissions) 
-                  ? retryResponse.data.user.role.permissions 
-                  : []
-              }
-            };
-            
-            setUser(userData);
-            tokenService.setRole(userData.role);
-            console.log('[AUTH-CONTEXT] ✅ Token refreshed and user verified');
-            return true;
-          } else {
-            console.log('[AUTH-CONTEXT] ❌ Could not fetch user after token refresh');
-            tokenService.clearAll();
-            setUser(null);
-            return false;
-          }
-
-        } catch (refreshError) {
-          console.error('[AUTH-CONTEXT] ❌ Token refresh failed:', refreshError.message);
-          // Refresh failed - clear everything
-          tokenService.clearAll();
-          setUser(null);
-          return false;
-        }
+        console.error('[AUTH-CONTEXT] ❌ User verification failed:', verifyError.message);
+        tokenService.clearAll();
+        setUser(null);
+        return false;
       }
+
     } catch (err) {
       console.error('[AUTH-CONTEXT] ❌ Auth check error:', err);
       tokenService.clearAll();
@@ -290,7 +305,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ===== PERMISSION HELPERS =====
+  // ===== PERMISSION HELPERS ===== (Keep all your existing helpers)
   const hasPermission = (permission) => {
     if (!user || !user.role || !Array.isArray(user.role.permissions)) {
       return false;

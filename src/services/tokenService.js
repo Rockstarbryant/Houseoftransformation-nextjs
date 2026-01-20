@@ -12,6 +12,34 @@ const COOKIE_AUTH_TOKEN = 'auth_token';
 // ===== SSR-SAFE CHECK =====
 const isBrowser = () => typeof window !== 'undefined';
 
+// ===== JWT VALIDATION HELPER =====
+const isValidJWT = (token) => {
+  if (!token || typeof token !== 'string') return false;
+  
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    
+    // Decode payload to verify it's valid JSON
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Check if token has expiry
+    if (!payload.exp) return false;
+    
+    // Check if token is expired
+    const expiryTime = payload.exp * 1000;
+    if (Date.now() >= expiryTime) {
+      console.log('[TOKEN-SERVICE] ⚠️ Token expired');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[TOKEN-SERVICE] ❌ Invalid JWT format:', error);
+    return false;
+  }
+};
+
 // ===== COOKIE HELPER FUNCTIONS =====
 const setCookie = (name, value, days = 7) => {
   if (!isBrowser()) return;
@@ -65,6 +93,12 @@ export const tokenService = {
     if (!isBrowser() || !token) return;
 
     try {
+      // ✅ Validate token before storing
+      if (!isValidJWT(token)) {
+        console.error('[TOKEN-SERVICE] ❌ Attempted to store invalid token');
+        return;
+      }
+
       localStorage.setItem(TOKEN_KEY, token);
       setCookie(COOKIE_AUTH_TOKEN, token, 7);
 
@@ -86,9 +120,9 @@ export const tokenService = {
       const token = localStorage.getItem(TOKEN_KEY);
       if (!token) return null;
 
-      // Check if token is expired
-      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-      if (expiry && Date.now() > parseInt(expiry)) {
+      // ✅ Validate JWT structure and expiry
+      if (!isValidJWT(token)) {
+        console.log('[TOKEN-SERVICE] ⚠️ Token invalid or expired, removing...');
         tokenService.removeToken();
         return null;
       }
@@ -96,6 +130,7 @@ export const tokenService = {
       return token;
     } catch (error) {
       console.error('[TOKEN-SERVICE] Error getting token:', error);
+      tokenService.removeToken();
       return null;
     }
   },
@@ -186,14 +221,19 @@ export const tokenService = {
     return !!tokenService.getToken();
   },
 
+  // ✅ Enhanced expiry check
   getTokenExpiryIn: () => {
     if (!isBrowser()) return null;
 
     try {
-      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-      if (!expiry) return null;
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
 
-      const remaining = parseInt(expiry) - Date.now();
+      // Decode token to get expiry
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return null;
+
+      const remaining = (payload.exp * 1000) - Date.now();
       return remaining > 0 ? Math.floor(remaining / 1000) : null;
     } catch (error) {
       return null;
@@ -202,7 +242,7 @@ export const tokenService = {
 
   isTokenExpiringSoon: () => {
     const expiryIn = tokenService.getTokenExpiryIn();
-    return expiryIn !== null && expiryIn < 300;
+    return expiryIn !== null && expiryIn < 300; // 5 minutes
   },
 
   getAllCookies: () => {

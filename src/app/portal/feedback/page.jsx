@@ -411,11 +411,11 @@ const fetchData = async () => {
   // ============================================
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader fullScreen text="Loading feedback..." />
-      </div>
-    );
+  return (
+    <div className="flex justify-center items-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+    </div>
+  );
   }
 
   // ============================================
@@ -458,7 +458,7 @@ const fetchData = async () => {
       )}
 
       {/* Stats */}
-      {stats && canViewStats() && (
+      {!isLoading && stats && canViewStats() && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Total Feedback</p>
@@ -486,9 +486,11 @@ const fetchData = async () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} className="text-slate-600 dark:text-slate-400" />
+      {/* Filters */}
+      {!isLoading && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter size={20} className="text-slate-600 dark:text-slate-400" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Filters</h3>
         </div>
 
@@ -531,18 +533,23 @@ const fetchData = async () => {
           </select>
 
           <button
-            onClick={fetchData}
-            className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw size={16} />
-            Refresh
-          </button>
+          onClick={fetchData}
+          disabled={isLoading}
+           className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+             >
+           <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+          Refresh
+           </button>
         </div>
       </div>
+      )}
+
 
       {/* Feedback List */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+      {/* Feedback List */}
+      {!isLoading && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
           Feedback ({filteredFeedback.length})
         </h3>
 
@@ -599,14 +606,16 @@ const fetchData = async () => {
                 </div>
               </div>
             ))}
-          </div>
+         </div>
         )}
       </div>
+      )}
 
       {/* RECYCLE BIN TAB */}
-<div className="mt-8">
-  <button
-    onClick={() => {
+      {!isLoading && (
+        <div className="mt-8">
+          <button
+            onClick={() => {
       setShowRecycleBin(!showRecycleBin);
       if (!showRecycleBin) {
         fetchRecycledFeedback();
@@ -717,8 +726,9 @@ const fetchData = async () => {
         </div>
       )}
     </div>
-  )}
-</div>
+      )}
+    </div>
+    )}
 
       {/* Modal */}
       {isModalOpen && selectedFeedback && (
