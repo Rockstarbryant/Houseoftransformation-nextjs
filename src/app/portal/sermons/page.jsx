@@ -328,6 +328,8 @@ export default function ManageSermons() {
   const [descriptionHtml, setDescriptionHtml] = useState('');
   const [toasts, setToasts] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'warning', title: '', message: '', onConfirm: () => {} });
+  const [selectedSermons, setSelectedSermons] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '', pastor: '', date: '', category: 'Sunday Service',
@@ -564,6 +566,90 @@ export default function ManageSermons() {
     );
   };
 
+  const handleSelectSermon = (sermonId) => {
+  setSelectedSermons(prev => 
+    prev.includes(sermonId) 
+      ? prev.filter(id => id !== sermonId)
+      : [...prev, sermonId]
+  );
+};
+
+const handlePrintSingle = (sermon) => {
+  printSermons([sermon]);
+};
+
+const handlePrintSelected = () => {
+  const sermonsToPrint = sermons.filter(s => selectedSermons.includes(s._id));
+  if (sermonsToPrint.length === 0) {
+    showToast('Please select at least one sermon to print', 'warning');
+    return;
+  }
+  printSermons(sermonsToPrint);
+};
+
+const printSermons = (sermonsArray) => {
+  const printWindow = window.open('', '_blank');
+  
+  const sermonsHtml = sermonsArray.map((sermon, index) => `
+    <div class="sermon-page" style="${index > 0 ? 'page-break-before: always;' : ''}">
+      <h2>${sermon.title}</h2>
+      <div class="sermon-meta">
+        <p><strong>Pastor:</strong> ${sermon.pastor}</p>
+        <p><strong>Date:</strong> ${new Date(sermon.date).toLocaleDateString()}</p>
+        <p><strong>Category:</strong> ${sermon.category}</p>
+        <p><strong>Type:</strong> ${sermon.type}</p>
+      </div>
+      ${sermon.thumbnail ? `<img src="${sermon.thumbnail}" alt="${sermon.title}" class="sermon-image" />` : ''}
+      ${sermon.videoUrl ? `<p class="video-link"><strong>Video:</strong> ${sermon.videoUrl}</p>` : ''}
+      <div class="sermon-content">
+        ${sermon.descriptionHtml || sermon.description || '<p>No content available</p>'}
+      </div>
+    </div>
+  `).join('');
+  
+  const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Sermons - House of Transformation</title>
+        <style>
+          body { font-family: Georgia, serif; padding: 40px; line-height: 1.6; color: #333; }
+          h1 { color: #8B1A1A; border-bottom: 3px solid #8B1A1A; padding-bottom: 10px; margin-bottom: 30px; }
+          h2 { color: #8B1A1A; margin-top: 0; font-size: 28px; }
+          .sermon-meta { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+          .sermon-meta p { margin: 5px 0; }
+          .sermon-image { max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px; }
+          .video-link { background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 15px 0; }
+          .sermon-content { margin-top: 20px; font-size: 14px; }
+          .sermon-content p { margin-bottom: 1em; }
+          .sermon-content h2 { margin-top: 1.5em; margin-bottom: 0.75em; font-size: 20px; }
+          .sermon-content h3 { margin-top: 1.25em; margin-bottom: 0.5em; font-size: 18px; }
+          .sermon-content ul, .sermon-content ol { margin-bottom: 1em; padding-left: 25px; }
+          .sermon-content img { max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+          @media print {
+            .no-print { display: none; }
+            .sermon-page { page-break-after: always; }
+            .sermon-page:last-child { page-break-after: auto; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Sermons - House of Transformation Church</h1>
+        ${sermonsHtml}
+        <div class="footer">
+          <p>Generated on ${new Date().toLocaleString()}</p>
+          <p>House of Transformation Church - Mombasa, Kenya</p>
+        </div>
+        <button class="no-print" onclick="window.print()" style="position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #8B1A1A; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">Print PDF</button>
+      </body>
+    </html>
+  `;
+  
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+};
+
   // ─── Render ───────────────────────────────────────────────────────────────
   const pinnedSermons = sermons.filter(s => s.pinned);
   const otherSermons = sermons.filter(s => !s.pinned);
@@ -578,17 +664,49 @@ export default function ManageSermons() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900 dark:text-white">Manage Sermons</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-center mt-1">Create, edit and organize your sermon collection</p>
-          </div>
+  <div>
+    <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900 dark:text-white">Manage Sermons</h1>
+    <p className="text-gray-600 dark:text-gray-400 text-center mt-1">Create, edit and organize your sermon collection</p>
+  </div>
+  <div className="flex gap-3">
+    {!showForm && (
+      <>
+        <button
+          onClick={() => {
+            setIsSelectionMode(!isSelectionMode);
+            setSelectedSermons([]);
+          }}
+          className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors shadow-sm ${
+            isSelectionMode 
+              ? 'bg-amber-600 dark:bg-amber-700 text-white hover:bg-amber-700 dark:hover:bg-amber-800' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+          }`}
+        >
+          {isSelectionMode ? 'Cancel Select' : 'Select Multiple'}
+        </button>
+        {isSelectionMode && selectedSermons.length > 0 && (
           <button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white dark:text-white rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors shadow-sm"
+            onClick={handlePrintSelected}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 dark:bg-green-700 text-white rounded-lg font-medium hover:bg-green-700 dark:hover:bg-green-800 transition-colors shadow-sm"
           >
-            <Plus size={20} /> Add Sermon
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print ({selectedSermons.length})
           </button>
-        </div>
+          )}
+        </>
+      )}
+      <button
+      onClick={() => { resetForm(); setShowForm(true); }}
+      className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white dark:text-white rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors shadow-sm"
+      >
+      <Plus size={20} /> Add Sermon
+      </button>
+    </div>
+     </div>
 
         <div className="mb-10 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
           <div className="flex items-center gap-3">
@@ -770,14 +888,18 @@ export default function ManageSermons() {
                   </h2>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pinnedSermons.map(sermon => (
-                      <SermonCard 
-                        key={sermon._id} 
-                        sermon={sermon} 
-                        onEdit={handleEdit} 
-                        onDelete={handleDelete} 
-                        onPin={handlePin} 
-                        isPinned 
-                      />
+                    <SermonCard 
+                    key={sermon._id} 
+                    sermon={sermon} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                    onPin={handlePin} 
+                     isPinned 
+                     isSelectionMode={isSelectionMode}
+                     isSelected={selectedSermons.includes(sermon._id)}
+                      onSelect={handleSelectSermon}
+                      onPrint={handlePrintSingle}
+                    />
                     ))}
                   </div>
                 </div>
@@ -796,13 +918,17 @@ export default function ManageSermons() {
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {otherSermons.map(sermon => (
-                      <SermonCard 
-                        key={sermon._id} 
-                        sermon={sermon} 
-                        onEdit={handleEdit} 
-                        onDelete={handleDelete} 
-                        onPin={handlePin} 
-                      />
+                    <SermonCard 
+                    key={sermon._id} 
+                    sermon={sermon} 
+                    onEdit={handleEdit} 
+                     onDelete={handleDelete} 
+                     onPin={handlePin}
+                     isSelectionMode={isSelectionMode}
+                     isSelected={selectedSermons.includes(sermon._id)}
+                     onSelect={handleSelectSermon}
+                     onPrint={handlePrintSingle}
+                     />
                     ))}
                   </div>
                 )}
@@ -823,7 +949,7 @@ export default function ManageSermons() {
 }
 
 // ─── Sermon Card Component ──────────────────────────────────────────────────
-function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
+function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned, isSelectionMode, isSelected, onSelect, onPrint }) {
   const typeIcon = {
     text: '📖',
     photo: '🖼️',
@@ -831,7 +957,34 @@ function SermonCard({ sermon, onEdit, onDelete, onPin, isPinned }) {
   }[sermon.type] || '📋';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 group relative">
+      {/* Selection checkbox */}
+      {isSelectionMode && (
+        <div className="absolute top-3 left-3 z-10">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(sermon._id)}
+            className="w-5 h-5 rounded border-2 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+      )}
+
+      {/* Print button (only when NOT in selection mode) */}
+      {!isSelectionMode && (
+        <button
+          onClick={() => onPrint(sermon)}
+          className="absolute top-3 right-3 z-10 p-2 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg shadow-md hover:bg-green-600 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+          title="Print this sermon"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+        </button>
+      )}
+
       <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
         {sermon.thumbnail ? (
           <img

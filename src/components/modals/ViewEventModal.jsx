@@ -12,11 +12,88 @@ export default function ViewEventModal({
   isOpen,
   onClose,
   event
-}) {
+  }) {
   if (!isOpen || !event) return null;
 
   const status = getEventStatus(event);
   const daysUntil = getDaysUntilEvent(event.date);
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    const registrations = event.registrations || [];
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${event.title} - Attendees List</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #8B1A1A; border-bottom: 3px solid #8B1A1A; padding-bottom: 10px; }
+            .event-info { margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+            .event-info p { margin: 5px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #8B1A1A; color: white; padding: 12px; text-align: left; font-weight: bold; }
+            td { padding: 10px; border-bottom: 1px solid #ddd; }
+            tr:hover { background: #f8f9fa; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+            .visitor { background: #dbeafe; color: #1e40af; }
+            .member { background: #dcfce7; color: #166534; }
+            .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+            @media print {
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${event.title}</h1>
+          <div class="event-info">
+            <p><strong>Date:</strong> ${formatEventDate(event.date)}</p>
+            <p><strong>Time:</strong> ${formatEventTime(event.time)}</p>
+            <p><strong>Location:</strong> ${event.location || 'TBA'}</p>
+            <p><strong>Total Registered:</strong> ${registrations.length} attendees</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Attendee</th>
+                <th>Type</th>
+                <th>Contact</th>
+                <th>Registered At</th>
+                <th>Attendance Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${registrations.map((reg, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${reg.isVisitor ? reg.visitorName : (reg.user?.name || 'Unknown')}</td>
+                  <td><span class="badge ${reg.isVisitor ? 'visitor' : 'member'}">${reg.isVisitor ? 'Visitor' : 'Member'}</span></td>
+                  <td>${reg.isVisitor ? (reg.visitorEmail || reg.visitorPhone || 'N/A') : (reg.user?.email || 'N/A')}</td>
+                  <td>${reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : 'N/A'}</td>
+                  <td>${reg.attendanceTime || 'Not recorded'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <p>House of Transformation Church</p>
+          </div>
+          
+          <button class="no-print" onclick="window.print()" style="position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #8B1A1A; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Print PDF</button>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
+  
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -28,12 +105,25 @@ export default function ViewEventModal({
               Event Details
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {event.registrations && event.registrations.length > 0 && (
+              <button
+                onClick={handlePrint}
+                className="px-4 py-2 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print List
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -167,62 +257,66 @@ export default function ViewEventModal({
                           #
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          User
+                          Attendee
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                          Type
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                           Registered At
                         </th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                          Attendance Time
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-  {event.registrations.map((reg, index) => (
-    <tr key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-        {index + 1}
-      </td>
-      <td className="px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">
-            {reg.isVisitor 
-              ? reg.visitorName 
-              : (reg.user?.name || reg.user?.email || 'Unknown User')
-            }
-          </p>
-          {reg.isVisitor && (
-            <>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{reg.visitorEmail}</p>
-              {reg.visitorPhone && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">{reg.visitorPhone}</p>
-              )}
-            </>
-          )}
-        </div>
-      </td>
-      <td className="px-4 py-3">
-        {reg.isVisitor ? (
-          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded">
-            Visitor
-          </span>
-        ) : (
-          <span className="px-2 py-1 bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300 text-xs font-bold rounded">
-            Member
-          </span>
-        )}
-      </td>
-      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-        {reg.registeredAt 
-          ? new Date(reg.registeredAt).toLocaleString()
-          : 'N/A'
-        }
-      </td>
-      {reg.attendanceTime && (
-        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-          {reg.attendanceTime}
-            </td>
-                )}
-                </tr>
-                ))}
-                </tbody>
+                      {event.registrations.map((reg, index) => (
+                        <tr key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                            {index + 1}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                {reg.isVisitor 
+                                  ? reg.visitorName 
+                                  : (reg.user?.name || reg.user?.email || 'Unknown User')
+                                }
+                              </p>
+                              {reg.isVisitor && (
+                                <>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">{reg.visitorEmail}</p>
+                                  {reg.visitorPhone && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{reg.visitorPhone}</p>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {reg.isVisitor ? (
+                              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded">
+                                Visitor
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300 text-xs font-bold rounded">
+                                Member
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                            {reg.registeredAt 
+                              ? new Date(reg.registeredAt).toLocaleString()
+                              : 'N/A'
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                            {reg.attendanceTime || 'Not recorded'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </div>

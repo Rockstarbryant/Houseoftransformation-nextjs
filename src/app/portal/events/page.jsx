@@ -284,12 +284,16 @@ export default function EventsPage() {
     today: filterEventsByStatus(events, 'today').length
   };
 
-  // ============================================
+ // ============================================
   // LOADING STATE
   // ============================================
 
   if (loading) {
-    return <Loader fullScreen text="Loading events..." />;
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+      </div>
+    );
   }
 
   // ============================================
@@ -320,9 +324,10 @@ export default function EventsPage() {
 
           <button
             onClick={fetchEvents}
-            className="flex items-center gap-2 px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
           >
-            <RefreshCw size={20} />
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
 
