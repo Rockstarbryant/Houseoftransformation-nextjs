@@ -24,11 +24,11 @@ const QuickInfoBar = () => {
           <div className="lg:w-5/12 relative min-h-[400px] group">
             <img 
               src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg" 
-              className="absolute inset-0 w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
+              className="absolute inset-0 w-full h-full object-cover opacity-160 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
               alt="H.O.T Ministry"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            <div className="absolute inset-0 bg-transparent" />
             <div className="absolute bottom-16 left-12 right-12 space-y-4">
               <div className="w-20 h-1 bg-[#8B1A1A]" />
               <h2 className="text-5xl font-black text-white leading-tight tracking-tighter">

@@ -28,7 +28,7 @@ const HeroSection = () => {
     <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-slate-950">
       {/* Background Image - CRITICAL: loads immediately */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-105"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-60 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
       />
       <div className="absolute inset-0 bg-white/5" />
@@ -46,17 +46,17 @@ const HeroSection = () => {
               <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-red-600 mb-8 leading-[0.9] tracking-tighter">
               H.O.T
-              <span className="block text-red-800 drop-shadow-sm">Transforming.</span>
-              <span className="text-red-800 font-semibold font-serif font-light tracking-normal">Lives.</span>
+              <span className="block text-blue-500 drop-shadow-sm">Transforming.</span>
+              <span className="block text-blue-500">Lives.</span>
             </h1>
 
-            <p className="max-w-lg text-lg md:text-xl text-slate-300 font-medium leading-relaxed mb-8 border-l-2 border-[#8B1A1A] pl-6">
+            <p className="max-w-lg text-lg md:text-xl text-slate-200 font-medium leading-relaxed mb-8 border-l-2 border-[#8B1A1A] pl-6">
               Touching and transforming lives through the anointed gospel of Jesus Christ. Join a community built on love and power.
             </p>
 
-            <div className="flex items-center gap-4 mb-12 text-slate-400">
+            <div className="flex items-center gap-4 mb-12 text-slate-300">
               <div className="size-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
                 <Calendar size={18} className="text-[#8B1A1A]" />
               </div>

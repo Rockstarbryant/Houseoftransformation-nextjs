@@ -665,8 +665,8 @@ const printSermons = (sermonsArray) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
   <div>
-    <h1 className="text-3xl md:text-4xl text-center font-bold text-gray-900 dark:text-white">Manage Sermons</h1>
-    <p className="text-gray-600 dark:text-gray-400 text-center mt-1">Create, edit and organize your sermon collection</p>
+    <h1 className="text-3xl md:text-4xl text-center font-bold text-red-900 dark:text-white">H.O.T SERMONS KITCHEN</h1>
+    <p className="text-gray-600 dark:text-gray-400 text-center mt-1">Cook, edit, post and organize your sermon collection</p>
   </div>
   <div className="flex gap-3">
     {!showForm && (
@@ -679,10 +679,10 @@ const printSermons = (sermonsArray) => {
           className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors shadow-sm ${
             isSelectionMode 
               ? 'bg-amber-600 dark:bg-amber-700 text-white hover:bg-amber-700 dark:hover:bg-amber-800' 
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              : 'bg-green-700 dark:bg-green-700 text-white dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {isSelectionMode ? 'Cancel Select' : 'Select Multiple'}
+          {isSelectionMode ? 'Cancel Select' : 'Print Multiple'}
         </button>
         {isSelectionMode && selectedSermons.length > 0 && (
           <button
