@@ -7,6 +7,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [useSingleCaption, setUseSingleCaption] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
   const dragRef = useRef(null);
 
@@ -20,6 +21,66 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+  // ✅ NEW: Helper to ensure file is ready before upload (fixes mobile timing issues)
+  const ensureFileReady = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!(file instanceof File || file instanceof Blob)) {
+        reject(new Error('Invalid file object'));
+        return;
+      }
+
+      // Read a small portion to verify file is accessible
+      const reader = new FileReader();
+      
+      reader.onloadend = () => {
+        console.log(`✅ File ready: ${file.name}`);
+        resolve(file);
+      };
+      
+      reader.onerror = () => {
+        console.error(`❌ File not ready: ${file.name}`);
+        reject(new Error(`File not accessible: ${file.name}`));
+      };
+
+      // Read just 1 byte to verify file is ready
+      try {
+        reader.readAsArrayBuffer(file.slice(0, 1));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  // ✅ NEW: Retry logic for failed uploads
+  const uploadWithRetry = async (formData, maxRetries = 2) => {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`🔄 Retry attempt ${attempt} of ${maxRetries}`);
+          // Exponential backoff: 1s, 2s, 4s...
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+        }
+
+        const response = await onUpload(formData);
+        console.log(`✅ Upload successful on attempt ${attempt + 1}`);
+        return response;
+        
+      } catch (err) {
+        lastError = err;
+        console.error(`❌ Upload attempt ${attempt + 1} failed:`, err.message);
+        
+        // Don't retry if it's a validation error (4xx)
+        if (err.response && err.response.status >= 400 && err.response.status < 500) {
+          throw err;
+        }
+      }
+    }
+    
+    throw lastError;
+  };
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -151,51 +212,115 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 
     setUploading(true);
     setError(null);
+    setUploadProgress(0);
+
+    // ✅ NEW: Detect mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // ✅ NEW: Give mobile devices extra time to prepare files
+    if (isMobile) {
+      console.log('📱 Mobile device detected - allowing extra preparation time');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     let uploadedCount = 0;
     const totalFiles = files.length;
+    const failedUploads = [];
 
     try {
-      const uploadPromises = files.map((file, idx) => {
-        const uploadFormData = new FormData();
-        uploadFormData.append('photo', file);
+      // ✅ IMPROVED: Process files sequentially on mobile, parallel on desktop
+      if (isMobile) {
+        // Sequential upload for mobile (more reliable)
+        for (let idx = 0; idx < files.length; idx++) {
+          try {
+            const file = files[idx];
+            console.log(`📤 Uploading file ${idx + 1}/${totalFiles}: ${file.name}`);
 
-        if (useSingleCaption) {
-          uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
-          uploadFormData.append('description', singleCaptionData.description);
-          uploadFormData.append('category', singleCaptionData.category);
-        } else {
-          uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
-          uploadFormData.append('description', multipleCaptions[idx]?.description || '');
-          uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-        }
+            // ✅ NEW: Ensure file is ready
+            const readyFile = await ensureFileReady(file);
 
-        return onUpload(uploadFormData)
-          .then(() => {
+            const uploadFormData = new FormData();
+            uploadFormData.append('photo', readyFile);
+
+            if (useSingleCaption) {
+              uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
+              uploadFormData.append('description', singleCaptionData.description);
+              uploadFormData.append('category', singleCaptionData.category);
+            } else {
+              uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+              uploadFormData.append('description', multipleCaptions[idx]?.description || '');
+              uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
+            }
+
+            // ✅ NEW: Upload with retry logic
+            await uploadWithRetry(uploadFormData);
             uploadedCount++;
-          })
-          .catch(err => {
+            setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+
+          } catch (err) {
+            console.error(`Failed to upload ${files[idx].name}:`, err);
+            failedUploads.push(files[idx].name);
+          }
+        }
+      } else {
+        // Parallel upload for desktop (faster)
+        const uploadPromises = files.map(async (file, idx) => {
+          try {
+            console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
+
+            // ✅ NEW: Ensure file is ready
+            const readyFile = await ensureFileReady(file);
+
+            const uploadFormData = new FormData();
+            uploadFormData.append('photo', readyFile);
+
+            if (useSingleCaption) {
+              uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
+              uploadFormData.append('description', singleCaptionData.description);
+              uploadFormData.append('category', singleCaptionData.category);
+            } else {
+              uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+              uploadFormData.append('description', multipleCaptions[idx]?.description || '');
+              uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
+            }
+
+            // ✅ NEW: Upload with retry logic
+            await uploadWithRetry(uploadFormData);
+            uploadedCount++;
+            setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+
+          } catch (err) {
             console.error(`Failed to upload ${file.name}:`, err);
+            failedUploads.push(file.name);
             throw err;
-          });
-      });
+          }
+        });
 
-      await Promise.all(uploadPromises);
+        await Promise.all(uploadPromises);
+      }
 
-      setSuccess(true);
-      setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
-      setMultipleCaptions([]);
-      setFiles([]);
-      setUseSingleCaption(true);
-      
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 2000);
+      // Check if all uploads succeeded
+      if (failedUploads.length === 0) {
+        setSuccess(true);
+        setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
+        setMultipleCaptions([]);
+        setFiles([]);
+        setUseSingleCaption(true);
+        
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } else {
+        setError(`Upload completed with errors. Failed files: ${failedUploads.join(', ')}. Successfully uploaded: ${uploadedCount}/${totalFiles}`);
+      }
+
     } catch (err) {
-      setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${err.message || 'Please try again.'}`);
+      const errorMessage = err.response?.data?.message || err.message || 'Network error. Please check your connection and try again.';
+      setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${errorMessage}`);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -207,7 +332,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
           <h2 className="text-2xl font-bold text-gray-900">Upload Photos</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition" disabled={uploading}>
             <X size={24} />
           </button>
         </div>
@@ -230,15 +355,33 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
             </div>
           )}
 
+          {/* Upload Progress */}
+          {uploading && uploadProgress > 0 && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-blue-900">Uploading...</p>
+                <p className="text-sm font-medium text-blue-900">{uploadProgress}%</p>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Drag & Drop Area */}
           <div
             ref={dragRef}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !uploading && fileInputRef.current?.click()}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors cursor-pointer bg-gray-50 hover:border-blue-400 hover:bg-blue-50"
+            className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors bg-gray-50 hover:border-blue-400 hover:bg-blue-50 ${
+              uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            }`}
           >
             <Upload size={40} className="mx-auto mb-3 text-gray-400" />
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Drag & drop photos here</h3>
@@ -254,6 +397,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
               accept={ALLOWED_TYPES.join(',')}
               onChange={handleFileSelect}
               className="hidden"
+              disabled={uploading}
             />
           </div>
 
@@ -272,6 +416,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                       type="button"
                       onClick={() => removeFile(idx)}
                       className="p-1 text-red-600 hover:bg-red-50 rounded transition ml-2"
+                      disabled={uploading}
                     >
                       <X size={16} />
                     </button>
@@ -306,6 +451,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                   checked={useSingleCaption}
                   onChange={(e) => setUseSingleCaption(e.target.checked)}
                   className="hidden"
+                  disabled={uploading}
                 />
               </label>
             </div>
