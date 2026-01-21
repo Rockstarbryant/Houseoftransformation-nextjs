@@ -292,18 +292,18 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-8">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-start sm:items-center justify-center overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full m-0 sm:m-8 min-h-screen sm:min-h-0 sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
-          <h2 className="text-2xl font-bold text-gray-900">Upload Photos</h2>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-lg z-10 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Upload Photos</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition" disabled={uploading}>
-            <X size={24} />
+            <X size={20} className="sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
           {/* Success Message */}
           {success && (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
@@ -344,17 +344,17 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors bg-gray-50 hover:border-blue-400 hover:bg-blue-50 ${
+            className={`border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center transition-colors bg-gray-50 hover:border-blue-400 hover:bg-blue-50 ${
               uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
-            <Upload size={40} className="mx-auto mb-3 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Drag & drop photos here</h3>
-            <p className="text-sm text-gray-600 mb-4">or click to select files</p>
-            <div className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition inline-block">
+            <Upload size={32} className="mx-auto mb-2 sm:mb-3 text-gray-400 sm:w-10 sm:h-10" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Drag & drop photos here</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">or click to select files</p>
+            <div className="px-3 py-2 sm:px-4 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition inline-block">
               Browse Files
             </div>
-            <p className="text-xs text-gray-500 mt-4">Supported: JPG, PNG, WebP, GIF (Max 5MB each)</p>
+            <p className="text-xs text-gray-500 mt-3 sm:mt-4">Supported: JPG, PNG, WebP, GIF (Max 5MB each)</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -368,9 +368,9 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 
           {/* Selected Files Preview */}
           {files.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm font-semibold text-gray-900 mb-3">Selected Files ({files.length})</p>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <p className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Selected Files ({files.length})</p>
+              <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
                 {files.map((file, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
                     <div className="flex-1 min-w-0">
@@ -392,20 +392,20 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
           )}
 
           {files.length > 1 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div className="relative inline-flex h-6 w-11 items-center rounded-full" style={{ backgroundColor: useSingleCaption ? '#2563eb' : '#d1d5db' }}>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <label className="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                <div className="relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full flex-shrink-0" style={{ backgroundColor: useSingleCaption ? '#2563eb' : '#d1d5db' }}>
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                      useSingleCaption ? 'translate-x-6' : 'translate-x-1'
+                    className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition ${
+                      useSingleCaption ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                <div className="flex-1">
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900">
                     {useSingleCaption ? 'One caption for all' : 'Unique caption per photo'}
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-gray-600 hidden sm:block">
                     {useSingleCaption
                       ? 'Same title/description for all photos'
                       : 'Each photo has its own title/description'}
@@ -423,11 +423,11 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
           )}
 
           {/* Form Fields */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {useSingleCaption ? (
               <>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Photo Title *
                   </label>
                   <input
@@ -437,7 +437,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                     onChange={handleSingleCaptionChange}
                     placeholder="e.g., Sunday Morning Worship"
                     disabled={uploading}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
                     required
                   />
                   {files.length > 1 && (
@@ -446,7 +446,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Description (Optional)
                   </label>
                   <textarea
@@ -456,12 +456,12 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                     placeholder="Add details about these photos..."
                     rows="2"
                     disabled={uploading}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Category *
                   </label>
                   <select
@@ -469,7 +469,7 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                     value={singleCaptionData.category}
                     onChange={handleSingleCaptionChange}
                     disabled={uploading}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-gray-100"
                   >
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -479,10 +479,10 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
               </>
             ) : (
               <>
-                <div className="border border-gray-300 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                <div className="border border-gray-300 rounded-lg overflow-hidden max-h-64 sm:max-h-96 overflow-y-auto">
                   {files.map((file, idx) => (
-                    <div key={idx} className={`p-4 ${idx > 0 ? 'border-t border-gray-200' : ''}`}>
-                      <p className="text-sm font-semibold text-gray-900 mb-3">{file.name}</p>
+                    <div key={idx} className={`p-3 sm:p-4 ${idx > 0 ? 'border-t border-gray-200' : ''}`}>
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3 truncate">{file.name}</p>
                       
                       <div className="space-y-3">
                         <div>
@@ -537,10 +537,10 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                   <button
                     type="button"
                     onClick={applySingleCaptionToAll}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2"
                     disabled={uploading}
                   >
-                    <Copy size={16} />
+                    <Copy size={14} className="sm:w-4 sm:h-4" />
                     Apply Single Caption to All
                   </button>
                 )}
@@ -548,12 +548,12 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200 sticky bottom-0 bg-white pb-2 sm:pb-0">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={uploading}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50 transition"
+                className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50 transition"
               >
                 Cancel
               </button>
@@ -561,16 +561,17 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
                 type="button"
                 onClick={handleUpload}
                 disabled={uploading || files.length === 0}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
+                className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
               >
                 {uploading ? (
                   <>
-                    <Loader size={18} className="animate-spin" />
-                    Uploading...
+                    <Loader size={16} className="animate-spin sm:w-[18px] sm:h-[18px]" />
+                    <span className="hidden sm:inline">Uploading...</span>
+                    <span className="sm:hidden">...</span>
                   </>
                 ) : (
                   <>
-                    <Upload size={18} />
+                    <Upload size={16} className="sm:w-[18px] sm:h-[18px]" />
                     Upload {files.length > 0 ? `(${files.length})` : ''}
                   </>
                 )}
