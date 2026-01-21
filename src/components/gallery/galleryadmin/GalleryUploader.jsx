@@ -228,76 +228,41 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
     const failedUploads = [];
 
     try {
-      // ✅ IMPROVED: Process files sequentially on mobile, parallel on desktop
-      if (isMobile) {
-        // Sequential upload for mobile (more reliable)
-        for (let idx = 0; idx < files.length; idx++) {
-          try {
-            const file = files[idx];
-            console.log(`📤 Uploading file ${idx + 1}/${totalFiles}: ${file.name}`);
+      // ✅ Process all files in parallel (works well on modern mobile networks)
+      const uploadPromises = files.map(async (file, idx) => {
+        try {
+          console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
 
-            // ✅ NEW: Ensure file is ready
-            const readyFile = await ensureFileReady(file);
+          // ✅ Ensure file is ready before upload
+          const readyFile = await ensureFileReady(file);
 
-            const uploadFormData = new FormData();
-            uploadFormData.append('photo', readyFile);
+          const uploadFormData = new FormData();
+          uploadFormData.append('photo', readyFile);
 
-            if (useSingleCaption) {
-              uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
-              uploadFormData.append('description', singleCaptionData.description);
-              uploadFormData.append('category', singleCaptionData.category);
-            } else {
-              uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
-              uploadFormData.append('description', multipleCaptions[idx]?.description || '');
-              uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-            }
-
-            // ✅ NEW: Upload with retry logic
-            await uploadWithRetry(uploadFormData);
-            uploadedCount++;
-            setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
-
-          } catch (err) {
-            console.error(`Failed to upload ${files[idx].name}:`, err);
-            failedUploads.push(files[idx].name);
+          if (useSingleCaption) {
+            uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
+            uploadFormData.append('description', singleCaptionData.description);
+            uploadFormData.append('category', singleCaptionData.category);
+          } else {
+            uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+            uploadFormData.append('description', multipleCaptions[idx]?.description || '');
+            uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
           }
+
+          // ✅ Upload with automatic retry logic
+          await uploadWithRetry(uploadFormData);
+          uploadedCount++;
+          setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+          failedUploads.push(file.name);
+          // Don't throw - let other uploads continue
         }
-      } else {
-        // Parallel upload for desktop (faster)
-        const uploadPromises = files.map(async (file, idx) => {
-          try {
-            console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
+      });
 
-            // ✅ NEW: Ensure file is ready
-            const readyFile = await ensureFileReady(file);
-
-            const uploadFormData = new FormData();
-            uploadFormData.append('photo', readyFile);
-
-            if (useSingleCaption) {
-              uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
-              uploadFormData.append('description', singleCaptionData.description);
-              uploadFormData.append('category', singleCaptionData.category);
-            } else {
-              uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
-              uploadFormData.append('description', multipleCaptions[idx]?.description || '');
-              uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-            }
-
-            // ✅ NEW: Upload with retry logic
-            await uploadWithRetry(uploadFormData);
-            uploadedCount++;
-            setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
-
-          } catch (err) {
-            console.error(`Failed to upload ${file.name}:`, err);
-            failedUploads.push(file.name);
-            throw err;
-          }
-        });
-
-        await Promise.all(uploadPromises);
-      }
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises);
 
       // Check if all uploads succeeded
       if (failedUploads.length === 0) {
