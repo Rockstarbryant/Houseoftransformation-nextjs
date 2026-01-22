@@ -189,49 +189,60 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
     setUseSingleCaption(false);
   };
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
+  // ============================================
+// REPLACE handleUpload function in GalleryUploader.jsx
+// Find the existing handleUpload and replace it with this
+// ============================================
 
-    if (files.length === 0) {
-      setError('Please select at least one photo');
+const handleUpload = async (e) => {
+  e.preventDefault();
+
+  if (files.length === 0) {
+    setError('Please select at least one photo');
+    return;
+  }
+
+  if (useSingleCaption && !singleCaptionData.title.trim()) {
+    setError('Please enter a title');
+    return;
+  }
+
+  if (!useSingleCaption) {
+    const allHaveTitles = multipleCaptions.every(cap => cap.title.trim());
+    if (!allHaveTitles) {
+      setError('All photos must have a title');
       return;
     }
+  }
 
-    if (useSingleCaption && !singleCaptionData.title.trim()) {
-      setError('Please enter a title');
-      return;
-    }
+  setUploading(true);
+  setError(null);
+  setUploadProgress(0);
 
-    if (!useSingleCaption) {
-      const allHaveTitles = multipleCaptions.every(cap => cap.title.trim());
-      if (!allHaveTitles) {
-        setError('All photos must have a title');
-        return;
-      }
-    }
+  // ✅ Detect mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // ✅ Give mobile devices extra preparation time
+  if (isMobile) {
+    console.log('📱 Mobile device detected - optimizing upload strategy');
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
 
-    setUploading(true);
-    setError(null);
-    setUploadProgress(0);
+  let uploadedCount = 0;
+  const totalFiles = files.length;
+  const failedUploads = [];
 
-    // ✅ NEW: Detect mobile device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // ✅ NEW: Give mobile devices extra time to prepare files
+  try {
+    // ✅ MOBILE: Upload files sequentially (one at a time)
+    // ✅ DESKTOP: Upload files in parallel (faster)
     if (isMobile) {
-      console.log('📱 Mobile device detected - allowing extra preparation time');
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    let uploadedCount = 0;
-    const totalFiles = files.length;
-    const failedUploads = [];
-
-    try {
-      // ✅ Process all files in parallel (works well on modern mobile networks)
-      const uploadPromises = files.map(async (file, idx) => {
+      console.log('📱 Using sequential upload for mobile stability');
+      
+      for (let idx = 0; idx < files.length; idx++) {
+        const file = files[idx];
+        
         try {
-          console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
+          console.log(`📤 Mobile upload ${idx + 1}/${totalFiles}: ${file.name}`);
 
           // ✅ Ensure file is ready before upload
           const readyFile = await ensureFileReady(file);
@@ -249,7 +260,45 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
             uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
           }
 
-          // ✅ Upload with automatic retry logic
+          // ✅ Upload with automatic retry
+          await uploadWithRetry(uploadFormData);
+          uploadedCount++;
+          setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+
+          // ✅ Small delay between uploads to prevent mobile browser overload
+          if (idx < files.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+          failedUploads.push(file.name);
+        }
+      }
+      
+    } else {
+      // ✅ DESKTOP: Parallel uploads (existing logic)
+      console.log('💻 Using parallel upload for desktop speed');
+      
+      const uploadPromises = files.map(async (file, idx) => {
+        try {
+          console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
+
+          const readyFile = await ensureFileReady(file);
+
+          const uploadFormData = new FormData();
+          uploadFormData.append('photo', readyFile);
+
+          if (useSingleCaption) {
+            uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
+            uploadFormData.append('description', singleCaptionData.description);
+            uploadFormData.append('category', singleCaptionData.category);
+          } else {
+            uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+            uploadFormData.append('description', multipleCaptions[idx]?.description || '');
+            uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
+          }
+
           await uploadWithRetry(uploadFormData);
           uploadedCount++;
           setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
@@ -257,37 +306,36 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
         } catch (err) {
           console.error(`Failed to upload ${file.name}:`, err);
           failedUploads.push(file.name);
-          // Don't throw - let other uploads continue
         }
       });
 
-      // Wait for all uploads to complete
       await Promise.all(uploadPromises);
-
-      // Check if all uploads succeeded
-      if (failedUploads.length === 0) {
-        setSuccess(true);
-        setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
-        setMultipleCaptions([]);
-        setFiles([]);
-        setUseSingleCaption(true);
-        
-        setTimeout(() => {
-          setSuccess(false);
-          onClose();
-        }, 2000);
-      } else {
-        setError(`Upload completed with errors. Failed files: ${failedUploads.join(', ')}. Successfully uploaded: ${uploadedCount}/${totalFiles}`);
-      }
-
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Network error. Please check your connection and try again.';
-      setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${errorMessage}`);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
     }
-  };
+
+    // Check results
+    if (failedUploads.length === 0) {
+      setSuccess(true);
+      setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
+      setMultipleCaptions([]);
+      setFiles([]);
+      setUseSingleCaption(true);
+      
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 2000);
+    } else {
+      setError(`Upload completed with errors. Failed files: ${failedUploads.join(', ')}. Successfully uploaded: ${uploadedCount}/${totalFiles}`);
+    }
+
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || err.message || 'Network error. Please check your connection and try again.';
+    setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${errorMessage}`);
+  } finally {
+    setUploading(false);
+    setUploadProgress(0);
+  }
+};
 
   if (!isOpen) return null;
 
