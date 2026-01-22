@@ -189,9 +189,9 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
     setUseSingleCaption(false);
   };
 
-  // ============================================
-// REPLACE handleUpload function in GalleryUploader.jsx
-// Find the existing handleUpload and replace it with this
+// ============================================
+// COMPLETE REPLACEMENT for handleUpload function
+// This includes the Android FormData MIME type fix
 // ============================================
 
 const handleUpload = async (e) => {
@@ -219,12 +219,10 @@ const handleUpload = async (e) => {
   setError(null);
   setUploadProgress(0);
 
-  // ✅ Detect mobile device
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   
-  // ✅ Give mobile devices extra preparation time
   if (isMobile) {
-    console.log('📱 Mobile device detected - optimizing upload strategy');
+    console.log('📱 Mobile device detected - using optimized upload');
     await new Promise(resolve => setTimeout(resolve, 800));
   }
 
@@ -233,10 +231,8 @@ const handleUpload = async (e) => {
   const failedUploads = [];
 
   try {
-    // ✅ MOBILE: Upload files sequentially (one at a time)
-    // ✅ DESKTOP: Upload files in parallel (faster)
     if (isMobile) {
-      console.log('📱 Using sequential upload for mobile stability');
+      console.log('📱 Sequential upload for mobile');
       
       for (let idx = 0; idx < files.length; idx++) {
         const file = files[idx];
@@ -244,11 +240,26 @@ const handleUpload = async (e) => {
         try {
           console.log(`📤 Mobile upload ${idx + 1}/${totalFiles}: ${file.name}`);
 
-          // ✅ Ensure file is ready before upload
           const readyFile = await ensureFileReady(file);
 
+          // ✅ CRITICAL ANDROID FIX: Recreate file with explicit MIME type
+          const fileWithType = new File(
+            [readyFile],
+            readyFile.name,
+            { 
+              type: readyFile.type || 'image/jpeg',
+              lastModified: readyFile.lastModified || Date.now()
+            }
+          );
+
+          console.log('✅ File prepared:', {
+            name: fileWithType.name,
+            type: fileWithType.type,
+            size: fileWithType.size
+          });
+
           const uploadFormData = new FormData();
-          uploadFormData.append('photo', readyFile);
+          uploadFormData.append('photo', fileWithType);
 
           if (useSingleCaption) {
             uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
@@ -260,12 +271,10 @@ const handleUpload = async (e) => {
             uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
           }
 
-          // ✅ Upload with automatic retry
           await uploadWithRetry(uploadFormData);
           uploadedCount++;
           setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
 
-          // ✅ Small delay between uploads to prevent mobile browser overload
           if (idx < files.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 300));
           }
@@ -277,17 +286,26 @@ const handleUpload = async (e) => {
       }
       
     } else {
-      // ✅ DESKTOP: Parallel uploads (existing logic)
-      console.log('💻 Using parallel upload for desktop speed');
+      console.log('💻 Parallel upload for desktop');
       
       const uploadPromises = files.map(async (file, idx) => {
         try {
-          console.log(`📤 Preparing upload ${idx + 1}/${totalFiles}: ${file.name}`);
+          console.log(`📤 Preparing ${idx + 1}/${totalFiles}: ${file.name}`);
 
           const readyFile = await ensureFileReady(file);
 
+          // ✅ ANDROID FIX: Also apply to desktop for consistency
+          const fileWithType = new File(
+            [readyFile],
+            readyFile.name,
+            { 
+              type: readyFile.type || 'image/jpeg',
+              lastModified: readyFile.lastModified || Date.now()
+            }
+          );
+
           const uploadFormData = new FormData();
-          uploadFormData.append('photo', readyFile);
+          uploadFormData.append('photo', fileWithType);
 
           if (useSingleCaption) {
             uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
@@ -312,7 +330,6 @@ const handleUpload = async (e) => {
       await Promise.all(uploadPromises);
     }
 
-    // Check results
     if (failedUploads.length === 0) {
       setSuccess(true);
       setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
@@ -325,12 +342,12 @@ const handleUpload = async (e) => {
         onClose();
       }, 2000);
     } else {
-      setError(`Upload completed with errors. Failed files: ${failedUploads.join(', ')}. Successfully uploaded: ${uploadedCount}/${totalFiles}`);
+      setError(`Upload completed with errors. Failed: ${failedUploads.join(', ')}. Success: ${uploadedCount}/${totalFiles}`);
     }
 
   } catch (err) {
-    const errorMessage = err.response?.data?.message || err.message || 'Network error. Please check your connection and try again.';
-    setError(`Upload failed: ${uploadedCount}/${totalFiles} files uploaded. ${errorMessage}`);
+    const errorMessage = err.response?.data?.message || err.message || 'Network error. Check connection.';
+    setError(`Upload failed: ${uploadedCount}/${totalFiles} uploaded. ${errorMessage}`);
   } finally {
     setUploading(false);
     setUploadProgress(0);
