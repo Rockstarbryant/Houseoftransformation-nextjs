@@ -6,7 +6,9 @@ const QuickActions = ({ onSelect }) => {
   const actions = [
     'Service times',
     'Location',
-    'Volunteer'
+    'Ministries',
+    'Contact us',
+    'Events'
   ];
 
   return (
@@ -15,7 +17,7 @@ const QuickActions = ({ onSelect }) => {
         <button
           key={idx}
           onClick={() => onSelect(action)}
-          className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-full transition"
+          className="px-2 sm:px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-full transition"
         >
           {action}
         </button>

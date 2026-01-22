@@ -124,14 +124,56 @@ export const GALLERY_CATEGORIES = [
   'Kids Ministry'
 ];
 
+// utils/constants.js - Chatbot Responses
+
 export const CHATBOT_RESPONSES = {
-  SERVICE_TIMES: 'Our Sunday service is at 9:00 AM - 12:00 PM. Wednesday service at 6:30 PM. Friday prayer meeting at 7:00 PM. Would you like directions?',
-  LOCATION: 'We are located in Busia Town, Busia County, Kenya. You can find us on the map in the Contact section!',
-  DONATION: 'Thank you for your generosity! You can give through M-Pesa, bank transfer, or online. Visit our Donate section for details.',
-  PRAYER: 'We would love to pray with you! Please fill out our prayer request form or speak with our pastoral team after service.',
-  VOLUNTEER: 'That\'s wonderful! Check out our Volunteer Portal to see current opportunities. We have positions in worship, children\'s ministry, and more!',
-  KIDS: 'We have a vibrant Kids Ministry! Visit our Kids Zone for activities, stories, and games. Sunday school is during the main service.',
-  DEFAULT: 'Thanks for your message! For more specific help, you can contact us at info@houseoftransformation.or.ke or call +254 700 000 000.'
+  // Core Information
+  SERVICE_TIMES: "Our Sunday services are from 9:00 AM to 12:00 PM. We'd love to see you there! You can find more details on our Home page.",
+  
+  LOCATION: "We are located in Busia Town, Busia County, Kenya. You can find our exact location on the map in the Contact section of our website!",
+  
+  CONTACT: "You can reach us at info@houseoftransformation.or.ke or call +254 700 000 000. Visit our Contact page in the menu for more ways to connect with us!",
+
+  // Engagement
+  DONATION: "Thank you for your generosity! You can give through our Portal page. Click on 'PORTAL' in the menu above to access giving options. Your support helps transform lives!",
+  
+  PRAYER: "We believe in the power of prayer! You can submit a prayer request through our website or share it with our pastoral team. Visit the Contact page or call us at +254 700 000 000.",
+  
+  VOLUNTEER: "We're excited you want to serve! Check out our Volunteer page in the menu to see opportunities. You can also contact us at info@houseoftransformation.or.ke to learn more about serving in various ministries.",
+
+  // Programs
+  KIDS: "We have programs for children and youth! Check the Content section in the menu for information about our kids' ministries. Our Sunday services (9 AM - 12 PM) include children's programs.",
+  
+  EVENTS: "We have exciting events throughout the year! Check the Content section in the menu or visit our website regularly for updates on upcoming programs and special services.",
+  
+  MINISTRIES: "We have various ministries to help you grow spiritually! Visit the Content section in the menu to explore our ministries, or click 'Ministries' below to learn more.",
+
+  // New Visitors
+  NEW_MEMBERS: "Welcome to House of Transformation! 🎉 We meet Sundays from 9 AM - 12 PM in Busia Town. For your first visit, just come as you are! Learn more about us in the About section of our website.",
+  
+  ABOUT: "House of Transformation exists to transform lives through the anointed gospel of Jesus Christ. We're a community built on love and power. Click 'ABOUT' in the menu to learn more about our mission and vision!",
+
+  // Spiritual Growth
+  BAPTISM: "Baptism is an important step of faith! Contact our pastoral team at info@houseoftransformation.or.ke or call +254 700 000 000 to learn about baptism classes and upcoming baptism services.",
+  
+  BIBLE_STUDY: "We offer Bible study opportunities to help you grow in God's Word. Check the Content section or contact us to join a study group that fits your schedule!",
+  
+  WORSHIP: "We have a vibrant worship ministry! If you're interested in joining the worship team, contact us at info@houseoftransformation.or.ke.",
+
+  // Technical/Website Help
+  PORTAL: "To access the member portal, click on 'PORTAL' in the menu at the top of the page. If you're a new member and need login credentials, please contact us at info@houseoftransformation.or.ke.",
+  
+  NAVIGATION: "I can help you navigate! Use the menu at the top: HOME, ABOUT (our mission), CONTENT (ministries/resources), VOLUNTEER, PORTAL (member login), CONTACT (location/info), and FEEDBACK. What are you looking for?",
+  
+  FEEDBACK_PAGE: "We value your feedback! Click on 'FEEDBACK' in the menu to share your thoughts, suggestions, or testimonies with us. Your input helps us serve better!",
+
+  // Practical Information
+  PARKING: "Parking is available at our location in Busia Town. Our team will be happy to guide you when you arrive for Sunday service (9 AM - 12 PM).",
+  
+  DRESS_CODE: "Come as you are! We welcome everyone regardless of attire. Most people dress casually or in business casual, but the most important thing is that you're here! 😊",
+
+  // Default
+  DEFAULT: "I'd be happy to help you! I can tell you about:\n• Our Sunday service times (9 AM - 12 PM)\n• How to find us in Busia Town\n• Volunteering opportunities\n• Kids programs\n• How to contact us\n• Navigating our website\n\nWhat would you like to know?"
 };
 
 export const SEO_META = {

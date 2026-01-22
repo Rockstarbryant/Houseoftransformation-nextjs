@@ -2,60 +2,181 @@
 
 /**
  * Format currency to KES format
+ * @param {number} amount - Amount in KES
+ * @returns {string} Formatted currency string
  */
-export const formatKES = (amount) => {
-  return `KES ${parseFloat(amount || 0).toLocaleString('en-KE', {
+export const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return 'KES 0.00';
+  
+  return new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency: 'KES',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  })}`;
+  }).format(amount);
 };
 
 /**
- * Calculate progress percentage
+ * Format date to readable string
+ * @param {string|Date} date - Date to format
+ * @returns {string} Formatted date string
  */
-export const calculateProgress = (raised, goal) => {
-  if (!goal || goal === 0) return 0;
-  return Math.min((raised / goal) * 100, 100);
+export const formatDate = (date) => {
+  if (!date) return 'N/A';
+  
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Invalid Date';
+  }
 };
 
 /**
- * Calculate days remaining
+ * Format date to short format (no time)
+ * @param {string|Date} date - Date to format
+ * @returns {string} Formatted date string
  */
-export const getDaysRemaining = (endDate) => {
-  const now = new Date();
-  const end = new Date(endDate);
-  const diff = end - now;
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  return days;
+export const formatDateShort = (date) => {
+  if (!date) return 'N/A';
+  
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Invalid Date';
+  }
 };
 
 /**
- * Get status color classes
+ * Join MongoDB campaigns with Supabase pledges
+ * This creates a lookup map and enriches pledge data with campaign info
+ * 
+ * @param {Array} pledges - Pledges from Supabase (have campaign_id as MongoDB ID)
+ * @param {Array} campaigns - Campaigns from MongoDB
+ * @returns {Array} Pledges enriched with campaign data
  */
-export const getStatusClasses = (status) => {
-  const colors = {
-    active: 'bg-green-100 text-green-800 border-green-300',
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    completed: 'bg-blue-100 text-blue-800 border-blue-300',
-    partial: 'bg-purple-100 text-purple-800 border-purple-300',
-    archived: 'bg-gray-100 text-gray-800 border-gray-300',
-    ended: 'bg-orange-100 text-orange-800 border-orange-300'
+export const joinCampaignsWithPledges = (pledges, campaigns) => {
+  if (!Array.isArray(pledges) || !Array.isArray(campaigns)) {
+    console.error('joinCampaignsWithPledges: Invalid input', { pledges, campaigns });
+    return pledges || [];
+  }
+
+  // Create a lookup map: { [mongoId]: campaign }
+  const campaignMap = {};
+  campaigns.forEach(campaign => {
+    if (campaign._id) {
+      campaignMap[campaign._id] = campaign;
+    }
+  });
+
+  // Enrich pledges with campaign data
+  return pledges.map(pledge => {
+    const campaign = campaignMap[pledge.campaign_id];
+    
+    return {
+      ...pledge,
+      campaign_title: campaign?.title || 'Unknown Campaign',
+      campaign_type: campaign?.campaignType || null,
+      campaign_status: campaign?.status || null,
+      campaign_goal: campaign?.goalAmount || 0,
+      campaign_current: campaign?.currentAmount || 0
+    };
+  });
+};
+
+/**
+ * Calculate pledge progress percentage
+ * @param {number} paid - Amount paid
+ * @param {number} pledged - Total pledged amount
+ * @returns {number} Percentage (0-100)
+ */
+export const calculateProgress = (paid, pledged) => {
+  if (!pledged || pledged === 0) return 0;
+  
+  const percentage = (paid / pledged) * 100;
+  return Math.min(100, Math.max(0, percentage));
+};
+
+/**
+ * Get status badge color classes
+ * @param {string} status - Pledge or payment status
+ * @returns {object} Tailwind classes for badge
+ */
+export const getStatusBadge = (status) => {
+  const badges = {
+    pending: {
+      bg: 'bg-yellow-100 dark:bg-yellow-950/30',
+      text: 'text-yellow-800 dark:text-yellow-200',
+      label: 'Pending'
+    },
+    partial: {
+      bg: 'bg-blue-100 dark:bg-blue-950/30',
+      text: 'text-blue-800 dark:text-blue-200',
+      label: 'Partial'
+    },
+    completed: {
+      bg: 'bg-green-100 dark:bg-green-950/30',
+      text: 'text-green-800 dark:text-green-200',
+      label: 'Completed'
+    },
+    cancelled: {
+      bg: 'bg-red-100 dark:bg-red-950/30',
+      text: 'text-red-800 dark:text-red-200',
+      label: 'Cancelled'
+    },
+    overdue: {
+      bg: 'bg-orange-100 dark:bg-orange-950/30',
+      text: 'text-orange-800 dark:text-orange-200',
+      label: 'Overdue'
+    },
+    success: {
+      bg: 'bg-green-100 dark:bg-green-950/30',
+      text: 'text-green-800 dark:text-green-200',
+      label: 'Success'
+    },
+    failed: {
+      bg: 'bg-red-100 dark:bg-red-950/30',
+      text: 'text-red-800 dark:text-red-200',
+      label: 'Failed'
+    }
   };
-  return colors[status] || colors.pending;
+
+  return badges[status] || badges.pending;
 };
 
 /**
- * Validate M-Pesa phone number
+ * Validate phone number (Kenya format)
+ * @param {string} phone - Phone number to validate
+ * @returns {boolean} Is valid
  */
-export const isValidMpesaPhone = (phone) => {
-  return /^254\d{9}$/.test(phone);
+export const validateKenyanPhone = (phone) => {
+  if (!phone) return false;
+  
+  // Kenya phone format: 254XXXXXXXXX (12 digits)
+  const phoneRegex = /^254\d{9}$/;
+  return phoneRegex.test(phone.replace(/\s+/g, ''));
 };
 
 /**
- * Format phone number to M-Pesa format
+ * Format phone number to Kenya format
+ * @param {string} phone - Phone number (e.g., "0712345678" or "712345678")
+ * @returns {string} Formatted phone (e.g., "254712345678")
  */
-export const formatToMpesaPhone = (phone) => {
-  // Remove any non-digits
+export const formatPhoneToKenyan = (phone) => {
+  if (!phone) return '';
+  
+  // Remove spaces and non-digits
   let cleaned = phone.replace(/\D/g, '');
   
   // If starts with 0, replace with 254
@@ -63,12 +184,7 @@ export const formatToMpesaPhone = (phone) => {
     cleaned = '254' + cleaned.substring(1);
   }
   
-  // If starts with +254, replace + with nothing
-  if (cleaned.startsWith('+254')) {
-    cleaned = cleaned.substring(1);
-  }
-  
-  // If doesn't start with 254, prepend it
+  // If doesn't start with 254, add it
   if (!cleaned.startsWith('254')) {
     cleaned = '254' + cleaned;
   }
@@ -77,141 +193,146 @@ export const formatToMpesaPhone = (phone) => {
 };
 
 /**
- * Export data to CSV
+ * Calculate campaign progress
+ * @param {number} current - Current amount raised
+ * @param {number} goal - Goal amount
+ * @returns {number} Percentage (0-100)
  */
-export const exportToCSV = (data, filename = 'export.csv') => {
-  if (!data || data.length === 0) {
-    alert('No data to export');
-    return;
-  }
-
-  // Get headers from first object
-  const headers = Object.keys(data[0]);
+export const calculateCampaignProgress = (current, goal) => {
+  if (!goal || goal === 0) return 0;
   
-  // Create CSV content
-  let csv = headers.join(',') + '\n';
-  data.forEach(row => {
-    csv += headers.map(header => {
-      const value = row[header];
-      // Handle values with commas or quotes
-      if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    }).join(',') + '\n';
-  });
-
-  // Create blob and download
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  const percentage = (current / goal) * 100;
+  return Math.min(100, Math.max(0, Math.round(percentage)));
 };
 
 /**
- * Calculate installment amount
+ * Get campaign type icon
+ * @param {string} type - Campaign type
+ * @returns {string} Emoji icon
  */
-export const calculateInstallment = (totalAmount, installmentPlan) => {
-  const plans = {
-    'lump-sum': 1,
-    'weekly': 4,
-    'bi-weekly': 2,
-    'monthly': 1
+export const getCampaignTypeIcon = (type) => {
+  const icons = {
+    building: '🏛️',
+    mission: '🌍',
+    event: '🎉',
+    equipment: '🎸',
+    benevolence: '❤️',
+    offering: '🙏'
   };
-
-  const periods = plans[installmentPlan] || 1;
-  return Math.ceil(totalAmount / periods);
-};
-
-/**
- * Get next payment due date
- */
-export const getNextPaymentDueDate = (lastPaymentDate, installmentPlan) => {
-  const date = new Date(lastPaymentDate);
   
-  switch(installmentPlan) {
-    case 'weekly':
-      date.setDate(date.getDate() + 7);
-      break;
-    case 'bi-weekly':
-      date.setDate(date.getDate() + 14);
-      break;
-    case 'monthly':
-      date.setMonth(date.getMonth() + 1);
-      break;
-    default:
-      return null;
-  }
-  
-  return date;
+  return icons[type] || '💝';
 };
 
 /**
- * Format date for display
+ * Get campaign status label
+ * @param {string} status - Campaign status
+ * @returns {object} Label and color classes
  */
-export const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-KE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
-/**
- * Format date and time
- */
-export const formatDateTime = (date) => {
-  return new Date(date).toLocaleDateString('en-KE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-/**
- * Check if campaign is ending soon (within 7 days)
- */
-export const isEndingSoon = (endDate) => {
-  const daysLeft = getDaysRemaining(endDate);
-  return daysLeft > 0 && daysLeft <= 7;
-};
-
-/**
- * Get pledge summary statistics
- */
-export const getPledgeSummary = (pledges) => {
-  if (!pledges || pledges.length === 0) {
-    return {
-      totalPledged: 0,
-      totalPaid: 0,
-      totalRemaining: 0,
-      completedCount: 0,
-      pendingCount: 0,
-      partialCount: 0
-    };
-  }
-
-  return {
-    totalPledged: pledges.reduce((sum, p) => sum + p.pledgedAmount, 0),
-    totalPaid: pledges.reduce((sum, p) => sum + p.paidAmount, 0),
-    totalRemaining: pledges.reduce((sum, p) => sum + p.remainingAmount, 0),
-    completedCount: pledges.filter(p => p.status === 'completed').length,
-    pendingCount: pledges.filter(p => p.status === 'pending').length,
-    partialCount: pledges.filter(p => p.status === 'partial').length
+export const getCampaignStatusLabel = (status) => {
+  const labels = {
+    draft: {
+      label: 'Draft',
+      bg: 'bg-gray-100 dark:bg-gray-800',
+      text: 'text-gray-800 dark:text-gray-200'
+    },
+    active: {
+      label: 'Active',
+      bg: 'bg-green-100 dark:bg-green-950/30',
+      text: 'text-green-800 dark:text-green-200'
+    },
+    completed: {
+      label: 'Completed',
+      bg: 'bg-blue-100 dark:bg-blue-950/30',
+      text: 'text-blue-800 dark:text-blue-200'
+    },
+    archived: {
+      label: 'Archived',
+      bg: 'bg-orange-100 dark:bg-orange-950/30',
+      text: 'text-orange-800 dark:text-orange-200'
+    }
   };
+  
+  return labels[status] || labels.draft;
 };
 
 /**
  * Validate pledge amount
+ * @param {number} amount - Amount to validate
+ * @param {number} min - Minimum allowed amount
+ * @returns {object} { valid: boolean, error: string }
  */
-export const isValidPledgeAmount = (amount, minAmount = 100, maxAmount = 10000000) => {
-  const num = parseFloat(amount);
-  return !isNaN(num) && num >= minAmount && num <= maxAmount;
+export const validatePledgeAmount = (amount, min = 0) => {
+  if (!amount || isNaN(amount)) {
+    return { valid: false, error: 'Please enter a valid amount' };
+  }
+  
+  if (amount <= 0) {
+    return { valid: false, error: 'Amount must be greater than 0' };
+  }
+  
+  if (min && amount < min) {
+    return { valid: false, error: `Minimum pledge amount is ${formatCurrency(min)}` };
+  }
+  
+  return { valid: true, error: null };
+};
+
+/**
+ * Calculate installment amount
+ * @param {number} totalAmount - Total pledge amount
+ * @param {string} plan - Installment plan (weekly, bi-weekly, monthly, lump-sum)
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {object} { installmentAmount: number, numberOfInstallments: number }
+ */
+export const calculateInstallment = (totalAmount, plan, startDate, endDate) => {
+  if (!totalAmount || !startDate || !endDate) {
+    return { installmentAmount: 0, numberOfInstallments: 0 };
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let numberOfInstallments = 1;
+
+  switch (plan) {
+    case 'weekly':
+      numberOfInstallments = Math.max(1, Math.floor(diffDays / 7));
+      break;
+    case 'bi-weekly':
+      numberOfInstallments = Math.max(1, Math.floor(diffDays / 14));
+      break;
+    case 'monthly':
+      numberOfInstallments = Math.max(1, Math.floor(diffDays / 30));
+      break;
+    case 'lump-sum':
+    default:
+      numberOfInstallments = 1;
+      break;
+  }
+
+  const installmentAmount = totalAmount / numberOfInstallments;
+
+  return {
+    installmentAmount: Math.round(installmentAmount * 100) / 100,
+    numberOfInstallments
+  };
+};
+
+/**
+ * Format payment method label
+ * @param {string} method - Payment method
+ * @returns {string} Formatted label
+ */
+export const formatPaymentMethod = (method) => {
+  const methods = {
+    mpesa: 'M-Pesa',
+    'bank-transfer': 'Bank Transfer',
+    cash: 'Cash',
+    manual: 'Manual Entry'
+  };
+  
+  return methods[method] || method?.toUpperCase() || 'Unknown';
 };

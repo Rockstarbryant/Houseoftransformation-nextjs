@@ -46,8 +46,34 @@ export const usePermissions = () => {
   /**
    * Donations Management
    */
-  const canManageDonations = () => hasPermission('manage:donations');
-  const canViewDonationReports = () => hasPermission('manage:donations');
+  /**
+ * Donations Management - Granular Permissions
+ */
+// Broad permission
+const canManageDonations = () => hasPermission('manage:donations');
+
+// Campaign permissions
+const canViewCampaigns = () => hasAnyPermission(['view:campaigns', 'manage:donations']);
+const canCreateCampaign = () => hasAnyPermission(['create:campaigns', 'manage:donations']);
+const canEditCampaign = () => hasAnyPermission(['edit:campaigns', 'manage:donations']);
+const canDeleteCampaign = () => hasAnyPermission(['delete:campaigns', 'manage:donations']);
+const canActivateCampaign = () => hasAnyPermission(['activate:campaigns', 'manage:donations']);
+const canFeatureCampaign = () => hasAnyPermission(['feature:campaigns', 'manage:donations']);
+
+// Pledge permissions
+const canViewPledges = () => hasAnyPermission(['view:pledges', 'manage:donations']);
+const canViewAllPledges = () => hasAnyPermission(['view:pledges:all', 'manage:donations']);
+const canApprovePledges = () => hasAnyPermission(['approve:pledges', 'manage:donations']);
+const canEditPledges = () => hasAnyPermission(['edit:pledges', 'manage:donations']);
+
+// Payment permissions
+const canViewPayments = () => hasAnyPermission(['view:payments', 'manage:donations']);
+const canViewAllPayments = () => hasAnyPermission(['view:payments:all', 'manage:donations']);
+const canProcessPayments = () => hasAnyPermission(['process:payments', 'manage:donations']);
+const canVerifyPayments = () => hasAnyPermission(['verify:payments', 'manage:donations']);
+
+// Reports
+const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 'manage:donations']);
 
   /**
    * Users Management
@@ -243,14 +269,15 @@ export const usePermissions = () => {
         });
       }
 
-      if (canManageDonations()) {
-        sections.push({
-          name: 'Donations',
-          href: '/portal/donations',
-          icon: 'Heart',
-          permission: 'manage:donations'
-        });
-      }
+      // Show donations if user has ANY donation permission
+if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canViewAllPayments() || canViewDonationReports()) {
+  sections.push({
+    name: 'Donations',
+    href: '/portal/donations',
+    icon: 'Heart',
+    permission: null // Multiple permissions possible
+  });
+}
 
       if (canManageUsers()) {
         sections.push({
@@ -399,6 +426,26 @@ export const usePermissions = () => {
     // Donations
     canManageDonations,
     canViewDonationReports,
+    // Donations
+    canManageDonations,
+    canViewDonationReports,
+    // Campaign permissions
+    canViewCampaigns,
+    canCreateCampaign,
+canEditCampaign,
+canDeleteCampaign,
+canActivateCampaign,
+canFeatureCampaign,
+// Pledge permissions
+canViewPledges,
+canViewAllPledges,
+canApprovePledges,
+canEditPledges,
+// Payment permissions
+canViewPayments,
+canViewAllPayments,
+canProcessPayments,
+canVerifyPayments,
 
     // Users
     canManageUsers,

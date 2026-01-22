@@ -1,4 +1,4 @@
-// src/services/api/settingsService.js
+// src/services/api/settingsService.js - UPDATED
 import api from '@/lib/api';
 
 /**
@@ -10,9 +10,6 @@ import api from '@/lib/api';
 // GET SETTINGS
 // ============================================
 
-/**
- * Get all settings (admin only)
- */
 export const getSettings = async () => {
   try {
     const response = await api.get('/settings');
@@ -23,9 +20,6 @@ export const getSettings = async () => {
   }
 };
 
-/**
- * Get public settings (no auth required)
- */
 export const getPublicSettings = async () => {
   try {
     const response = await api.get('/settings/public');
@@ -40,10 +34,6 @@ export const getPublicSettings = async () => {
 // UPDATE SETTINGS BY CATEGORY
 // ============================================
 
-/**
- * Update general settings
- * @param {object} data - { siteName, siteTagline, siteDescription, contactEmail, contactPhone, contactAddress }
- */
 export const updateGeneralSettings = async (data) => {
   try {
     const response = await api.patch('/settings/general', data);
@@ -54,10 +44,6 @@ export const updateGeneralSettings = async (data) => {
   }
 };
 
-/**
- * Update email settings
- * @param {object} data - { smtpHost, smtpPort, smtpUser, smtpPassword, fromEmail, fromName }
- */
 export const updateEmailSettings = async (data) => {
   try {
     const response = await api.patch('/settings/email', data);
@@ -68,10 +54,6 @@ export const updateEmailSettings = async (data) => {
   }
 };
 
-/**
- * Update notification settings
- * @param {object} data - notification preferences
- */
 export const updateNotificationSettings = async (data) => {
   try {
     const response = await api.patch('/settings/notifications', data);
@@ -82,10 +64,6 @@ export const updateNotificationSettings = async (data) => {
   }
 };
 
-/**
- * Update security settings
- * @param {object} data - security configuration
- */
 export const updateSecuritySettings = async (data) => {
   try {
     const response = await api.patch('/settings/security', data);
@@ -96,10 +74,6 @@ export const updateSecuritySettings = async (data) => {
   }
 };
 
-/**
- * Update payment settings
- * @param {object} data - payment gateway configuration
- */
 export const updatePaymentSettings = async (data) => {
   try {
     const response = await api.patch('/settings/payment', data);
@@ -110,10 +84,78 @@ export const updatePaymentSettings = async (data) => {
   }
 };
 
-/**
- * Update social media links
- * @param {object} data - social media URLs
- */
+// ============================================
+// M-PESA SPECIFIC SETTINGS
+// ============================================
+
+export const getMpesaSettings = async () => {
+  try {
+    const response = await api.get('/settings/mpesa');
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Get M-Pesa settings error:', error);
+    throw error;
+  }
+};
+
+export const updateMpesaSettings = async (data) => {
+  try {
+    const response = await api.patch('/settings/mpesa', data);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update M-Pesa settings error:', error);
+    throw error;
+  }
+};
+
+export const testMpesaConnection = async () => {
+  try {
+    const response = await api.post('/settings/mpesa/test', {});
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Test M-Pesa connection error:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// DONATION SETTINGS
+// ============================================
+
+export const getDonationSettings = async () => {
+  try {
+    const response = await api.get('/settings/donations');
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Get donation settings error:', error);
+    throw error;
+  }
+};
+
+export const updateDonationSettings = async (data) => {
+  try {
+    const response = await api.patch('/settings/donations', data);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update donation settings error:', error);
+    throw error;
+  }
+};
+
+export const updatePaymentGateway = async (data) => {
+  try {
+    const response = await api.patch('/settings/payment-gateway', data);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update payment gateway error:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// OTHER SETTINGS
+// ============================================
+
 export const updateSocialMedia = async (data) => {
   try {
     const response = await api.patch('/settings/social', data);
@@ -124,10 +166,6 @@ export const updateSocialMedia = async (data) => {
   }
 };
 
-/**
- * Update maintenance mode
- * @param {object} data - { enabled, message, allowedIPs, estimatedTime }
- */
 export const updateMaintenanceMode = async (data) => {
   try {
     const response = await api.patch('/settings/maintenance', data);
@@ -138,10 +176,6 @@ export const updateMaintenanceMode = async (data) => {
   }
 };
 
-/**
- * Update API keys
- * @param {object} data - API keys for third-party services
- */
 export const updateApiKeys = async (data) => {
   try {
     const response = await api.patch('/settings/api-keys', data);
@@ -152,10 +186,6 @@ export const updateApiKeys = async (data) => {
   }
 };
 
-/**
- * Update feature flags
- * @param {object} data - feature enable/disable flags
- */
 export const updateFeatures = async (data) => {
   try {
     const response = await api.patch('/settings/features', data);
@@ -166,9 +196,6 @@ export const updateFeatures = async (data) => {
   }
 };
 
-/**
- * Reset all settings to default
- */
 export const resetSettings = async () => {
   try {
     const response = await api.post('/settings/reset');
@@ -183,9 +210,6 @@ export const resetSettings = async () => {
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Validate email settings
- */
 export const validateEmailSettings = (data) => {
   const errors = {};
 
@@ -207,9 +231,6 @@ export const validateEmailSettings = (data) => {
   };
 };
 
-/**
- * Validate social media URLs
- */
 export const validateSocialMedia = (data) => {
   const errors = {};
   const urlPattern = /^https?:\/\/.+/;
@@ -226,18 +247,12 @@ export const validateSocialMedia = (data) => {
   };
 };
 
-/**
- * Mask sensitive data for display
- */
 export const maskSensitiveData = (value, visibleChars = 4) => {
   if (!value || value.length <= visibleChars) return value;
   const masked = '*'.repeat(value.length - visibleChars);
   return masked + value.slice(-visibleChars);
 };
 
-/**
- * Export settings as JSON
- */
 export const exportSettingsAsJSON = (settings) => {
   const dataStr = JSON.stringify(settings, null, 2);
   const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -251,9 +266,6 @@ export const exportSettingsAsJSON = (settings) => {
   URL.revokeObjectURL(url);
 };
 
-/**
- * Get settings categories for navigation
- */
 export const getSettingsCategories = () => {
   return [
     {
@@ -282,9 +294,9 @@ export const getSettingsCategories = () => {
     },
     {
       id: 'payment',
-      name: 'Payment',
+      name: 'Payment & Donations',
       icon: 'CreditCard',
-      description: 'Payment gateways and donation settings'
+      description: 'Payment gateways and M-Pesa configuration'
     },
     {
       id: 'social',

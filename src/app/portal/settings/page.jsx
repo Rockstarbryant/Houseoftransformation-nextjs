@@ -16,6 +16,7 @@ import {
 } from '@/services/api/settingsService';
 import Loader from '@/components/common/Loader';
 
+
 /**
  * Settings Management Portal
  * Admin-only page for system configuration
@@ -195,25 +196,31 @@ export default function SettingsPage() {
   };
 
   const handleSavePayment = async () => {
-    try {
-      setSaving(true);
-      setError(null);
+  try {
+    setSaving(true);
+    setError(null);
 
-      const response = await updatePaymentSettings(settings.paymentSettings);
+    // Save both payment and donation settings
+    const paymentResponse = await updatePaymentSettings(settings.paymentSettings);
+    const donationResponse = await updateDonationSettings(settings.donationSettings);
 
-      if (response.success) {
-        setSuccess('Payment settings saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
-        setHasChanges(false);
-        setTimeout(() => setSuccess(null), 3000);
-      }
-    } catch (err) {
-      console.error('[Settings] Save payment error:', err);
-      setError(err.response?.data?.message || 'Failed to save payment settings');
-    } finally {
-      setSaving(false);
+    if (paymentResponse.success && donationResponse.success) {
+      setSuccess('Payment and donation settings saved successfully!');
+      setSettings({
+        ...settings,
+        paymentSettings: paymentResponse.paymentSettings || settings.paymentSettings,
+        donationSettings: donationResponse.donations || settings.donationSettings
+      });
+      setOriginalSettings(JSON.parse(JSON.stringify(settings)));
+      setHasChanges(false);
+      setTimeout(() => setSuccess(null), 3000);
     }
+  } catch (err) {
+    console.error('[Settings] Save payment error:', err);
+    setError(err.response?.data?.message || 'Failed to save payment settings');
+  } finally {
+    setSaving(false);
+  }
   };
 
   const handleSaveSocial = async () => {
@@ -311,16 +318,26 @@ export default function SettingsPage() {
   // ============================================
 
   const handleChange = (category, field, value) => {
-    setSettings(prev => {
-      const updated = { ...prev };
-      if (category) {
-        updated[category] = { ...updated[category], [field]: value };
-      } else {
-        updated[field] = value;
-      }
-      return updated;
-    });
-    setHasChanges(true);
+  setSettings(prev => {
+    const updated = { ...prev };
+    if (category && category.includes('.')) {
+      // Handle nested properties like 'paymentSettings.mpesa'
+      const [parent, child] = category.split('.');
+      updated[parent] = {
+        ...updated[parent],
+        [child]: {
+          ...updated[parent][child],
+          [field]: value
+        }
+      };
+    } else if (category) {
+      updated[category] = { ...updated[category], [field]: value };
+    } else {
+      updated[field] = value;
+    }
+    return updated;
+  });
+  setHasChanges(true);
   };
 
   const handleReset = () => {
@@ -349,19 +366,19 @@ export default function SettingsPage() {
 
   // Save handler router
   const handleSave = () => {
-    switch (activeTab) {
-      case 'general': return handleSaveGeneral();
-      case 'email': return handleSaveEmail();
-      case 'notifications': return handleSaveNotifications();
-      case 'security': return handleSaveSecurity();
-      case 'payment': return handleSavePayment();
-      case 'social': return handleSaveSocial();
-      case 'maintenance': return handleSaveMaintenance();
-      case 'api-keys': return handleSaveApiKeys();
-      case 'features': return handleSaveFeatures();
-      default: return;
-    }
-  };
+  switch (activeTab) {
+    case 'general': return handleSaveGeneral();
+    case 'email': return handleSaveEmail();
+    case 'notifications': return handleSaveNotifications();
+    case 'security': return handleSaveSecurity();
+    case 'payment': return handleSavePayment();
+    case 'social': return handleSaveSocial();
+    case 'maintenance': return handleSaveMaintenance();
+    case 'api-keys': return handleSaveApiKeys();
+    case 'features': return handleSaveFeatures();
+    default: return;
+  }
+};
 
   // ============================================
   // TAB CONFIGURATION
@@ -990,160 +1007,308 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* PAYMENT SETTINGS */}
-            {activeTab === 'payment' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    Payment Settings
-                  </h2>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Configure payment gateways and donation settings
-                  </p>
-                </div>
+           
 
-                <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                  <div>
-                    <p className="font-bold text-slate-900 dark:text-white">Enable Payments</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Allow users to make donations</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.paymentSettings.enablePayments}
-                    onChange={(e) => handleChange('paymentSettings', 'enablePayments', e.target.checked)}
-                    className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                  />
-                </label>
+{/* PAYMENT & DONATIONS SETTINGS */}
+{activeTab === 'payment' && (
+  <div className="space-y-6">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+        Payment & Donations Settings
+      </h2>
+      <p className="text-slate-600 dark:text-slate-400">
+        Configure payment gateways and donation features
+      </p>
+    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      Payment Gateway
-                    </label>
-                    <select
-                      value={settings.paymentSettings.paymentGateway}
-                      onChange={(e) => handleChange('paymentSettings', 'paymentGateway', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    >
-                      <option value="mpesa">M-Pesa</option>
-                      <option value="stripe">Stripe</option>
-                      <option value="paypal">PayPal</option>
-                      <option value="flutterwave">Flutterwave</option>
-                    </select>
-                  </div>
+    {/* Enable Donations */}
+    <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+      <div>
+        <p className="font-bold text-slate-900 dark:text-white">Enable Donations</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Allow users to make donations and pledges</p>
+      </div>
+      <input
+        type="checkbox"
+        checked={settings.paymentSettings.enablePayments}
+        onChange={(e) => handleChange('paymentSettings', 'enablePayments', e.target.checked)}
+        className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+      />
+    </label>
 
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      Currency
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.paymentSettings.currency}
-                      onChange={(e) => handleChange('paymentSettings', 'currency', e.target.value)}
-                      placeholder="KES"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-                </div>
+    {/* Payment Gateway & Currency */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+          Primary Payment Gateway
+        </label>
+        <select
+          value={settings.paymentSettings.paymentGateway}
+          onChange={(e) => handleChange('paymentSettings', 'paymentGateway', e.target.value)}
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+        >
+          <option value="mpesa">M-Pesa</option>
+          <option value="stripe">Stripe</option>
+          <option value="paypal">PayPal</option>
+        </select>
+      </div>
 
-                {settings.paymentSettings.paymentGateway === 'mpesa' && (
-                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-4">M-Pesa Configuration</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-blue-900 dark:text-blue-200 mb-2">
-                          Business Shortcode
-                        </label>
-                        <input
-                          type="text"
-                          value={settings.paymentSettings.mpesaShortcode}
-                          onChange={(e) => handleChange('paymentSettings', 'mpesaShortcode', e.target.value)}
-                          placeholder="174379"
-                          className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                        />
-                      </div>
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+          Currency
+        </label>
+        <input
+          type="text"
+          value={settings.paymentSettings.currency}
+          onChange={(e) => handleChange('paymentSettings', 'currency', e.target.value)}
+          placeholder="KES"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+        />
+      </div>
+    </div>
 
-                      <div>
-                        <label className="block text-sm font-bold text-blue-900 dark:text-blue-200 mb-2">
-                          Passkey
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords.mpesaPasskey ? "text" : "password"}
-                            value={settings.paymentSettings.mpesaPasskey}
-                            onChange={(e) => handleChange('paymentSettings', 'mpesaPasskey', e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility('mpesaPasskey')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                          >
-                            {showPasswords.mpesaPasskey ? <EyeOff size={20} /> : <Eye size={20} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+    <div>
+      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+        Minimum Donation Amount ({settings.paymentSettings.currency})
+      </label>
+      <input
+        type="number"
+        value={settings.paymentSettings.minimumDonation}
+        onChange={(e) => handleChange('paymentSettings', 'minimumDonation', Number(e.target.value))}
+        min="1"
+        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+      />
+    </div>
 
-                {settings.paymentSettings.paymentGateway === 'stripe' && (
-                  <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                    <h3 className="font-bold text-purple-900 dark:text-purple-200 mb-4">Stripe Configuration</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-purple-900 dark:text-purple-200 mb-2">
-                          Public Key
-                        </label>
-                        <input
-                          type="text"
-                          value={settings.paymentSettings.stripePublicKey}
-                          onChange={(e) => handleChange('paymentSettings', 'stripePublicKey', e.target.value)}
-                          placeholder="pk_live_..."
-                          className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                        />
-                      </div>
+    {/* M-PESA CONFIGURATION */}
+    {settings.paymentSettings.paymentGateway === 'mpesa' && (
+      <div className="bg-orange-50 dark:bg-orange-950/30 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-6 space-y-6">
+        <div className="flex items-start gap-3 mb-4">
+          <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+          <div>
+            <h3 className="font-bold text-orange-900 dark:text-orange-200">M-Pesa Configuration</h3>
+            <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
+              Configure your M-Pesa business account credentials for processing mobile money donations
+            </p>
+          </div>
+        </div>
 
-                      <div>
-                        <label className="block text-sm font-bold text-purple-900 dark:text-purple-200 mb-2">
-                          Secret Key
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords.stripeSecret ? "text" : "password"}
-                            value={settings.paymentSettings.stripeSecretKey}
-                            onChange={(e) => handleChange('paymentSettings', 'stripeSecretKey', e.target.value)}
-                            placeholder="sk_live_..."
-                            className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility('stripeSecret')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                          >
-                            {showPasswords.stripeSecret ? <EyeOff size={20} /> : <Eye size={20} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Consumer Key
+            </label>
+            <input
+              type="text"
+              value={settings.paymentSettings.mpesa.consumerKey}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerKey', e.target.value)}
+              placeholder="From Safaricom Developer Portal"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Get this from your Safaricom Daraja API credentials
+            </p>
+          </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                    Minimum Donation Amount ({settings.paymentSettings.currency})
-                  </label>
-                  <input
-                    type="number"
-                    value={settings.paymentSettings.minimumDonation}
-                    onChange={(e) => handleChange('paymentSettings', 'minimumDonation', Number(e.target.value))}
-                    min="1"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                  />
-                </div>
-              </div>
-            )}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Consumer Secret
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords.mpesaSecret ? "text" : "password"}
+                value={settings.paymentSettings.mpesa.consumerSecret}
+                onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerSecret', e.target.value)}
+                placeholder="••••••••••••••••"
+                className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility('mpesaSecret')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPasswords.mpesaSecret ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Business Shortcode
+            </label>
+            <input
+              type="text"
+              value={settings.paymentSettings.mpesa.shortcode}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'shortcode', e.target.value)}
+              placeholder="174379"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Passkey
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords.mpesaPasskey ? "text" : "password"}
+                value={settings.paymentSettings.mpesa.passkey}
+                onChange={(e) => handleChange('paymentSettings.mpesa', 'passkey', e.target.value)}
+                placeholder="••••••••••••••••"
+                className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility('mpesaPasskey')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPasswords.mpesaPasskey ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Environment
+            </label>
+            <select
+              value={settings.paymentSettings.mpesa.environment}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'environment', e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            >
+              <option value="sandbox">Sandbox (Testing)</option>
+              <option value="production">Production (Live)</option>
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Use sandbox for testing, production for live transactions
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Callback URL
+            </label>
+            <input
+              type="url"
+              value={settings.paymentSettings.mpesa.callbackUrl}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'callbackUrl', e.target.value)}
+              placeholder="https://yourdomain.com/api/payments/mpesa-callback"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              URL where M-Pesa will send payment confirmations
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+            Request Timeout (ms)
+          </label>
+          <input
+            type="number"
+            value={settings.paymentSettings.mpesa.timeout}
+            onChange={(e) => handleChange('paymentSettings.mpesa', 'timeout', Number(e.target.value))}
+            min="1000"
+            max="30000"
+            step="1000"
+            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+          />
+        </div>
+
+        {/* Test M-Pesa Button */}
+        <button
+          onClick={async () => {
+            try {
+              setSaving(true);
+              const result = await testMpesaConnection();
+              if (result.success) {
+                setSuccess('M-Pesa connection is valid!');
+                setTimeout(() => setSuccess(null), 3000);
+              } else {
+                setError('M-Pesa configuration is invalid. Please check your credentials.');
+              }
+            } catch (err) {
+              setError(err.message || 'Failed to test M-Pesa connection');
+            } finally {
+              setSaving(false);
+            }
+          }}
+          disabled={saving}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Testing...
+            </>
+          ) : (
+            'Test M-Pesa Connection'
+          )}
+        </button>
+      </div>
+    )}
+
+    {/* Donation Features */}
+    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-4">Donation Features</h3>
+      <div className="space-y-3">
+        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white">Enable Campaigns</span>
+          <input
+            type="checkbox"
+            checked={settings.donationSettings.enableCampaigns}
+            onChange={(e) => handleChange('donationSettings', 'enableCampaigns', e.target.checked)}
+            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white">Enable Pledges</span>
+          <input
+            type="checkbox"
+            checked={settings.donationSettings.enablePledges}
+            onChange={(e) => handleChange('donationSettings', 'enablePledges', e.target.checked)}
+            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white">Enable Offerings</span>
+          <input
+            type="checkbox"
+            checked={settings.donationSettings.enableOfferings}
+            onChange={(e) => handleChange('donationSettings', 'enableOfferings', e.target.checked)}
+            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white">Send Donation Receipts</span>
+          <input
+            type="checkbox"
+            checked={settings.donationSettings.sendReceipts}
+            onChange={(e) => handleChange('donationSettings', 'sendReceipts', e.target.checked)}
+            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white">Enable Pledge Reminders</span>
+          <input
+            type="checkbox"
+            checked={settings.donationSettings.enablePledgeReminders}
+            onChange={(e) => handleChange('donationSettings', 'enablePledgeReminders', e.target.checked)}
+            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+  )}
 
             {/* SOCIAL MEDIA SETTINGS */}
             {activeTab === 'social' && (

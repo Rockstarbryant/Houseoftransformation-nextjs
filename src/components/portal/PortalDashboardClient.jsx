@@ -44,10 +44,10 @@ export default function PortalDashboardClient() {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-[#8B1A1A] to-red-900 rounded-2xl p-8 text-white shadow-lg">
         <h1 className="text-4xl font-black mb-2">
-          Welcome back, {user?.name?.split(' ')[0]}! 👋
+          Welcome back, {user?.name?.split(' ')[0]}! 
         </h1>
         <p className="text-red-100">
-          Role: <span className="font-bold capitalize">{user?.role?.name || 'Member'}</span>
+          H.O.T: <span className="font-bold capitalize">{user?.role?.name || 'Member'}</span>
         </p>
         <p className="text-red-100 text-sm mt-2">
           {sections.length} accessible features
@@ -56,11 +56,11 @@ export default function PortalDashboardClient() {
 
       {/* Admin Notice */}
       {isAdmin() && (
-        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">
-            🔐 Administrator Access
+        <div className="bg-green-900 dark:bg-green-900 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <h3 className="font-bold text-white dark:text-blue-200 mb-2">
+            Administrator Access
           </h3>
-          <p className="text-sm text-blue-800 dark:text-blue-300">
+          <p className="text-sm text-white dark:text-slate-300">
             You have full system access. Manage roles, users, and permissions from the portal.
           </p>
         </div>

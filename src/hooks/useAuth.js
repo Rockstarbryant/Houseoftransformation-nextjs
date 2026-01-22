@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { authService } from '../services/api/authService';
+import  authService  from '../services/api/authService';
 import { setWithExpiry, getWithExpiry } from '../utils/helpers';
 
 export const useAuth = () => {

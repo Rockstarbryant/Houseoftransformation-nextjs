@@ -19,6 +19,12 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 
   const [multipleCaptions, setMultipleCaptions] = useState([]);
 
+  // Detect Brave browser
+  const isBraveBrowser = () => {
+  return (navigator.brave && typeof navigator.brave.isBrave === 'function') || 
+         /Brave/i.test(navigator.userAgent);
+  };
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -384,6 +390,29 @@ const handleUpload = async (e) => {
               <p className="text-red-800 font-medium">{error}</p>
             </div>
           )}
+
+          {isBraveBrowser() && (
+  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+    <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+    <div className="flex-1">
+      <p className="text-amber-800 font-semibold text-sm mb-1">
+        Brave Browser Detected
+      </p>
+      <p className="text-amber-700 text-xs leading-relaxed">
+        If uploads fail, please disable Brave Shields for this site:
+        <br />
+        <strong>1.</strong> Click the Brave icon (lion) in the address bar
+        <br />
+        <strong>2.</strong> Toggle "Shields" to OFF
+        <br />
+        <strong>3.</strong> Refresh the page and try again
+        <br />
+        <br />
+        Or switch to Chrome for uploads.
+      </p>
+    </div>
+  </div>
+)}
 
           {/* Upload Progress */}
           {uploading && uploadProgress > 0 && (
