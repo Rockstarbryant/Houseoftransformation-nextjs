@@ -16,22 +16,25 @@ export const galleryService = {
   },
 
   /**
-   * ✅ IMPROVED: Upload photo with FormData and automatic retry logic
-   * Expects FormData with fields: photo, title, description, category
-   * 
-   * @param {FormData} formData - The form data containing the photo and metadata
-   * @param {number} maxRetries - Maximum number of retry attempts (default: 2)
-   * @returns {Promise} Response data from the server
+   * ✅ COMPLETE MOBILE FIX: Upload photo with retry + mobile optimization
    */
-  async uploadPhoto(formData, maxRetries = 2) {
+  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
     let lastError;
+
+    // ✅ CRITICAL: Mobile needs delay AFTER FormData creation
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      console.log('📱 Mobile detected - adding stabilization delay');
+      await new Promise(resolve => setTimeout(resolve, 1500)); // ✅ Increased to 1.5s
+    }
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0) {
           console.log(`🔄 Retry attempt ${attempt}/${maxRetries}`);
-          // Exponential backoff: wait 1s, then 2s, then 4s
-          const delay = 1000 * Math.pow(2, attempt - 1);
+          // Exponential backoff: 2s, 4s, 8s
+          const delay = 2000 * Math.pow(2, attempt - 1);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
 
@@ -41,8 +44,7 @@ export const galleryService = {
           headers: { 
             'Content-Type': 'multipart/form-data'
           },
-          timeout: 30000, // 30 second timeout for mobile/slow connections
-          // Optional: Track upload progress
+          timeout: isMobile ? 90000 : 60000, // ✅ 90s for mobile, 60s for desktop
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percentCompleted = Math.round(
@@ -59,7 +61,6 @@ export const galleryService = {
       } catch (error) {
         lastError = error;
         
-        // Log the error details
         console.error(`❌ Upload attempt ${attempt + 1} failed:`, {
           message: error.message,
           status: error.response?.status,
@@ -68,22 +69,20 @@ export const galleryService = {
 
         // Don't retry for client errors (400-499) - these are validation errors
         if (error.response && error.response.status >= 400 && error.response.status < 500) {
-          console.log('🚫 Client error detected - not retrying');
+          console.log('🚫 Client error - not retrying');
           throw error;
         }
 
-        // Don't retry if we've hit the max attempts
+        // Don't retry if max attempts reached
         if (attempt === maxRetries) {
           console.log('🚫 Max retries reached');
           throw error;
         }
 
-        // Log the retry
-        console.log(`⏳ Will retry in ${Math.pow(2, attempt)}s...`);
+        console.log(`⏳ Will retry in ${2 * Math.pow(2, attempt)}s...`);
       }
     }
 
-    // This should never be reached, but just in case
     throw lastError;
   },
 
@@ -111,76 +110,5 @@ export const galleryService = {
       console.error('Like error:', error);
       throw error;
     }
-  },
-
-  /**
-   * ✅ NEW: Batch upload multiple photos with progress tracking
-   * 
-   * @param {Array} filesWithData - Array of objects with {file, title, description, category}
-   * @param {Function} onProgress - Optional callback for progress updates
-   * @returns {Promise} Object with successful and failed uploads
-   * 
-   * Example usage:
-   * const results = await galleryService.uploadMultiplePhotos(
-   *   [{file, title, description, category}, ...],
-   *   (progress) => console.log(progress)
-   * );
-   * // Returns: { successful: [...], failed: [...], total: 5 }
-   */
-  async uploadMultiplePhotos(filesWithData, onProgress = null) {
-    const results = {
-      successful: [],
-      failed: [],
-      total: filesWithData.length
-    };
-
-    // Process all files sequentially
-    for (let i = 0; i < filesWithData.length; i++) {
-      const { file, title, description, category } = filesWithData[i];
-      
-      try {
-        const formData = new FormData();
-        formData.append('photo', file);
-        formData.append('title', title);
-        formData.append('description', description || '');
-        formData.append('category', category || 'Worship Services');
-
-        const response = await this.uploadPhoto(formData);
-        results.successful.push({
-          fileName: file.name,
-          data: response
-        });
-
-        // Call progress callback if provided
-        if (onProgress) {
-          onProgress({
-            current: i + 1,
-            total: filesWithData.length,
-            fileName: file.name,
-            status: 'success'
-          });
-        }
-
-      } catch (error) {
-        results.failed.push({
-          fileName: file.name,
-          error: error.response?.data?.message || error.message
-        });
-
-        // Call progress callback if provided
-        if (onProgress) {
-          onProgress({
-            current: i + 1,
-            total: filesWithData.length,
-            fileName: file.name,
-            status: 'failed',
-            error: error.message
-          });
-        }
-      }
-    }
-
-    // Return results after ALL files are processed
-    return results;
   }
 };
