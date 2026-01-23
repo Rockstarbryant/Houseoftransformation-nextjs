@@ -72,17 +72,17 @@ export const joinCampaignsWithPledges = (pledges, campaigns) => {
     return pledges || [];
   }
 
-  // Create a lookup map: { [mongoId]: campaign }
+  // Create lookup map: { [supabaseId]: campaign }
   const campaignMap = {};
   campaigns.forEach(campaign => {
-    if (campaign._id) {
-      campaignMap[campaign._id] = campaign;
+    if (campaign.supabaseId) {
+      campaignMap[campaign.supabaseId] = campaign;
     }
   });
 
   // Enrich pledges with campaign data
   return pledges.map(pledge => {
-    const campaign = campaignMap[pledge.campaign_id];
+    const campaign = campaignMap[pledge.campaign_id]; // pledge.campaign_id is UUID
     
     return {
       ...pledge,

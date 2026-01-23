@@ -114,6 +114,49 @@ export const campaignService = {
   }
 };
 
+// CONTRIBUTION SERVICE (Add to exports)
+export const contributionService = {
+  // Create contribution
+  create: async (contributionData) => {
+    try {
+      const response = await api.post('/contributions', contributionData);
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Create contribution error:', error);
+      throw error;
+    }
+  },
+
+  // Get all contributions (admin only)
+  getAll: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.paymentMethod) params.append('paymentMethod', filters.paymentMethod);
+      if (filters.campaignId) params.append('campaignId', filters.campaignId);
+      if (filters.page) params.append('page', filters.page);
+      if (filters.limit) params.append('limit', filters.limit);
+
+      const response = await api.get(`/contributions?${params.toString()}`);
+      return response?.data || { contributions: [], success: false };
+    } catch (error) {
+      console.error('Get contributions error:', error);
+      throw error;
+    }
+  },
+
+  // Verify contribution (admin only)
+  verify: async (contributionId) => {
+    try {
+      const response = await api.patch(`/contributions/${contributionId}/verify`, {});
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Verify contribution error:', error);
+      throw error;
+    }
+  }
+};
+
 // ============================================
 // PLEDGE SERVICE
 // ============================================
@@ -140,6 +183,17 @@ export const pledgeService = {
       throw error;
     }
   },
+
+  // In pledgeService object, add:
+getAllPledges: async (page = 1, limit = 20) => {
+  try {
+    const response = await api.get(`/pledges/all?page=${page}&limit=${limit}`);
+    return response?.data || { pledges: [], success: false };
+  } catch (error) {
+    console.error('Get all pledges error:', error);
+    throw error;
+  }
+},
 
   // Get single pledge
   getById: async (pledgeId) => {
@@ -350,5 +404,6 @@ export const donationApi = {
   campaigns: campaignService,
   pledges: pledgeService,
   payments: paymentService,
+  contributions: contributionService,
   settings: donationSettingsService
 };

@@ -10,9 +10,6 @@ import api from '@/lib/api';
 // ROLE CRUD
 // ============================================
 
-/**
- * Get all roles
- */
 export const getAllRoles = async () => {
   try {
     const response = await api.get('/roles');
@@ -23,9 +20,6 @@ export const getAllRoles = async () => {
   }
 };
 
-/**
- * Get single role by ID
- */
 export const getRoleById = async (roleId) => {
   try {
     const response = await api.get(`/roles/${roleId}`);
@@ -36,9 +30,6 @@ export const getRoleById = async (roleId) => {
   }
 };
 
-/**
- * Create new role
- */
 export const createRole = async (roleData) => {
   try {
     const response = await api.post('/roles', roleData);
@@ -49,9 +40,6 @@ export const createRole = async (roleData) => {
   }
 };
 
-/**
- * Update role (permissions + description)
- */
 export const updateRole = async (roleId, updates) => {
   try {
     const response = await api.patch(`/roles/${roleId}`, updates);
@@ -62,9 +50,6 @@ export const updateRole = async (roleId, updates) => {
   }
 };
 
-/**
- * Delete role
- */
 export const deleteRole = async (roleId) => {
   try {
     const response = await api.delete(`/roles/${roleId}`);
@@ -79,9 +64,6 @@ export const deleteRole = async (roleId) => {
 // USER ASSIGNMENT
 // ============================================
 
-/**
- * Assign role to single user
- */
 export const assignRoleToUser = async (userId, roleId) => {
   try {
     const response = await api.patch('/roles/assign-user', {
@@ -95,9 +77,6 @@ export const assignRoleToUser = async (userId, roleId) => {
   }
 };
 
-/**
- * Bulk assign role to multiple users
- */
 export const bulkAssignRole = async (userIds, roleId) => {
   try {
     const response = await api.post('/roles/bulk-assign', {
@@ -111,9 +90,6 @@ export const bulkAssignRole = async (userIds, roleId) => {
   }
 };
 
-/**
- * Get users by role ID
- */
 export const getUsersByRole = async (roleId, page = 1, limit = 50) => {
   try {
     const response = await api.get(`/roles/${roleId}/users`, {
@@ -126,9 +102,6 @@ export const getUsersByRole = async (roleId, page = 1, limit = 50) => {
   }
 };
 
-/**
- * Get user with role
- */
 export const getUserWithRole = async (userId) => {
   try {
     const response = await api.get(`/roles/user/${userId}`);
@@ -140,16 +113,29 @@ export const getUserWithRole = async (userId) => {
 };
 
 // ============================================
-// PERMISSIONS
+// PERMISSIONS - FIXED
 // ============================================
 
-/**
- * Get all available permissions (for UI)
- */
 export const getAvailablePermissions = async () => {
   try {
     const response = await api.get('/roles/permissions/list');
-    return response.data;
+    
+    if (response.data.success && response.data.permissions) {
+      // Backend returns: { all: [...], grouped: {...} }
+      // Convert to array format expected by frontend
+      const permissionsArray = response.data.permissions.all.map(perm => ({
+        key: perm,
+        label: formatPermissionLabel(perm),
+        category: categorizePermission(perm)
+      }));
+      
+      return {
+        success: true,
+        permissions: permissionsArray
+      };
+    }
+    
+    return { success: false, permissions: [] };
   } catch (error) {
     console.error('[RoleService] Get permissions error:', error);
     throw error;
@@ -160,16 +146,36 @@ export const getAvailablePermissions = async () => {
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Check if role is deletable
- */
+const formatPermissionLabel = (perm) => {
+  return perm
+    .split(':')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' > ');
+};
+
+const categorizePermission = (perm) => {
+  if (perm.startsWith('manage:')) return 'Broad Permissions';
+  if (perm.includes('campaign')) return 'Campaigns';
+  if (perm.includes('pledge')) return 'Pledges';
+  if (perm.includes('payment')) return 'Payments';
+  if (perm.includes('donation')) return 'Donations';
+  if (perm.includes('feedback')) return 'Feedback';
+  if (perm.includes('event')) return 'Events';
+  if (perm.includes('sermon')) return 'Sermons';
+  if (perm.includes('gallery')) return 'Gallery';
+  if (perm.includes('user')) return 'Users';
+  if (perm.includes('role')) return 'Roles';
+  if (perm.includes('blog')) return 'Blog';
+  if (perm.includes('livestream')) return 'Livestream';
+  if (perm.includes('volunteer')) return 'Volunteers';
+  if (perm.includes('analytics') || perm.includes('audit')) return 'Analytics';
+  return 'Other';
+};
+
 export const canDeleteRole = (role) => {
   return role && !role.isSystemRole;
 };
 
-/**
- * Format role for display
- */
 export const formatRoleDisplay = (role) => {
   if (!role) return null;
   
@@ -186,9 +192,6 @@ export const formatRoleDisplay = (role) => {
   };
 };
 
-/**
- * Group permissions by category
- */
 export const groupPermissionsByCategory = (permissions) => {
   const grouped = {};
   

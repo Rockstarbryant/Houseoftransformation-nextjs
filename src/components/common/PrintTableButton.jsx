@@ -3,7 +3,8 @@
 import { Printer } from 'lucide-react';
 
 /**
- * Reusable Print Table Button Component
+ * Redesigned Reusable Print Table Button Component
+ * Embeds CSS directly in print window
  * Usage: <PrintTableButton title="My Report" columns={[...]} data={[...]} />
  */
 export default function PrintTableButton({ 
@@ -66,136 +67,128 @@ export default function PrintTableButton({
         <head>
           <title>${title}</title>
           <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
+            * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
-              font-family: 'Segoe UI', Arial, sans-serif; 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
               padding: 40px;
               background: #fff;
               color: #000;
             }
-            
-            h1 { 
-              color: #8B1A1A; 
-              border-bottom: 3px solid #8B1A1A; 
+            .print-title {
+              color: #8B1A1A;
+              border-bottom: 3px solid #8B1A1A;
               padding-bottom: 10px;
               margin-bottom: 5px;
-              font-size: 28px;
+              font-size: 32px;
+              font-weight: 700;
             }
-            
-            h2 {
-              color: #666;
+            .print-subtitle {
+              color: #6b7280;
               font-size: 16px;
-              margin-bottom: 20px;
-              font-weight: normal;
+              margin-bottom: 24px;
+              font-weight: 400;
             }
-            
-            .header-info { 
-              margin: 20px 0; 
-              background: #f8f9fa; 
-              padding: 15px; 
+            .print-header-info {
+              margin: 24px 0;
+              background: #f8f9fa;
+              padding: 20px;
               border-radius: 8px;
               border-left: 4px solid #8B1A1A;
             }
-            
-            .header-info p { 
-              margin: 5px 0;
+            .print-header-info p {
+              margin: 6px 0;
               font-size: 14px;
+              color: #374151;
             }
-            
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin-top: 20px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            .print-header-info strong {
+              color: #111827;
+              font-weight: 600;
             }
-            
-            th { 
-              background: #8B1A1A; 
-              color: white; 
-              padding: 12px; 
-              text-align: left; 
-              font-weight: bold;
+            .print-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 24px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .print-table th {
+              background: #8B1A1A;
+              color: white;
+              padding: 14px 16px;
+              text-align: left;
+              font-weight: 600;
               font-size: 13px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
-            
-            td { 
-              padding: 10px 12px; 
-              border-bottom: 1px solid #ddd;
+            .print-table td {
+              padding: 12px 16px;
+              border-bottom: 1px solid #e5e7eb;
               font-size: 13px;
+              color: #374151;
             }
-            
-            tr:nth-child(even) {
+            .print-table tr:nth-child(even) {
               background-color: #f9fafb;
             }
-            
-            tr:hover { 
-              background: #f1f5f9; 
+            .print-table tr:hover {
+              background: #f1f5f9;
             }
-            
-            .badge { 
-              padding: 4px 8px; 
-              border-radius: 4px; 
-              font-size: 11px; 
-              font-weight: bold;
-              display: inline-block;
+            .print-table tbody tr:last-child td {
+              border-bottom: none;
             }
-            
-            .badge-green { background: #dcfce7; color: #166534; }
-            .badge-blue { background: #dbeafe; color: #1e40af; }
-            .badge-yellow { background: #fef3c7; color: #92400e; }
-            .badge-red { background: #fee2e2; color: #991b1b; }
-            .badge-gray { background: #f3f4f6; color: #374151; }
-            
-            .footer { 
-              margin-top: 40px; 
-              padding-top: 20px;
+            .print-footer {
+              margin-top: 48px;
+              padding-top: 24px;
               border-top: 2px solid #e5e7eb;
-              text-align: center; 
-              color: #666; 
-              font-size: 12px;
+              text-align: center;
+              color: #6b7280;
+              font-size: 13px;
             }
-            
-            .footer p {
-              margin: 5px 0;
+            .print-footer p {
+              margin: 6px 0;
             }
-            
-            .no-print { 
-              display: none; 
+            .print-footer strong {
+              color: #374151;
+              font-weight: 600;
             }
-            
+            .print-button {
+              position: fixed;
+              top: 24px;
+              right: 24px;
+              padding: 14px 28px;
+              background: #8B1A1A;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 600;
+              box-shadow: 0 4px 12px rgba(139, 26, 26, 0.3);
+              font-size: 14px;
+            }
+            .print-button:hover {
+              background: #7f1d1d;
+            }
             @media print {
-              body {
-                padding: 20px;
-              }
-              
-              .no-print { 
-                display: none !important; 
-              }
-              
-              @page {
-                margin: 1cm;
-              }
+              body { padding: 20px; }
+              .no-print { display: none !important; }
+              @page { margin: 1.5cm; }
+              tr { page-break-inside: avoid; }
+              .print-table { box-shadow: none; }
             }
           </style>
         </head>
         <body>
-          <h1>${title}</h1>
-          ${subtitle ? `<h2>${subtitle}</h2>` : ''}
+          <h1 class="print-title">${title}</h1>
+          ${subtitle ? `<h2 class="print-subtitle">${subtitle}</h2>` : ''}
           
           ${headerInfo ? `
-            <div class="header-info">
+            <div class="print-header-info">
               ${headerInfo}
             </div>
           ` : ''}
           
-          <table>
+          <table class="print-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -207,33 +200,16 @@ export default function PrintTableButton({
             </tbody>
           </table>
           
-          <div class="footer">
+          <div class="print-footer">
             ${footerInfo || `
               <p><strong>Generated on:</strong> ${new Date().toLocaleString()}</p>
               <p><strong>Total Records:</strong> ${data.length}</p>
-              <p style="margin-top: 10px;">House of Transformation Church, Mombasa, Kenya</p>
+              <p style="margin-top: 12px; font-weight: 500;">House of Transformation Church, Mombasa, Kenya</p>
             `}
           </div>
           
-          <button 
-            class="no-print" 
-            onclick="window.print()" 
-            style="
-              position: fixed; 
-              top: 20px; 
-              right: 20px; 
-              padding: 12px 24px; 
-              background: #8B1A1A; 
-              color: white; 
-              border: none; 
-              border-radius: 8px; 
-              cursor: pointer; 
-              font-weight: bold;
-              box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-              font-size: 14px;
-            "
-          >
-            🖨️ Print PDF
+          <button class="print-button no-print" onclick="window.print()">
+            Print PDF
           </button>
         </body>
       </html>
@@ -248,7 +224,7 @@ export default function PrintTableButton({
       onClick={handlePrint}
       disabled={!data || data.length === 0}
       className={`
-        px-4 py-2 bg-[#8B1A1A] text-white font-bold rounded-lg 
+        px-4 py-2 bg-[#8B1A1A] text-white font-semibold rounded-lg 
         hover:bg-red-900 transition-colors flex items-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
