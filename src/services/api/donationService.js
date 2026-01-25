@@ -80,6 +80,17 @@ export const campaignService = {
     }
   },
 
+  // In campaignService object
+  getAnalytics: async (campaignId) => {
+    try {
+      const response = await api.get(`/campaigns/${campaignId}/analytics`);
+      return response?.data || { analytics: {}, success: false };
+    } catch (error) {
+      console.error('Campaign analytics error:', error);
+      throw error;
+    }
+  },
+
   // Complete campaign
   complete: async (campaignId) => {
     try {
@@ -221,6 +232,8 @@ getAllPledges: async (page = 1, limit = 20) => {
   },
 
   // Update pledge (admin only)
+  // In pledgeService object - update method should already exist, just verify it sends all fields:
+
   update: async (pledgeId, updates) => {
     try {
       const response = await api.put(`/pledges/${pledgeId}`, updates);
@@ -397,6 +410,58 @@ export const donationSettingsService = {
 };
 
 // ============================================
+// ANALYTICS SERVICE (ADD TO EXISTING FILE)
+// ============================================
+
+export const analyticsService = {
+  /**
+   * Get complete dashboard analytics
+   * Includes: campaigns, monthly trend, payment breakdown, pledge status, member tiers
+   */
+  getDashboard: async () => {
+    try {
+      const response = await api.get('/donations/analytics/dashboard');
+      return response?.data || { success: false, data: {} };
+    } catch (error) {
+      console.error('Dashboard analytics error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get detailed analytics for a specific campaign
+   */
+  getCampaignAnalytics: async (campaignId) => {
+    try {
+      const response = await api.get(`/donations/analytics/campaign/${campaignId}`);
+      return response?.data || { success: false, analytics: {} };
+    } catch (error) {
+      console.error('Campaign analytics error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Generate PDF report
+   * (Optional - implement if needed)
+   */
+  generateReport: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.campaignId) params.append('campaignId', filters.campaignId);
+
+      const response = await api.get(`/donations/analytics/report?${params.toString()}`);
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Report generation error:', error);
+      throw error;
+    }
+  }
+};
+
+// ============================================
 // EXPORT ALL SERVICES
 // ============================================
 
@@ -405,5 +470,6 @@ export const donationApi = {
   pledges: pledgeService,
   payments: paymentService,
   contributions: contributionService,
-  settings: donationSettingsService
+  settings: donationSettingsService,
+  analytics: analyticsService
 };

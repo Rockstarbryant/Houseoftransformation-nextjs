@@ -20,7 +20,6 @@ import ContributionForm from '@/components/donations/ContributionForm';
 import MpesaModal from '@/components/donations/MpesaModal';
 import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
 import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal'; // NEW
-import EditPledgeModal from '@/components/donations/EditPledgeModal';
 import DonationsMobileNav from '@/components/donations/DonationsMobileNav';
 
 import {
@@ -73,7 +72,6 @@ export default function DonationsPage() {
   const [selectedPledgeForPayment, setSelectedPledgeForPayment] = useState(null);
   const [selectedPledgeForManual, setSelectedPledgeForManual] = useState(null);
   const [selectedPledgeForHistory, setSelectedPledgeForHistory] = useState(null); // NEW
-  const [selectedPledgeForEdit, setSelectedPledgeForEdit] = useState(null);
 
   const [stats, setStats] = useState({
     totalRaised: 0,
@@ -316,43 +314,6 @@ export default function DonationsPage() {
     fetchAllData();
     setTimeout(() => setSuccess(null), 3000);
   };
-
-  // Add these handler functions in your page.jsx (around line 150-200)
-
-const handleCancelPledge = async (pledge) => {
-  if (!window.confirm(`Are you sure you want to cancel this pledge for ${pledge.member_name}?`)) {
-    return;
-  }
-
-  try {
-    const response = await donationApi.pledges.cancel(pledge.id);
-    if (response.success) {
-      setSuccess('Pledge cancelled successfully');
-      fetchAllData();
-      setTimeout(() => setSuccess(null), 3000);
-    } else {
-      setError(response.message || 'Failed to cancel pledge');
-    }
-  } catch (err) {
-    setError(err.response?.data?.message || 'Failed to cancel pledge');
-  }
-};
-
-const handleEditPledge = (pledge) => {
-  // You can create an EditPledgeModal or use a simple prompt
-  // For now, let's add a modal state
-  setSelectedPledgeForEdit(pledge);
-};
-
-const handlePledgeUpdated = () => {
-  setSelectedPledgeForEdit(null);
-  setSuccess('Pledge updated successfully!');
-  fetchAllData();
-  setTimeout(() => setSuccess(null), 3000);
-};
-
-
-
 
   // Close mobile menu when tab changes
   useEffect(() => {
@@ -610,79 +571,131 @@ const handlePledgeUpdated = () => {
           )}
         </div>
 
-        {/* Mobile Tab Content - IMPORTANT: This must be visible on mobile */}
-          <div className="md:hidden">
-            {/* OVERVIEW TAB */}
-            {activeTab === 'overview' && (
-              <div className="space-y-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-                {/* Quick Stats - Mobile optimized */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {canViewPledges() && (
-                    <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-4 shadow-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-semibold opacity-90">My Pledges</p>
-                        <Target size={18} className="opacity-70" />
-                      </div>
-                      <p className="text-2xl font-black mb-2">{myPledges.length}</p>
-                      <p className="text-xs opacity-90">
-                        {myPledges.filter(p => p.status !== 'completed').length} active
-                      </p>
+        {/* TAB CONTENT */}
+        <div className="p-6">
+                  {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 md:space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {canViewPledges() && (
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                    <div className="flex items-center justify-between mb-3 md:mb-4">
+                      <p className="text-xs md:text-sm font-semibold opacity-90">My Pledges</p>
+                      <Target size={18} className="opacity-70 md:w-5 md:h-5" />
                     </div>
-                  )}
-
-                 {canViewAllPledges() && (
-                      <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Total Pledges</p>
-                          <Users size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">{allPledges.length}</p>
-                        <p className="text-xs opacity-90">
-                          {allPledges.filter(p => p.status === 'completed').length} completed
-                        </p>
-                      </div>
-                    )}
-
-                    {canViewAllPayments() && (
-                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Amount Collected</p>
-                          <DollarSign size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">
-                          KES {(payments.filter(p => p.status === 'success').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000000).toFixed(1)}M
-                        </p>
-                        <p className="text-xs opacity-90">
-                          {payments.filter(p => p.status === 'success').length} successful
-                        </p>
-                      </div>
-                    )}
-
-                    {canViewCampaigns() && (
-                      <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Active Campaigns</p>
-                          <TrendingUp size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">{campaigns.length}</p>
-                        <p className="text-xs opacity-90">
-                          {campaigns.filter(c => c.status === 'active').length} running
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Welcome Message */}
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                    <h3 className="text-base font-bold text-blue-900 dark:text-blue-100 mb-2">
-                      👋 Welcome back, {user?.name}!
-                    </h3>
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      This dashboard shows your giving activity and campaign progress.
+                    <p className="text-2xl md:text-3xl font-black mb-2">{myPledges.length}</p>
+                    <p className="text-xs md:text-sm opacity-90">
+                      {myPledges.filter(p => p.status !== 'completed').length} active
                     </p>
+                  </div>
+                )}
+
+               {canViewAllPledges() && (
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Total Pledges</p>
+                    <Users size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">{allPledges.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {allPledges.filter(p => p.status === 'completed').length} completed
+                  </p>
+                </div>
+              )}
+
+              {canViewAllPayments() && (
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Amount Collected</p>
+                    <DollarSign size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">
+                    KES {(payments.filter(p => p.status === 'success').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000000).toFixed(1)}M
+                  </p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {payments.filter(p => p.status === 'success').length} successful
+                  </p>
+                </div>
+              )}
+
+              {canViewCampaigns() && (
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Active Campaigns</p>
+                    <TrendingUp size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">{campaigns.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {campaigns.filter(c => c.status === 'active').length} running
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Welcome Message */}
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 md:p-8">
+                <h3 className="text-base md:text-lg font-bold text-blue-900 dark:text-blue-100 mb-2">
+                  👋 Welcome back, {user?.name}!
+                </h3>
+                <p className="text-sm md:text-base text-blue-800 dark:text-blue-200">
+                  This dashboard shows your giving activity and campaign progress. Use the {' '}
+                  <span className="hidden md:inline">tabs above</span>
+                  <span className="md:hidden">cards above</span>
+                  {' '}to manage pledges, view payments, and access detailed reports.
+                </p>
+              </div>
+
+              {/* Recent Campaigns - Mobile Optimized */}
+              {canViewCampaigns() && campaigns.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 md:p-6 border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-4 md:mb-6">
+                    Active Campaigns
+                  </h3>
+                  
+                  {/* Mobile: Stacked Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {campaigns.slice(0, 4).map(campaign => {
+                      const progress = campaign.currentAmount > 0 
+                        ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) 
+                        : 0;
+                      
+                      return (
+                        <div
+                          key={campaign._id}
+                          className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 md:p-4 border border-slate-200 dark:border-slate-600"
+                        >
+                          <h4 className="font-bold text-sm md:text-base text-slate-900 dark:text-white mb-2 line-clamp-2">
+                            {campaign.title}
+                          </h4>
+                          <div className="space-y-2 text-xs md:text-sm mb-3 md:mb-4">
+                            <div className="flex justify-between">
+                              <span className="text-slate-600 dark:text-slate-400">Goal:</span>
+                              <span className="font-semibold">{formatCurrency(campaign.goalAmount)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-600 dark:text-slate-400">Raised:</span>
+                              <span className="font-semibold text-green-600">{formatCurrency(campaign.currentAmount)}</span>
+                            </div>
+                          </div>
+                          <div className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
+                            <div
+                              className="h-full bg-green-500 transition-all duration-300"
+                              style={{ width: `${Math.min(progress, 100)}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                            {progress}% complete
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
 
           {/* ANALYTICS TAB - Mobile & Desktop Responsive */}
           {activeTab === 'analytics' && (
@@ -716,8 +729,6 @@ const handlePledgeUpdated = () => {
               pledges={allPledges}
               onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
               onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
-              onEditPledge={handleEditPledge}        
-              onCancelPledge={handleCancelPledge}
             />
           )}
 
@@ -819,14 +830,6 @@ const handlePledgeUpdated = () => {
           pledge={selectedPledgeForManual}
           onClose={() => setSelectedPledgeForManual(null)}
           onSuccess={handleManualPaymentRecorded}
-        />
-      )}
-
-      {selectedPledgeForEdit && (
-        <EditPledgeModal
-          pledge={selectedPledgeForEdit}
-          onClose={() => setSelectedPledgeForEdit(null)}
-          onSuccess={handlePledgeUpdated}
         />
       )}
 
