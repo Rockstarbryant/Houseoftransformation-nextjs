@@ -520,7 +520,7 @@ const handlePledgeUpdated = () => {
         }}
       />
 
-      {/* Desktop Navigation Tabs */}
+      {/* Desktop Navigation Tabs - ONLY TABS HIDDEN ON MOBILE */}
       <div className="hidden md:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
         <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-t-xl overflow-x-auto">
           {/* Overview Tab */}
@@ -548,8 +548,6 @@ const handlePledgeUpdated = () => {
             </button>
           )}
 
-           {/* My Pledges Tab */}
-
           {canViewPledges() && (
             <button
               onClick={() => setActiveTab('my-pledges')}
@@ -562,8 +560,6 @@ const handlePledgeUpdated = () => {
               My Pledges ({myPledges.length})
             </button>
           )}
-
-          {/* All Pledges Tab (Admin) */}
 
           {canViewAllPledges() && (
             <button
@@ -580,8 +576,6 @@ const handlePledgeUpdated = () => {
               </span>
             </button>
           )}
-
-           {/* Payments Tab (Admin) */}
 
           {canViewAllPayments() && (
             <button
@@ -609,187 +603,234 @@ const handlePledgeUpdated = () => {
             </button>
           )}
         </div>
+      </div>
 
-        {/* Mobile Tab Content - IMPORTANT: This must be visible on mobile */}
-          <div className="md:hidden">
-            {/* OVERVIEW TAB */}
-            {activeTab === 'overview' && (
-              <div className="space-y-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-                {/* Quick Stats - Mobile optimized */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {canViewPledges() && (
-                    <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-4 shadow-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-semibold opacity-90">My Pledges</p>
-                        <Target size={18} className="opacity-70" />
-                      </div>
-                      <p className="text-2xl font-black mb-2">{myPledges.length}</p>
-                      <p className="text-xs opacity-90">
-                        {myPledges.filter(p => p.status !== 'completed').length} active
-                      </p>
-                    </div>
-                  )}
-
-                 {canViewAllPledges() && (
-                      <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Total Pledges</p>
-                          <Users size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">{allPledges.length}</p>
-                        <p className="text-xs opacity-90">
-                          {allPledges.filter(p => p.status === 'completed').length} completed
-                        </p>
-                      </div>
-                    )}
-
-                    {canViewAllPayments() && (
-                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Amount Collected</p>
-                          <DollarSign size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">
-                          KES {(payments.filter(p => p.status === 'success').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000000).toFixed(1)}M
-                        </p>
-                        <p className="text-xs opacity-90">
-                          {payments.filter(p => p.status === 'success').length} successful
-                        </p>
-                      </div>
-                    )}
-
-                    {canViewCampaigns() && (
-                      <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 shadow-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold opacity-90">Active Campaigns</p>
-                          <TrendingUp size={18} className="opacity-70" />
-                        </div>
-                        <p className="text-2xl font-black mb-2">{campaigns.length}</p>
-                        <p className="text-xs opacity-90">
-                          {campaigns.filter(c => c.status === 'active').length} running
-                        </p>
-                      </div>
-                    )}
+      {/* TAB CONTENT - VISIBLE ON BOTH MOBILE AND DESKTOP */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 md:space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {canViewPledges() && (
+                <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">My Pledges</p>
+                    <Target size={18} className="opacity-70 md:w-5 md:h-5" />
                   </div>
-
-                  {/* Welcome Message */}
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                    <h3 className="text-base font-bold text-blue-900 dark:text-blue-100 mb-2">
-                      👋 Welcome back, {user?.name}!
-                    </h3>
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      This dashboard shows your giving activity and campaign progress.
-                    </p>
-                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">{myPledges.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {myPledges.filter(p => p.status !== 'completed').length} active
+                  </p>
                 </div>
               )}
 
-          {/* ANALYTICS TAB - Mobile & Desktop Responsive */}
-          {activeTab === 'analytics' && (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden md:p-6">
-              {isLoadingAnalytics ? (
-                <div className="flex justify-center items-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+              {canViewAllPledges() && (
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Total Pledges</p>
+                    <Users size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">{allPledges.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {allPledges.filter(p => p.status === 'completed').length} completed
+                  </p>
                 </div>
-              ) : analyticsData ? (
-                <DonationsAnalyticsDashboard data={analyticsData} />
-              ) : (
-                <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-8 text-center">
-                  <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
+              )}
+
+              {canViewAllPayments() && (
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Amount Collected</p>
+                    <DollarSign size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">
+                    KES {(payments.filter(p => p.status === 'success').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000000).toFixed(1)}M
+                  </p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {payments.filter(p => p.status === 'success').length} successful
+                  </p>
+                </div>
+              )}
+
+              {canViewCampaigns() && (
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <p className="text-xs md:text-sm font-semibold opacity-90">Active Campaigns</p>
+                    <TrendingUp size={18} className="opacity-70 md:w-5 md:h-5" />
+                  </div>
+                  <p className="text-2xl md:text-3xl font-black mb-2">{campaigns.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">
+                    {campaigns.filter(c => c.status === 'active').length} running
+                  </p>
                 </div>
               )}
             </div>
-          )}
 
+            {/* Welcome Message */}
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 md:p-8">
+              <h3 className="text-base md:text-lg font-bold text-blue-900 dark:text-blue-100 mb-2">
+                👋 Welcome back, {user?.name}!
+              </h3>
+              <p className="text-sm md:text-base text-blue-800 dark:text-blue-200">
+                This dashboard shows your giving activity and campaign progress. Use the {' '}
+                <span className="hidden md:inline">tabs above</span>
+                <span className="md:hidden">cards above</span>
+                {' '}to manage pledges, view payments, and access detailed reports.
+              </p>
+            </div>
 
-          {/* ✅ MY PLEDGES TAB - ENHANCED USER VIEW */}
-          {activeTab === 'my-pledges' && (
-            <EnhancedUserPledgeView
-              pledges={myPledges}
-              onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
-            />
-          )}
-
-          {/* ✅ ALL PLEDGES TAB - ENHANCED ADMIN TABLE */}
-          {activeTab === 'all-pledges' && canViewAllPledges() && (
-            <EnhancedAdminPledgeTable
-              pledges={allPledges}
-              onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
-              onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
-              onEditPledge={handleEditPledge}        
-              onCancelPledge={handleCancelPledge}
-            />
-          )}
-
-          {/* PAYMENTS TAB (ADMIN) */}
-        {activeTab === 'payments' && canViewAllPayments() && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-            {payments.length === 0 ? (
-              <div className="text-center py-12">
-                <DollarSign size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  No payments yet
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100 dark:bg-slate-900">
-                    <tr className="border-b border-slate-200 dark:border-slate-700">
-                      <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Phone</th>
-                      <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Amount</th>
-                      <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Method</th>
-                      <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Status</th>
-                      <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {payments.map(payment => (
-                      <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                          {payment.mpesa_phone_number || 'Manual'}
-                        </td>
-                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
-                          {formatCurrency(payment.amount)}
-                        </td>
-                        <td className="px-6 py-4 capitalize text-slate-700 dark:text-slate-300">
-                          {payment.payment_method}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            payment.status === 'success'
-                              ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-200'
-                              : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200'
-                          }`}>
-                            {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                          {formatDate(payment.created_at)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Recent Campaigns - Mobile Optimized */}
+            {canViewCampaigns() && campaigns.length > 0 && (
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 md:p-6 border border-slate-200 dark:border-slate-700">
+                <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-4 md:mb-6">
+                  Active Campaigns
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {campaigns.slice(0, 4).map(campaign => {
+                    const progress = campaign.currentAmount > 0 
+                      ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) 
+                      : 0;
+                    
+                    return (
+                      <div
+                        key={campaign._id}
+                        className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 md:p-4 border border-slate-200 dark:border-slate-600"
+                      >
+                        <h4 className="font-bold text-sm md:text-base text-slate-900 dark:text-white mb-2 line-clamp-2">
+                          {campaign.title}
+                        </h4>
+                        <div className="space-y-2 text-xs md:text-sm mb-3 md:mb-4">
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Goal:</span>
+                            <span className="font-semibold">{formatCurrency(campaign.goalAmount)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Raised:</span>
+                            <span className="font-semibold text-green-600">{formatCurrency(campaign.currentAmount)}</span>
+                          </div>
+                        </div>
+                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
+                          <div
+                            className="h-full bg-green-500 transition-all duration-300"
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                          {progress}% complete
+                        </p>
+                      </div>
+                    );
+                  })}
+                  </div>
               </div>
             )}
           </div>
         )}
 
-        {/* CAMPAIGNS TAB (ADMIN) */}
-        {activeTab === 'campaigns' && canViewCampaigns() && (
-          <div className="space-y-6">
-            {canCreateCampaign() && (
-              <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
-            )}
-
-            {activeTab === 'campaigns' && canViewCampaigns() && (
-                <CampaignsTab onCampaignCreated={handleCampaignCreated} />
-              )}
+        {/* ANALYTICS TAB */}
+    {activeTab === 'analytics' && (
+      <div className="overflow-hidden">
+        {isLoadingAnalytics ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+          </div>
+        ) : analyticsData ? (
+          <DonationsAnalyticsDashboard data={analyticsData} />
+        ) : (
+          <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-8 text-center">
+            <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
           </div>
         )}
-        </div>
       </div>
+    )}
+
+    {/* MY PLEDGES TAB */}
+    {activeTab === 'my-pledges' && (
+      <EnhancedUserPledgeView
+        pledges={myPledges}
+        onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
+      />
+    )}
+
+    {/* ALL PLEDGES TAB */}
+    {activeTab === 'all-pledges' && canViewAllPledges() && (
+      <EnhancedAdminPledgeTable
+        pledges={allPledges}
+        onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
+        onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
+        onEditPledge={handleEditPledge}        
+        onCancelPledge={handleCancelPledge}
+      />
+    )}
+
+    {/* PAYMENTS TAB */}
+    {activeTab === 'payments' && canViewAllPayments() && (
+      <div className="overflow-hidden">
+        {payments.length === 0 ? (
+          <div className="text-center py-12">
+            <DollarSign size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+              No payments yet
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-100 dark:bg-slate-900">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Phone</th>
+                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Amount</th>
+                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Method</th>
+                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Status</th>
+                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {payments.map(payment => (
+                  <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                      {payment.mpesa_phone_number || 'Manual'}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                      {formatCurrency(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4 capitalize text-slate-700 dark:text-slate-300">
+                      {payment.payment_method}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        payment.status === 'success'
+                          ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-200'
+                          : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200'
+                      }`}>
+                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                      {formatDate(payment.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* CAMPAIGNS TAB */}
+    {activeTab === 'campaigns' && canViewCampaigns() && (
+      <div className="space-y-6">
+        {canCreateCampaign() && (
+          <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
+        )}
+        <CampaignsTab onCampaignCreated={handleCampaignCreated} />
+      </div>
+    )}
+  </div>
+
 
       {/* Modals */}
       {isPledgeModalOpen && (

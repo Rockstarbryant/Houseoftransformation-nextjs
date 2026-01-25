@@ -25,7 +25,7 @@ export default function ServiceAreaDetailPage() {
     return (
       <div className="pt-20 min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Service Area Not Found</h1>
-        <p className="text-gray-600 mb-8">Sorry, we couldn't find that service area.</p>
+        <p className="text-gray-600 mb-8">Sorry, we could not find that service area.</p>
         <Link href="/service-areas" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
           Back to Service Areas
         </Link>
@@ -233,7 +233,7 @@ export default function ServiceAreaDetailPage() {
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-12 text-center text-white shadow-lg mb-12">
           <h2 className="text-4xl font-bold mb-4">Ready to Join?</h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            We'd love to have you serve with us! Contact the team lead to learn more.
+            We would love to have you serve with us. Contact the team lead to learn more.
           </p>
           <button 
             onClick={handleApply}

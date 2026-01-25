@@ -111,7 +111,7 @@ const VolunteerPage = () => {
             <div className="py-12 lg:pl-12 flex flex-col justify-center bg-[#8B1A1A] lg:bg-transparent lg:text-slate-900 text-white p-6 lg:p-0">
               <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Why We Volunteer</h3>
               <p className="text-sm opacity-80 font-medium leading-relaxed max-w-md italic">
-                "Our Busia Main Campus serves as a beacon of hope, fostering vibrant worship and active service".
+                Our Busia Main Campus serves as a beacon of hope, fostering vibrant worship and active service.
               </p>
             </div>
           </div>

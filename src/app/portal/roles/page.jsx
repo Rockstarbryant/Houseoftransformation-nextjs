@@ -75,26 +75,6 @@ export default function RolesPage() {
   const [expandedRoles, setExpandedRoles] = useState(new Set());
 
   // ============================================
-  // PERMISSION CHECK
-  // ============================================
-  
-  if (!canManageRoles()) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Access Denied
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400">
-            You don't have permission to manage roles
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
   // DATA FETCHING
   // ============================================
 
@@ -149,6 +129,27 @@ export default function RolesPage() {
       setActionLoading(false);
     }
   };
+
+   // ============================================
+  // PERMISSION CHECK
+  // ============================================
+  
+  if (!canManageRoles()) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400">
+            You need permission to manage roles
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
   // ============================================
   // CRUD HANDLERS
@@ -965,7 +966,7 @@ export default function RolesPage() {
                 <>
                   <p className="text-slate-700 dark:text-slate-300">
                     Are you sure you want to delete the role{' '}
-                    <span className="font-bold capitalize">"{selectedRole.name}"</span>?
+                    <span className="font-bold capitalize">&quot;{selectedRole.name}&quot;</span>?
                   </p>
 
                   <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">

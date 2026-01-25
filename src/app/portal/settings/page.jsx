@@ -7,7 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import {
   Settings as SettingsIcon, Mail, Bell, Shield, CreditCard, Share2, 
   AlertTriangle, Key, Zap, Save, RefreshCw, Download, CheckCircle, 
-  XCircle, AlertCircle, Eye, EyeOff, Globe, Phone, MapPin
+  XCircle, AlertCircle, Eye, EyeOff, Globe, Phone, BookOpen, Calendar, ImageIcon, Users, MapPin
 } from 'lucide-react';
 import {
   getSettings, updateGeneralSettings, updateEmailSettings, updateNotificationSettings,
@@ -24,6 +24,8 @@ import Loader from '@/components/common/Loader';
 export default function SettingsPage() {
   const { user } = useAuth();
   const { isAdmin } = usePermissions();
+  const { hasPermission } = usePermissions();
+  const canAccessSettings = hasPermission('manage:settings');
 
   // ============================================
   // STATE MANAGEMENT
@@ -46,11 +48,18 @@ export default function SettingsPage() {
   // Visibility toggles for sensitive fields
   const [showPasswords, setShowPasswords] = useState({});
 
+  // 1. Hook MUST come first
+useEffect(() => {
+  if (canAccessSettings) {
+    fetchSettings();
+  }
+}, [canAccessSettings]); // added dependency
+
   // ============================================
   // PERMISSION CHECK
   // ============================================
   
-  if (!isAdmin()) {
+  if (!canAccessSettings) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -69,11 +78,11 @@ export default function SettingsPage() {
   // ============================================
   // DATA FETCHING
   // ============================================
-
+/*
   useEffect(() => {
     fetchSettings();
   }, []);
-
+*/
   const fetchSettings = async () => {
     try {
       setLoading(true);
@@ -542,7 +551,7 @@ export default function SettingsPage() {
         <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="text-yellow-600" size={20} />
           <p className="text-yellow-800 dark:text-yellow-200 font-semibold">
-            You have unsaved changes. Don't forget to save before leaving this page.
+            You have unsaved changes. Save before leaving this page.
           </p>
         </div>
       )}
@@ -1318,7 +1327,7 @@ export default function SettingsPage() {
                     Social Media Links
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400">
-                    Configure your church's social media presence
+                    Configure your social media presence
                   </p>
                 </div>
 

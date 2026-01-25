@@ -1,7 +1,7 @@
 // app/portal/analytics/page.jsx - PART 1: Imports, State & Overview Cards
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -44,36 +44,10 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState('overview');
 
   // ============================================
-  // PERMISSION CHECK
-  // ============================================
-  
-  const canViewAnalytics = hasPermission('view:analytics');
-
-  if (!canViewAnalytics) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <BarChart3 className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Access Denied
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400">
-            You don't have permission to view analytics
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
   // DATA FETCHING
   // ============================================
 
-  useEffect(() => {
-    fetchAllData();
-  }, [timePeriod]);
-
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -101,13 +75,42 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timePeriod]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]); // Now safe to include fetchAllData here
+
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchAllData();
     setRefreshing(false);
   };
+
+  // ============================================
+  // PERMISSION CHECK
+  // ============================================
+  
+  const canViewAnalytics = hasPermission('view:analytics');
+
+  if (!canViewAnalytics) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <BarChart3 className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400">
+           You don&apos;t have permission to view analytics
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  
 
   // ============================================
   // LOADING STATE
