@@ -1,15 +1,7 @@
 'use client';
 
-//export const dynamic = 'force-dynamic';
-
-import dynamicLoad from 'next/dynamic';
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, Filter, X, Info, XCircle } from 'lucide-react';
-
-// Lazy load SimpleMDE since it needs the browser
-const SimpleMDE = dynamicLoad(() => import('react-simplemde-editor'), { ssr: false });
-
-import 'easymde/dist/easymde.min.css';
+import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, X, Info, XCircle, Eye, EyeOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -19,7 +11,7 @@ import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import PermissionAlert from '@/components/common/PermissionAlert';
 
-// ─── Toast Notification System ──────────────────────────────────────────────
+// ===== TOAST NOTIFICATION SYSTEM =====
 const Toast = ({ message, type, onClose }) => {
   const icons = {
     success: <CheckCircle size={20} />,
@@ -83,7 +75,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
   );
 };
 
-// ─── Confirmation Dialog ────────────────────────────────────────────────────
+// ===== CONFIRMATION DIALOG =====
 const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
 
@@ -121,8 +113,148 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
   );
 };
 
+// ===== SIMPLE MARKDOWN EDITOR =====
+const SimpleMarkdownEditor = ({ value, onChange, disabled }) => {
+  const [showPreview, setShowPreview] = useState(false);
+
+  const insertMarkdown = (before, after = '') => {
+    const textarea = document.getElementById('markdown-textarea');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = value.substring(start, end) || 'text';
+    const newValue = value.substring(0, start) + before + selectedText + after + value.substring(end);
+    onChange(newValue);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = start + before.length;
+      textarea.selectionEnd = start + before.length + selectedText.length;
+    }, 0);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-2 p-3 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600">
+        <button
+          type="button"
+          onClick={() => insertMarkdown('**', '**')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 font-bold transition"
+          title="Bold"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => insertMarkdown('*', '*')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 italic transition"
+          title="Italic"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          onClick={() => insertMarkdown('# ', '')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 font-bold text-lg transition"
+          title="Heading"
+        >
+          H
+        </button>
+
+        <div className="w-px bg-gray-300 dark:bg-slate-500"></div>
+
+        <button
+          type="button"
+          onClick={() => insertMarkdown('- ', '')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 transition"
+          title="Bullet List"
+        >
+          • List
+        </button>
+        <button
+          type="button"
+          onClick={() => insertMarkdown('1. ', '')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 transition"
+          title="Numbered List"
+        >
+          1. List
+        </button>
+
+        <div className="w-px bg-gray-300 dark:bg-slate-500"></div>
+
+        <button
+          type="button"
+          onClick={() => insertMarkdown('[', '](url)')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 transition"
+          title="Link"
+        >
+          Link
+        </button>
+        <button
+          type="button"
+          onClick={() => insertMarkdown('`', '`')}
+          disabled={disabled}
+          className="px-3 py-2 bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-50 dark:hover:bg-slate-500 disabled:opacity-50 font-mono text-sm transition"
+          title="Code"
+        >
+          Code
+        </button>
+
+        <div className="flex-1"></div>
+
+        <button
+          type="button"
+          onClick={() => setShowPreview(!showPreview)}
+          disabled={disabled}
+          className={`px-3 py-2 rounded flex items-center gap-2 transition ${
+            showPreview
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              : 'bg-white dark:bg-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-500'
+          } disabled:opacity-50`}
+        >
+          {showPreview ? <EyeOff size={18} /> : <Eye size={18} />}
+          {showPreview ? 'Edit' : 'Preview'}
+        </button>
+      </div>
+
+      {/* Editor Area */}
+      {!showPreview ? (
+        <textarea
+          id="markdown-textarea"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 font-mono text-sm resize-vertical"
+          placeholder="Start writing... Supports **bold**, *italic*, # headings, lists, and more!"
+        />
+      ) : (
+        <div className="min-h-64 p-4 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg overflow-auto">
+          <div className="prose dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {value}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Supports **bold**, *italic*, # headings, lists, [links](url), and `code`.
+      </p>
+    </div>
+  );
+};
+
+// ===== MAIN MANAGE BLOG COMPONENT =====
 const ManageBlog = () => {
-  const { user, canPostBlogCategory, getAllowedBlogCategories } = useAuth();
+  const { user, hasPermission, getAllowedBlogCategories } = useAuth();
 
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -147,10 +279,10 @@ const ManageBlog = () => {
   const [imagePreview, setImagePreview] = useState(null);
 
   const allCategories = [
-    { value: 'testimonies', label: 'Testimonies', color: 'purple' },
-    { value: 'events', label: 'Events', color: 'blue' },
-    { value: 'teaching', label: 'Teaching', color: 'green' },
-    { value: 'news', label: 'News', color: 'yellow' }
+    { value: 'testimonies', label: 'Testimonies' },
+    { value: 'events', label: 'Events' },
+    { value: 'teaching', label: 'Teaching' },
+    { value: 'news', label: 'News' }
   ];
 
   // Toast utilities
@@ -167,6 +299,7 @@ const ManageBlog = () => {
     setConfirmDialog({ isOpen: true, title, message, onConfirm });
   };
 
+  // Lifecycle hooks
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -194,6 +327,7 @@ const ManageBlog = () => {
     setFilteredPosts(filtered);
   }, [posts, searchQuery, categoryFilter, statusFilter]);
 
+  // API calls
   const fetchPosts = async () => {
     try {
       setLoading(true);
@@ -229,13 +363,13 @@ const ManageBlog = () => {
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'church_sermons');
+      const formDataObj = new FormData();
+      formDataObj.append('file', file);
+      formDataObj.append('upload_preset', 'church_sermons');
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formDataObj }
       );
 
       const data = await response.json();
@@ -254,48 +388,11 @@ const ManageBlog = () => {
     }
   };
 
-  const handleInlineImageUpload = (file, onSuccess, onError) => {
-    if (!file.type.startsWith('image/')) {
-      onError('Please upload an image file');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'church_sermons');
-
-    fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      { method: 'POST', body: formData }
-    )
-      .then(res => res.json())
-      .then(data => {
-        if (data.secure_url) {
-          onSuccess(data.secure_url);
-        } else {
-          onError('Image upload failed');
-        }
-      })
-      .catch(err => {
-        console.error('Inline image upload error:', err);
-        onError('Failed to upload image');
-      });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.content.trim()) {
       showToast('Title and content are required', 'warning');
-      return;
-    }
-
-    if (!canPostBlogCategory(formData.category)) {
-      showToast(
-        `Your role cannot post in the ${formData.category} category. ` +
-        `Allowed: ${getAllowedBlogCategories().join(', ')}`,
-        'error'
-      );
       return;
     }
 
@@ -325,7 +422,7 @@ const ManageBlog = () => {
       }, 1500);
     } catch (error) {
       console.error('Error saving post:', error);
-      showToast('Failed to save post', 'error');
+      showToast(error.response?.data?.message || 'Failed to save post', 'error');
     } finally {
       setLoading(false);
     }
@@ -364,6 +461,7 @@ const ManageBlog = () => {
     );
   };
 
+  // Helper functions
   const getCategoryColor = (category) => {
     const colors = {
       testimonies: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200',
@@ -384,8 +482,7 @@ const ManageBlog = () => {
       year: 'numeric'
     });
 
-  const allowedCategories = getAllowedBlogCategories();
-  const canCreateBlog = allowedCategories.length > 0;
+  const canCreateBlog = hasPermission('manage:blog');
 
   const stats = {
     total: posts.length,
@@ -398,6 +495,7 @@ const ManageBlog = () => {
     }).length
   };
 
+  // Render
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -452,8 +550,8 @@ const ManageBlog = () => {
       {!canCreateBlog && !showForm && (
         <PermissionAlert
           title="No Permission"
-          message="Your role cannot create blog posts."
-          currentRole={user?.role}
+          message="Your role cannot create blog posts. You need the 'manage:blog' permission."
+          currentRole={user?.role?.name}
           actionType="blog post"
         />
       )}
@@ -475,7 +573,7 @@ const ManageBlog = () => {
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className="pl-10 pr-8 py-2.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 appearance-none"
+            className="pl-4 pr-8 py-2.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 appearance-none"
           >
             <option value="all">All Categories</option>
             {allCategories.map(cat => (
@@ -557,18 +655,11 @@ const ManageBlog = () => {
                 required
                 disabled={loading || uploading}
               >
-                {allCategories.map(cat => {
-                  const allowed = allowedCategories.includes(cat.value);
-                  return (
-                    <option
-                      key={cat.value}
-                      value={cat.value}
-                      disabled={!allowed}
-                    >
-                      {cat.label} {!allowed ? '(Not allowed)' : ''}
-                    </option>
-                  );
-                })}
+                {allCategories.map(cat => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -596,62 +687,16 @@ const ManageBlog = () => {
               )}
             </div>
 
-            {/* Main Content - SimpleMDE */}
+            {/* Content Editor */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Content * (Markdown + drag & drop images)
+                Content * (Markdown)
               </label>
-              <div className="border dark:border-slate-700 rounded overflow-hidden bg-white dark:bg-slate-800">
-                <SimpleMDE
-                  value={formData.content}
-                  onChange={value => setFormData(prev => ({ ...prev, content: value }))}
-                  options={{
-                    spellChecker: false,
-                    autoFocus: true,
-                    placeholder: "Start writing...\n\nDrag & drop or paste images anywhere!",
-                    uploadImage: true,
-                    imageUploadFunction: handleInlineImageUpload,
-                    status: true,
-                    toolbar: [
-                      "bold", "italic", "heading", "|",
-                      "quote", "unordered-list", "ordered-list", "|",
-                      "link", "image", "code", "table", "|",
-                      "preview", "side-by-side", "fullscreen"
-                    ],
-                    previewRender: (plainText) => {
-                      return (
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            img: ({ node, ...props }) => (
-                              <img
-                                {...props}
-                                alt={props.alt || 'Uploaded image'}
-                                style={{ maxWidth: '100%', height: 'auto', borderRadius: '6px', margin: '0.75rem 0' }}
-                                loading="lazy"
-                              />
-                            ),
-                            table: ({ node, ...props }) => (
-                              <table {...props} style={{ borderCollapse: 'collapse', width: '100%', margin: '1rem 0' }} />
-                            ),
-                            th: ({ node, ...props }) => (
-                              <th {...props} style={{ border: '1px solid #ddd', padding: '8px', background: '#f5f5f5' }} />
-                            ),
-                            td: ({ node, ...props }) => (
-                              <td {...props} style={{ border: '1px solid #ddd', padding: '8px' }} />
-                            )
-                          }}
-                        >
-                          {plainText}
-                        </ReactMarkdown>
-                      );
-                    }
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Supports **bold**, *italic*, # headings, lists, code blocks. Drag & drop images directly.
-              </p>
+              <SimpleMarkdownEditor
+                value={formData.content}
+                onChange={value => setFormData(prev => ({ ...prev, content: value }))}
+                disabled={loading || uploading}
+              />
             </div>
 
             {/* Actions */}
@@ -709,7 +754,6 @@ const ManageBlog = () => {
                         src={post.image}
                         alt={post.title}
                         className="w-full h-full object-cover"
-                        
                       />
                     </div>
                   )}

@@ -107,13 +107,20 @@ export const USER_ROLES = {
 };
 
 export const BLOG_CATEGORIES = [
-  'All',
-  'News',
-  'Events',
-  'Outreach',
-  'Teaching',
-  'Testimonies'
+  'all',
+  'news',
+  'events',
+  'teaching',
+  'testimonies'
 ];
+
+export const BLOG_CATEGORY_LABELS = {
+  all: 'All',
+  news: 'News',
+  events: 'Events',
+  teaching: 'Teaching',
+  testimonies: 'Testimonies'
+};
 
 export const GALLERY_CATEGORIES = [
   'All',

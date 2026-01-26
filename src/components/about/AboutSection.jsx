@@ -68,7 +68,7 @@ const AboutSection = ({ preview = false }) => {
             <div className="lg:w-1/2 relative min-h-[300px] md:min-h-[400px]">
               <img 
                 src={churchImages[0].url} 
-                className="absolute inset-0 w-full h-full object-cover" 
+                className="absolute inset-0 w-full h-auto object-cover" 
                 alt="H.O.T Worship" 
               />
             </div>

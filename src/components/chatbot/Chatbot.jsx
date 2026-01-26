@@ -31,7 +31,7 @@ const Chatbot = () => {
   }
 
   return (
-    <div className="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-white rounded-2xl shadow-2xl z-40 overflow-hidden">
+    <div className="fixed bottom-6 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-white rounded-2xl shadow-2xl z-40 overflow-hidden">
       <div className="bg-blue-900 text-white p-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <MessageCircle size={24} />

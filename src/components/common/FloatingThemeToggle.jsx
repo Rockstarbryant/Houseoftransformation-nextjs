@@ -42,7 +42,7 @@ const FloatingThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900 hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700"
+      className="fixed bottom-24 right-6 z-40 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900 hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700"
       title="Toggle theme"
       aria-label="Toggle dark mode"
     >

@@ -352,20 +352,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getAllowedBlogCategories = () => {
-    if (!user) return [];
-    
-    const categoryPermissions = {
-      'member': ['testimonies'],
-      'volunteer': ['testimonies', 'events'],
-      'usher': ['testimonies', 'events'],
-      'worship_team': ['testimonies', 'events'],
-      'pastor': ['testimonies', 'events', 'teaching', 'news'],
-      'bishop': ['testimonies', 'events', 'teaching', 'news'],
-      'admin': ['testimonies', 'events', 'teaching', 'news']
-    };
-    
-    return categoryPermissions[user.role?.name] || [];
+  // Check if user has manage:blog permission (object-based role)
+  if (!user || !user.role) return [];
+  
+  // Check if manage:blog permission exists in user.role.permissions array
+  const hasManageBlog = Array.isArray(user.role.permissions) && 
+    user.role.permissions.includes('manage:blog');
+  
+  if (!hasManageBlog) return [];
+  
+  // Admin and those with manage:blog can post in all categories
+  return ['testimonies', 'events', 'teaching', 'news'];
   };
+
+  // ===== ADD THIS NEW FUNCTION (for backward compatibility) =====
+const canPostBlogCategory = (category) => {
+  // Check if user has manage:blog permission
+  if (!user || !user.role) return false;
+  
+  const hasManageBlog = Array.isArray(user.role.permissions) && 
+    user.role.permissions.includes('manage:blog');
+  
+  if (!hasManageBlog) return false;
+  
+  // If they have manage:blog, they can post in any category
+  const allowedCategories = ['testimonies', 'events', 'teaching', 'news'];
+  return allowedCategories.includes(category);
+};
 
   const value = {
     user,
@@ -387,6 +400,7 @@ export const AuthProvider = ({ children }) => {
     canManageUsers: () => hasPermission('manage:users'),
     canManageRoles: () => hasPermission('manage:roles'),
     canPostBlog,
+    canPostBlogCategory,
     canPostSermon: () => hasPermission('manage:sermons'),
     canUploadPhoto: () => hasPermission('manage:gallery'),
     canEditBlog,

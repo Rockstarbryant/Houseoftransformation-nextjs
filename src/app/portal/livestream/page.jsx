@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit, Trash2, Eye, Calendar, Clock, Users, TrendingUp, Video, Radio, Archive, Search, Filter,
-  AlertCircle, CheckCircle, Play, Pause, X, BookOpen, MessageSquare, XCircle, Info
+  AlertCircle, CheckCircle, Play, Pause, X, BookOpen, FileText, MessageSquare, XCircle, Info
 } from 'lucide-react';
 import { useLivestream, useLivestreamAdmin } from '@/hooks/useLivestream';
 
@@ -136,6 +136,11 @@ const ManageLiveStream = () => {
   const [editingId, setEditingId] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: () => {} });
+  
+  const [transcriptData, setTranscriptData] = useState(null);
+  const [editedTranscript, setEditedTranscript] = useState('');
+  const [loadingTranscript, setLoadingTranscript] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const [preacherInputs, setPreacherInputs] = useState(['']);
   const [scriptureInputs, setScriptureInputs] = useState(['']);
@@ -174,6 +179,12 @@ const ManageLiveStream = () => {
   const showConfirm = (title, message, onConfirm, type = 'danger') => {
     setConfirmDialog({ isOpen: true, title, message, onConfirm, type });
   };
+
+  useEffect(() => {
+  if (selectedStream) {
+    loadTranscript(selectedStream._id);
+  }
+}, [selectedStream?._id]);
 
   useEffect(() => {
     publicFetchArchives({ 
@@ -285,6 +296,132 @@ const ManageLiveStream = () => {
       publicFetchArchives({ type: filterType, limit: 100, includeScheduled: true });
     }
   };
+
+  const loadTranscript = async (streamId) => {
+  try {
+    const response = await fetch(`/api/livestreams/${streamId}/transcript`, {
+      credentials: 'include'
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      setTranscriptData(result.data);
+      setEditedTranscript(result.data.cleaned || '');
+    }
+  } catch (error) {
+    console.error('Error loading transcript:', error);
+    showToast('Failed to load transcript', 'error');
+  }
+};
+
+const handleExtractTranscript = async (streamId) => {
+  try {
+    setLoadingTranscript(true);
+    const response = await fetch(`/api/livestreams/${streamId}/transcript/extract`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+      credentials: 'include'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      setTranscriptData(result.data);
+      setEditedTranscript(result.data.cleaned || '');
+      showToast('Transcript extracted successfully', 'success');
+    } else {
+      showToast(result.message || 'Extraction failed', 'warning');
+      setTranscriptData(result.data);
+      setEditedTranscript(result.data?.cleaned || '');
+    }
+  } catch (error) {
+    console.error('Error extracting transcript:', error);
+    showToast('Failed to extract transcript', 'error');
+  } finally {
+    setLoadingTranscript(false);
+  }
+};
+
+const handleSaveTranscript = async (streamId) => {
+  try {
+    if (!editedTranscript || editedTranscript.trim().length === 0) {
+      showToast('Transcript cannot be empty', 'error');
+      return;
+    }
+
+    setLoadingTranscript(true);
+    const response = await fetch(`/api/livestreams/${streamId}/transcript`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+      body: JSON.stringify({ cleaned: editedTranscript }),
+      credentials: 'include'
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      setTranscriptData(prev => ({
+        ...prev,
+        cleaned: result.data.cleaned
+      }));
+      showToast('Transcript saved successfully', 'success');
+    } else {
+      showToast(result.message || 'Failed to save transcript', 'error');
+    }
+  } catch (error) {
+    console.error('Error saving transcript:', error);
+    showToast('Failed to save transcript', 'error');
+  } finally {
+    setLoadingTranscript(false);
+  }
+};
+
+const handleGenerateSummary = async (streamId) => {
+  try {
+    if (!editedTranscript || editedTranscript.trim().length === 0) {
+      showToast('Please provide a cleaned transcript first', 'error');
+      return;
+    }
+
+    setLoadingAI(true);
+    const response = await fetch(`/api/livestreams/${streamId}/transcript/generate-summary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+      credentials: 'include'
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      // Refresh the selected stream to show new summary
+      const updatedStream = await fetch(`/api/livestreams/${streamId}`, {
+        credentials: 'include'
+      }).then(r => r.json());
+      
+      if (updatedStream.success) {
+        setSelectedStream(updatedStream.data);
+      }
+      
+      showToast('AI summary generated successfully!', 'success');
+    } else {
+      showToast(result.message || 'Failed to generate summary', 'error');
+    }
+  } catch (error) {
+    console.error('Error generating summary:', error);
+    showToast('Failed to generate AI summary', 'error');
+  } finally {
+    setLoadingAI(false);
+  }
+};
 
   const getEmbedUrl = (stream) => {
     if (stream.youtubeVideoId) return `https://www.youtube.com/embed/${stream.youtubeVideoId}`;
@@ -403,6 +540,23 @@ const ManageLiveStream = () => {
           <Archive size={20} />
           All Streams ({publicArchives.length})
         </button>
+        <button
+          onClick={() => {
+            setView('transcript');
+            // Show stream selection or select first stream
+            if (!selectedStream && publicArchives.length > 0) {
+              setSelectedStream(publicArchives[0]);
+            }
+          }}
+          className={`pb-4 px-6 font-medium text-lg transition-colors flex items-center gap-2 ${
+            view === 'transcript' 
+              ? 'border-b-4 border-blue-600 text-blue-700' 
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <FileText size={20} />
+          Transcript Management
+        </button>
       </div>
 
       {/* Dashboard View */}
@@ -507,6 +661,180 @@ const ManageLiveStream = () => {
           </div>
         </div>
       )}
+      {/* Transcript Management View */}
+              {view === 'transcript' && selectedStream && (
+                <div className="space-y-8">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Transcript Management</h2>
+                      <p className="text-gray-600 mt-1">{selectedStream.title}</p>
+                    </div>
+                    <button
+                      onClick={() => { setView('archive'); setSelectedStream(null); }}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+
+                  {/* Extraction Status Card */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">Transcript Extraction</h3>
+                      <button
+                        onClick={() => handleExtractTranscript(selectedStream._id)}
+                        disabled={loadingTranscript}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
+                      >
+                        {loadingTranscript ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Extracting...
+                          </>
+                        ) : (
+                          <>
+                            <span>↻</span>
+                            Extract from Video
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {transcriptData?.extractionStatus && (
+                      <div className={`p-4 rounded-lg mb-4 ${
+                        transcriptData.extractionStatus === 'success' ? 'bg-green-50 border border-green-200' :
+                        transcriptData.extractionStatus === 'pending' ? 'bg-amber-50 border border-amber-200' :
+                        'bg-red-50 border border-red-200'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          {transcriptData.extractionStatus === 'success' && (
+                            <span className="text-green-600 font-semibold">✓ Successfully extracted from video</span>
+                          )}
+                          {transcriptData.extractionStatus === 'pending' && (
+                            <span className="text-amber-600 font-semibold">⊙ Not yet extracted</span>
+                          )}
+                          {transcriptData.extractionStatus === 'failed' && (
+                            <span className="text-red-600 font-semibold">✗ Extraction failed</span>
+                          )}
+                          {transcriptData.extractionStatus === 'manual' && (
+                            <span className="text-blue-600 font-semibold">✎ Manually provided</span>
+                          )}
+                        </div>
+                        {transcriptData.extractionError && (
+                          <p className="text-sm text-gray-600 mt-2">{transcriptData.extractionError}</p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      {transcriptData?.raw && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 mb-2">Raw Transcript (from video)</p>
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-[200px] overflow-y-auto">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap font-mono text-xs">
+                              {transcriptData.raw.substring(0, 1000)}
+                              {transcriptData.raw.length > 1000 && '...'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cleaned Transcript Editor */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Cleaned Transcript</h3>
+                        <p className="text-sm text-gray-600 mt-1">Edit and verify transcript before generating summary</p>
+                      </div>
+                      <button
+                        onClick={() => handleSaveTranscript(selectedStream._id)}
+                        disabled={loadingTranscript || !editedTranscript || editedTranscript === transcriptData?.cleaned}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:bg-gray-400"
+                      >
+                        {loadingTranscript ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={editedTranscript}
+                      onChange={(e) => setEditedTranscript(e.target.value)}
+                      placeholder="Paste or edit transcript here..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[400px] font-mono text-sm resize-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      {editedTranscript.length} / 50,000 characters
+                    </p>
+                  </div>
+
+                  {/* AI Summary Generation */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Generate AI Summary</h3>
+                        <p className="text-sm text-gray-600 mt-1">Create summary and key points from cleaned transcript</p>
+                      </div>
+                      <button
+                        onClick={() => handleGenerateSummary(selectedStream._id)}
+                        disabled={loadingAI || !editedTranscript || editedTranscript.trim().length === 0}
+                        className="flex items-center gap-2 px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-60 disabled:bg-gray-400"
+                      >
+                        {loadingAI ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            ✨
+                            Generate Summary
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {selectedStream.aiSummary?.summary && (
+                      <div className="space-y-6">
+                        {/* Summary */}
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {selectedStream.aiSummary.summary}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-3">
+                              Generated: {new Date(selectedStream.aiSummary.generatedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Key Points */}
+                        {selectedStream.aiSummary.keyPoints?.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-2">Key Points</h4>
+                            <ul className="space-y-2">
+                              {selectedStream.aiSummary.keyPoints.map((point, idx) => (
+                                <li key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                  <span className="text-red-600 font-bold mt-0.5">•</span>
+                                  <span className="text-sm text-gray-700">{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!selectedStream.aiSummary?.summary && (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-500">Summary will appear here after generation</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
       {/* Archive View */}
       {view === 'archive' && (
@@ -668,6 +996,9 @@ const ManageLiveStream = () => {
           )}
         </div>
       )}
+
+     
+
 
       {/* Create/Edit Modal */}
       {showStreamModal && (

@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
+import Link from 'next/link';
 import { 
   Plus, 
   Eye, 
@@ -435,6 +436,14 @@ export default function MobileCampaignsTab({ onCampaignCreated }) {
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2 pt-2">
+                        <Link 
+                          href={`/campaigns/${campaign._id}`} 
+                          className="p-2 bg-green-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600" 
+                          title="View"
+                        >
+                          <Eye size={14} />
+                          View
+                        </Link>
                       {canActivateCampaign() && campaign.status === 'draft' && (
                         <button
                           onClick={(e) => {

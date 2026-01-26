@@ -575,11 +575,11 @@ const showAnalyticsDetails = (campaign) => {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {filteredCampaigns.map(campaign => {
                 // Find where progress is calculated and update:
-const analytics = campaignAnalytics[campaign._id];
-const progress = analytics 
-  ? calculateCampaignProgress(analytics.totalRaised, campaign.goalAmount)
-  : calculateCampaignProgress(campaign.currentAmount, campaign.goalAmount);
-  const statusLabel = getCampaignStatusLabel(campaign.status);
+              const analytics = campaignAnalytics[campaign._id];
+              const progress = analytics 
+                ? calculateCampaignProgress(analytics.totalRaised, campaign.goalAmount)
+                : calculateCampaignProgress(campaign.currentAmount, campaign.goalAmount);
+                const statusLabel = getCampaignStatusLabel(campaign.status);
 
                 return (
                   <tr key={campaign._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
@@ -589,21 +589,21 @@ const progress = analytics
                     </td>
                     <td className="px-6 py-4 font-bold">{formatCurrency(campaign.goalAmount)}</td>
                     <td className="px-6 py-4">
-  {campaignAnalytics[campaign._id] ? (
-    <div>
-      <div className="font-bold text-green-600">
-        {formatCurrency(campaignAnalytics[campaign._id].totalRaised)}
-      </div>
-      <div className="text-xs text-slate-500">
-        Pledged: {formatCurrency(campaignAnalytics[campaign._id].totalPledged)}
-      </div>
-    </div>
-  ) : (
-    <div className="font-bold text-green-600">
-      {formatCurrency(campaign.currentAmount)}
-    </div>
-  )}
-</td>
+                      {campaignAnalytics[campaign._id] ? (
+                        <div>
+                          <div className="font-bold text-green-600">
+                            {formatCurrency(campaignAnalytics[campaign._id].totalRaised)}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Pledged: {formatCurrency(campaignAnalytics[campaign._id].totalPledged)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="font-bold text-green-600">
+                          {formatCurrency(campaign.currentAmount)}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                         <div className="bg-green-500 h-2 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div>
@@ -638,12 +638,12 @@ const progress = analytics
                         </button>
 
                         <button 
-  onClick={() => showAnalyticsDetails(campaign)}
-  className="p-2 hover:bg-purple-100 rounded text-purple-600" 
-  title="View Analytics"
->
-  <Info size={16} />
-</button>
+                            onClick={() => showAnalyticsDetails(campaign)}
+                            className="p-2 hover:bg-purple-100 rounded text-purple-600" 
+                            title="View Analytics"
+                          >
+                            <Info size={16} />
+                          </button>
                         
                         {canEditCampaign() && (
                           <button 

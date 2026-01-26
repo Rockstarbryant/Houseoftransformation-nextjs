@@ -389,7 +389,7 @@ export default function MobileDonationsPage() {
       <div className={`min-h-screen ${bg} flex justify-center items-center`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FDB022] mx-auto mb-4"></div>
-          <p className={`text-sm ${textSecondary}`}>Loading donations...</p>
+          <p className={`text-sm ${textSecondary}`}>Refreshing...</p>
         </div>
       </div>
     );
@@ -439,12 +439,12 @@ export default function MobileDonationsPage() {
       {/* HEADER */}
       <div className={`${cardBg} px-6 pt-6 pb-6 rounded-b-3xl shadow-sm border-b ${border}`}>
         {/* Greeting & Theme Toggle */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className={`text-3xl font-black ${textPrimary}`}>
               Hi, {user?.name?.split(' ')[0] || 'Satya'}
             </h1>
-            <p className={`text-sm ${textSecondary} mt-1`}>How are you feeling today?</p>
+            <p className={`text-sm ${textSecondary} mt-1`}>How are you today?</p>
           </div>
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
@@ -453,32 +453,29 @@ export default function MobileDonationsPage() {
             {isDarkMode ? <Moon size={20} className="text-yellow-400" /> : <Sun size={20} className="text-yellow-500" />}
           </button>
         </div>
-
-        {/* Date Selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {[
-            { day: 'Sun', date: '9' },
-            { day: 'Mon', date: '20' },
-            { day: 'Tue', date: '21' },
-            { day: 'Wed', date: '22' },
-            { day: 'Thu', date: '23' },
-            { day: 'Fri', date: '24' },
-            { day: 'Sat', date: '25' }
-          ].map((item, idx) => (
-            <button
-              key={idx}
-              className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-2xl font-medium transition-all ${
-                idx === 3
-                  ? 'bg-[#FDB022] text-white shadow-md scale-105'
-                  : `${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-50 text-slate-600'}`
-              }`}
-            >
-              <span className="text-xs opacity-70">{item.day}</span>
-              <span className="text-2xl font-bold mt-1">{item.date}</span>
-            </button>
-          ))}
-        </div>
       </div>
+
+      {/* Quick Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 mb-6 px-4 mt-4">
+              {canViewPledges() && (
+                <button 
+                  onClick={() => setIsPledgeModalOpen(true)}
+                  className="bg-blue-500 text-white p-4 rounded-2xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={20} />
+                Pledge
+                </button>
+              )}
+              {canViewCampaigns() && (
+                <button 
+                  onClick={() => setIsContributionModalOpen(true)}
+                  className={`${cardBg} ${textPrimary} bg-green-500 p-4 rounded-2xl font-semibold shadow-md border ${border} hover:shadow-lg transition-all flex items-center justify-center gap-2`}
+                >
+                  <DollarSign size={20} />
+                  Contribute
+                </button>
+              )}
+            </div>
 
       {/* SUCCESS/ERROR MESSAGES */}
       <div className="px-4 pt-4">
@@ -497,16 +494,14 @@ export default function MobileDonationsPage() {
         )}
       </div>
       {/* MAIN CONTENT AREA */}
-      <div className="px-4 py-6">
+      <div className="py-6">
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Featured Action Card */}
             <div className="bg-gradient-to-br from-[#FDB022] to-[#FF9500] rounded-3xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">
-                  😊
-                </div>
+                
                 <span className="font-bold text-lg">Daily Affirmations</span>
               </div>
               <p className="text-white/90 text-sm mb-4 leading-relaxed">
@@ -622,28 +617,6 @@ export default function MobileDonationsPage() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Quick Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              {canViewPledges() && (
-                <button 
-                  onClick={() => setIsPledgeModalOpen(true)}
-                  className="bg-gradient-to-br from-[#FDB022] to-[#FF9500] text-white p-4 rounded-2xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus size={20} />
-                  New Pledge
-                </button>
-              )}
-              {canViewCampaigns() && (
-                <button 
-                  onClick={() => setIsContributionModalOpen(true)}
-                  className={`${cardBg} ${textPrimary} p-4 rounded-2xl font-semibold shadow-md border ${border} hover:shadow-lg transition-all flex items-center justify-center gap-2`}
-                >
-                  <DollarSign size={20} />
-                  Contribute
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -882,16 +855,6 @@ export default function MobileDonationsPage() {
           pledge={selectedPledgeForHistory}
           onClose={() => setSelectedPledgeForHistory(null)}
         />
-      )}
-
-      {/* Floating Action Button - Optional */}
-      {canViewPledges() && activeTab === 'overview' && (
-        <button
-          onClick={() => setIsPledgeModalOpen(true)}
-          className="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-[#FDB022] to-[#FF9500] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-40"
-        >
-          <Plus size={28} strokeWidth={3} />
-        </button>
       )}
     </div>
   );
