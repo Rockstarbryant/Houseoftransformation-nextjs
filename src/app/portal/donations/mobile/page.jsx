@@ -12,11 +12,11 @@ import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
 // Import all your existing components (unchanged)
-import EnhancedAdminPledgeTable from '@/components/donations/EnhancedAdminPledgeTable';
-import EnhancedUserPledgeView from '@/components/donations/EnhancedUserPledgeView';
-import DonationsAnalyticsDashboard from '@/components/donations/DonationsAnalyticsDashboard';
+import UserPledgeCards from '@/components/donations/mobile/UserPledgeCards';
+import AdminPledgeCards from '@/components/donations/mobile/AdminPledgeCards';
+import MobileAnalyticsDashboard from '@/components/donations/mobile/MobileAnalyticsDashboard';
 import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
-import CampaignsTab from '@/components/donations/CampaignsTab';
+import MobileCampaignsTab from '@/components/donations/mobile/MobileCampaignsTab';
 import PledgeForm from '@/components/donations/PledgeForm';
 import ContributionForm from '@/components/donations/ContributionForm';
 import MpesaModal from '@/components/donations/MpesaModal';
@@ -660,7 +660,7 @@ export default function MobileDonationsPage() {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FDB022]"></div>
                 </div>
               ) : analyticsData ? (
-                <DonationsAnalyticsDashboard data={analyticsData} />
+                <MobileAnalyticsDashboard data={analyticsData} />
               ) : (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📊</div>
@@ -704,10 +704,10 @@ export default function MobileDonationsPage() {
                 </div>
               ) : (
                 <div className="p-4">
-                  <EnhancedUserPledgeView
-                    pledges={myPledges}
-                    onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
-                  />
+                  <UserPledgeCards
+                      pledges={myPledges}
+                      onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
+                    />
                 </div>
               )}
             </div>
@@ -732,7 +732,7 @@ export default function MobileDonationsPage() {
               </div>
               
               <div className="p-4">
-                <EnhancedAdminPledgeTable
+                <AdminPledgeCards
                   pledges={allPledges}
                   onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
                   onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
@@ -748,19 +748,12 @@ export default function MobileDonationsPage() {
         {activeTab === 'campaigns' && canViewCampaigns() && (
           <div className="space-y-6">
             {/* Admin Campaign Manager */}
-            {canCreateCampaign() && (
-              <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
-                <button
-                  onClick={() => {
-                    alert('Campaign creation form will open here');
-                  }}
-                  className="w-full bg-gradient-to-r from-[#FDB022] to-[#FF9500] text-white py-4 rounded-2xl font-semibold shadow-md flex items-center justify-center gap-2"
-                >
-                  <Plus size={20} />
-                  Create New Campaign
-                </button>
-              </div>
-            )}
+            <div className="space-y-6">
+                    {canCreateCampaign() && (
+                      <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
+                    )}
+                   
+                  </div>
 
             {/* Campaigns List */}
             <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
@@ -808,14 +801,14 @@ export default function MobileDonationsPage() {
 
             {/* Full CampaignsTab Component */}
             <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
-              <CampaignsTab onCampaignCreated={handleCampaignCreated} />
+              <MobileCampaignsTab onCampaignCreated={handleCampaignCreated} />
             </div>
           </div>
         )}
       </div>
       {/* BOTTOM NAVIGATION - JOURNAL STYLE */}
       <div className={`fixed bottom-0 left-0 right-0 ${cardBg} border-t ${border} safe-area-bottom`}>
-        <div className="flex items-center justify-around px-4 py-3">
+        <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -824,14 +817,14 @@ export default function MobileDonationsPage() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${
+                className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all min-w-0 ${
                   isActive
                     ? 'text-[#FDB022]'
                     : `${textSecondary} hover:${textPrimary}`
                 }`}
               >
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-xs font-medium">{item.label}</span>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-medium truncate max-w-full">{item.label}</span>
               </button>
             );
           })}

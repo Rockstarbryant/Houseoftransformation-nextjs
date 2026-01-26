@@ -107,6 +107,12 @@ export default function DonationsPage() {
     );
   };
 
+   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      router.push('/portal/donations/mobile');
+    }
+  }, [router]);
+
   useEffect(() => {
     if (!isLoading && !canAccessDonations()) {
       setError('You do not have permission to access donations');
