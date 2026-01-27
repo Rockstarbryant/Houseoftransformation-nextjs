@@ -12,7 +12,8 @@ import {
 import {
   getSettings, updateGeneralSettings, updateEmailSettings, updateNotificationSettings,
   updateSecuritySettings, updatePaymentSettings, updateSocialMedia, updateMaintenanceMode,
-  updateApiKeys, updateFeatures, resetSettings, exportSettingsAsJSON, maskSensitiveData
+  updateApiKeys, updateFeatures, resetSettings, simulateMpesaStkPush, exportSettingsAsJSON, maskSensitiveData,
+  testMpesaConnection, updateDonationSettings
 } from '@/services/api/settingsService';
 import Loader from '@/components/common/Loader';
 
@@ -209,20 +210,30 @@ useEffect(() => {
     setSaving(true);
     setError(null);
 
-    // Save both payment and donation settings
-    const paymentResponse = await updatePaymentSettings(settings.paymentSettings);
-    const donationResponse = await updateDonationSettings(settings.donationSettings);
+    console.log('[Settings] Saving payment settings:', settings.paymentSettings);
 
-    if (paymentResponse.success && donationResponse.success) {
-      setSuccess('Payment and donation settings saved successfully!');
-      setSettings({
-        ...settings,
-        paymentSettings: paymentResponse.paymentSettings || settings.paymentSettings,
-        donationSettings: donationResponse.donations || settings.donationSettings
-      });
-      setOriginalSettings(JSON.parse(JSON.stringify(settings)));
+    // Use the service function instead of api.patch
+    const response = await updatePaymentSettings({
+      paymentGateway: settings.paymentSettings.paymentGateway,
+      minimumDonation: settings.paymentSettings.minimumDonation,
+      currency: settings.paymentSettings.currency,
+      mpesa: settings.paymentSettings.mpesa,
+      stripe: settings.paymentSettings.stripe,
+      paypal: settings.paymentSettings.paypal,
+      flutterwave: settings.paymentSettings.flutterwave,
+      enablePayments: settings.paymentSettings.enablePayments
+    });
+
+    console.log('[Settings] Payment save response:', response);
+
+    if (response.success) {
+      setSuccess('Payment settings saved successfully!');
+      setSettings(response.settings);
+      setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
       setHasChanges(false);
       setTimeout(() => setSuccess(null), 3000);
+    } else {
+      setError(response.message || 'Failed to save payment settings');
     }
   } catch (err) {
     console.error('[Settings] Save payment error:', err);
@@ -230,7 +241,7 @@ useEffect(() => {
   } finally {
     setSaving(false);
   }
-  };
+};
 
   const handleSaveSocial = async () => {
     try {
@@ -1181,6 +1192,98 @@ useEffect(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Party A (Phone Number)
+            </label>
+            <input
+              type="tel"
+              value={settings.paymentSettings.mpesa.partyA || ''}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'partyA', e.target.value)}
+              placeholder="254712345678"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Phone number initiating the STK/C2B request
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Party B (Business Shortcode)
+            </label>
+            <input
+              type="text"
+              value={settings.paymentSettings.mpesa.partyB || ''}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'partyB', e.target.value)}
+              placeholder="174379"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Organization receiving the funds
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Transaction Type
+            </label>
+            <select
+              value={settings.paymentSettings.mpesa.transactionType || 'CustomerPayBillOnline'}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionType', e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            >
+              <option value="CustomerPayBillOnline">Pay Bill Online</option>
+              <option value="CustomerBuyGoodsOnline">Buy Goods Online</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Default Amount (KES)
+            </label>
+            <input
+              type="number"
+              value={settings.paymentSettings.mpesa.amount || 0}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'amount', Number(e.target.value))}
+              placeholder="100"
+              min="1"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Transaction Description
+            </label>
+            <input
+              type="text"
+              value={settings.paymentSettings.mpesa.transactionDesc || ''}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionDesc', e.target.value)}
+              placeholder="Church Donation"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Account Reference
+            </label>
+            <input
+              type="text"
+              value={settings.paymentSettings.mpesa.accountRef || ''}
+              onChange={(e) => handleChange('paymentSettings.mpesa', 'accountRef', e.target.value)}
+              placeholder="HOT-DONATION"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
               Environment
             </label>
             <select
@@ -1230,23 +1333,26 @@ useEffect(() => {
 
         {/* Test M-Pesa Button */}
         <button
-          onClick={async () => {
-            try {
-              setSaving(true);
-              const result = await testMpesaConnection();
-              if (result.success) {
-                setSuccess('M-Pesa connection is valid!');
-                setTimeout(() => setSuccess(null), 3000);
-              } else {
-                setError('M-Pesa configuration is invalid. Please check your credentials.');
+            onClick={async () => {
+              try {
+                setSaving(true);
+                setError(null);
+                const result = await testMpesaConnection();
+                
+                if (result.success) {
+                  setSuccess('M-Pesa connection is valid!');
+                  setTimeout(() => setSuccess(null), 3000);
+                } else {
+                  setError(result.message || 'M-Pesa configuration is invalid. Please check your credentials.');
+                }
+              } catch (err) {
+                console.error('[Settings] M-Pesa test error:', err);
+                setError(err.response?.data?.message || err.message || 'Failed to test M-Pesa connection');
+              } finally {
+                setSaving(false);
               }
-            } catch (err) {
-              setError(err.message || 'Failed to test M-Pesa connection');
-            } finally {
-              setSaving(false);
-            }
-          }}
-          disabled={saving}
+            }}
+            disabled={saving}
           className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? (
@@ -1258,6 +1364,121 @@ useEffect(() => {
             'Test M-Pesa Connection'
           )}
         </button>
+
+        {/* STK PUSH SIMULATION */}
+<div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-6">
+  <div className="flex items-start gap-3 mb-6">
+    <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+    <div>
+      <h3 className="font-bold text-blue-900 dark:text-blue-200">STK Push Simulation</h3>
+      <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+        Test M-Pesa payment flow by simulating an STK push. Enter a test phone number and amount.
+      </p>
+    </div>
+  </div>
+
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+          Test Phone Number
+        </label>
+        <input
+          type="tel"
+          id="simulatePhoneNumber"
+          placeholder="254712345678"
+          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+        />
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Format: 254XXXXXXXXX (Kenya)
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+          Test Amount (KES)
+        </label>
+        <input
+          type="number"
+          id="simulateAmount"
+          placeholder="100"
+          min="1"
+          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+        Account Reference (Optional)
+      </label>
+      <input
+        type="text"
+        id="simulateAccountRef"
+        placeholder="HOT-TEST-001"
+        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+      />
+    </div>
+
+    <button
+      onClick={async () => {
+        try {
+          setSaving(true);
+          setError(null);
+
+          const phoneNumber = document.getElementById('simulatePhoneNumber').value;
+          const amount = document.getElementById('simulateAmount').value;
+          const accountRef = document.getElementById('simulateAccountRef').value;
+
+          if (!phoneNumber || !amount) {
+            setError('Phone number and amount are required');
+            setSaving(false);
+            return;
+          }
+
+          console.log('[Settings] Simulating STK push with:', { phoneNumber, amount, accountRef });
+
+          const result = await simulateMpesaStkPush(phoneNumber, parseInt(amount), accountRef);
+
+          if (result.success) {
+            setSuccess(`STK Push simulated! Check console for details.`);
+            console.log('[Settings] STK Push Simulation Result:', result.simulation);
+            setTimeout(() => setSuccess(null), 5000);
+            
+            // Clear inputs
+            document.getElementById('simulatePhoneNumber').value = '';
+            document.getElementById('simulateAmount').value = '';
+            document.getElementById('simulateAccountRef').value = '';
+          } else {
+            setError(result.message || 'Failed to simulate STK push');
+          }
+        } catch (err) {
+          console.error('[Settings] STK push simulation error:', err);
+          setError(err.response?.data?.message || err.message || 'Failed to simulate STK push');
+        } finally {
+          setSaving(false);
+        }
+      }}
+      disabled={saving}
+      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+    >
+      {saving ? (
+        <>
+          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          Simulating...
+        </>
+      ) : (
+        'Simulate STK Push'
+      )}
+    </button>
+
+    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
+        <span className="font-semibold">How it works:</span> This simulates what happens when a user initiates a payment. In production, the STK push would appear on the customer's phone. The simulation shows the exact credentials and parameters that would be sent to M-Pesa.
+      </p>
+    </div>
+  </div>
+</div>
       </div>
     )}
 

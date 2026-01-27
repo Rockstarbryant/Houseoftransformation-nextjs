@@ -76,7 +76,9 @@ export const updateSecuritySettings = async (data) => {
 
 export const updatePaymentSettings = async (data) => {
   try {
+    console.log('[SettingsService] Sending payment settings:', data);
     const response = await api.patch('/settings/payment', data);
+    console.log('[SettingsService] Payment response:', response.data);
     return response.data;
   } catch (error) {
     console.error('[SettingsService] Update payment settings error:', error);
@@ -100,7 +102,7 @@ export const getMpesaSettings = async () => {
 
 export const updateMpesaSettings = async (data) => {
   try {
-    const response = await api.patch('/settings/mpesa', data);
+    const response = await api.patch('/settings/mpesa', data);    
     return response.data;
   } catch (error) {
     console.error('[SettingsService] Update M-Pesa settings error:', error);
@@ -114,6 +116,20 @@ export const testMpesaConnection = async () => {
     return response.data;
   } catch (error) {
     console.error('[SettingsService] Test M-Pesa connection error:', error);
+    throw error;
+  }
+};
+
+export const simulateMpesaStkPush = async (phoneNumber, amount, accountRef = null) => {
+  try {
+    const response = await api.post('/settings/mpesa/simulate', {
+      phoneNumber,
+      amount,
+      accountRef
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] STK Push simulation error:', error);
     throw error;
   }
 };

@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 import { donationApi } from '@/services/api/donationService';
 import { X, DollarSign, User, Mail, Phone, Building } from 'lucide-react';
+import MpesaModal from './MpesaModal';
 
 export default function ContributionForm({ onClose, onSuccess, preselectedCampaign = null }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
+  const [mpesaPaymentData, setMpesaPaymentData] = useState(null);
   
   const [formData, setFormData] = useState({
     campaignId: preselectedCampaign || '',
@@ -52,64 +55,127 @@ export default function ContributionForm({ onClose, onSuccess, preselectedCampai
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+  e.preventDefault();
+  setError(null);
+  setSuccess(null);
 
-    // Validation
-    if (!formData.campaignId) {
-      setError('Please select a campaign');
+  // Validation
+  if (!formData.campaignId) {
+    setError('Please select a campaign');
+    return;
+  }
+
+  if (!formData.amount || parseFloat(formData.amount) <= 0) {
+    setError('Please enter a valid amount');
+    return;
+  }
+
+  if (!formData.isAnonymous) {
+    if (!formData.contributorName || !formData.contributorEmail || !formData.contributorPhone) {
+      setError('Please fill in all contributor details or check "Anonymous"');
       return;
     }
+  }
 
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      setError('Please enter a valid amount');
-      return;
+  // IF MPESA - SHOW MODAL INSTEAD OF DIRECT SUBMISSION
+  if (formData.paymentMethod === 'mpesa') {
+    // Store contribution data for M-Pesa modal
+    setMpesaPaymentData({
+      campaignId: formData.campaignId,
+      contributorName: formData.isAnonymous ? 'Anonymous' : formData.contributorName,
+      contributorEmail: formData.isAnonymous ? null : formData.contributorEmail,
+      contributorPhone: formData.isAnonymous ? null : formData.contributorPhone,
+      amount: parseFloat(formData.amount),
+      paymentMethod: 'mpesa',
+      notes: formData.notes,
+      isAnonymous: formData.isAnonymous
+    });
+    setShowMpesaModal(true);
+    return;
+  }
+
+  // FOR OTHER PAYMENT METHODS - SUBMIT DIRECTLY
+  try {
+    setLoading(true);
+
+    const response = await donationApi.contributions.create({
+      campaignId: formData.campaignId,
+      contributorName: formData.isAnonymous ? 'Anonymous' : formData.contributorName,
+      contributorEmail: formData.isAnonymous ? null : formData.contributorEmail,
+      contributorPhone: formData.isAnonymous ? null : formData.contributorPhone,
+      amount: parseFloat(formData.amount),
+      paymentMethod: formData.paymentMethod,
+      mpesaRef: null,
+      notes: formData.notes,
+      isAnonymous: formData.isAnonymous
+    });
+
+    if (response.success) {
+      setSuccess('Contribution recorded successfully! Thank you for your generosity.');
+      setTimeout(() => {
+        onSuccess?.();
+        onClose();
+      }, 2000);
+    } else {
+      setError(response.message || 'Failed to record contribution');
     }
-
-    if (!formData.isAnonymous) {
-      if (!formData.contributorName || !formData.contributorEmail || !formData.contributorPhone) {
-        setError('Please fill in all contributor details or check "Anonymous"');
-        return;
-      }
-    }
-
-    if (formData.paymentMethod === 'mpesa' && !formData.mpesaRef) {
-      setError('Please provide M-Pesa transaction reference');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await donationApi.contributions.create({
-        campaignId: formData.campaignId,
-        contributorName: formData.isAnonymous ? 'Anonymous' : formData.contributorName,
-        contributorEmail: formData.isAnonymous ? null : formData.contributorEmail,
-        contributorPhone: formData.isAnonymous ? null : formData.contributorPhone,
-        amount: parseFloat(formData.amount),
-        paymentMethod: formData.paymentMethod,
-        mpesaRef: formData.mpesaRef || null,
-        notes: formData.notes,
-        isAnonymous: formData.isAnonymous
-      });
-
-      if (response.success) {
-        setSuccess('Contribution recorded successfully! Thank you for your generosity.');
-        setTimeout(() => {
-          onSuccess?.();
-          onClose();
-        }, 2000);
-      } else {
-        setError(response.message || 'Failed to record contribution');
-      }
-    } catch (err) {
-      console.error('Create contribution error:', err);
-      setError(err.response?.data?.message || 'Failed to record contribution');
-    } finally {
-      setLoading(false);
-    }
+  } catch (err) {
+    console.error('Create contribution error:', err);
+    setError(err.response?.data?.message || 'Failed to record contribution');
+  } finally {
+    setLoading(false);
+  }
   };
+
+  const handleMpesaSuccess = async () => {
+  // After M-Pesa payment is successful, create the contribution record
+  try {
+    setLoading(true);
+
+    const response = await donationApi.contributions.create({
+      ...mpesaPaymentData,
+      mpesaRef: 'MPESA_STK_INITIATED' // Mark as initiated via STK
+    });
+
+    if (response.success) {
+      setSuccess('Contribution recorded successfully! Thank you for your generosity.');
+      setTimeout(() => {
+        onSuccess?.();
+        onClose();
+      }, 2000);
+    }
+  } catch (err) {
+    console.error('Create contribution error:', err);
+    setError(err.response?.data?.message || 'Failed to record contribution');
+  } finally {
+    setLoading(false);
+    setShowMpesaModal(false);
+    setMpesaPaymentData(null);
+  }
+  };
+
+  // RENDER M-PESA MODAL WHEN ACTIVE
+if (showMpesaModal && mpesaPaymentData) {
+  // Create a fake pledge object from contribution data for the modal
+  const fakePledge = {
+    id: mpesaPaymentData.campaignId,
+    campaign_title: selectedCampaign?.title || 'Contribution',
+    pledged_amount: mpesaPaymentData.amount,
+    paid_amount: 0,
+    remaining_amount: mpesaPaymentData.amount
+  };
+
+  return (
+    <MpesaModal
+      pledge={fakePledge}
+      onClose={() => {
+        setShowMpesaModal(false);
+        setMpesaPaymentData(null);
+      }}
+      onSuccess={handleMpesaSuccess}
+    />
+  );
+}
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

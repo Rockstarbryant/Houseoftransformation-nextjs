@@ -859,7 +859,3 @@ export default function MobileDonationsPage() {
     </div>
   );
 }
-
-// ============================================
-// END OF COMPONENT - MERGE ALL SECTIONS
-// ============================================
