@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
-  User, Calendar, BookOpen, ImageIcon, Heart, Users, Shield, BarChart3, LogOut, Home, Play, Newspaper, DollarSign, FileText, MessageSquare, Mail
+  User, Calendar, BookOpen, ImageIcon, Heart, Users, Shield, BarChart3, LogOut, Home, Play, Newspaper, DollarSign, FileText, MessageSquare, Mail, Bell
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -22,6 +22,7 @@ export default function PortalSidebar({ isOpen, onToggle }) {
 
   const iconMap = {
     'User': <User size={20} />,
+    'Bell': <Bell size={20} />,
     'Calendar': <Calendar size={20} />,
     'BookOpen': <BookOpen size={20} />,
     'ImageIcon': <ImageIcon size={20} />,

@@ -1,9 +1,10 @@
 'use client';
 
-import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
+import { Menu, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import Link from 'next/link';
+import NotificationBell from '@/components/NotificationBell';
 
 /**
  * Portal Header
@@ -42,11 +43,8 @@ export default function PortalHeader({ onSidebarToggle, sidebarOpen }) {
 
       {/* Right: Notifications + User Menu */}
       <div className="flex items-center gap-4">
-        {/* Notifications */}
-        <button className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-          <Bell size={20} className="text-slate-600 dark:text-slate-400" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        {/* Real-time Notification Bell */}
+        <NotificationBell />
 
         {/* User Menu */}
         <div className="relative">

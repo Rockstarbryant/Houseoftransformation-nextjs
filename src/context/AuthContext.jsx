@@ -335,6 +335,11 @@ export const AuthProvider = ({ children }) => {
     return hasPermission(`manage:${feature}`);
   };
 
+  const canManageAnnouncements = () => hasPermission('manage:announcements');
+  const canCreateAnnouncement = () => hasPermission('manage:announcements');
+  const canEditAnnouncement = () => hasPermission('manage:announcements');
+  const canDeleteAnnouncement = () => hasPermission('manage:announcements');
+
   const canPostBlog = () => {
     if (!user) return false;
     const allowedRoles = ['member', 'volunteer', 'usher', 'worship_team', 'pastor', 'bishop', 'admin'];
@@ -426,7 +431,12 @@ const canPostBlogCategory = (category) => {
     canViewFeedbackStats: () => hasAnyPermission(['view:feedback:stats', 'manage:feedback']),
     canReadAnyFeedback: () => hasAnyPermission(['read:feedback:sermon', 'read:feedback:service', 'read:feedback:testimony', 'read:feedback:suggestion', 'read:feedback:prayer', 'read:feedback:general', 'manage:feedback']),
     canRespondAnyFeedback: () => hasAnyPermission(['respond:feedback:sermon', 'respond:feedback:service', 'respond:feedback:testimony', 'respond:feedback:suggestion', 'respond:feedback:prayer', 'respond:feedback:general', 'manage:feedback']),
-    canArchiveAnyFeedback: () => hasAnyPermission(['archive:feedback:sermon', 'archive:feedback:service', 'archive:feedback:testimony', 'archive:feedback:suggestion', 'archive:feedback:prayer', 'archive:feedback:general', 'manage:feedback'])
+    canArchiveAnyFeedback: () => hasAnyPermission(['archive:feedback:sermon', 'archive:feedback:service', 'archive:feedback:testimony', 'archive:feedback:suggestion', 'archive:feedback:prayer', 'archive:feedback:general', 'manage:feedback']),
+    // Announcements
+    canManageAnnouncements,
+    canCreateAnnouncement,
+    canEditAnnouncement,
+    canDeleteAnnouncement
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

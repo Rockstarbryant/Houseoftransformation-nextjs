@@ -165,6 +165,21 @@ export const contributionService = {
       console.error('Verify contribution error:', error);
       throw error;
     }
+  },
+
+  // INITIATE M-PESA PAYMENT FOR CONTRIBUTION
+  initiateMpesa: async (campaignId, amount, phoneNumber) => {
+    try {
+      const response = await api.post('/contributions/mpesa/initiate', {
+        campaignId,
+        amount,
+        phoneNumber
+      });
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Initiate contribution M-Pesa error:', error);
+      throw error;
+    }
   }
 };
 
@@ -261,13 +276,20 @@ getAllPledges: async (page = 1, limit = 20) => {
 // ============================================
 
 export const paymentService = {
-  // Initiate M-Pesa payment
+  // ✅ CRITICAL: Add idempotency key to all payment requests
   initiateMpesa: async (pledgeId, amount, phoneNumber) => {
     try {
+      // Generate UUID for idempotency
+      const idempotencyKey = crypto.randomUUID();
+      
       const response = await api.post('/payments/mpesa/initiate', {
         pledgeId,
         amount,
         phoneNumber
+      }, {
+        headers: {
+          'Idempotency-Key': idempotencyKey
+        }
       });
       return response?.data || { success: false };
     } catch (error) {

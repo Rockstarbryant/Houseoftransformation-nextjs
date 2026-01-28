@@ -131,9 +131,15 @@ export default function BlogDetailClient({ post }) {
         {/* Featured Image */}
         <div className="relative aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden bg-slate-100 mb-16 shadow-2xl">
           {post.image ? (
-            <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+            <img 
+              src={post.image} 
+              alt={post.title} 
+              className="w-full h-full object-cover" 
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-200 text-9xl font-black">📰</div>
+            <div className="w-full h-full flex items-center justify-center text-slate-200 text-9xl font-black">
+              📰
+            </div>
           )}
         </div>
 

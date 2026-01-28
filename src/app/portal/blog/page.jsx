@@ -354,39 +354,43 @@ const ManageBlog = () => {
   };
 
   const handleFeaturedImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    try {
-      setUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
+  try {
+    setUploading(true);
+    
+    // Create FormData for Cloudinary
+    const cloudinaryFormData = new FormData();
+    cloudinaryFormData.append('file', file);
+    cloudinaryFormData.append('upload_preset', 'church_sermons'); // Use the same preset or create a new one
 
-      const formDataObj = new FormData();
-      formDataObj.append('file', file);
-      formDataObj.append('upload_preset', 'church_sermons');
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: formDataObj }
-      );
-
-      const data = await response.json();
-
-      if (data.secure_url) {
-        setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
-        showToast('Featured image uploaded successfully', 'success');
-      } else {
-        showToast('Featured image upload failed', 'error');
+    // Upload to Cloudinary
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: 'POST',
+        body: cloudinaryFormData
       }
-    } catch (error) {
-      console.error('Featured image upload error:', error);
-      showToast('Error uploading featured image', 'error');
-    } finally {
-      setUploading(false);
+    );
+
+    const data = await response.json();
+    
+    if (data.secure_url) {
+      // Set the Cloudinary URL to formData
+      setFormData(prev => ({ ...prev, image: data.secure_url }));
+      setImagePreview(data.secure_url);
+      showToast('Image uploaded successfully!', 'success');
+    } else {
+      showToast('Image upload failed', 'error');
     }
-  };
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    showToast('Error uploading image: ' + error.message, 'error');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

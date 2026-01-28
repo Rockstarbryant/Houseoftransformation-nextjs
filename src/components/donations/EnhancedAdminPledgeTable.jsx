@@ -1,423 +1,410 @@
-import { useState, useMemo } from 'react';
-import { Users, CheckCircle, Search, Filter, Download, Printer, ChevronDown, ChevronUp, AlertTriangle, X } from 'lucide-react';
+'use client';
 
-const formatCurrency = (amount) => {
-  if (!amount && amount !== 0) return 'KES 0.00';
-  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(amount);
-};
+import { useState, useEffect, useMemo } from 'react';
+import { Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { donationApi } from '@/services/api/donationService';
+import { formatCurrency, formatDateShort, getStatusBadge } from '@/utils/donationHelpers';
+import EditPledgeModal from './EditPledgeModal';
+import ManualPaymentModal from './ManualPaymentModal';
 
-const formatDate = (date) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const getStatusBadge = (status) => {
-  const badges = {
-    pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
-    partial: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Partial' },
-    completed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Completed' },
-    cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' }
-  };
-  return badges[status] || badges.pending;
-};
-
-export default function EnhancedPledgeTable({ 
-  pledges = [], 
-  onRecordPayment, 
-  onViewHistory,
-  onEditPledge,      
-  onCancelPledge     
-}) {
+export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTrigger = 0 }) {
+  const [pledges, setPledges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPledges, setSelectedPledges] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
-  const [filters, setFilters] = useState({
-    status: 'all',
-    campaign: 'all',
-    dateFrom: '',
-    dateTo: ''
-  });
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [editingPledge, setEditingPledge] = useState(null);
+  const [recordingPaymentFor, setRecordingPaymentFor] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [payments, setPayments] = useState({});
 
-  // Get unique campaigns
-  const campaigns = useMemo(() => {
-    return [...new Set(pledges.map(p => p.campaign_title).filter(Boolean))];
+  // Fetch pledges
+  useEffect(() => {
+    fetchPledges();
+  }, [campaignId, refreshTrigger]);
+
+  // Fetch payment details for each pledge
+  useEffect(() => {
+    if (pledges.length > 0) {
+      fetchPaymentDetails();
+    }
   }, [pledges]);
 
-  // Check if overdue
-  const isOverdue = (pledge) => {
-    if (pledge.status === 'completed' || pledge.status === 'cancelled') return false;
-    return pledge.due_date && new Date(pledge.due_date) < new Date();
-  };
+  const fetchPledges = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // Filter and sort
-  const processedPledges = useMemo(() => {
-    let result = pledges.filter(p => {
-      const searchMatch = !searchTerm || 
-        p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.campaign_title?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const statusMatch = filters.status === 'all' || 
-        (filters.status === 'overdue' ? isOverdue(p) : p.status === filters.status);
-      
-      const campaignMatch = filters.campaign === 'all' || p.campaign_title === filters.campaign;
-      
-      const dateMatch = (!filters.dateFrom || new Date(p.created_at) >= new Date(filters.dateFrom)) &&
-                       (!filters.dateTo || new Date(p.created_at) <= new Date(filters.dateTo));
-
-      return searchMatch && statusMatch && campaignMatch && dateMatch;
-    });
-
-    result.sort((a, b) => {
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
-      
-      if (['pledged_amount', 'paid_amount', 'remaining_amount'].includes(sortConfig.key)) {
-        aVal = parseFloat(aVal) || 0;
-        bVal = parseFloat(bVal) || 0;
-      } else if (sortConfig.key === 'created_at') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+      let response;
+      if (campaignId) {
+        response = await donationApi.pledges.getCampaignPledges(campaignId);
+      } else {
+        response = await donationApi.pledges.getAllPledges();
       }
 
-      return sortConfig.direction === 'asc' 
-        ? (aVal > bVal ? 1 : -1)
-        : (aVal < bVal ? 1 : -1);
-    });
-
-    return result;
-  }, [pledges, searchTerm, filters, sortConfig]);
-
-  // Stats
-  const stats = useMemo(() => ({
-    total: processedPledges.length,
-    pledged: processedPledges.reduce((s, p) => s + (p.pledged_amount || 0), 0),
-    paid: processedPledges.reduce((s, p) => s + (p.paid_amount || 0), 0),
-    remaining: processedPledges.reduce((s, p) => s + (p.remaining_amount || 0), 0),
-    completed: processedPledges.filter(p => p.status === 'completed').length,
-    overdue: processedPledges.filter(isOverdue).length
-  }), [processedPledges]);
-
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
+      if (response.success && response.pledges) {
+        setPledges(response.pledges);
+      } else {
+        setError(response.message || 'Failed to fetch pledges');
+      }
+    } catch (err) {
+      console.error('[PLEDGE-TABLE] Error:', err);
+      setError(err.message || 'Error fetching pledges');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExportCSV = () => {
-    const data = selectedPledges.length > 0 
-      ? processedPledges.filter(p => selectedPledges.includes(p.id))
-      : processedPledges;
+  const fetchPaymentDetails = async () => {
+    try {
+      const { success, payments: allPayments } = await donationApi.payments.getAll();
+      
+      if (success && allPayments) {
+        const paymentMap = {};
+        allPayments.forEach(payment => {
+          if (payment.pledge_id) {
+            paymentMap[payment.pledge_id] = payment;
+          }
+        });
+        setPayments(paymentMap);
+      }
+    } catch (err) {
+      console.error('[PAYMENT-DETAILS] Error:', err);
+    }
+  };
 
+  const isOverdue = (pledge) => {
+    if (!pledge.due_date || pledge.status === 'completed' || pledge.status === 'cancelled') {
+      return false;
+    }
+    return new Date(pledge.due_date) < new Date();
+  };
+
+  const handleSort = (key) => {
+    setSortConfig({
+      key,
+      direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+    });
+  };
+
+  const handleDelete = async (pledgeId) => {
+    if (!window.confirm('Are you sure you want to delete this pledge?')) return;
+
+    try {
+      const response = await donationApi.pledges.cancel(pledgeId);
+      if (response.success) {
+        setPledges(pledges.filter(p => p.id !== pledgeId));
+      } else {
+        alert(response.message || 'Failed to delete pledge');
+      }
+    } catch (err) {
+      alert('Error deleting pledge: ' + err.message);
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedPledges(processedPledges.map(p => p.id));
+    } else {
+      setSelectedPledges([]);
+    }
+  };
+
+  const handleExport = () => {
     const csv = [
-      ['Member', 'Email', 'Campaign', 'Pledged', 'Paid', 'Balance', 'Status', 'Date'],
-      ...data.map(p => [
-        p.member_name, p.member_email, p.campaign_title || 'General',
-        p.pledged_amount, p.paid_amount, p.remaining_amount, 
-        p.status, formatDate(p.created_at)
-      ])
-    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+      ['Member', 'Email', 'Phone', 'Pledged', 'Paid', 'Balance', 'Status', 'Payment Method', 'Verified By', 'Processed At', 'Due Date'],
+      ...processedPledges.map(pledge => {
+        const payment = payments[pledge.id];
+        return [
+          pledge.member_name,
+          pledge.member_email,
+          pledge.member_phone,
+          pledge.pledged_amount,
+          pledge.paid_amount,
+          pledge.remaining_amount,
+          pledge.status,
+          payment?.payment_method || 'N/A',
+          payment?.verified_by_id || 'N/A',
+          payment?.processed_at ? new Date(payment.processed_at).toLocaleDateString() : 'N/A',
+          pledge.due_date ? new Date(pledge.due_date).toLocaleDateString() : 'N/A'
+        ];
+      })
+    ];
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
+    const csvContent = csv.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `pledges-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
-  const handlePrint = () => {
-    const data = selectedPledges.length > 0 
-      ? processedPledges.filter(p => selectedPledges.includes(p.id))
-      : processedPledges;
+  // Filter and sort
+  const processedPledges = useMemo(() => {
+    let filtered = pledges;
 
-    const rows = data.map((p, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${p.member_name}</td>
-        <td>${p.campaign_title || 'General'}</td>
-        <td>${formatCurrency(p.pledged_amount)}</td>
-        <td>${formatCurrency(p.paid_amount)}</td>
-        <td>${formatCurrency(p.remaining_amount)}</td>
-        <td>${p.status}</td>
-      </tr>
-    `).join('');
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(p => p.status === filterStatus);
+    }
 
-    const win = window.open('', '_blank');
-    win.document.write(`
-      <!DOCTYPE html>
-      <html><head><title>Pledge Report</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h1 { color: #8B1A1A; border-bottom: 3px solid #8B1A1A; padding-bottom: 10px; }
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
-        .stat { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #8B1A1A; }
-        .stat-label { font-size: 12px; color: #666; }
-        .stat-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #8B1A1A; color: white; padding: 12px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        tr:nth-child(even) { background: #f9fafb; }
-        @media print { .no-print { display: none; } }
-      </style></head><body>
-      <h1>Pledge Report</h1>
-      <div class="stats">
-        <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${stats.total}</div></div>
-        <div class="stat"><div class="stat-label">Pledged</div><div class="stat-value">${formatCurrency(stats.pledged)}</div></div>
-        <div class="stat"><div class="stat-label">Collected</div><div class="stat-value">${formatCurrency(stats.paid)}</div></div>
-        <div class="stat"><div class="stat-label">Outstanding</div><div class="stat-value">${formatCurrency(stats.remaining)}</div></div>
+    if (searchTerm) {
+      filtered = filtered.filter(p =>
+        p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_phone?.includes(searchTerm)
+      );
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [pledges, sortConfig, filterStatus, searchTerm]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
-      <table><thead><tr><th>#</th><th>Member</th><th>Campaign</th><th>Pledged</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-      <tbody>${rows}</tbody></table>
-      <p style="margin-top: 30px; text-align: center; color: #666;">Generated: ${new Date().toLocaleString()}</p>
-      <button class="no-print" onclick="window.print()" style="position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #8B1A1A; color: white; border: none; border-radius: 8px; cursor: pointer;">Print PDF</button>
-      </body></html>
-    `);
-    win.document.close();
-  };
+    );
+  }
 
-  const hasFilters = searchTerm || filters.status !== 'all' || filters.campaign !== 'all' || filters.dateFrom || filters.dateTo;
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center gap-3">
+        <AlertCircle className="text-red-600" size={24} />
+        <div>
+          <h3 className="font-bold text-red-900">Error Loading Pledges</h3>
+          <p className="text-red-700">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200">
-      {/* Header */}
-      <div className="p-6 border-b bg-slate-50">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Users size={24} className="text-[#8B1A1A]" />
-              All Member Pledges
-            </h3>
-            <p className="text-sm text-slate-600 mt-1">Comprehensive pledge view</p>
+    <div className="space-y-6">
+      
+      {/* Toolbar */}
+      <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex-1 min-w-[250px]">
+            <input
+              type="text"
+              placeholder="Search by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 font-semibold rounded-lg flex items-center gap-2 ${
-                hasFilters ? 'bg-[#8B1A1A] text-white' : 'bg-slate-200 hover:bg-slate-300'
-              }`}
-            >
-              <Filter size={18} />
-              Filters
-            </button>
-            <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center gap-2">
-              <Download size={18} /> CSV
-            </button>
-            <button onClick={handlePrint} className="px-4 py-2 bg-[#8B1A1A] text-white font-semibold rounded-lg hover:bg-red-900 flex items-center gap-2">
-              <Printer size={18} /> Print
-            </button>
-          </div>
-        </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, email, or campaign..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-          />
-        </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mt-4 p-4 bg-white border rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})} className="px-3 py-2 border rounded-lg">
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-                <option value="overdue">Overdue</option>
-              </select>
-
-              <select value={filters.campaign} onChange={(e) => setFilters({...filters, campaign: e.target.value})} className="px-3 py-2 border rounded-lg">
-                <option value="all">All Campaigns</option>
-                {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-
-              <input type="date" value={filters.dateFrom} onChange={(e) => setFilters({...filters, dateFrom: e.target.value})} className="px-3 py-2 border rounded-lg" />
-              <input type="date" value={filters.dateTo} onChange={(e) => setFilters({...filters, dateTo: e.target.value})} className="px-3 py-2 border rounded-lg" />
-            </div>
-            {hasFilters && (
-              <button onClick={() => { setFilters({status: 'all', campaign: 'all', dateFrom: '', dateTo: ''}); setSearchTerm(''); }} className="mt-3 px-4 py-2 bg-slate-200 rounded-lg hover:bg-slate-300 flex items-center gap-2">
-                <X size={16} /> Clear Filters
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-          <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-slate-600">Total</p>
-            <p className="text-lg font-bold">{stats.total}</p>
-          </div>
-          <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-slate-600">Pledged</p>
-            <p className="text-lg font-bold text-blue-600">{formatCurrency(stats.pledged)}</p>
-          </div>
-          <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-slate-600">Collected</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(stats.paid)}</p>
-          </div>
-          <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-slate-600">Outstanding</p>
-            <p className="text-lg font-bold text-red-600">{formatCurrency(stats.remaining)}</p>
-          </div>
-          <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-slate-600">Overdue</p>
-            <p className="text-lg font-bold text-orange-600">{stats.overdue}</p>
-          </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download size={18} />
+            Export CSV
+          </button>
         </div>
 
         {selectedPledges.length > 0 && (
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex justify-between">
-            <p className="text-sm text-blue-800 font-semibold">{selectedPledges.length} selected</p>
-            <button onClick={() => setSelectedPledges([])} className="text-blue-600 text-sm font-semibold">Clear</button>
+          <div className="text-sm text-slate-600">
+            {selectedPledges.length} pledge(s) selected
           </div>
         )}
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        {processedPledges.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users size={48} className="mx-auto mb-4 text-slate-300" />
-            <p className="text-lg font-semibold mb-2">No pledges found</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-100 text-xs uppercase">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3">
-                  <input type="checkbox" onChange={(e) => setSelectedPledges(e.target.checked ? processedPledges.map(p => p.id) : [])} />
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedPledges.length === processedPledges.length && processedPledges.length > 0}
+                    onChange={handleSelectAll}
+                    className="rounded"
+                  />
                 </th>
-                <th className="px-4 py-3 cursor-pointer hover:bg-slate-200" onClick={() => handleSort('member_name')}>
-                  Member {sortConfig.key === 'member_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Member</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Email</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Phone</th>
+                <th className="px-4 py-3 text-right text-sm font-bold text-slate-700 cursor-pointer" onClick={() => handleSort('pledged_amount')}>
+                  Pledged
                 </th>
-                <th className="px-4 py-3 cursor-pointer hover:bg-slate-200" onClick={() => handleSort('campaign_title')}>
-                  Campaign {sortConfig.key === 'campaign_title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 cursor-pointer hover:bg-slate-200" onClick={() => handleSort('pledged_amount')}>
-                  Pledged {sortConfig.key === 'pledged_amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 cursor-pointer hover:bg-slate-200" onClick={() => handleSort('paid_amount')}>
-                  Paid {sortConfig.key === 'paid_amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3">Balance</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-3 text-right text-sm font-bold text-slate-700">Paid</th>
+                <th className="px-4 py-3 text-right text-sm font-bold text-slate-700">Balance</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Status</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Payment Method</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Verified By</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Processed At</th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Due Date</th>
+                <th className="px-4 py-3 text-center text-sm font-bold text-slate-700">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200">
               {processedPledges.map(pledge => {
                 const badge = getStatusBadge(pledge.status);
                 const overdue = isOverdue(pledge);
-                
+                const payment = payments[pledge.id];
+
                 return (
-                  <tr key={pledge.id} className="border-b hover:bg-slate-50">
-                     <td className="px-4 py-3">
-                      <input 
-                        type="checkbox" 
+                  <tr key={pledge.id} className={`hover:bg-slate-50 transition-colors ${overdue ? 'bg-red-50' : ''}`}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
                         checked={selectedPledges.includes(pledge.id)}
-                        onChange={(e) => setSelectedPledges(e.target.checked ? [...selectedPledges, pledge.id] : selectedPledges.filter(id => id !== pledge.id))}
+                        onChange={(e) => setSelectedPledges(
+                          e.target.checked
+                            ? [...selectedPledges, pledge.id]
+                            : selectedPledges.filter(id => id !== pledge.id)
+                        )}
+                        className="rounded"
                       />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold">{pledge.member_name}</div>
-                      <div className="text-xs text-slate-500">{pledge.member_email}</div>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{pledge.member_name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{pledge.member_email}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{pledge.member_phone}</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-900">
+                      {formatCurrency(pledge.pledged_amount)}
                     </td>
-                    <td className="px-4 py-3">{pledge.campaign_title || 'General'}</td>
-                    <td className="px-4 py-3 font-bold">{formatCurrency(pledge.pledged_amount)}</td>
-                    <td className="px-4 py-3 font-bold text-green-600">{formatCurrency(pledge.paid_amount)}</td>
-                    <td className="px-4 py-3 font-bold text-red-600">{formatCurrency(pledge.remaining_amount)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-green-600">
+                      {formatCurrency(pledge.paid_amount)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-red-600">
+                      {formatCurrency(pledge.remaining_amount)}
+                    </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${badge.bg} ${badge.text}`}>
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${badge.bg} ${badge.text}`}>
                         {badge.label}
                       </span>
-                      {overdue && (
-                        <div className="flex items-center gap-1 text-orange-600 text-xs mt-1">
-                          <AlertTriangle size={12} /> Overdue
-                        </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {payment ? (
+                        <span className="capitalize text-slate-700">{payment.payment_method}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">N/A</span>
                       )}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">{formatDate(pledge.created_at)}</td>
-                    <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1">
-                            {/* Record Payment */}
-                            {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onRecordPayment && (
-                            <button 
-                                onClick={() => onRecordPayment(pledge)} 
-                                className="text-blue-600 hover:text-blue-800 font-semibold text-xs text-left"
-                            >
-                                Record Payment
-                            </button>
-                            )}
-                            
-                            {/* View History */}
-                            {onViewHistory && (
-                            <button 
-                                onClick={() => onViewHistory(pledge)} 
-                                className="text-purple-600 hover:text-purple-800 font-semibold text-xs text-left"
-                            >
-                                View History
-                            </button>
-                            )}
-
-                            {/* ✅ ADD: Edit Pledge */}
-                            {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onEditPledge && (
-                            <button 
-                                onClick={() => onEditPledge(pledge)} 
-                                className="text-green-600 hover:text-green-800 font-semibold text-xs text-left"
-                            >
-                                Edit Pledge
-                            </button>
-                            )}
-
-                            {/* ✅ ADD: Cancel Pledge */}
-                            {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onCancelPledge && (
-                            <button 
-                                onClick={() => onCancelPledge(pledge)} 
-                                className="text-red-600 hover:text-red-800 font-semibold text-xs text-left"
-                            >
-                                Cancel Pledge
-                            </button>
-                            )}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {payment?.verified_by_id ? (
+                        <div>
+                          <p className="font-semibold text-slate-900">{payment.verified_by_id}</p>
+                          <p className="text-xs text-slate-500">
+                            {payment.verified_at ? new Date(payment.verified_at).toLocaleDateString() : 'N/A'}
+                          </p>
                         </div>
-
+                      ) : (
+                        <span className="text-slate-400 italic">Pending</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {payment?.processed_at ? (
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {new Date(payment.processed_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(payment.processed_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Not processed</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {pledge.due_date ? (
+                        <div>
+                          <p className={overdue ? 'font-bold text-red-600' : 'font-semibold text-slate-900'}>
+                            {new Date(pledge.due_date).toLocaleDateString()}
+                          </p>
+                          {overdue && <p className="text-xs text-red-600">OVERDUE</p>}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => setEditingPledge(pledge)}
+                        className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                        title="Edit pledge"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => setRecordingPaymentFor(pledge)}
+                        className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600"
+                        title="Record payment"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(pledge.id)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                        title="Delete pledge"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+
+        {processedPledges.length === 0 && (
+          <div className="text-center py-12 text-slate-600">
+            <p className="text-lg font-semibold">No pledges found</p>
+            <p className="text-sm">Try adjusting your filters or search criteria</p>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      {processedPledges.length > 0 && (
-        <div className="bg-slate-50 border-t px-6 py-4 flex justify-between text-sm">
-          <div className="flex gap-6">
-            <div>
-              <span className="text-slate-600">Collection Rate:</span>
-              <span className="ml-2 font-bold">{stats.pledged > 0 ? Math.round((stats.paid / stats.pledged) * 100) : 0}%</span>
-            </div>
-            <div>
-              <span className="text-slate-600">Completion:</span>
-              <span className="ml-2 font-bold">{stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</span>
-            </div>
-          </div>
-          <div className="text-slate-600">
-            Showing <strong>{processedPledges.length}</strong> pledges
-          </div>
-        </div>
+      {/* Modals */}
+      {editingPledge && (
+        <EditPledgeModal
+          pledge={editingPledge}
+          onClose={() => setEditingPledge(null)}
+          onSuccess={() => {
+            setEditingPledge(null);
+            fetchPledges();
+          }}
+        />
+      )}
+
+      {recordingPaymentFor && (
+        <ManualPaymentModal
+          pledge={recordingPaymentFor}
+          onClose={() => setRecordingPaymentFor(null)}
+          onSuccess={() => {
+            setRecordingPaymentFor(null);
+            fetchPledges();
+            fetchPaymentDetails();
+          }}
+        />
       )}
     </div>
   );

@@ -45,13 +45,23 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
         onClick={(e) => handleReadMore(e)}
       >
         {/* Banner Section */}
-        <div className="relative h-48 md:h-56 overflow-hidden bg-slate-900 dark:bg-slate-700 group-hover:scale-105 transition-transform duration-500">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-black opacity-90 group-hover:scale-110 transition-transform duration-700" />
-          <div className="absolute inset-0 flex items-center justify-center text-6xl drop-shadow-2xl">
-            {post.image || <Newspaper className="text-white/20 w-16 h-16" />}
-          </div>
+        <div className="relative h-48 md:h-56 overflow-hidden bg-slate-900 dark:bg-slate-700">
+          {post.image ? (
+            <img 
+              src={post.image} 
+              alt={post.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-black opacity-90 group-hover:scale-110 transition-transform duration-700" />
+              <div className="absolute inset-0 flex items-center justify-center text-6xl drop-shadow-2xl">
+                <Newspaper className="text-white/20 w-16 h-16" />
+              </div>
+            </>
+          )}
           
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+          <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md ${categoryColors[post.category] || 'bg-white/90 text-slate-800 border-slate-200'}`}>
               {post.category || 'General'}
             </span>

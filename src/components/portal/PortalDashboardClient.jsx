@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import api from '@/lib/api';
 import {
   Calendar,
   BookOpen,
@@ -15,19 +17,32 @@ import {
   ArrowRight,
   Home,
   TrendingUp,
-  FileText,
+  Bell,
   User,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search,
+  CheckCheck,
+  AlertCircle,
+  Info,
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 
 /**
  * Portal Dashboard Client Component with Multi-Page Navigation
+ * Journey tab replaced with Announcements
  */
 export default function PortalDashboardClient() {
   const { user } = useAuth();
   const { getAccessibleSections, isAdmin } = usePermissions();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(0);
+  
+  // Announcements state
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [announcementsPage, setAnnouncementsPage] = useState(1);
 
   const sections = getAccessibleSections();
 
@@ -46,6 +61,66 @@ export default function PortalDashboardClient() {
   const permissions = Array.isArray(user?.role?.permissions) 
     ? user.role.permissions 
     : [];
+
+  // Priority config for announcements
+  const priorityConfig = {
+    low: { icon: Info, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Low' },
+    normal: { icon: Bell, color: 'text-gray-600', bg: 'bg-gray-50', label: 'Normal' },
+    high: { icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50', label: 'High' },
+    urgent: { icon: Zap, color: 'text-red-600', bg: 'bg-red-50', label: 'Urgent' }
+  };
+
+  // Fetch announcements
+  const fetchAnnouncements = async () => {
+    try {
+      setLoadingAnnouncements(true);
+      const response = await api.get(`/announcements?page=${announcementsPage}&limit=10`);
+      
+      if (response.data.success) {
+        setAnnouncements(response.data.announcements);
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error fetching announcements:', error);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
+  // Mark announcement as read
+  const markAsRead = async (id) => {
+    try {
+      await api.post(`/announcements/${id}/read`);
+      setAnnouncements(prev =>
+        prev.map(a => a._id === id ? { ...a, isRead: true } : a)
+      );
+    } catch (error) {
+      console.error('[Dashboard] Error marking as read:', error);
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    
+    return date.toLocaleDateString();
+  };
+
+  // Fetch announcements when tab is selected
+  useEffect(() => {
+    if (currentPage === 2) { // Announcements tab index
+      fetchAnnouncements();
+    }
+  }, [currentPage, announcementsPage]);
 
   // Page 0: Original Portal Dashboard
   const renderPortalDashboard = () => (
@@ -191,94 +266,63 @@ export default function PortalDashboardClient() {
     </div>
   );
 
-  // Page 1: Analytics Overview
+  // Page 1: Analytics (keeping original)
   const renderAnalytics = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-4xl font-black mb-2">Analytics</h1>
-        <p className="text-blue-100">Track your performance metrics</p>
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-8 text-white shadow-lg">
+        <h1 className="text-4xl font-black mb-2">Explore</h1>
+        <p className="text-purple-100">Discover insights and analytics</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="text-green-500" size={24} />
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">2,847</span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Views</p>
-          <p className="text-xs text-green-500 mt-1">+12.5% from last month</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="text-blue-500" size={24} />
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">1,245</span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Active Users</p>
-          <p className="text-xs text-blue-500 mt-1">+8.3% from last month</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-          <div className="flex items-center gap-3 mb-2">
-            <Heart className="text-red-500" size={24} />
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">573</span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Donations</p>
-          <p className="text-xs text-red-500 mt-1">+15.2% from last month</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar className="text-purple-500" size={24} />
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">28</span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Events This Month</p>
-          <p className="text-xs text-purple-500 mt-1">+4 from last month</p>
-        </div>
-      </div>
-
-      {/* Chart Placeholder */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Weekly Activity</h3>
-        <div className="flex items-end gap-2 h-48">
-          {[65, 45, 80, 55, 70, 85, 60].map((height, i) => (
-            <div key={i} className="flex-1 bg-blue-500 rounded-t-lg transition-all hover:bg-blue-600" 
-                 style={{ height: `${height}%` }}>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <TrendingUp className="text-blue-600 dark:text-blue-400" size={24} />
             </div>
-          ))}
+            <h3 className="font-bold text-slate-900 dark:text-white">Engagement</h3>
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">87%</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Monthly average</p>
         </div>
-        <div className="flex justify-between mt-2 text-xs text-slate-500">
-          <span>Mon</span>
-          <span>Tue</span>
-          <span>Wed</span>
-          <span>Thu</span>
-          <span>Fri</span>
-          <span>Sat</span>
-          <span>Sun</span>
+
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Users className="text-green-600 dark:text-green-400" size={24} />
+            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white">Active Users</h3>
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">1,234</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">This month</p>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <BarChart3 className="text-purple-600 dark:text-purple-400" size={24} />
+            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white">Growth</h3>
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">+24%</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">vs last month</p>
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
         <h3 className="font-bold text-slate-900 dark:text-white mb-4">Recent Activity</h3>
         <div className="space-y-3">
           {[
-            { user: 'John Doe', action: 'donated $50', time: '2 hours ago', color: 'bg-red-500' },
-            { user: 'Jane Smith', action: 'registered for event', time: '5 hours ago', color: 'bg-blue-500' },
-            { user: 'Mike Johnson', action: 'submitted feedback', time: '1 day ago', color: 'bg-green-500' },
-            { user: 'Sarah Williams', action: 'updated profile', time: '2 days ago', color: 'bg-purple-500' }
-          ].map((activity, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-              <div className={`w-2 h-2 rounded-full ${activity.color}`}></div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {activity.user}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{activity.action}</p>
+            { label: 'New registrations', value: '45', time: 'Today' },
+            { label: 'Events attended', value: '128', time: 'This week' },
+            { label: 'Donations received', value: '$2,450', time: 'This month' }
+          ].map((item, i) => (
+            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{item.time}</p>
               </div>
-              <span className="text-xs text-slate-400">{activity.time}</span>
+              <p className="text-lg font-bold text-[#8B1A1A]">{item.value}</p>
             </div>
           ))}
         </div>
@@ -286,124 +330,136 @@ export default function PortalDashboardClient() {
     </div>
   );
 
-  // Page 2: Reports
-  const renderReports = () => (
+  // Page 2: ANNOUNCEMENTS (Replacing Journey)
+  const renderAnnouncements = () => (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-4xl font-black mb-2">Reports</h1>
-        <p className="text-purple-100">Generate and view system reports</p>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white shadow-lg">
+        <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
+          <Bell size={40} />
+          Announcements
+        </h1>
+        <p className="text-blue-100">Stay updated with the latest news and updates</p>
       </div>
 
-      {/* Report Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <FileText className="text-purple-600" size={24} />
-            </div>
-            <ArrowRight className="text-slate-400" size={20} />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white mb-2">Monthly Report</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Complete overview of January 2026
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Generated</span>
-            <span className="text-xs text-slate-400">Last updated: Jan 20</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <BarChart3 className="text-blue-600" size={24} />
-            </div>
-            <ArrowRight className="text-slate-400" size={20} />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white mb-2">Donation Trends</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Analyze donation patterns over time
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Pending</span>
-            <span className="text-xs text-slate-400">Generating...</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <Users className="text-green-600" size={24} />
-            </div>
-            <ArrowRight className="text-slate-400" size={20} />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white mb-2">User Engagement</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Track user activity and retention
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Generated</span>
-            <span className="text-xs text-slate-400">Last updated: Jan 22</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-              <Calendar className="text-red-600" size={24} />
-            </div>
-            <ArrowRight className="text-slate-400" size={20} />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white mb-2">Event Analytics</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Review event attendance and feedback
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Generated</span>
-            <span className="text-xs text-slate-400">Last updated: Jan 19</span>
-          </div>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => router.push('/portal/announcements')}
+          className="px-4 py-2 bg-[#8B1A1A] text-white rounded-lg font-semibold hover:bg-red-900 transition-colors"
+        >
+          View All Announcements
+        </button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
-        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Report Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-            <p className="text-2xl font-bold text-purple-600">12</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Reports</p>
-          </div>
-          <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-            <p className="text-2xl font-bold text-green-600">8</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Generated</p>
-          </div>
-          <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-            <p className="text-2xl font-bold text-yellow-600">3</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">In Progress</p>
-          </div>
-          <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-            <p className="text-2xl font-bold text-red-600">1</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Failed</p>
-          </div>
+      {/* Announcements List */}
+      {loadingAnnouncements ? (
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
         </div>
-      </div>
+      ) : announcements.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-12 text-center">
+          <Bell size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <p className="text-slate-600 dark:text-slate-400 font-semibold">
+            No announcements yet
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {announcements.slice(0, 5).map((announcement) => {
+            const PriorityIcon = priorityConfig[announcement.priority].icon;
+            const priorityColor = priorityConfig[announcement.priority].color;
+            const priorityBg = priorityConfig[announcement.priority].bg;
+
+            return (
+              <div
+                key={announcement._id}
+                onClick={() => router.push(`/portal/announcements/${announcement._id}`)}
+                className={`
+                  bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm cursor-pointer
+                  hover:shadow-md transition-all border-l-4
+                  ${!announcement.isRead ? 'border-l-[#8B1A1A] bg-red-50/30 dark:bg-red-950/10' : 'border-l-transparent'}
+                `}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Priority Icon */}
+                  <div className={`p-3 ${priorityBg} dark:${priorityBg}/20 rounded-lg flex-shrink-0`}>
+                    <PriorityIcon size={20} className={priorityColor} />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        {announcement.title}
+                        {!announcement.isRead && (
+                          <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                      </h3>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {formatDate(announcement.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
+                      {announcement.content}
+                    </p>
+
+                    {/* Meta Info */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded capitalize">
+                        {announcement.category}
+                      </span>
+                      <span className={`px-2 py-1 ${priorityBg} dark:${priorityBg}/20 ${priorityColor} rounded capitalize font-semibold`}>
+                        {priorityConfig[announcement.priority].label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mark as Read Button */}
+                  {!announcement.isRead && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(announcement._id);
+                      }}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
+                      title="Mark as read"
+                    >
+                      <CheckCheck size={18} className="text-green-600" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* View All Link */}
+      {announcements.length > 0 && (
+        <div className="text-center">
+          <button
+            onClick={() => router.push('/portal/announcements')}
+            className="text-[#8B1A1A] hover:text-red-900 font-semibold text-sm underline"
+          >
+            View all {announcements.length > 5 ? `${announcements.length} ` : ''}announcements →
+          </button>
+        </div>
+      )}
     </div>
   );
 
-  // Page 3: Profile Overview
+  // Page 3: Profile (keeping original)
   const renderProfile = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-8 text-white shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-            <User className="text-green-600" size={32} />
-          </div>
-          <div>
-            <h1 className="text-4xl font-black">{user?.name || 'User'}</h1>
-            <p className="text-green-100">{user?.email || 'user@example.com'}</p>
-          </div>
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-2xl p-8 text-white shadow-lg flex items-center gap-6">
+        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+          <User className="text-green-600" size={32} />
+        </div>
+        <div>
+          <h1 className="text-4xl font-black">{user?.name || 'User'}</h1>
+          <p className="text-green-100">{user?.email || 'user@example.com'}</p>
         </div>
       </div>
 
@@ -503,11 +559,11 @@ export default function PortalDashboardClient() {
   const pages = [
     renderPortalDashboard,
     renderAnalytics,
-    renderReports,
+    renderAnnouncements,  // ← CHANGED: Announcements instead of renderReports
     renderProfile
   ];
 
-  const pageNames = ['Home', 'Explore', 'Journey', 'Profile'];
+  const pageNames = ['Home', 'Explore', 'Announcements', 'Profile']; // ← CHANGED: Journey → Announcements
 
   return (
     <div className="pb-24 md:pb-8">
@@ -524,7 +580,7 @@ export default function PortalDashboardClient() {
             {[
               { icon: <Home size={24} />, label: 'Home' },
               { icon: <TrendingUp size={24} />, label: 'Explore' },
-              { icon: <FileText size={24} />, label: 'Journey' },
+              { icon: <Bell size={24} />, label: 'Announcements' }, // ← CHANGED: FileText → Bell, Journey → Announcements
               { icon: <User size={24} />, label: 'Profile' }
             ].map((item, i) => (
               <button

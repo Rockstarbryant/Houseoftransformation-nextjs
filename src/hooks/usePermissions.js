@@ -161,6 +161,14 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
   const canViewAnalytics = () => hasPermission('view:analytics');
   const canViewAuditLogs = () => hasPermission('view:audit_logs');
 
+  /**
+   * Announcements Management
+   */
+  const canManageAnnouncements = () => hasPermission('manage:announcements');
+  const canCreateAnnouncement = () => hasPermission('manage:announcements');
+  const canEditAnnouncement = () => hasPermission('manage:announcements');
+  const canDeleteAnnouncement = () => hasPermission('manage:announcements');
+
   // ===== HELPER FUNCTIONS =====
 
   /**
@@ -234,6 +242,7 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
     try {
       const sections = [];
 
+
       // Everyone can access profile
       sections.push({
         name: 'Profile',
@@ -241,6 +250,17 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
         icon: 'User',
         permission: null
       });
+
+      // Only show Announcements in sidebar for users with manage permission
+      // All users can access via dashboard
+      if (canManageAnnouncements()) {
+        sections.push({
+          name: 'Announcements',
+          href: '/portal/announcements',
+          icon: 'Bell',
+          permission: 'manage:announcements'
+        });
+      }
 
       if (canManageEvents()) {
         sections.push({
@@ -503,6 +523,12 @@ canVerifyPayments,
 
     // Analytics & Reporting
     canViewAnalytics,
-    canViewAuditLogs
+    canViewAuditLogs,
+
+    // Announcements
+    canManageAnnouncements,
+    canCreateAnnouncement,
+    canEditAnnouncement,
+    canDeleteAnnouncement
   };
 };
