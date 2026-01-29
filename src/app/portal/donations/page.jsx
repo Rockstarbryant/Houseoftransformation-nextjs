@@ -17,6 +17,8 @@ import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
 import CampaignsTab from '@/components/donations/CampaignsTab';
 import PledgeForm from '@/components/donations/PledgeForm';
 import ContributionForm from '@/components/donations/ContributionForm';
+import TransactionAuditLogTab from '@/components/donations/TransactionAuditLogTab'; // NEW
+import ContributionsTab from '@/components/donations/ContributionsTab';
 import MpesaModal from '@/components/donations/MpesaModal';
 import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
 import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal'; // NEW
@@ -65,6 +67,7 @@ export default function DonationsPage() {
   const [allPledges, setAllPledges] = useState([]);
   const [payments, setPayments] = useState([]);
   const [analyticsData, setAnalyticsData] = useState(null);
+
   
 
   // Modal states
@@ -118,6 +121,19 @@ export default function DonationsPage() {
       setError('You do not have permission to access donations');
     }
   }, [isLoading]);
+
+  // In CampaignsTab.jsx or main donations page
+  useEffect(() => {
+  const checkOverdueCampaigns = async () => {
+    try {
+      await api.post('/campaigns/check-overdue');
+    } catch (err) {
+      console.error('[CAMPAIGNS] Failed to check overdue:', err);
+    }
+  };
+
+  checkOverdueCampaigns();
+}, []);
 
   // Fetch all data
   const fetchAllData = useCallback(async () => {
@@ -585,6 +601,32 @@ const handlePledgeUpdated = () => {
 
           {canViewAllPayments() && (
             <button
+              onClick={() => setActiveTab('contributions')}
+              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'contributions'
+                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              Contributions
+            </button>
+          )}
+
+          {canViewDonationReports() && (
+            <button
+              onClick={() => setActiveTab('audit')}
+              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'audit'
+                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              Audit Log
+            </button>
+          )}
+
+          {canViewAllPayments() && (
+            <button
               onClick={() => setActiveTab('payments')}
               className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'payments'
@@ -759,6 +801,12 @@ const handlePledgeUpdated = () => {
         onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
       />
     )}
+
+    {activeTab === 'audit' && canViewDonationReports() && (
+       <TransactionAuditLogTab />
+    )}
+
+    {activeTab === 'contributions' && <ContributionsTab />}
 
     {/* ALL PLEDGES TAB */}
     {activeTab === 'all-pledges' && canViewAllPledges() && (

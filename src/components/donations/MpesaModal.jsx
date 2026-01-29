@@ -2,18 +2,19 @@
 
 import { useState } from 'react';
 import { donationApi } from '@/services/api/donationService';
-import { formatCurrency, validateKenyanPhone, formatPhoneToKenyan } from '@/utils/donationHelpers';
-import { X, Smartphone, CheckCircle, AlertCircle } from 'lucide-react';
+import { formatCurrency, validateKenyanPhone } from '@/utils/donationHelpers';
+import { X, Smartphone, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 
 export default function MpesaModal({ pledge, onClose, onSuccess }) {
   const [phone, setPhone] = useState('254');
   const [amount, setAmount] = useState(pledge.remaining_amount);
-  const [step, setStep] = useState('input'); // 'input' | 'processing' | 'waiting'
+  const [step, setStep] = useState('input'); // 'input' | 'processing' | 'waiting' | 'duplicate'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [duplicateInfo, setDuplicateInfo] = useState(null);
 
   // ============================================
-  // FORM HANDLERS
+  // FORM VALIDATION
   // ============================================
 
   const validateForm = () => {
@@ -51,6 +52,10 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
     setError(null);
   };
 
+  // ============================================
+  // SUBMIT PAYMENT
+  // ============================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -61,7 +66,7 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
     setStep('processing');
 
     try {
-      console.log('[MPESA] Initiating payment:', {
+      console.log('[MPESA-MODAL] Initiating payment:', {
         pledgeId: pledge.id,
         amount: Number(amount),
         phone
@@ -74,21 +79,43 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
       );
 
       if (response.success) {
-        console.log('[MPESA] Payment initiated successfully');
-        setStep('waiting');
-        
-        // Auto-close after 10 seconds and refresh parent
-        setTimeout(() => {
-          if (onSuccess) onSuccess();
-          onClose();
-        }, 10000);
+        // ✅ FIXED: Handle duplicate request properly
+        if (response.isDuplicate) {
+          console.log('[MPESA-MODAL] Duplicate request detected');
+          setDuplicateInfo({
+            paymentId: response.paymentId,
+            status: response.status
+          });
+          setStep('duplicate');
+          
+          // Auto-close after showing duplicate message
+          setTimeout(() => {
+            if (onSuccess) onSuccess();
+            onClose();
+          }, 3000);
+        } else {
+          console.log('[MPESA-MODAL] Payment initiated successfully');
+          setStep('waiting');
+          
+          // Auto-close after 10 seconds and refresh parent
+          setTimeout(() => {
+            if (onSuccess) onSuccess();
+            onClose();
+          }, 10000);
+        }
       } else {
         setError(response.message || 'Failed to initiate payment');
         setStep('input');
       }
     } catch (err) {
-      console.error('[MPESA] Error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to initiate M-Pesa payment');
+      console.error('[MPESA-MODAL] Error:', err);
+      
+      // ✅ FIXED: Better error message extraction
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || 'Failed to initiate M-Pesa payment';
+      
+      setError(errorMessage);
       setStep('input');
     } finally {
       setIsSubmitting(false);
@@ -125,6 +152,7 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
               onClick={handleClose}
               disabled={isSubmitting}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+              aria-label="Close"
             >
               <X size={24} />
             </button>
@@ -177,6 +205,7 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
                 required
                 disabled={isSubmitting}
+                aria-label="M-Pesa Phone Number"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Format: 254XXXXXXXXX (12 digits)
@@ -199,6 +228,7 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
                 required
                 disabled={isSubmitting}
+                aria-label="Payment Amount"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Maximum: {formatCurrency(pledge.remaining_amount)}
@@ -209,7 +239,7 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -252,6 +282,51 @@ export default function MpesaModal({ pledge, onClose, onSuccess }) {
           </h3>
           <p className="text-slate-600 dark:text-slate-400">
             Initiating M-Pesa payment. Please wait...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================
+  // RENDER - DUPLICATE REQUEST STEP
+  // ============================================
+
+  if (step === 'duplicate') {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
+          
+          {/* Duplicate Icon */}
+          <div className="mb-6">
+            <div className="animate-pulse">
+              <Zap className="mx-auto text-yellow-500" size={64} />
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              Payment Already Initiated
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              This payment request was already processed. Please check your payment history.
+            </p>
+            {duplicateInfo && (
+              <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-left">
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                  <strong>Payment ID:</strong> {duplicateInfo.paymentId}
+                </p>
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                  <strong>Status:</strong> {duplicateInfo.status}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            This window will close automatically in 3 seconds...
           </p>
         </div>
       </div>

@@ -28,8 +28,8 @@ const Card = ({
   };
 
   const variants = {
-    light: 'bg-white',
-    slate: 'bg-slate-50',
+    light: 'bg-white dark:bg-slate-800',
+    slate: 'bg-slate-50 dark:bg-slate-700',
     dark: 'bg-slate-900 text-white',
     gradient: 'bg-gradient-to-br from-slate-50 to-white'
   };

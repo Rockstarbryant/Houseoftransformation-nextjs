@@ -26,7 +26,7 @@ export const galleryService = {
     
     if (isMobile) {
       console.log('📱 Mobile detected - adding stabilization delay');
-      await new Promise(resolve => setTimeout(resolve, 1500)); // ✅ Increased to 1.5s
+      await new Promise(resolve => setTimeout(resolve, 15000)); // ✅ Increased to 1.5s
     }
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -34,7 +34,7 @@ export const galleryService = {
         if (attempt > 0) {
           console.log(`🔄 Retry attempt ${attempt}/${maxRetries}`);
           // Exponential backoff: 2s, 4s, 8s
-          const delay = 2000 * Math.pow(2, attempt - 1);
+          const delay = 6000 * Math.pow(2, attempt - 1);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
 

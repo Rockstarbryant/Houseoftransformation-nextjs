@@ -331,122 +331,124 @@ export default function PortalDashboardClient() {
   );
 
   // Page 2: ANNOUNCEMENTS (Replacing Journey)
+  // Page 2: ANNOUNCEMENTS (X/Binance Style Redesign)
   const renderAnnouncements = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
-          <Bell size={40} />
-          Announcements
-        </h1>
-        <p className="text-blue-100">Stay updated with the latest news and updates</p>
+    <div className="w-full max-w-4xl mx-auto md:px-4 pb-20 md:pb-8">
+      {/* Dynamic Header: Responsive padding and text size */}
+      <div className="bg-slate-900 md:rounded-2xl p-6 md:p-10 text-white relative overflow-hidden mb-4 md:mb-8">
+        <div className="relative z-10">
+          <h1 className="text-2xl md:text-4xl font-black flex items-center gap-3">
+            <Bell className="text-yellow-400 animate-ring" size={28} />
+            Announcements
+          </h1>
+          <p className="text-slate-400 text-sm md:text-base mt-2">Latest updates from the ecosystem.</p>
+        </div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-3xl rounded-full"></div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.push('/portal/announcements')}
-          className="px-4 py-2 bg-[#8B1A1A] text-white rounded-lg font-semibold hover:bg-red-900 transition-colors"
-        >
-          View All Announcements
+      {/* Filter Bar: Stacks on mobile */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 md:px-0 mb-6">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto">
+          {['All', 'Unread', 'System'].map((tab) => (
+            <button key={tab} className="flex-1 sm:flex-none px-6 py-2 text-xs font-bold rounded-lg transition-all hover:bg-white dark:hover:bg-slate-700">
+              {tab}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => router.push('/portal/announcements')} className="text-xs font-bold text-[#8B1A1A] flex items-center gap-1 self-end">
+          Archive <ArrowRight size={14} />
         </button>
       </div>
 
-      {/* Announcements List */}
-      {loadingAnnouncements ? (
-        <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
-        </div>
-      ) : announcements.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-12 text-center">
-          <Bell size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <p className="text-slate-600 dark:text-slate-400 font-semibold">
-            No announcements yet
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {announcements.slice(0, 5).map((announcement) => {
-            const PriorityIcon = priorityConfig[announcement.priority].icon;
-            const priorityColor = priorityConfig[announcement.priority].color;
-            const priorityBg = priorityConfig[announcement.priority].bg;
-
+      {/* The Feed: Fluid Width */}
+      <div className="space-y-[1px] md:space-y-3 bg-slate-100 dark:bg-slate-900 md:bg-transparent">
+        {loadingAnnouncements ? (
+          <div className="p-8 text-center animate-pulse text-slate-400">Loading feed...</div>
+        ) : announcements.length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 p-12 text-center md:rounded-xl">
+            <p className="text-slate-500 font-medium">No new notifications</p>
+          </div>
+        ) : (
+          announcements.map((announcement) => {
+            const Config = priorityConfig[announcement.priority] || priorityConfig.normal;
             return (
               <div
                 key={announcement._id}
                 onClick={() => router.push(`/portal/announcements/${announcement._id}`)}
                 className={`
-                  bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm cursor-pointer
-                  hover:shadow-md transition-all border-l-4
-                  ${!announcement.isRead ? 'border-l-[#8B1A1A] bg-red-50/30 dark:bg-red-950/10' : 'border-l-transparent'}
+                  relative flex flex-col md:flex-row gap-3 md:gap-4 p-4 md:p-5 
+                  bg-white dark:bg-slate-800 md:rounded-xl cursor-pointer 
+                  transition-all active:scale-[0.98] md:hover:shadow-md
+                  border-b md:border border-slate-50 dark:border-slate-700
+                  ${!announcement.isRead ? 'border-l-4 border-l-[#8B1A1A]' : 'border-l-4 border-l-transparent'}
                 `}
               >
-                <div className="flex items-start gap-4">
-                  {/* Priority Icon */}
-                  <div className={`p-3 ${priorityBg} dark:${priorityBg}/20 rounded-lg flex-shrink-0`}>
-                    <PriorityIcon size={20} className={priorityColor} />
+                {/* Top Row (Mobile) / Left Side (PC) */}
+                <div className="flex items-start justify-between md:justify-start gap-4">
+                  <div className={`p-2.5 rounded-lg ${Config.bg} ${Config.color}`}>
+                    <Config.icon size={20} />
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                        {announcement.title}
-                        {!announcement.isRead && (
-                          <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                        )}
-                      </h3>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {formatDate(announcement.createdAt)}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
-                      {announcement.content}
-                    </p>
-
-                    {/* Meta Info */}
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded capitalize">
-                        {announcement.category}
-                      </span>
-                      <span className={`px-2 py-1 ${priorityBg} dark:${priorityBg}/20 ${priorityColor} rounded capitalize font-semibold`}>
-                        {priorityConfig[announcement.priority].label}
-                      </span>
-                    </div>
+                  
+                  {/* Category & Time (Mobile Only view) */}
+                  <div className="flex flex-col items-end md:hidden">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                      {formatDate(announcement.createdAt)}
+                    </span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded mt-1 font-black uppercase ${Config.bg} ${Config.color}`}>
+                      {Config.label}
+                    </span>
                   </div>
-
-                  {/* Mark as Read Button */}
-                  {!announcement.isRead && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markAsRead(announcement._id);
-                      }}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
-                      title="Mark as read"
-                    >
-                      <CheckCheck size={18} className="text-green-600" />
-                    </button>
-                  )}
                 </div>
+
+                {/* Content Area */}
+                <div className="flex-1 min-w-0">
+                  <div className="hidden md:flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#8B1A1A]">{announcement.category}</span>
+                      <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">{Config.label}</span>
+                    </div>
+                    <span className="text-xs text-slate-400 font-medium">{formatDate(announcement.createdAt)}</span>
+                  </div>
+
+                  <h3 className={`text-sm md:text-base mb-1 truncate ${!announcement.isRead ? 'font-black text-slate-900 dark:text-white' : 'font-medium text-slate-500'}`}>
+                    {announcement.title}
+                  </h3>
+                  
+                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {announcement.content}
+                  </p>
+
+                  <div className="mt-3 flex items-center justify-between md:hidden">
+                     <span className="text-[#8B1A1A] text-[11px] font-bold uppercase tracking-wider">Details →</span>
+                     {!announcement.isRead && (
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); markAsRead(announcement._id); }}
+                         className="p-1 bg-green-50 text-green-600 rounded"
+                       >
+                         <CheckCheck size={16} />
+                       </button>
+                     )}
+                  </div>
+                </div>
+
+                {/* Desktop Action (Hidden on Mobile) */}
+                {!announcement.isRead && (
+                  <div className="hidden md:flex items-center ml-4">
+                    <button 
+                       onClick={(e) => { e.stopPropagation(); markAsRead(announcement._id); }}
+                       className="p-2 hover:bg-green-50 text-slate-300 hover:text-green-600 rounded-full transition-colors"
+                       title="Mark as read"
+                    >
+                      <CheckCheck size={20} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
-          })}
-        </div>
-      )}
-
-      {/* View All Link */}
-      {announcements.length > 0 && (
-        <div className="text-center">
-          <button
-            onClick={() => router.push('/portal/announcements')}
-            className="text-[#8B1A1A] hover:text-red-900 font-semibold text-sm underline"
-          >
-            View all {announcements.length > 5 ? `${announcements.length} ` : ''}announcements →
-          </button>
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 

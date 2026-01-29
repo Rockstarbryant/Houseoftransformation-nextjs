@@ -14,6 +14,10 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
   const [error, setError] = useState(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
 
+  // ============================================
+  // VALIDATION
+  // ============================================
+
   const validateForm = () => {
     if (!amount || amount <= 0) {
       setError('Amount must be greater than 0');
@@ -30,8 +34,27 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
       return false;
     }
 
+    // ✅ FIXED: Validate M-Pesa reference format
+    if (paymentMethod === 'mpesa' && mpesaRef.trim()) {
+      // M-Pesa receipts are typically 10 alphanumeric characters
+      if (mpesaRef.trim().length < 10) {
+        setError('Invalid M-Pesa reference format (minimum 10 characters)');
+        return false;
+      }
+
+      // Only alphanumeric
+      if (!/^[A-Z0-9]+$/i.test(mpesaRef.trim())) {
+        setError('M-Pesa reference must be alphanumeric');
+        return false;
+      }
+    }
+
     return true;
   };
+
+  // ============================================
+  // SUBMIT
+  // ============================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,23 +84,36 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
       if (response.success) {
         console.log('[MANUAL-PAYMENT] Payment recorded successfully');
         
-        // Show success feedback
-        if (response.isDuplicate) {
+        // ✅ FIXED: Handle duplicate receipt detection from backend
+        if (response.details?.existingPaymentId) {
           setIsDuplicate(true);
+          setError(`This M-Pesa receipt has already been used (Payment ID: ${response.details.existingPaymentId})`);
           setTimeout(() => {
-            if (onSuccess) onSuccess();
-            onClose();
+            setIsSubmitting(false);
           }, 2000);
-        } else {
-          if (onSuccess) onSuccess();
-          onClose();
+          return;
         }
+        
+        // Success - refresh and close
+        if (onSuccess) onSuccess();
+        onClose();
       } else {
         setError(response.message || 'Failed to record payment');
       }
     } catch (err) {
       console.error('[MANUAL-PAYMENT] Error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to record payment');
+      
+      // ✅ FIXED: Better error handling
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || 'Failed to record payment';
+      
+      setError(errorMessage);
+      
+      // Check if it's a duplicate error
+      if (errorMessage.includes('duplicate') || errorMessage.includes('already been recorded')) {
+        setIsDuplicate(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -108,6 +144,7 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
             onClick={handleClose}
             disabled={isSubmitting}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+            aria-label="Close"
           >
             <X size={24} />
           </button>
@@ -118,7 +155,7 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
           <div className="mx-6 mt-6 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-center gap-3">
             <Zap className="text-yellow-600 flex-shrink-0" size={20} />
             <p className="text-yellow-800 dark:text-yellow-200 text-sm font-semibold">
-              Duplicate request detected - closing window
+              Duplicate M-Pesa receipt detected
             </p>
           </div>
         )}
@@ -178,6 +215,7 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
               required
               disabled={isSubmitting}
+              aria-label="Payment Amount"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Maximum: {formatCurrency(pledge.remaining_amount)}
@@ -194,14 +232,18 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
               onChange={(e) => {
                 setPaymentMethod(e.target.value);
                 setError(null);
+                // Clear mpesa ref if switching away from mpesa
+                if (e.target.value !== 'mpesa') {
+                  setMpesaRef('');
+                }
               }}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none"
               disabled={isSubmitting}
+              aria-label="Payment Method"
             >
               <option value="cash">Cash</option>
               <option value="mpesa">M-Pesa</option>
-              <option value="bank-transfer">Bank Transfer</option>
-              <option value="manual">Other</option>
+              <option value="bank_transfer">Bank Transfer</option>
             </select>
           </div>
 
@@ -209,20 +251,23 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
           {paymentMethod === 'mpesa' && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                M-Pesa Reference Number * (Verified)
+                M-Pesa Reference Number *
               </label>
               <input 
                 type="text"
                 value={mpesaRef}
                 onChange={(e) => {
-                  setMpesaRef(e.target.value);
+                  // Convert to uppercase for consistency
+                  setMpesaRef(e.target.value.toUpperCase());
                   setError(null);
+                  setIsDuplicate(false);
                 }}
                 placeholder="e.g., QBR3X4Y5Z6"
-                maxLength="10"
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
+                maxLength="15"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none uppercase"
                 required
                 disabled={isSubmitting}
+                aria-label="M-Pesa Reference Number"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 ✅ Receipt will be verified with M-Pesa API
@@ -240,8 +285,9 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
               onChange={(e) => setNotes(e.target.value)}
               rows="3"
               placeholder="Any additional details..."
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none resize-none"
               disabled={isSubmitting}
+              aria-label="Payment Notes"
             />
           </div>
 
@@ -282,7 +328,7 @@ export default function ManualPaymentModal({ pledge, onClose, onSuccess }) {
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
