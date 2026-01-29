@@ -15,31 +15,12 @@ export const galleryService = {
     }
   },
 
-  async uploadPhoto(file, meta = {}) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('title', meta.title || '');
-  formData.append('description', meta.description || '');
-  formData.append('category', meta.category || '');
-
-  const response = await api.post(
-    API_ENDPOINTS.GALLERY.UPLOAD,
-    formData
-  );
-
-  return response.data;
-},
-
-
-
-
   
-
 
   /**
    * ✅ COMPLETE MOBILE FIX: Upload photo with retry + mobile optimization
    */
-/*  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
+  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
     let lastError;
 
     // ✅ CRITICAL: Mobile needs delay AFTER FormData creation
@@ -105,7 +86,7 @@ export const galleryService = {
     }
 
     throw lastError;
-  }, */
+  }, 
 
   /**
    * Delete photo by ID
