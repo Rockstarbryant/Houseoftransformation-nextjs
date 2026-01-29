@@ -15,44 +15,21 @@ export const galleryService = {
     }
   },
 
-  async uploadPhoto(file, meta, maxRetries = 2) {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  async uploadPhoto(file, meta = {}) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('title', meta.title || '');
+  formData.append('description', meta.description || '');
+  formData.append('category', meta.category || '');
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      if (isMobile) {
-        await new Promise(r => setTimeout(r, 300));
-      }
+  const response = await api.post(
+    API_ENDPOINTS.GALLERY.UPLOAD,
+    formData
+  );
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', meta.title);
-      formData.append('description', meta.description);
-      formData.append('category', meta.category);
-
-      const response = await api.post(
-        API_ENDPOINTS.GALLERY.UPLOAD,
-        formData,
-        {
-          timeout: isMobile ? 90000 : 60000
-        }
-      );
-
-      return response.data;
-
-    } catch (error) {
-      if (
-        error.response &&
-        error.response.status >= 400 &&
-        error.response.status < 500
-      ) {
-        throw error;
-      }
-
-      if (attempt === maxRetries) throw error;
-    }
-  }
+  return response.data;
 },
+
 
 
 
