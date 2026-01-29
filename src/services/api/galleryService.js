@@ -15,13 +15,60 @@ export const galleryService = {
     }
   },
 
+  async uploadPhoto(createFormData, maxRetries = 2) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, 400 * attempt));
+      }
+
+      // ✅ Rebuild FormData every attempt
+      const formData = createFormData();
+
+      // ✅ Small stabilization delay ONLY on mobile
+      if (isMobile) {
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      const response = await api.post(
+        API_ENDPOINTS.GALLERY.UPLOAD,
+        formData,
+        {
+          timeout: isMobile ? 90000 : 60000,
+          onUploadProgress: e => {
+            if (e.total) {
+              console.log(Math.round((e.loaded * 100) / e.total));
+            }
+          }
+        }
+      );
+
+      return response.data;
+
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.status >= 400 &&
+        error.response.status < 500
+      ) {
+        throw error; // validation errors
+      }
+
+      if (attempt === maxRetries) throw error;
+    }
+  }
+},
+
+
   
 
 
   /**
    * ✅ COMPLETE MOBILE FIX: Upload photo with retry + mobile optimization
    */
-  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
+/*  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
     let lastError;
 
     // ✅ CRITICAL: Mobile needs delay AFTER FormData creation
@@ -87,7 +134,7 @@ export const galleryService = {
     }
 
     throw lastError;
-  }, 
+  }, */
 
   /**
    * Delete photo by ID

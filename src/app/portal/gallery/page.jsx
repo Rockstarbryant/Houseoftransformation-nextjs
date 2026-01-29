@@ -292,7 +292,32 @@ export default function ManageGallery() {
     }
   };
 
-  const handleUpload = async (formData) => {
+  const handleUpload = async () => {
+  try {
+    const response = await galleryService.uploadPhoto(() => {
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      fd.append('title', title);
+      fd.append('description', description);
+      fd.append('category', category);
+      return fd;
+    });
+
+    if (response.success) {
+      showToast('Photo uploaded successfully!', 'success');
+      await fetchPhotos();
+      return true;
+    } else {
+      throw new Error(response.message || 'Upload failed');
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    throw err;
+  }
+};
+
+
+/*  const handleUpload = async (formData) => {
     try {
       const response = await galleryService.uploadPhoto(formData);
       if (response.success) {
@@ -306,7 +331,7 @@ export default function ManageGallery() {
       console.error('Upload error:', err);
       throw err;
     }
-  };
+  };  */
 
   const handleDelete = async (photoId) => {
     showConfirm(
