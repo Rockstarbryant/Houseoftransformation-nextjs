@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X } from 'lucide-react';
+import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2 } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
 //export const dynamic = 'force-dynamic';
@@ -15,6 +15,8 @@ const LiveStreamPage = () => {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
+  const [pipActive, setPipActive] = useState(false);
+  const [pipVideoRef, setPipVideoRef] = useState(null);
 
   // FIX: Load archives on component mount with default filters
   useEffect(() => {
@@ -26,7 +28,7 @@ const LiveStreamPage = () => {
     { value: 'sermon', label: 'ðŸŽ¤ Sermons' },
     { value: 'praise_worship', label: 'ðŸŽµ Praise & Worship' },
     { value: 'full_service', label: 'â›ª Full Service' },
-    { value: 'sunday_school', label: 'ðŸ“š Sunday School' },
+    { value: 'sunday_school', label: 'ðŸ"š Sunday School' },
     { value: 'special_event', label: 'ðŸŽ‰ Special Events' }
   ];
 
@@ -59,6 +61,34 @@ const LiveStreamPage = () => {
       navigator.share({ title: stream.title, text });
     } else {
       alert('Copy link to share: ' + window.location.href);
+    }
+  };
+
+  const handlePictureInPicture = async (stream, isLiveStream = false) => {
+    try {
+      const videoElement = document.querySelector('iframe[title="' + stream.title + '"]');
+      
+      if (videoElement && videoElement.requestPictureInPicture) {
+        await videoElement.requestPictureInPicture();
+        setPipActive(true);
+      } else {
+        alert('Picture-in-Picture is available for embedded videos. The video will continue playing in the background.');
+        setPipActive(true);
+      }
+    } catch (error) {
+      console.error('PiP Error:', error);
+      alert('Picture-in-Picture is not supported in your browser.');
+    }
+  };
+
+  const exitPictureInPicture = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setPipActive(false);
+      }
+    } catch (error) {
+      console.error('Exit PiP Error:', error);
     }
   };
 
@@ -102,7 +132,14 @@ const LiveStreamPage = () => {
 
               <div className="w-full lg:w-2/3">
                 {getEmbedUrl(activeStream) && (
-                  <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black">
+                  <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black relative">
+                    <button
+                      onClick={() => handlePictureInPicture(activeStream, true)}
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95"
+                      title="Picture in Picture"
+                    >
+                      <Maximize2 size={20} />
+                    </button>
                     <iframe
                       src={getEmbedUrl(activeStream)}
                       className="w-full h-full"
@@ -156,110 +193,142 @@ const LiveStreamPage = () => {
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" size={16} />
             </div>
 
-            <button
-              onClick={() => setGridView(!gridView)}
-              className="p-4 bg-slate-900 dark:bg-red-600 text-white rounded-2xl hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-xl shadow-slate-200 dark:shadow-slate-900"
-            >
-              {gridView ? <List size={20} /> : <LayoutGrid size={20} />}
-            </button>
+            <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-2xl">
+              <button
+                onClick={() => setGridView(true)}
+                className={`p-3 rounded-xl transition-all ${gridView ? 'bg-slate-900 dark:bg-red-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-400'}`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setGridView(false)}
+                className={`p-3 rounded-xl transition-all ${!gridView ? 'bg-slate-900 dark:bg-red-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-400'}`}
+              >
+                <List size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ARCHIVES GRID/LIST */}
         {loading ? (
-          <div className="flex flex-col items-center py-40">
-            <div className="w-12 h-12 border-4 border-slate-100 dark:border-slate-700 border-t-red-600 rounded-full animate-spin mb-4" />
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">Loading archives...</p>
-          </div>
-        ) : archives.length === 0 ? (
-          <div className="text-center py-40 bg-white dark:bg-slate-800 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-700">
-            <p className="text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">No archives available</p>
+          <div className="text-center py-20">
+            <p className="text-slate-500 dark:text-slate-400 font-bold">Loading archives...</p>
           </div>
         ) : (
-          <div className={gridView ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
-            {archives.map((stream) => (
-              <div 
-                key={stream._id} 
-                className="group relative bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[40px] overflow-hidden hover:border-slate-900 dark:hover:border-white transition-all duration-500 flex flex-col h-full shadow-sm hover:shadow-2xl hover:shadow-slate-200 dark:hover:shadow-slate-900"
-              >
-                {/* Thumbnail Layer */}
-                <div 
-                  className="relative aspect-video bg-slate-900 overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedStream(stream)}
-                >
-                  <div className="absolute inset-0 z-10 bg-slate-900/40 group-hover:bg-red-600/20 transition-all duration-500" />
-                  <div className="absolute inset-0 flex items-center justify-center z-20">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500">
-                      <Play size={24} className="text-slate-900 fill-current ml-1" />
-                    </div>
-                  </div>
-                  {getEmbedUrl(stream) && (
-                    <iframe
-                      src={getEmbedUrl(stream)}
-                      className="w-full h-full pointer-events-none grayscale group-hover:grayscale-0 transition-all duration-700"
-                      allow="autoplay"
-                    />
-                  )}
-                  {/* Category Float */}
-                  <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[9px] font-black uppercase tracking-widest rounded-lg">
-                    {stream.type.replace('_', ' ')}
-                  </div>
-                </div>
-
-                {/* Content Block */}
-                <div className="p-8 flex flex-col flex-1">
-                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-3">
-                    {new Date(stream.startTime).toLocaleDateString()}
-                  </p>
-                  
-                  <h3
-                    className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-6 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors line-clamp-2 cursor-pointer"
-                    onClick={() => setSelectedStream(stream)}
-                  >
-                    {stream.title}
-                  </h3>
-
-                  {/* Metadata Nodes */}
-                  <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50 dark:border-slate-700">
-                    {stream.preacherNames?.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Users size={12} className="text-slate-400 dark:text-slate-500" />
-                        <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white truncate">{stream.preacherNames[0]}</span>
+          <div>
+            {gridView ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {archives?.map((stream) => (
+                  <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[32px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl flex flex-col">
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video bg-slate-900 overflow-hidden cursor-pointer" onClick={() => setSelectedStream(stream)}>
+                      {stream.thumbnail && <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                        <Play size={48} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <TrendingUp size={12} className="text-slate-400 dark:text-slate-500" />
-                      <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white">{stream.viewCount || 0} Views</span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-8 flex-1 flex flex-col">
+                      <h3
+                        className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-6 cursor-pointer hover:text-red-600 dark:hover:text-red-500 transition-colors line-clamp-3"
+                        onClick={() => setSelectedStream(stream)}
+                      >
+                        {stream.title}
+                      </h3>
+
+                      {/* Metadata Nodes */}
+                      <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50 dark:border-slate-700">
+                        {stream.preacherNames?.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Users size={12} className="text-slate-400 dark:text-slate-500" />
+                            <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white truncate">{stream.preacherNames[0]}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <TrendingUp size={12} className="text-slate-400 dark:text-slate-500" />
+                          <span className="text-[9px] font-black uppercase text-slate-900 dark:text-white">{stream.viewCount || 0} Views</span>
+                        </div>
+                      </div>
+
+                      {/* AI Snippet */}
+                      {stream.aiSummary?.summary && (
+                        <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl mb-8 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium line-clamp-2 italic leading-relaxed">
+                            "{stream.aiSummary.summary}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Actions Container */}
+                      <div className="mt-auto flex gap-3">
+                        <button
+                          onClick={() => setSelectedStream(stream)}
+                          className="flex-1 bg-slate-900 dark:bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-lg active:scale-95"
+                        >
+                          Watch Now
+                        </button>
+                        <button
+                          onClick={() => handleShare(stream)}
+                          className="p-4 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
+                        >
+                          <Share2 size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* AI Snippet */}
-                  {stream.aiSummary?.summary && (
-                    <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl mb-8 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium line-clamp-2 italic leading-relaxed">
-                        "{stream.aiSummary.summary}"
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Actions Container */}
-                  <div className="mt-auto flex gap-3">
-                    <button
-                      onClick={() => setSelectedStream(stream)}
-                      className="flex-1 bg-slate-900 dark:bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-lg active:scale-95"
-                    >
-                      Watch Now
-                    </button>
-                    <button
-                      onClick={() => handleShare(stream)}
-                      className="p-4 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
-                    >
-                      <Share2 size={18} />
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="space-y-6">
+                {archives?.map((stream) => (
+                  <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[24px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl p-6 flex gap-8 cursor-pointer" onClick={() => setSelectedStream(stream)}>
+                    {/* Thumbnail */}
+                    <div className="relative w-40 h-24 bg-slate-900 rounded-2xl overflow-hidden flex-shrink-0">
+                      {stream.thumbnail && <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                        <Play size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-3 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors line-clamp-2">
+                          {stream.title}
+                        </h3>
+                        {stream.aiSummary?.summary && (
+                          <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium line-clamp-1 italic">
+                            {stream.aiSummary.summary}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-6 text-[12px] text-slate-500 dark:text-slate-400 font-bold uppercase">
+                        {stream.preacherNames?.length > 0 && (
+                          <span className="flex items-center gap-2">
+                            <Users size={12} /> {stream.preacherNames[0]}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-2">
+                          <TrendingUp size={12} /> {stream.viewCount || 0} Views
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 flex-col-reverse">
+                      <button
+                        onClick={() => handleShare(stream)}
+                        className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
+                      >
+                        <Share2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -271,15 +340,24 @@ const LiveStreamPage = () => {
             
             {/* Left: Player Section */}
             <div className="flex-1 bg-black flex flex-col">
-              <div className="aspect-video w-full">
+              <div className="aspect-video w-full relative">
                 {getEmbedUrl(selectedStream) && (
-                  <iframe
-                    src={getEmbedUrl(selectedStream)}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="autoplay"
-                    title={selectedStream.title}
-                  />
+                  <>
+                    <button
+                      onClick={() => handlePictureInPicture(selectedStream, false)}
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95"
+                      title="Picture in Picture"
+                    >
+                      <Maximize2 size={20} />
+                    </button>
+                    <iframe
+                      src={getEmbedUrl(selectedStream)}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="autoplay"
+                      title={selectedStream.title}
+                    />
+                  </>
                 )}
               </div>
               <div className="p-10 text-white bg-slate-900 dark:bg-slate-950 flex-1 overflow-y-auto">
