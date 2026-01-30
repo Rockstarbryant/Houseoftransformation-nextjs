@@ -154,7 +154,7 @@ const LiveStreamPage = () => {
                   <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black relative group">
                     <button
                       onClick={() => openFloatingPiP(activeStream)}
-                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 opacity-0 group-hover:opacity-100"
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 md:opacity-0 md:group-hover:opacity-100 opacity-100"
                       title="Picture in Picture"
                     >
                       <Maximize2 size={20} />
@@ -364,7 +364,7 @@ const LiveStreamPage = () => {
                   <>
                     <button
                       onClick={() => openFloatingPiP(selectedStream)}
-                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 opacity-0 group-hover:opacity-100"
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 md:opacity-0 md:group-hover:opacity-100 opacity-100"
                       title="Picture in Picture"
                     >
                       <Maximize2 size={20} />
