@@ -200,188 +200,58 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 // This includes the Android FormData MIME type fix
 // ============================================
 
+ // Inside GalleryUploader.jsx
 const handleUpload = async (e) => {
   e.preventDefault();
-
-  if (files.length === 0) {
-    setError('Please select at least one photo');
-    return;
-  }
-
-  if (useSingleCaption && !singleCaptionData.title.trim()) {
-    setError('Please enter a title');
-    return;
-  }
-
-  if (!useSingleCaption) {
-    const allHaveTitles = multipleCaptions.every(cap => cap.title.trim());
-    if (!allHaveTitles) {
-      setError('All photos must have a title');
-      return;
-    }
-  }
+  if (files.length === 0) return setError('Please select a photo');
 
   setUploading(true);
   setError(null);
-  setUploadProgress(0);
-
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   
-  if (isMobile) {
-    console.log('📱 Mobile device detected - using optimized upload');
-    await new Promise(resolve => setTimeout(resolve, 800));
-  }
-
-  let uploadedCount = 0;
-  const totalFiles = files.length;
   const failedUploads = [];
+  let uploadedCount = 0;
 
-  try {
-    if (isMobile) {
-      console.log('📱 Sequential upload for mobile');
+  // Process files one-by-one for mobile stability
+  for (let idx = 0; idx < files.length; idx++) {
+    try {
+      const file = files[idx];
       
-      for (let idx = 0; idx < files.length; idx++) {
-        const file = files[idx];
-        
-        try {
-          console.log(`📤 Mobile upload ${idx + 1}/${totalFiles}: ${file.name}`);
+      // 1. "Lock" the file data immediately to prevent mobile cache clearing
+      const fileArrayBuffer = await file.arrayBuffer();
+      const stableBlob = new Blob([fileArrayBuffer], { type: file.type || 'image/jpeg' });
 
-          const readyFile = await ensureFileReady(file);
+      const uploadFormData = new FormData();
+      // Use the stableBlob instead of the original 'file' object
+      uploadFormData.append('photo', stableBlob, file.name);
 
-          // ✅ CRITICAL ANDROID FIX: Recreate file with explicit MIME type
-       /*   const fileWithType = new File(
-            [readyFile],
-            readyFile.name,
-            { 
-              type: readyFile.type || 'image/jpeg',
-              lastModified: readyFile.lastModified || Date.now()
-            }
-          );
-
-          console.log('✅ File prepared:', {
-            name: fileWithType.name,
-            type: fileWithType.type,
-            size: fileWithType.size
-          });  */
-
-          const uploadFormData = new FormData();
-         // uploadFormData.append('photo', fileWithType);
-
-         // Explicitly define the blob to ensure the MIME type is locked in
-      const blob = new Blob([readyFile], { type: readyFile.type || 'image/jpeg' });
-      uploadFormData.append('photo', blob, readyFile.name || `photo-${idx}.jpg`);
-
-       /*   if (useSingleCaption) {
-            uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
-            uploadFormData.append('description', singleCaptionData.description);
-            uploadFormData.append('category', singleCaptionData.category);
-          } else {
-            uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
-            uploadFormData.append('description', multipleCaptions[idx]?.description || '');
-            uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-          }  */
-
-         // 3. Add metadata
+      // 2. Add metadata
       const title = useSingleCaption 
         ? `${singleCaptionData.title}${files.length > 1 ? ` - ${idx + 1}` : ''}`
-        : (multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+        : multipleCaptions[idx]?.title;
       
-      uploadFormData.append('title', title);
-      uploadFormData.append('description', useSingleCaption ? singleCaptionData.description : (multipleCaptions[idx]?.description || ''));
-      uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : (multipleCaptions[idx]?.category || 'Worship Services'));   
+      uploadFormData.append('title', title || 'Untitled');
+      uploadFormData.append('description', useSingleCaption ? singleCaptionData.description : multipleCaptions[idx]?.description);
+      uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : multipleCaptions[idx]?.category);
 
-        /*  await uploadWithRetry(uploadFormData);
-          uploadedCount++;
-          setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
-
-          if (idx < files.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 300));
-          }
-
-        } catch (err) {
-          console.error(`Failed to upload ${file.name}:`, err);
-          failedUploads.push(file.name);
-        }
-      }  */
-
-        // 4. Send immediately
-      await onUpload(uploadFormData);
+      // 3. Send to service (Make sure galleryService.uploadPhoto is cleaned up - see below)
+      await galleryService.uploadPhoto(uploadFormData);
       
       uploadedCount++;
-      setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+      setUploadProgress(Math.round((uploadedCount / files.length) * 100));
     } catch (err) {
-      failedUploads.push(file.name);
+      console.error("Single file upload failed", err);
+      failedUploads.push(files[idx].name);
     }
   }
-      
-    } else {
-      console.log('💻 Parallel upload for desktop');
-      
-      const uploadPromises = files.map(async (file, idx) => {
-        try {
-          console.log(`📤 Preparing ${idx + 1}/${totalFiles}: ${file.name}`);
 
-          const readyFile = await ensureFileReady(file);
-
-          // ✅ ANDROID FIX: Also apply to desktop for consistency
-          const fileWithType = new File(
-            [readyFile],
-            readyFile.name,
-            { 
-              type: readyFile.type || 'image/jpeg',
-              lastModified: readyFile.lastModified || Date.now()
-            }
-          );
-
-          const uploadFormData = new FormData();
-          uploadFormData.append('photo', fileWithType);
-
-          if (useSingleCaption) {
-            uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
-            uploadFormData.append('description', singleCaptionData.description);
-            uploadFormData.append('category', singleCaptionData.category);
-          } else {
-            uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
-            uploadFormData.append('description', multipleCaptions[idx]?.description || '');
-            uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-          }
-
-          await uploadWithRetry(uploadFormData);
-          uploadedCount++;
-          setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
-
-        } catch (err) {
-          console.error(`Failed to upload ${file.name}:`, err);
-          failedUploads.push(file.name);
-        }
-      });
-
-      await Promise.all(uploadPromises);
-    }
-
-    if (failedUploads.length === 0) {
-      setSuccess(true);
-      setSingleCaptionData({ title: '', description: '', category: 'Worship Services' });
-      setMultipleCaptions([]);
-      setFiles([]);
-      setUseSingleCaption(true);
-      
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 2000);
-    } else {
-      setError(`Upload completed with errors. Failed: ${failedUploads.join(', ')}. Success: ${uploadedCount}/${totalFiles}`);
-    }
-
-  } catch (err) {
-    const errorMessage = err.response?.data?.message || err.message || 'Network error. Check connection.';
-    setError(`Upload failed: ${uploadedCount}/${totalFiles} uploaded. ${errorMessage}`);
-  } finally {
-    setUploading(false);
-    setUploadProgress(0);
+  if (failedUploads.length > 0) {
+    setError(`Upload completed with errors. Failed: ${failedUploads.join(', ')}`);
+  } else {
+    setSuccess(true);
+    setTimeout(() => { onClose(); setSuccess(false); }, 2000);
   }
-};
+  setUploading(false);
+};  
 
   if (!isOpen) return null;
 
