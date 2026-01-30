@@ -200,7 +200,6 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
 // This includes the Android FormData MIME type fix
 // ============================================
 
- // Inside GalleryUploader.jsx
 const handleUpload = async (e) => {
   e.preventDefault();
   if (files.length === 0) return setError('Please select a photo');
@@ -208,50 +207,48 @@ const handleUpload = async (e) => {
   setUploading(true);
   setError(null);
   
-  const failedUploads = [];
-  let uploadedCount = 0;
+  try {
+    const file = files[0]; // Testing with single photo
 
-  // Process files one-by-one for mobile stability
-  for (let idx = 0; idx < files.length; idx++) {
-    try {
-      const file = files[idx];
-      
-      // 1. "Lock" the file data immediately to prevent mobile cache clearing
-      const fileArrayBuffer = await file.arrayBuffer();
-      const stableBlob = new Blob([fileArrayBuffer], { type: file.type || 'image/jpeg' });
+    // 1. FORCE the mobile device to read the file data into memory immediately
+    const reader = new FileReader();
+    
+    const fileData = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file); // This reads the actual bytes
+    });
 
-      const uploadFormData = new FormData();
-      // Use the stableBlob instead of the original 'file' object
-      uploadFormData.append('photo', stableBlob, file.name);
+    // 2. Reconstruct the file as a stable Blob
+    const stableBlob = new Blob([fileData], { type: file.type });
+    
+    const uploadFormData = new FormData();
+    // Append the stable blob, not the original 'file'
+    uploadFormData.append('photo', stableBlob, file.name);
 
-      // 2. Add metadata
-      const title = useSingleCaption 
-        ? `${singleCaptionData.title}${files.length > 1 ? ` - ${idx + 1}` : ''}`
-        : multipleCaptions[idx]?.title;
-      
-      uploadFormData.append('title', title || 'Untitled');
-      uploadFormData.append('description', useSingleCaption ? singleCaptionData.description : multipleCaptions[idx]?.description);
-      uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : multipleCaptions[idx]?.category);
+    // 3. Add your metadata
+    const title = useSingleCaption ? singleCaptionData.title : (multipleCaptions[0]?.title || 'Untitled');
+    uploadFormData.append('title', title);
+    uploadFormData.append('description', useSingleCaption ? singleCaptionData.description : (multipleCaptions[0]?.description || ''));
+    uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : (multipleCaptions[0]?.category || 'Worship Services'));
 
-      // 3. Send to service (Make sure galleryService.uploadPhoto is cleaned up - see below)
-      //await galleryService.uploadPhoto(uploadFormData);
-      await onUpload(uploadFormData);
-      
-      uploadedCount++;
-      setUploadProgress(Math.round((uploadedCount / files.length) * 100));
-    } catch (err) {
-      console.error("Single file upload failed", err);
-      failedUploads.push(files[idx].name);
-    }
-  }
-
-  if (failedUploads.length > 0) {
-    setError(`Upload completed with errors. Failed: ${failedUploads.join(', ')}`);
-  } else {
+    // 4. Send using the prop passed from page.jsx
+    await onUpload(uploadFormData);
+    
+    setUploadProgress(100);
     setSuccess(true);
-    setTimeout(() => { onClose(); setSuccess(false); }, 2000);
+    setTimeout(() => {
+      onClose();
+      setSuccess(false);
+      setFiles([]);
+    }, 2000);
+
+  } catch (err) {
+    console.error("Mobile Upload Error:", err);
+    setError(`Upload failed: ${err.message || 'Network Error'}`);
+  } finally {
+    setUploading(false);
   }
-  setUploading(false);
 };  
 
   if (!isOpen) return null;

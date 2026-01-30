@@ -16,14 +16,21 @@ export const galleryService = {
   },
 
   // galleryService.js - Replace the uploadPhoto function
-// Inside galleryService.js
 async uploadPhoto(formData) {
-  // No 15-second delay!
-  const response = await api.post(API_ENDPOINTS.GALLERY.UPLOAD, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 60000, // Give mobile 60s to finish the actual upload
-  });
-  return response.data;
+  // REMOVE the 15-second delay entirely. 
+  // It is likely the cause of the "Network Error" on physical devices.
+  try {
+    const response = await api.post(API_ENDPOINTS.GALLERY.UPLOAD, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // Increased timeout for mobile data speed, but start IMMEDIATELY
+      timeout: 90000 
+    });
+    return response.data;
+  } catch (error) {
+    // Log the actual error to your mobile console/remote debugger
+    console.error('Service Error:', error.response?.data || error.message);
+    throw error;
+  }
 },
 
   
