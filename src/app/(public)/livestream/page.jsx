@@ -71,10 +71,38 @@ const LiveStreamPage = () => {
 
   const openFloatingPiP = (stream) => {
     setFloatingPiP(stream);
+    // Save to sessionStorage so it persists if user navigates and comes back
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('floatingPiP', JSON.stringify(stream));
+    }
   };
 
   const closeFloatingPiP = () => {
     setFloatingPiP(null);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('floatingPiP');
+    }
+  };
+
+  // Restore PiP state on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('floatingPiP');
+      if (saved) {
+        try {
+          setFloatingPiP(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to restore PiP state:', e);
+        }
+      }
+    }
+  }, []);
+
+  const getClientCoords = (e) => {
+    if (e.touches) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
   };
 
   const handlePiPDragStart = (e) => {
@@ -82,10 +110,11 @@ const LiveStreamPage = () => {
     const pipElement = document.getElementById('floating-pip');
     if (!pipElement) return;
     
+    const coords = getClientCoords(e);
     const rect = pipElement.getBoundingClientRect();
     setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: coords.x - rect.left,
+      y: coords.y - rect.top
     });
     setIsDraggingPiP(true);
   };
@@ -96,8 +125,9 @@ const LiveStreamPage = () => {
     const pipElement = document.getElementById('floating-pip');
     if (!pipElement) return;
     
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+    const coords = getClientCoords(e);
+    const newX = coords.x - dragOffset.x;
+    const newY = coords.y - dragOffset.y;
     
     pipElement.style.left = `${Math.max(0, Math.min(newX, window.innerWidth - pipSize.width))}px`;
     pipElement.style.top = `${Math.max(0, Math.min(newY, window.innerHeight - pipSize.height))}px`;
@@ -109,13 +139,14 @@ const LiveStreamPage = () => {
 
   const handleResizeStart = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     const pipElement = document.getElementById('floating-pip');
     if (!pipElement) return;
     
-    const rect = pipElement.getBoundingClientRect();
+    const coords = getClientCoords(e);
     setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
+      x: coords.x,
+      y: coords.y,
       width: pipSize.width,
       height: pipSize.height
     });
@@ -125,8 +156,9 @@ const LiveStreamPage = () => {
   const handleResizeMove = (e) => {
     if (!isResizingPiP) return;
     
-    const deltaX = e.clientX - resizeStart.x;
-    const deltaY = e.clientY - resizeStart.y;
+    const coords = getClientCoords(e);
+    const deltaX = coords.x - resizeStart.x;
+    const deltaY = coords.y - resizeStart.y;
     
     const newWidth = Math.max(280, resizeStart.width + deltaX);
     const newHeight = Math.max(180, resizeStart.height + deltaY);
@@ -145,9 +177,13 @@ const LiveStreamPage = () => {
     if (isDraggingPiP) {
       window.addEventListener('mousemove', handlePiPDragMove);
       window.addEventListener('mouseup', handlePiPDragEnd);
+      window.addEventListener('touchmove', handlePiPDragMove, { passive: false });
+      window.addEventListener('touchend', handlePiPDragEnd);
       return () => {
         window.removeEventListener('mousemove', handlePiPDragMove);
         window.removeEventListener('mouseup', handlePiPDragEnd);
+        window.removeEventListener('touchmove', handlePiPDragMove);
+        window.removeEventListener('touchend', handlePiPDragEnd);
       };
     }
   }, [isDraggingPiP, dragOffset, pipSize]);
@@ -156,9 +192,13 @@ const LiveStreamPage = () => {
     if (isResizingPiP) {
       window.addEventListener('mousemove', handleResizeMove);
       window.addEventListener('mouseup', handleResizeEnd);
+      window.addEventListener('touchmove', handleResizeMove, { passive: false });
+      window.addEventListener('touchend', handleResizeEnd);
       return () => {
         window.removeEventListener('mousemove', handleResizeMove);
         window.removeEventListener('mouseup', handleResizeEnd);
+        window.removeEventListener('touchmove', handleResizeMove);
+        window.removeEventListener('touchend', handleResizeEnd);
       };
     }
   }, [isResizingPiP, resizeStart]);
@@ -529,7 +569,8 @@ const LiveStreamPage = () => {
           {/* Header - Draggable */}
           <div
             onMouseDown={handlePiPDragStart}
-            className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none h-11"
+            onTouchStart={handlePiPDragStart}
+            className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none h-11 touch-none"
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse flex-shrink-0" />
@@ -559,7 +600,8 @@ const LiveStreamPage = () => {
           {/* Resize Handle */}
           <div
             onMouseDown={handleResizeStart}
-            className="absolute bottom-0 right-0 w-6 h-6 bg-red-600 hover:bg-red-700 cursor-se-resize rounded-tl-xl transition-colors"
+            onTouchStart={handleResizeStart}
+            className="absolute bottom-0 right-0 w-6 h-6 bg-red-600 hover:bg-red-700 cursor-se-resize rounded-tl-xl transition-colors touch-none"
             title="Drag to resize"
           />
         </div>
