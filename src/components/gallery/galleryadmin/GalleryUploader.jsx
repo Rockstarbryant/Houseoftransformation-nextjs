@@ -234,7 +234,8 @@ const handleUpload = async (e) => {
       uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : multipleCaptions[idx]?.category);
 
       // 3. Send to service (Make sure galleryService.uploadPhoto is cleaned up - see below)
-      await galleryService.uploadPhoto(uploadFormData);
+      //await galleryService.uploadPhoto(uploadFormData);
+      await onUpload(uploadFormData);
       
       uploadedCount++;
       setUploadProgress(Math.round((uploadedCount / files.length) * 100));
