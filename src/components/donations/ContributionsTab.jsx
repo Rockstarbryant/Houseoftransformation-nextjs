@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, getStatusBadge } from '@/utils/donationHelpers';
-import { Eye, CheckCircle, Download, Filter, Search, DollarSign, X, Printer } from 'lucide-react';
+import { Eye, CheckCircle, Download, Filter, Search, DollarSign, X, Printer, Pencil, Trash2 } from 'lucide-react';
+import ContributionDetailsModal from './ContributionDetailsModal';
 
 export default function ContributionsTab() {
   // ============================================
@@ -12,6 +13,9 @@ export default function ContributionsTab() {
   const [allContributions, setAllContributions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedContributions, setSelectedContributions] = useState(new Set());
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedContribution, setSelectedContribution] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const [filters, setFilters] = useState({
     status: '',
@@ -170,6 +174,25 @@ export default function ContributionsTab() {
     }
     setSelectedContributions(newSelected);
   };
+
+  const handleDelete = async (contributionId) => {
+  if (!confirm('Are you sure you want to delete this contribution? This cannot be undone.')) return;
+
+  try {
+    const response = await donationApi.contributions.delete(contributionId);
+    
+    if (response.success) {
+      // Remove from local state
+      setAllContributions(prev => prev.filter(c => c.id !== contributionId));
+      alert('Contribution deleted successfully');
+    } else {
+      alert(response.message || 'Failed to delete contribution');
+    }
+  } catch (error) {
+    console.error('[CONTRIBUTIONS] Delete error:', error);
+    alert(error.response?.data?.message || 'Failed to delete contribution');
+  }
+};
 
   const handlePrint = () => {
     const dataToPrint = selectedContributions.size > 0
@@ -533,12 +556,39 @@ export default function ContributionsTab() {
                             </button>
                           )}
                           <button
+                            onClick={() => {
+                              setSelectedContribution(contrib);
+                              setShowDetailsModal(true);
+                            }}
                             className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
                             title="View Details"
-                            onClick={() => alert(JSON.stringify(contrib, null, 2))}
                           >
                             <Eye size={18} />
                           </button>
+                           {(contrib.payment_method === 'cash' || contrib.payment_method === 'bank_transfer') && 
+                            contrib.status !== 'verified' && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setSelectedContribution(contrib);
+                                    setShowEditModal(true);
+                                  }}
+                                  className="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950/30 rounded-lg transition-colors"
+                                  title="Edit Contribution"
+                                >
+                                  <Pencil size={18} />
+                                </button>
+                                
+                                <button
+                                  onClick={() => handleDelete(contrib.id)}
+                                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                                  title="Delete Contribution"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </>
+                            )}
+
                         </div>
                       </td>
                     </tr>
@@ -549,6 +599,20 @@ export default function ContributionsTab() {
           </table>
         </div>
       </div>
+
+        {/* Contribution Details Modal */}
+
+        {showDetailsModal && selectedContribution && (
+          <ContributionDetailsModal
+            contribution={selectedContribution}
+            onClose={() => {
+              setShowDetailsModal(false);
+              setSelectedContribution(null);
+            }}
+          />
+        )}
+
+        {/* Optional: Edit modal - you can create similar to record modal */}
 
       {/* Top Campaigns */}
       {Object.keys(stats.byCampaign).length > 0 && (

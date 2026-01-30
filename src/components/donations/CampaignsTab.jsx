@@ -28,20 +28,7 @@ export default function CampaignsTab({ onCampaignCreated }) {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [campaignAnalytics, setCampaignAnalytics] = useState({});
   const [showContribModal, setShowContribModal] = useState(false);
-  const handleCompleteCampaign = async (campaignId) => {
-  if (!confirm('Mark this campaign as completed? This cannot be undone.')) return;
-
-  try {
-    const response = await donationApi.campaigns.completeCampaign(campaignId);
-    
-    if (response.success) {
-      alert('Campaign marked as completed');
-      fetchCampaigns(); // Refresh
-    }
-  } catch (error) {
-    alert('Failed to complete campaign');
-  }
-};
+  
 
 
   useEffect(() => {
@@ -80,32 +67,7 @@ export default function CampaignsTab({ onCampaignCreated }) {
     }
   }
 };
-/*
-   const fetchCampaigns = async (silent = false) => {
-    if (!silent) {
-      setIsLoading(true);
-    } else {
-      setIsRefreshing(true);
-    }
-    
-    try {
-      const response = await donationApi.campaigns.getAll({});
-      if (response.success) {
-        setCampaigns(response.campaigns || []);
-      }
-    } catch (err) {
-      if (!silent) {
-        setError('Failed to load campaigns');
-      }
-    } finally {
-      if (!silent) {
-        setIsLoading(false);
-      } else {
-        setIsRefreshing(false);
-      }
-    }
-  };
-*/
+
 
   const fetchCampaignAnalytics = async (campaignIds) => {
   try {
@@ -240,6 +202,26 @@ const showAnalyticsDetails = (campaign) => {
     fetchCampaigns(true); // Silent background refresh
     setTimeout(() => setSuccess(null), 3000);
   };
+
+  const handleCompleteCampaign = async (campaignId) => {
+  if (!confirm('Mark this campaign as completed? This will end the campaign and prevent new contributions.')) {
+    return;
+  }
+
+  try {
+    const response = await donationApi.campaigns.completeCampaign(campaignId);
+    
+    if (response.success) {
+      alert('Campaign marked as completed successfully');
+      fetchCampaigns(); // Refresh list
+    } else {
+      alert(response.message || 'Failed to complete campaign');
+    }
+  } catch (error) {
+    console.error('[CAMPAIGN-COMPLETE] Error:', error);
+    alert(error.response?.data?.message || 'Failed to complete campaign');
+  }
+};
 
   // Print individual campaign with embedded CSS
   const handlePrintCampaign = (campaign) => {

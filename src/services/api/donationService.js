@@ -174,6 +174,28 @@ export const contributionService = {
     }
   },
 
+   // ✅ NEW: Update contribution
+  update: async (contributionId, updates) => {
+    try {
+      const response = await api.put(`/contributions/${contributionId}`, updates);
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Update contribution error:', error);
+      throw error;
+    }
+  },
+
+  // ✅ NEW: Delete contribution
+  delete: async (contributionId) => {
+    try {
+      const response = await api.delete(`/contributions/${contributionId}`);
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('Delete contribution error:', error);
+      throw error;
+    }
+  },
+
   // ✅ FIXED: Initiate M-Pesa for contribution (with idempotency)
   initiateMpesa: async (campaignId, amount, phoneNumber) => {
     try {
@@ -203,6 +225,7 @@ export const contributionService = {
     }
   }
 };
+
 
 // ============================================
 // PLEDGE SERVICE

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react'; // ✅ FIXED: Added useEffect
+import { useState, useEffect } from 'react';
 import { donationApi } from '@/services/api/donationService';
-import api from '@/lib/api'; // ✅ FIXED: Import api instance
+import api from '@/lib/api';
 import { formatCurrency } from '@/utils/donationHelpers';
 import { X, DollarSign, CheckCircle, AlertCircle, Search, UserCheck } from 'lucide-react';
 
@@ -20,13 +20,11 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
-  // ✅ User search functionality
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  // ✅ Fetch users on mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -36,13 +34,11 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
         }
       } catch (error) {
         console.error('[CONTRIB-MODAL] Fetch users error:', error);
-        // Don't show error to user - just means user list unavailable
       }
     };
     fetchUsers();
   }, []);
 
-  // ✅ Filter users based on search
   const filteredUsers = users.filter(user => {
     if (!searchTerm) return false;
     const search = searchTerm.toLowerCase();
@@ -53,7 +49,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     );
   });
 
-  // ✅ Handle user selection
   const handleSelectUser = (user) => {
     setSelectedUser(user);
     setFormData({
@@ -66,7 +61,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     setShowUserDropdown(false);
   };
 
-  // ✅ Clear selected user
   const handleClearUser = () => {
     setSelectedUser(null);
     setFormData({
@@ -77,10 +71,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     });
   };
 
-  // ============================================
-  // VALIDATION
-  // ============================================
-
+  // ✅ VALIDATION - Only name required, email/phone optional
   const validateForm = () => {
     if (!formData.amount || formData.amount <= 0) {
       setError('Amount must be greater than 0');
@@ -93,32 +84,25 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
         return false;
       }
 
-      if (!formData.contributorEmail.trim()) {
-        setError('Contributor email is required');
-        return false;
+      // Validate email only if provided
+      if (formData.contributorEmail.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.contributorEmail)) {
+          setError('Invalid email format');
+          return false;
+        }
       }
 
-      if (!formData.contributorPhone.trim()) {
-        setError('Contributor phone is required');
-        return false;
-      }
-
-      // Validate email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.contributorEmail)) {
-        setError('Invalid email format');
-        return false;
-      }
-
-      // Validate phone (Kenya format)
-      const phoneRegex = /^(254|0)[0-9]{9}$/;
-      if (!phoneRegex.test(formData.contributorPhone.replace(/\s/g, ''))) {
-        setError('Invalid phone number. Use format: 0712345678 or 254712345678');
-        return false;
+      // Validate phone only if provided
+      if (formData.contributorPhone.trim()) {
+        const phoneRegex = /^(254|0)[0-9]{9}$/;
+        if (!phoneRegex.test(formData.contributorPhone.replace(/\s/g, ''))) {
+          setError('Invalid phone number. Use: 0712345678 or 254712345678');
+          return false;
+        }
       }
     }
 
-    // If M-Pesa, require reference
     if (formData.paymentMethod === 'mpesa' && !formData.mpesaRef.trim()) {
       setError('M-Pesa reference is required');
       return false;
@@ -126,10 +110,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
 
     return true;
   };
-
-  // ============================================
-  // SUBMIT
-  // ============================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -140,18 +120,18 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     setError(null);
 
     try {
-      console.log('[CONTRIBUTION-RECORD] Recording contribution:', formData);
-
-      // Format phone number
-      let formattedPhone = formData.contributorPhone.replace(/\s/g, '');
-      if (formattedPhone.startsWith('0')) {
-        formattedPhone = '254' + formattedPhone.substring(1);
+      let formattedPhone = null;
+      if (formData.contributorPhone && formData.contributorPhone.trim()) {
+        formattedPhone = formData.contributorPhone.replace(/\s/g, '');
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '254' + formattedPhone.substring(1);
+        }
       }
 
       const response = await donationApi.contributions.create({
-        campaignId: campaign._id, // MongoDB ID
+        campaignId: campaign._id,
         contributorName: formData.isAnonymous ? 'Anonymous' : formData.contributorName,
-        contributorEmail: formData.isAnonymous ? null : formData.contributorEmail,
+        contributorEmail: formData.isAnonymous ? null : (formData.contributorEmail.trim() || null),
         contributorPhone: formData.isAnonymous ? null : formattedPhone,
         amount: Number(formData.amount),
         paymentMethod: formData.paymentMethod,
@@ -161,9 +141,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
       });
 
       if (response.success) {
-        console.log('[CONTRIBUTION-RECORD] Contribution recorded successfully');
-        
-        // Success - refresh and close
         if (onSuccess) onSuccess();
         onClose();
       } else {
@@ -171,20 +148,9 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
       }
     } catch (err) {
       console.error('[CONTRIBUTION-RECORD] Error:', err);
-      
-      const errorMessage = err.response?.data?.message 
-        || err.message 
-        || 'Failed to record contribution';
-      
-      setError(errorMessage);
+      setError(err.response?.data?.message || err.message || 'Failed to record contribution');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
     }
   };
 
@@ -204,16 +170,15 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </p>
           </div>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             disabled={isSubmitting}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-            aria-label="Close"
           >
             <X size={24} />
           </button>
         </div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
           <div className="mx-6 mt-6 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
@@ -224,26 +189,28 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           
-          {/* Anonymous Checkbox */}
+          {/* ✅ FIXED: Anonymous Checkbox */}
           <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <input
               type="checkbox"
               id="isAnonymous"
               checked={formData.isAnonymous}
               onChange={(e) => {
-                setFormData({ ...formData, isAnonymous: e.target.checked });
-                if (e.target.checked) {
+                const isChecked = e.target.checked;
+                setFormData({ ...formData, isAnonymous: isChecked });
+                if (isChecked) {
                   handleClearUser();
                 }
               }}
-              className="w-5 h-5 text-blue-600 rounded"
+              className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+              disabled={isSubmitting}
             />
-            <label htmlFor="isAnonymous" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+            <label htmlFor="isAnonymous" className="text-sm font-semibold text-blue-900 dark:text-blue-200 cursor-pointer">
               This is an anonymous contribution
             </label>
           </div>
 
-          {/* User Search Dropdown */}
+          {/* User Search */}
           {!formData.isAnonymous && users.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -265,7 +232,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                   disabled={isSubmitting || selectedUser !== null}
                 />
                 
-                {/* Dropdown */}
                 {showUserDropdown && filteredUsers.length > 0 && !selectedUser && (
                   <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredUsers.slice(0, 10).map(user => (
@@ -273,12 +239,12 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                         key={user._id}
                         type="button"
                         onClick={() => handleSelectUser(user)}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-950/30 border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors"
+                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-950/30 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
                       >
                         <p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
                         {user.phone && (
-                          <p className="text-xs text-slate-500 dark:text-slate-500">{user.phone}</p>
+                          <p className="text-xs text-slate-500">{user.phone}</p>
                         )}
                       </button>
                     ))}
@@ -286,7 +252,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                 )}
               </div>
               
-              {/* Selected User Display */}
               {selectedUser && (
                 <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -296,9 +261,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                         {selectedUser.name}
                       </p>
                       <p className="text-xs text-green-700 dark:text-green-300">{selectedUser.email}</p>
-                        
-                          <p className="text-xs text-green-700 dark:text-green-300">{selectedUser.phone}</p>
-                        
                     </div>
                   </div>
                   <button
@@ -313,7 +275,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </div>
           )}
 
-          {/* Contributor Details (hidden if anonymous or user selected) */}
+          {/* Manual Entry Fields */}
           {!formData.isAnonymous && !selectedUser && (
             <>
               <div>
@@ -329,7 +291,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                   }}
                   placeholder="John Doe"
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
-                  required={!formData.isAnonymous}
+                  required
                   disabled={isSubmitting}
                 />
               </div>
@@ -337,7 +299,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Email *
+                    Email <span className="text-slate-400">(Optional)</span>
                   </label>
                   <input 
                     type="email"
@@ -348,14 +310,13 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                     }}
                     placeholder="john@example.com"
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
-                    required={!formData.isAnonymous}
                     disabled={isSubmitting}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Phone Number *
+                    Phone Number <span className="text-slate-400">(Optional)</span>
                   </label>
                   <input 
                     type="text"
@@ -364,9 +325,8 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                       setFormData({ ...formData, contributorPhone: e.target.value });
                       setError(null);
                     }}
-                    placeholder="0712345678 or 254712345678"
+                    placeholder="0712345678"
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
-                    required={!formData.isAnonymous}
                     disabled={isSubmitting}
                   />
                 </div>
@@ -374,7 +334,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </>
           )}
 
-          {/* Read-only fields when user is selected */}
+          {/* Read-only when user selected */}
           {!formData.isAnonymous && selectedUser && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-75">
               <div>
@@ -434,7 +394,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
               onChange={(e) => {
                 setFormData({ ...formData, paymentMethod: e.target.value });
                 setError(null);
-                // Clear mpesa ref if not mpesa
                 if (e.target.value !== 'mpesa') {
                   setFormData(prev => ({ ...prev, mpesaRef: '' }));
                 }
@@ -448,7 +407,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </select>
           </div>
 
-          {/* M-Pesa Reference (conditional) */}
+          {/* M-Pesa Reference */}
           {formData.paymentMethod === 'mpesa' && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -519,11 +478,11 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </div>
           )}
 
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button 
               type="button"
-              onClick={handleClose}
+              onClick={onClose}
               disabled={isSubmitting}
               className="flex-1 px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
             >
