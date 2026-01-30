@@ -4,6 +4,9 @@ import Providers from '@/components/providers/Providers';
 import { ThemeProvider } from '@/context/ThemeContext';
 import FloatingThemeToggle from '@/components/common/FloatingThemeToggle';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+// layout.jsx
+import { PiPProvider } from '@/context/PiPContext';
+import GlobalPiP from '@/components/GlobalPiP';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -53,9 +56,14 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <ThemeProvider>
-          <Providers>{children}</Providers>
+          <PiPProvider>
+          <Providers>
+            {children}
+            </Providers>
+          <GlobalPiP /> {/* This stays mounted during navigation */}
           <FloatingThemeToggle />
           <ServiceWorkerRegister />
+          </PiPProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -389,6 +389,27 @@ export const analyticsService = {
   }
 };
 
+export const auditService = {
+  getAll: async (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    const response = await api.get(`/audit?${params.toString()}`);
+    return response?.data || { logs: [], success: false };
+  },
+
+  exportCSV: async (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    const response = await api.get(`/audit/export?${params.toString()}`, {
+      responseType: 'blob'
+    });
+    return response;
+  },
+
+  getStats: async () => {
+    const response = await api.get('/audit/stats');
+    return response?.data || { stats: {}, success: false };
+  }
+};
+
 // ============================================
 // SETTINGS SERVICE
 // ============================================
@@ -435,5 +456,6 @@ export const donationApi = {
   payments: paymentService,
   contributions: contributionService,
   settings: donationSettingsService,
-  analytics: analyticsService
+  analytics: analyticsService,
+  audit: auditService
 };

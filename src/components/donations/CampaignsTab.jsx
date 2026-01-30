@@ -5,7 +5,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDateShort, getCampaignStatusLabel, calculateCampaignProgress } from '@/utils/donationHelpers';
 import PrintTableButton from '@/components/common/PrintTableButton';
-import { Plus, Eye, Edit, Archive, Trash2, CheckCircle, AlertCircle, RefreshCw, Printer, Info } from 'lucide-react';
+import ContributionRecordModal from './ContributionRecordModal';
+import { Plus, Eye, Edit, Archive, Trash2, CheckCircle, AlertCircle, RefreshCw, Printer, DollarSign, Info } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CampaignsTab({ onCampaignCreated }) {
@@ -26,6 +27,8 @@ export default function CampaignsTab({ onCampaignCreated }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [campaignAnalytics, setCampaignAnalytics] = useState({});
+  const [showContribModal, setShowContribModal] = useState(false);
+
 
   useEffect(() => {
     if (canViewCampaigns()) {
@@ -644,6 +647,17 @@ const showAnalyticsDetails = (campaign) => {
                           >
                             <Info size={16} />
                           </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedCampaign(campaign);
+                              setShowContribModal(true);
+                            }}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                            title="Record Contribution"
+                          >
+                            <DollarSign size={18} />
+                          </button>
                         
                         {canEditCampaign() && (
                           <button 
@@ -700,6 +714,18 @@ const showAnalyticsDetails = (campaign) => {
                     </div>
                 </div>
                 </div>
+
+                {/* Contribution Record Modal */}
+                {showContribModal && selectedCampaign && (
+                  <ContributionRecordModal
+                    campaign={selectedCampaign}
+                    onClose={() => setShowContribModal(false)}
+                    onSuccess={() => {
+                      // Refresh campaigns or contributions
+                      fetchCampaigns();
+                    }}
+                  />
+                )}
 
                 {/* Edit Modal */}
                 {isEditModalOpen && selectedCampaign && (

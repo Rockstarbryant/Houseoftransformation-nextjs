@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, getStatusBadge } from '@/utils/donationHelpers';
-import { Eye, CheckCircle, Download, Filter, Search, DollarSign } from 'lucide-react';
+import { Eye, CheckCircle, Download, Filter, Search, DollarSign, Printer } from 'lucide-react';
 
 export default function ContributionsTab() {
   const [contributions, setContributions] = useState([]);
@@ -17,6 +17,7 @@ export default function ContributionsTab() {
   });
   const [pagination, setPagination] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedContributions, setSelectedContributions] = useState(new Set());
 
   useEffect(() => {
     fetchContributions();
@@ -60,6 +61,80 @@ export default function ContributionsTab() {
     alert('Export feature coming soon');
   };
 
+  // Handle select all
+const handleSelectAll = (e) => {
+  if (e.target.checked) {
+    setSelectedContributions(new Set(contributions.map(c => c.id)));
+  } else {
+    setSelectedContributions(new Set());
+  }
+};
+
+// Handle select one
+const handleSelectRow = (id) => {
+  const newSelected = new Set(selectedContributions);
+  if (newSelected.has(id)) {
+    newSelected.delete(id);
+  } else {
+    newSelected.add(id);
+  }
+  setSelectedContributions(newSelected);
+};
+
+// Print function
+const handlePrint = () => {
+  const dataToPrint = selectedContributions.size > 0
+    ? contributions.filter(c => selectedContributions.has(c.id))
+    : contributions;
+
+  const printWindow = window.open('', '', 'height=600,width=800');
+  
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Contributions Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <h1>Contributions Report</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Contributor</th>
+              <th>Campaign</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dataToPrint.map(c => `
+              <tr>
+                <td>${c.is_anonymous ? 'Anonymous' : c.contributor_name}</td>
+                <td>${c.campaign_title}</td>
+                <td>KES ${c.amount.toLocaleString()}</td>
+                <td>${c.payment_method}</td>
+                <td>${c.status}</td>
+                <td>${new Date(c.created_at).toLocaleDateString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  printWindow.print();
+};
+
   // Calculate stats
   const stats = {
     total: contributions.reduce((sum, c) => sum + Number(c.amount || 0), 0),
@@ -86,6 +161,13 @@ export default function ContributionsTab() {
             One-time donations without pledges
           </p>
         </div>
+        <button
+          onClick={handlePrint}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          <Printer size={18} className="inline mr-2" />
+          Print {selectedContributions.size > 0 ? 'Selected' : 'All'}
+        </button>
         <button
           onClick={handleExport}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -184,6 +266,7 @@ export default function ContributionsTab() {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
               <tr>
+                <th className="px-6 py-3"><input type="checkbox" checked={selectedContributions.size === contributions.length} onChange={handleSelectAll}/></th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Contributor</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Campaign</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Amount</th>
@@ -217,6 +300,13 @@ export default function ContributionsTab() {
                     
                     return (
                       <tr key={contrib.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedContributions.has(contrib.id)}
+                            onChange={() => handleSelectRow(contrib.id)}
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-semibold text-slate-900 dark:text-white">

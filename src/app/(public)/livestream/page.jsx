@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
+// page.jsx snippet
+import { usePiP } from '@/context/PiPContext';
 
 const LiveStreamPage = () => {
   const { activeStream, archives, loading, fetchArchives } = useLivestream();
@@ -11,13 +13,16 @@ const LiveStreamPage = () => {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
-  const [floatingPiP, setFloatingPiP] = useState(null);
-  const [pipSize, setPipSize] = useState({ width: 360, height: 240 });
-  const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
-  const [isDraggingPiP, setIsDraggingPiP] = useState(false);
-  const [isResizingPiP, setIsResizingPiP] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 360, height: 240 });
+ // const [floatingPiP, setFloatingPiP] = useState(null);
+  //const [pipSize, setPipSize] = useState({ width: 360, height: 240 });
+  //const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
+  //const [isDraggingPiP, setIsDraggingPiP] = useState(false);
+  //const [isResizingPiP, setIsResizingPiP] = useState(false);
+  //const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+ // const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 360, height: 240 });
+  const { floatingPiP, setFloatingPiP } = usePiP(); // Use the global hook
+
+  
 
   // FIX: Load archives on component mount with default filters
   useEffect(() => {
@@ -68,7 +73,7 @@ const LiveStreamPage = () => {
   }, []);
 
   // Save PiP to localStorage whenever it changes
-  useEffect(() => {
+/*  useEffect(() => {
     if (typeof window !== 'undefined') {
       if (floatingPiP) {
         localStorage.setItem('persistentPiP', JSON.stringify(floatingPiP));
@@ -76,7 +81,7 @@ const LiveStreamPage = () => {
         localStorage.setItem('persistentPiPPosition', JSON.stringify(pipPosition));
       }
     }
-  }, [floatingPiP, pipSize, pipPosition]);
+  }, [floatingPiP, pipSize, pipPosition]);  */
 
   const streamTypes = [
     { value: '', label: 'All Livestreams' },
@@ -120,8 +125,8 @@ const LiveStreamPage = () => {
   };
 
   const openFloatingPiP = async (stream) => {
-    setFloatingPiP(stream);
-    
+    setFloatingPiP(stream); // This now sends the data to the Layout level
+
     // Request screen wake lock to prevent screen from sleeping
     if (typeof navigator !== 'undefined' && navigator.wakeLock) {
       try {
@@ -149,10 +154,10 @@ const LiveStreamPage = () => {
     return { x: e.clientX, y: e.clientY };
   };
 
-  const handlePiPDragStart = (e) => {
+ /* const handlePiPDragStart = (e) => {
     e.preventDefault();
     const pipElement = document.getElementById('floating-pip');
-    if (!pipElement) return;
+    if (!pipElement) return; 
     
     const coords = getClientCoords(e);
     const rect = pipElement.getBoundingClientRect();
@@ -180,7 +185,7 @@ const LiveStreamPage = () => {
     pipElement.style.top = `${boundedY}px`;
     
     setPipPosition({ x: boundedX, y: boundedY });
-  };
+  }; 
 
   const handlePiPDragEnd = () => {
     setIsDraggingPiP(false);
@@ -220,9 +225,9 @@ const LiveStreamPage = () => {
 
   const handleResizeEnd = () => {
     setIsResizingPiP(false);
-  };
+  };  */
 
-  useEffect(() => {
+/*  useEffect(() => {
     if (isDraggingPiP) {
       window.addEventListener('mousemove', handlePiPDragMove);
       window.addEventListener('mouseup', handlePiPDragEnd);
@@ -251,7 +256,7 @@ const LiveStreamPage = () => {
       };
     }
   }, [isResizingPiP, resizeStart]);
-
+*/
   return (
     <div className="pt-20 min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
       {/* ACTIVE STREAM: CINEMATIC COMMAND CENTER */}
@@ -603,7 +608,7 @@ const LiveStreamPage = () => {
         </div>
       )}
 
-      {/* FLOATING PiP WINDOW - PERSISTENT */}
+      {/* FLOATING PiP WINDOW - PERSISTENT 
       {floatingPiP && (
         <div
           id="floating-pip"
@@ -615,7 +620,7 @@ const LiveStreamPage = () => {
             height: `${pipSize.height}px`,
           }}
         >
-          {/* Header - Draggable */}
+          { Header - Draggable }
           <div
             onMouseDown={handlePiPDragStart}
             onTouchStart={handlePiPDragStart}
@@ -633,7 +638,7 @@ const LiveStreamPage = () => {
             </button>
           </div>
 
-          {/* Video Container */}
+          { Video Container }
           <div className="w-full bg-black" style={{ height: `${pipSize.height - 44}px` }}>
             {getEmbedUrl(floatingPiP) && (
               <iframe
@@ -646,7 +651,7 @@ const LiveStreamPage = () => {
             )}
           </div>
 
-          {/* Resize Handle */}
+          { Resize Handle }
           <div
             onMouseDown={handleResizeStart}
             onTouchStart={handleResizeStart}
@@ -654,7 +659,7 @@ const LiveStreamPage = () => {
             title="Drag to resize"
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 };
