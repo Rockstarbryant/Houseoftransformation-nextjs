@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2 } from 'lucide-react';
+import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
 //export const dynamic = 'force-dynamic';
@@ -15,8 +15,10 @@ const LiveStreamPage = () => {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
-  const [pipActive, setPipActive] = useState(false);
-  const [pipVideoRef, setPipVideoRef] = useState(null);
+  const [floatingPiP, setFloatingPiP] = useState(null);
+  const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
+  const [isDraggingPiP, setIsDraggingPiP] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // FIX: Load archives on component mount with default filters
   useEffect(() => {
@@ -64,33 +66,50 @@ const LiveStreamPage = () => {
     }
   };
 
-  const handlePictureInPicture = async (stream, isLiveStream = false) => {
-    try {
-      const videoElement = document.querySelector('iframe[title="' + stream.title + '"]');
-      
-      if (videoElement && videoElement.requestPictureInPicture) {
-        await videoElement.requestPictureInPicture();
-        setPipActive(true);
-      } else {
-        alert('Picture-in-Picture is available for embedded videos. The video will continue playing in the background.');
-        setPipActive(true);
-      }
-    } catch (error) {
-      console.error('PiP Error:', error);
-      alert('Picture-in-Picture is not supported in your browser.');
-    }
+  const openFloatingPiP = (stream) => {
+    setFloatingPiP(stream);
   };
 
-  const exitPictureInPicture = async () => {
-    try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-        setPipActive(false);
-      }
-    } catch (error) {
-      console.error('Exit PiP Error:', error);
-    }
+  const closeFloatingPiP = () => {
+    setFloatingPiP(null);
   };
+
+  const handlePiPDragStart = (e) => {
+    const rect = e.currentTarget.parentElement.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setIsDraggingPiP(true);
+  };
+
+  const handlePiPDragMove = (e) => {
+    if (!isDraggingPiP) return;
+    
+    const viewport = document.documentElement;
+    const newX = ((e.clientX - dragOffset.x) / viewport.clientWidth) * 100;
+    const newY = ((e.clientY - dragOffset.y) / viewport.clientHeight) * 100;
+    
+    setPipPosition({
+      x: Math.max(0, Math.min(newX, 85)),
+      y: Math.max(0, Math.min(newY, 85))
+    });
+  };
+
+  const handlePiPDragEnd = () => {
+    setIsDraggingPiP(false);
+  };
+
+  useEffect(() => {
+    if (isDraggingPiP) {
+      window.addEventListener('mousemove', handlePiPDragMove);
+      window.addEventListener('mouseup', handlePiPDragEnd);
+      return () => {
+        window.removeEventListener('mousemove', handlePiPDragMove);
+        window.removeEventListener('mouseup', handlePiPDragEnd);
+      };
+    }
+  }, [isDraggingPiP, dragOffset]);
 
   return (
     <div className="pt-20 min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
@@ -132,10 +151,10 @@ const LiveStreamPage = () => {
 
               <div className="w-full lg:w-2/3">
                 {getEmbedUrl(activeStream) && (
-                  <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black relative">
+                  <div className="aspect-video rounded-[40px] overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.2)] border-2 border-white/10 bg-black relative group">
                     <button
-                      onClick={() => handlePictureInPicture(activeStream, true)}
-                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95"
+                      onClick={() => openFloatingPiP(activeStream)}
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 opacity-0 group-hover:opacity-100"
                       title="Picture in Picture"
                     >
                       <Maximize2 size={20} />
@@ -340,12 +359,12 @@ const LiveStreamPage = () => {
             
             {/* Left: Player Section */}
             <div className="flex-1 bg-black flex flex-col">
-              <div className="aspect-video w-full relative">
+              <div className="aspect-video w-full relative group">
                 {getEmbedUrl(selectedStream) && (
                   <>
                     <button
-                      onClick={() => handlePictureInPicture(selectedStream, false)}
-                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95"
+                      onClick={() => openFloatingPiP(selectedStream)}
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 opacity-0 group-hover:opacity-100"
                       title="Picture in Picture"
                     >
                       <Maximize2 size={20} />
@@ -439,6 +458,49 @@ const LiveStreamPage = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING PiP WINDOW */}
+      {floatingPiP && (
+        <div
+          className="fixed z-[200] rounded-[20px] overflow-hidden shadow-2xl border-2 border-red-600 bg-black hover:shadow-red-600/50 transition-shadow cursor-move"
+          style={{
+            left: `${pipPosition.x}%`,
+            top: `${pipPosition.y}%`,
+            width: '360px',
+            height: '240px',
+          }}
+        >
+          {/* Header - Draggable */}
+          <div
+            onMouseDown={handlePiPDragStart}
+            className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
+          >
+            <div className="flex items-center gap-2 flex-1">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <span className="text-white font-black text-[10px] uppercase tracking-widest truncate">{floatingPiP.title}</span>
+            </div>
+            <button
+              onClick={closeFloatingPiP}
+              className="p-1 hover:bg-red-800 rounded transition-all ml-2"
+            >
+              <X size={16} className="text-white" />
+            </button>
+          </div>
+
+          {/* Video Container */}
+          <div className="w-full h-[calc(100%-44px)] bg-black">
+            {getEmbedUrl(floatingPiP) && (
+              <iframe
+                src={getEmbedUrl(floatingPiP)}
+                className="w-full h-full"
+                allowFullScreen
+                allow="autoplay"
+                title={floatingPiP.title}
+              />
+            )}
           </div>
         </div>
       )}
