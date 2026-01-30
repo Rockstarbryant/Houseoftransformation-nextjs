@@ -13,13 +13,6 @@ const LiveStreamPage = () => {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
- // const [floatingPiP, setFloatingPiP] = useState(null);
-  //const [pipSize, setPipSize] = useState({ width: 360, height: 240 });
-  //const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
-  //const [isDraggingPiP, setIsDraggingPiP] = useState(false);
-  //const [isResizingPiP, setIsResizingPiP] = useState(false);
-  //const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
- // const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 360, height: 240 });
   const { floatingPiP, setFloatingPiP } = usePiP(); // Use the global hook
 
   
@@ -72,16 +65,6 @@ const LiveStreamPage = () => {
     }
   }, []);
 
-  // Save PiP to localStorage whenever it changes
-/*  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (floatingPiP) {
-        localStorage.setItem('persistentPiP', JSON.stringify(floatingPiP));
-        localStorage.setItem('persistentPiPSize', JSON.stringify(pipSize));
-        localStorage.setItem('persistentPiPPosition', JSON.stringify(pipPosition));
-      }
-    }
-  }, [floatingPiP, pipSize, pipPosition]);  */
 
   const streamTypes = [
     { value: '', label: 'All Livestreams' },
@@ -154,109 +137,6 @@ const LiveStreamPage = () => {
     return { x: e.clientX, y: e.clientY };
   };
 
- /* const handlePiPDragStart = (e) => {
-    e.preventDefault();
-    const pipElement = document.getElementById('floating-pip');
-    if (!pipElement) return; 
-    
-    const coords = getClientCoords(e);
-    const rect = pipElement.getBoundingClientRect();
-    setDragOffset({
-      x: coords.x - rect.left,
-      y: coords.y - rect.top
-    });
-    setIsDraggingPiP(true);
-  };
-
-  const handlePiPDragMove = (e) => {
-    if (!isDraggingPiP) return;
-    
-    const pipElement = document.getElementById('floating-pip');
-    if (!pipElement) return;
-    
-    const coords = getClientCoords(e);
-    const newX = coords.x - dragOffset.x;
-    const newY = coords.y - dragOffset.y;
-    
-    const boundedX = Math.max(0, Math.min(newX, window.innerWidth - pipSize.width));
-    const boundedY = Math.max(0, Math.min(newY, window.innerHeight - pipSize.height));
-    
-    pipElement.style.left = `${boundedX}px`;
-    pipElement.style.top = `${boundedY}px`;
-    
-    setPipPosition({ x: boundedX, y: boundedY });
-  }; 
-
-  const handlePiPDragEnd = () => {
-    setIsDraggingPiP(false);
-  };
-
-  const handleResizeStart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const pipElement = document.getElementById('floating-pip');
-    if (!pipElement) return;
-    
-    const coords = getClientCoords(e);
-    setResizeStart({
-      x: coords.x,
-      y: coords.y,
-      width: pipSize.width,
-      height: pipSize.height
-    });
-    setIsResizingPiP(true);
-  };
-
-  const handleResizeMove = (e) => {
-    if (!isResizingPiP) return;
-    
-    const coords = getClientCoords(e);
-    const deltaX = coords.x - resizeStart.x;
-    const deltaY = coords.y - resizeStart.y;
-    
-    const newWidth = Math.max(280, resizeStart.width + deltaX);
-    const newHeight = Math.max(180, resizeStart.height + deltaY);
-    
-    setPipSize({
-      width: newWidth,
-      height: newHeight
-    });
-  };
-
-  const handleResizeEnd = () => {
-    setIsResizingPiP(false);
-  };  */
-
-/*  useEffect(() => {
-    if (isDraggingPiP) {
-      window.addEventListener('mousemove', handlePiPDragMove);
-      window.addEventListener('mouseup', handlePiPDragEnd);
-      window.addEventListener('touchmove', handlePiPDragMove, { passive: false });
-      window.addEventListener('touchend', handlePiPDragEnd);
-      return () => {
-        window.removeEventListener('mousemove', handlePiPDragMove);
-        window.removeEventListener('mouseup', handlePiPDragEnd);
-        window.removeEventListener('touchmove', handlePiPDragMove);
-        window.removeEventListener('touchend', handlePiPDragEnd);
-      };
-    }
-  }, [isDraggingPiP, dragOffset, pipSize]);
-
-  useEffect(() => {
-    if (isResizingPiP) {
-      window.addEventListener('mousemove', handleResizeMove);
-      window.addEventListener('mouseup', handleResizeEnd);
-      window.addEventListener('touchmove', handleResizeMove, { passive: false });
-      window.addEventListener('touchend', handleResizeEnd);
-      return () => {
-        window.removeEventListener('mousemove', handleResizeMove);
-        window.removeEventListener('mouseup', handleResizeEnd);
-        window.removeEventListener('touchmove', handleResizeMove);
-        window.removeEventListener('touchend', handleResizeEnd);
-      };
-    }
-  }, [isResizingPiP, resizeStart]);
-*/
   return (
     <div className="pt-20 min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
       {/* ACTIVE STREAM: CINEMATIC COMMAND CENTER */}
@@ -607,59 +487,6 @@ const LiveStreamPage = () => {
           </div>
         </div>
       )}
-
-      {/* FLOATING PiP WINDOW - PERSISTENT 
-      {floatingPiP && (
-        <div
-          id="floating-pip"
-          className="fixed z-[200] rounded-[20px] overflow-hidden shadow-2xl border-2 border-red-600 bg-black hover:shadow-red-600/50 transition-shadow"
-          style={{
-            left: `${pipPosition.x}px`,
-            top: `${pipPosition.y}px`,
-            width: `${pipSize.width}px`,
-            height: `${pipSize.height}px`,
-          }}
-        >
-          { Header - Draggable }
-          <div
-            onMouseDown={handlePiPDragStart}
-            onTouchStart={handlePiPDragStart}
-            className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none h-11 touch-none"
-          >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse flex-shrink-0" />
-              <span className="text-white font-black text-[10px] uppercase tracking-widest truncate">{floatingPiP.title}</span>
-            </div>
-            <button
-              onClick={closeFloatingPiP}
-              className="p-1 hover:bg-red-800 rounded transition-all ml-2 flex-shrink-0"
-            >
-              <X size={16} className="text-white" />
-            </button>
-          </div>
-
-          { Video Container }
-          <div className="w-full bg-black" style={{ height: `${pipSize.height - 44}px` }}>
-            {getEmbedUrl(floatingPiP) && (
-              <iframe
-                src={getEmbedUrl(floatingPiP)}
-                className="w-full h-full"
-                allowFullScreen
-                allow="autoplay"
-                title={floatingPiP.title}
-              />
-            )}
-          </div>
-
-          { Resize Handle }
-          <div
-            onMouseDown={handleResizeStart}
-            onTouchStart={handleResizeStart}
-            className="absolute bottom-0 right-0 w-6 h-6 bg-red-600 hover:bg-red-700 cursor-se-resize rounded-tl-xl transition-colors touch-none"
-            title="Drag to resize"
-          />
-        </div>
-      )} */}
     </div>
   );
 };
