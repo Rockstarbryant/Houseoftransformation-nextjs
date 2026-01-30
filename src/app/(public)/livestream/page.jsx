@@ -4,10 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 
-//export const dynamic = 'force-dynamic';
-
-//export const revalidate = 60; // Revalidate every 60 seconds instead of force-dynamic
-
 const LiveStreamPage = () => {
   const { activeStream, archives, loading, fetchArchives } = useLivestream();
   const [filterType, setFilterType] = useState('');
@@ -16,8 +12,8 @@ const LiveStreamPage = () => {
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
   const [floatingPiP, setFloatingPiP] = useState(null);
-  const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
   const [pipSize, setPipSize] = useState({ width: 360, height: 240 });
+  const [pipPosition, setPipPosition] = useState({ x: 20, y: 80 });
   const [isDraggingPiP, setIsDraggingPiP] = useState(false);
   const [isResizingPiP, setIsResizingPiP] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -27,6 +23,60 @@ const LiveStreamPage = () => {
   useEffect(() => {
     fetchArchives({ type: filterType, sortBy: sortBy, limit: 100 });
   }, []);
+
+  // Restore PiP from localStorage on mount and request wake lock
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedPiP = localStorage.getItem('persistentPiP');
+      const savedSize = localStorage.getItem('persistentPiPSize');
+      const savedPosition = localStorage.getItem('persistentPiPPosition');
+      
+      if (savedPiP) {
+        try {
+          setFloatingPiP(JSON.parse(savedPiP));
+          if (savedSize) setPipSize(JSON.parse(savedSize));
+          if (savedPosition) setPipPosition(JSON.parse(savedPosition));
+        } catch (e) {
+          console.error('Failed to restore PiP:', e);
+          localStorage.removeItem('persistentPiP');
+        }
+      }
+
+      // Request wake lock to keep screen on while video is playing
+      if (navigator.wakeLock && savedPiP) {
+        navigator.wakeLock.request('screen').catch((err) => {
+          console.log(`Wake Lock error: ${err.name}, ${err.message}`);
+        });
+      }
+
+      // Handle visibility change to reacquire wake lock
+      const handleVisibilityChange = async () => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible' && floatingPiP) {
+          try {
+            await navigator.wakeLock.request('screen');
+          } catch (err) {
+            console.log(`Wake Lock error on visibility: ${err.name}, ${err.message}`);
+          }
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
+  }, []);
+
+  // Save PiP to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (floatingPiP) {
+        localStorage.setItem('persistentPiP', JSON.stringify(floatingPiP));
+        localStorage.setItem('persistentPiPSize', JSON.stringify(pipSize));
+        localStorage.setItem('persistentPiPPosition', JSON.stringify(pipPosition));
+      }
+    }
+  }, [floatingPiP, pipSize, pipPosition]);
 
   const streamTypes = [
     { value: '', label: 'All Livestreams' },
@@ -69,34 +119,28 @@ const LiveStreamPage = () => {
     }
   };
 
-  const openFloatingPiP = (stream) => {
+  const openFloatingPiP = async (stream) => {
     setFloatingPiP(stream);
-    // Save to sessionStorage so it persists if user navigates and comes back
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('floatingPiP', JSON.stringify(stream));
+    
+    // Request screen wake lock to prevent screen from sleeping
+    if (typeof navigator !== 'undefined' && navigator.wakeLock) {
+      try {
+        await navigator.wakeLock.request('screen');
+        console.log('Wake Lock acquired');
+      } catch (err) {
+        console.log(`Wake Lock error: ${err.name}, ${err.message}`);
+      }
     }
   };
 
   const closeFloatingPiP = () => {
     setFloatingPiP(null);
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('floatingPiP');
+      localStorage.removeItem('persistentPiP');
+      localStorage.removeItem('persistentPiPSize');
+      localStorage.removeItem('persistentPiPPosition');
     }
   };
-
-  // Restore PiP state on component mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('floatingPiP');
-      if (saved) {
-        try {
-          setFloatingPiP(JSON.parse(saved));
-        } catch (e) {
-          console.error('Failed to restore PiP state:', e);
-        }
-      }
-    }
-  }, []);
 
   const getClientCoords = (e) => {
     if (e.touches) {
@@ -129,8 +173,13 @@ const LiveStreamPage = () => {
     const newX = coords.x - dragOffset.x;
     const newY = coords.y - dragOffset.y;
     
-    pipElement.style.left = `${Math.max(0, Math.min(newX, window.innerWidth - pipSize.width))}px`;
-    pipElement.style.top = `${Math.max(0, Math.min(newY, window.innerHeight - pipSize.height))}px`;
+    const boundedX = Math.max(0, Math.min(newX, window.innerWidth - pipSize.width));
+    const boundedY = Math.max(0, Math.min(newY, window.innerHeight - pipSize.height));
+    
+    pipElement.style.left = `${boundedX}px`;
+    pipElement.style.top = `${boundedY}px`;
+    
+    setPipPosition({ x: boundedX, y: boundedY });
   };
 
   const handlePiPDragEnd = () => {
@@ -554,14 +603,14 @@ const LiveStreamPage = () => {
         </div>
       )}
 
-      {/* FLOATING PiP WINDOW */}
+      {/* FLOATING PiP WINDOW - PERSISTENT */}
       {floatingPiP && (
         <div
           id="floating-pip"
           className="fixed z-[200] rounded-[20px] overflow-hidden shadow-2xl border-2 border-red-600 bg-black hover:shadow-red-600/50 transition-shadow"
           style={{
-            left: '20px',
-            top: '80px',
+            left: `${pipPosition.x}px`,
+            top: `${pipPosition.y}px`,
             width: `${pipSize.width}px`,
             height: `${pipSize.height}px`,
           }}
