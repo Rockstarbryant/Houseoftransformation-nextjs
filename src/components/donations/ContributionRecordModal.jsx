@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // ✅ FIXED: Added useEffect
 import { donationApi } from '@/services/api/donationService';
+import api from '@/lib/api'; // ✅ FIXED: Import api instance
 import { formatCurrency } from '@/utils/donationHelpers';
-import { X, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, DollarSign, CheckCircle, AlertCircle, Search, UserCheck } from 'lucide-react';
 
 export default function ContributionRecordModal({ campaign, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -18,6 +19,63 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  
+  // ✅ User search functionality
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  // ✅ Fetch users on mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await api.get('/users');
+        if (response?.data?.success) {
+          setUsers(response.data.users || []);
+        }
+      } catch (error) {
+        console.error('[CONTRIB-MODAL] Fetch users error:', error);
+        // Don't show error to user - just means user list unavailable
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // ✅ Filter users based on search
+  const filteredUsers = users.filter(user => {
+    if (!searchTerm) return false;
+    const search = searchTerm.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(search) ||
+      user.email?.toLowerCase().includes(search) ||
+      user.phone?.includes(search)
+    );
+  });
+
+  // ✅ Handle user selection
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setFormData({
+      ...formData,
+      contributorName: user.name || '',
+      contributorEmail: user.email || '',
+      contributorPhone: user.phone || ''
+    });
+    setSearchTerm('');
+    setShowUserDropdown(false);
+  };
+
+  // ✅ Clear selected user
+  const handleClearUser = () => {
+    setSelectedUser(null);
+    setFormData({
+      ...formData,
+      contributorName: '',
+      contributorEmail: '',
+      contributorPhone: ''
+    });
+  };
 
   // ============================================
   // VALIDATION
@@ -55,7 +113,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
       // Validate phone (Kenya format)
       const phoneRegex = /^(254|0)[0-9]{9}$/;
       if (!phoneRegex.test(formData.contributorPhone.replace(/\s/g, ''))) {
-        setError('Invalid phone number');
+        setError('Invalid phone number. Use format: 0712345678 or 254712345678');
         return false;
       }
     }
@@ -135,7 +193,7 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
       <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         
         {/* Header */}
-        <div className="border-b border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800">
+        <div className="border-b border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <DollarSign className="text-green-600" size={28} />
@@ -172,7 +230,12 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
               type="checkbox"
               id="isAnonymous"
               checked={formData.isAnonymous}
-              onChange={(e) => setFormData({ ...formData, isAnonymous: e.target.checked })}
+              onChange={(e) => {
+                setFormData({ ...formData, isAnonymous: e.target.checked });
+                if (e.target.checked) {
+                  handleClearUser();
+                }
+              }}
               className="w-5 h-5 text-blue-600 rounded"
             />
             <label htmlFor="isAnonymous" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
@@ -180,8 +243,78 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
             </label>
           </div>
 
-          {/* Contributor Details (hidden if anonymous) */}
-          {!formData.isAnonymous && (
+          {/* User Search Dropdown */}
+          {!formData.isAnonymous && users.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <Search size={16} className="inline mr-2" />
+                Quick Select Registered User (Optional)
+              </label>
+              
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShowUserDropdown(e.target.value.length > 0);
+                  }}
+                  onFocus={() => searchTerm && setShowUserDropdown(true)}
+                  placeholder="Search by name, email, or phone..."
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 outline-none"
+                  disabled={isSubmitting || selectedUser !== null}
+                />
+                
+                {/* Dropdown */}
+                {showUserDropdown && filteredUsers.length > 0 && !selectedUser && (
+                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredUsers.slice(0, 10).map(user => (
+                      <button
+                        key={user._id}
+                        type="button"
+                        onClick={() => handleSelectUser(user)}
+                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-950/30 border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors"
+                      >
+                        <p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
+                        {user.phone && (
+                          <p className="text-xs text-slate-500 dark:text-slate-500">{user.phone}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected User Display */}
+              {selectedUser && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="text-green-600" size={18} />
+                    <div>
+                      <p className="text-sm font-semibold text-green-900 dark:text-green-200">
+                        {selectedUser.name}
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-300">{selectedUser.email}</p>
+                        
+                          <p className="text-xs text-green-700 dark:text-green-300">{selectedUser.phone}</p>
+                        
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearUser}
+                    className="text-xs text-red-600 hover:underline font-semibold"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Contributor Details (hidden if anonymous or user selected) */}
+          {!formData.isAnonymous && !selectedUser && (
             <>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -239,6 +372,35 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                 </div>
               </div>
             </>
+          )}
+
+          {/* Read-only fields when user is selected */}
+          {!formData.isAnonymous && selectedUser && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-75">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Email
+                </label>
+                <input 
+                  type="email"
+                  value={formData.contributorEmail}
+                  readOnly
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Phone Number
+                </label>
+                <input 
+                  type="text"
+                  value={formData.contributorPhone}
+                  readOnly
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white cursor-not-allowed"
+                />
+              </div>
+            </div>
           )}
 
           {/* Amount */}

@@ -28,6 +28,20 @@ export default function CampaignsTab({ onCampaignCreated }) {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [campaignAnalytics, setCampaignAnalytics] = useState({});
   const [showContribModal, setShowContribModal] = useState(false);
+  const handleCompleteCampaign = async (campaignId) => {
+  if (!confirm('Mark this campaign as completed? This cannot be undone.')) return;
+
+  try {
+    const response = await donationApi.campaigns.completeCampaign(campaignId);
+    
+    if (response.success) {
+      alert('Campaign marked as completed');
+      fetchCampaigns(); // Refresh
+    }
+  } catch (error) {
+    alert('Failed to complete campaign');
+  }
+};
 
 
   useEffect(() => {
@@ -676,6 +690,16 @@ const showAnalyticsDetails = (campaign) => {
                             title="Activate"
                           >
                             <CheckCircle size={16} />
+                          </button>
+                        )}
+
+                        {campaign.status === 'active' && (
+                          <button
+                            onClick={() => handleCompleteCampaign(campaign._id)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="Mark as Completed"
+                          >
+                            <CheckCircle size={18} />
                           </button>
                         )}
 

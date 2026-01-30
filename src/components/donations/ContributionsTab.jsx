@@ -1,36 +1,49 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, getStatusBadge } from '@/utils/donationHelpers';
-import { Eye, CheckCircle, Download, Filter, Search, DollarSign, Printer } from 'lucide-react';
+import { Eye, CheckCircle, Download, Filter, Search, DollarSign, X, Printer } from 'lucide-react';
 
 export default function ContributionsTab() {
-  const [contributions, setContributions] = useState([]);
+  // ============================================
+  // STATE
+  // ============================================
+  const [allContributions, setAllContributions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedContributions, setSelectedContributions] = useState(new Set());
+  
   const [filters, setFilters] = useState({
     status: '',
     paymentMethod: '',
     campaignId: '',
-    page: 1,
-    limit: 20
+    searchTerm: ''
   });
-  const [pagination, setPagination] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContributions, setSelectedContributions] = useState(new Set());
 
+  const [campaigns, setCampaigns] = useState([]);
+
+  // ============================================
+  // FETCH DATA ON MOUNT
+  // ============================================
   useEffect(() => {
-    fetchContributions();
-  }, [filters]);
+    fetchAllData();
+  }, []);
 
-  const fetchContributions = async () => {
+  const fetchAllData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await donationApi.contributions.getAll(filters);
-      
-      if (response.success) {
-        setContributions(response.contributions || []);
-        setPagination(response.pagination);
+      // Fetch contributions and campaigns in parallel
+      const [contribResponse, campaignsResponse] = await Promise.all([
+        donationApi.contributions.getAll({ limit: 1000 }),
+        donationApi.campaigns.getAll()
+      ]);
+
+      if (contribResponse.success) {
+        setAllContributions(contribResponse.contributions || []);
+      }
+
+      if (campaignsResponse.success) {
+        setCampaigns(campaignsResponse.campaigns || []);
       }
     } catch (error) {
       console.error('[CONTRIBUTIONS] Fetch error:', error);
@@ -39,6 +52,84 @@ export default function ContributionsTab() {
     }
   };
 
+  // ============================================
+  // CLIENT-SIDE FILTERING (NO REFETCH)
+  // ============================================
+  const filteredContributions = useMemo(() => {
+    let filtered = [...allContributions];
+
+    // Filter by status
+    if (filters.status) {
+      filtered = filtered.filter(c => c.status === filters.status);
+    }
+
+    // Filter by payment method
+    if (filters.paymentMethod) {
+      filtered = filtered.filter(c => c.payment_method === filters.paymentMethod);
+    }
+
+    // Filter by campaign
+    if (filters.campaignId) {
+      filtered = filtered.filter(c => c.campaign_id === filters.campaignId);
+    }
+
+    // Filter by search term
+    if (filters.searchTerm) {
+      const search = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.contributor_name?.toLowerCase().includes(search) ||
+        c.contributor_email?.toLowerCase().includes(search) ||
+        c.contributor_phone?.includes(search) ||
+        c.campaign_title?.toLowerCase().includes(search)
+      );
+    }
+
+    return filtered;
+  }, [allContributions, filters]);
+
+  // ============================================
+  // STATISTICS
+  // ============================================
+  const stats = useMemo(() => {
+    const verified = filteredContributions.filter(c => c.status === 'verified');
+    
+    // Total by method
+    const byMethod = {
+      mpesa: 0,
+      cash: 0,
+      bank_transfer: 0
+    };
+    
+    verified.forEach(c => {
+      const method = c.payment_method || 'cash';
+      byMethod[method] = (byMethod[method] || 0) + Number(c.amount || 0);
+    });
+
+    // Total by campaign
+    const byCampaign = {};
+    verified.forEach(c => {
+      const title = c.campaign_title || 'General Offering';
+      if (!byCampaign[title]) {
+        byCampaign[title] = 0;
+      }
+      byCampaign[title] += Number(c.amount || 0);
+    });
+
+    return {
+      total: verified.reduce((sum, c) => sum + Number(c.amount || 0), 0),
+      count: {
+        verified: allContributions.filter(c => c.status === 'verified').length,
+        pending: allContributions.filter(c => c.status === 'pending').length,
+        failed: allContributions.filter(c => c.status === 'failed').length
+      },
+      byMethod,
+      byCampaign
+    };
+  }, [allContributions, filteredContributions]);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
   const handleVerify = async (contributionId) => {
     if (!confirm('Verify this contribution? This will mark it as confirmed.')) return;
 
@@ -46,8 +137,14 @@ export default function ContributionsTab() {
       const response = await donationApi.contributions.verify(contributionId);
       
       if (response.success) {
-        // Refresh list
-        fetchContributions();
+        // Update local state
+        setAllContributions(prev => 
+          prev.map(c => 
+            c.id === contributionId 
+              ? { ...c, status: 'verified', verified_at: new Date().toISOString() }
+              : c
+          )
+        );
         alert('Contribution verified successfully');
       }
     } catch (error) {
@@ -56,91 +153,127 @@ export default function ContributionsTab() {
     }
   };
 
-  const handleExport = () => {
-    // TODO: Implement CSV export
-    alert('Export feature coming soon');
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedContributions(new Set(filteredContributions.map(c => c.id)));
+    } else {
+      setSelectedContributions(new Set());
+    }
   };
 
-  // Handle select all
-const handleSelectAll = (e) => {
-  if (e.target.checked) {
-    setSelectedContributions(new Set(contributions.map(c => c.id)));
-  } else {
-    setSelectedContributions(new Set());
-  }
-};
+  const handleSelectRow = (id) => {
+    const newSelected = new Set(selectedContributions);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedContributions(newSelected);
+  };
 
-// Handle select one
-const handleSelectRow = (id) => {
-  const newSelected = new Set(selectedContributions);
-  if (newSelected.has(id)) {
-    newSelected.delete(id);
-  } else {
-    newSelected.add(id);
-  }
-  setSelectedContributions(newSelected);
-};
+  const handlePrint = () => {
+    const dataToPrint = selectedContributions.size > 0
+      ? filteredContributions.filter(c => selectedContributions.has(c.id))
+      : filteredContributions;
 
-// Print function
-const handlePrint = () => {
-  const dataToPrint = selectedContributions.size > 0
-    ? contributions.filter(c => selectedContributions.has(c.id))
-    : contributions;
+    if (dataToPrint.length === 0) {
+      alert('No data to print');
+      return;
+    }
 
-  const printWindow = window.open('', '', 'height=600,width=800');
-  
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Contributions Report</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-        </style>
-      </head>
-      <body>
-        <h1>Contributions Report</h1>
-        <table>
-          <thead>
-            <tr>
-              <th>Contributor</th>
-              <th>Campaign</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${dataToPrint.map(c => `
+    const printWindow = window.open('', '', 'height=600,width=800');
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Contributions Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; color: #1e293b; }
+            .meta { text-align: center; color: #64748b; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 14px; }
+            th { background-color: #f1f5f9; font-weight: 600; color: #334155; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h1>Contributions Report</h1>
+          <div class="meta">
+            Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}<br>
+            Total Records: ${dataToPrint.length}
+          </div>
+          <table>
+            <thead>
               <tr>
-                <td>${c.is_anonymous ? 'Anonymous' : c.contributor_name}</td>
-                <td>${c.campaign_title}</td>
-                <td>KES ${c.amount.toLocaleString()}</td>
-                <td>${c.payment_method}</td>
-                <td>${c.status}</td>
-                <td>${new Date(c.created_at).toLocaleDateString()}</td>
+                <th>Contributor</th>
+                <th>Campaign</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>M-Pesa Ref</th>
+                <th>Status</th>
+                <th>Date</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </body>
-    </html>
-  `);
-  
-  printWindow.document.close();
-  printWindow.print();
-};
+            </thead>
+            <tbody>
+              ${dataToPrint.map(c => `
+                <tr>
+                  <td>${c.is_anonymous ? 'Anonymous' : c.contributor_name}</td>
+                  <td>${c.campaign_title || 'General'}</td>
+                  <td><strong>KES ${Number(c.amount || 0).toLocaleString()}</strong></td>
+                  <td>${(c.payment_method || 'cash').toUpperCase()}</td>
+                  <td>${c.mpesa_ref || 'N/A'}</td>
+                  <td>${c.status.toUpperCase()}</td>
+                  <td>${new Date(c.created_at).toLocaleDateString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="total">
+            Total Amount: KES ${dataToPrint.reduce((sum, c) => sum + Number(c.amount || 0), 0).toLocaleString()}
+          </div>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.print();
+  };
 
-  // Calculate stats
-  const stats = {
-    total: contributions.reduce((sum, c) => sum + Number(c.amount || 0), 0),
-    pending: contributions.filter(c => c.status === 'pending').length,
-    verified: contributions.filter(c => c.status === 'verified').length,
-    failed: contributions.filter(c => c.status === 'failed').length
+  const handleExport = () => {
+    const dataToPrint = selectedContributions.size > 0
+      ? filteredContributions.filter(c => selectedContributions.has(c.id))
+      : filteredContributions;
+
+    if (dataToPrint.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // Create CSV
+    const headers = ['Contributor', 'Campaign', 'Amount', 'Method', 'M-Pesa Ref', 'Status', 'Date'];
+    const csvRows = dataToPrint.map(c => [
+      c.is_anonymous ? 'Anonymous' : c.contributor_name,
+      c.campaign_title || 'General',
+      c.amount,
+      c.payment_method || 'cash',
+      c.mpesa_ref || '',
+      c.status,
+      new Date(c.created_at).toLocaleDateString()
+    ].join(','));
+
+    const csv = [headers.join(','), ...csvRows].join('\n');
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `contributions-${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -161,20 +294,22 @@ const handlePrint = () => {
             One-time donations without pledges
           </p>
         </div>
-        <button
-          onClick={handlePrint}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          <Printer size={18} className="inline mr-2" />
-          Print {selectedContributions.size > 0 ? 'Selected' : 'All'}
-        </button>
-        <button
-          onClick={handleExport}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Download size={18} />
-          Export CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Printer size={18} />
+            Print {selectedContributions.size > 0 ? 'Selected' : 'All'}
+          </button>
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Download size={18} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -193,17 +328,35 @@ const handlePrint = () => {
 
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">Verified</p>
-          <p className="text-2xl font-bold text-green-600">{stats.verified}</p>
+          <p className="text-2xl font-bold text-green-600">{stats.count.verified}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.count.pending}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">Failed</p>
-          <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+          <p className="text-2xl font-bold text-red-600">{stats.count.failed}</p>
+        </div>
+      </div>
+
+      {/* Method Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">M-Pesa</p>
+          <p className="text-xl font-bold text-blue-900 dark:text-blue-100">{formatCurrency(stats.byMethod.mpesa)}</p>
+        </div>
+        
+        <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+          <p className="text-sm text-green-700 dark:text-green-300 font-semibold">Cash</p>
+          <p className="text-xl font-bold text-green-900 dark:text-green-100">{formatCurrency(stats.byMethod.cash)}</p>
+        </div>
+        
+        <div className="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+          <p className="text-sm text-purple-700 dark:text-purple-300 font-semibold">Bank Transfer</p>
+          <p className="text-xl font-bold text-purple-900 dark:text-purple-100">{formatCurrency(stats.byMethod.bank_transfer)}</p>
         </div>
       </div>
 
@@ -212,6 +365,15 @@ const handlePrint = () => {
         <div className="flex items-center gap-2 mb-4">
           <Filter size={18} className="text-slate-600" />
           <h3 className="font-bold text-slate-900 dark:text-white">Filters</h3>
+          {(filters.status || filters.paymentMethod || filters.campaignId || filters.searchTerm) && (
+            <button
+              onClick={() => setFilters({ status: '', paymentMethod: '', campaignId: '', searchTerm: '' })}
+              className="ml-auto text-xs text-red-600 hover:underline font-semibold flex items-center gap-1"
+            >
+              <X size={14} />
+              Clear Filters
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -220,15 +382,15 @@ const handlePrint = () => {
             <input
               type="text"
               placeholder="Search by name, email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={filters.searchTerm}
+              onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
               className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
           <select
             value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
             className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">All Statuses</option>
@@ -239,24 +401,27 @@ const handlePrint = () => {
 
           <select
             value={filters.paymentMethod}
-            onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value, page: 1 })}
+            onChange={(e) => setFilters(prev => ({ ...prev, paymentMethod: e.target.value }))}
             className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">All Methods</option>
             <option value="mpesa">M-Pesa</option>
-            <option value="bank-transfer">Bank Transfer</option>
             <option value="cash">Cash</option>
+            <option value="bank_transfer">Bank Transfer</option>
           </select>
 
-          <button
-            onClick={() => {
-              setFilters({ status: '', paymentMethod: '', campaignId: '', page: 1, limit: 20 });
-              setSearchTerm('');
-            }}
-            className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
+          <select
+            value={filters.campaignId}
+            onChange={(e) => setFilters(prev => ({ ...prev, campaignId: e.target.value }))}
+            className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            Clear Filters
-          </button>
+            <option value="">All Campaigns</option>
+            {campaigns.map(campaign => (
+              <option key={campaign.supabaseId} value={campaign.supabaseId}>
+                {campaign.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -266,7 +431,13 @@ const handlePrint = () => {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-6 py-3"><input type="checkbox" checked={selectedContributions.size === contributions.length} onChange={handleSelectAll}/></th>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedContributions.size === filteredContributions.length && filteredContributions.length > 0}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Contributor</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Campaign</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Amount</th>
@@ -278,148 +449,121 @@ const handlePrint = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {contributions.length === 0 ? (
+              {filteredContributions.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
+                  <td colSpan="9" className="px-6 py-12 text-center">
                     <p className="text-slate-600 dark:text-slate-400">No contributions found</p>
                   </td>
                 </tr>
               ) : (
-                contributions
-                  .filter(contrib => {
-                    if (!searchTerm) return true;
-                    const search = searchTerm.toLowerCase();
-                    return (
-                      contrib.contributor_name?.toLowerCase().includes(search) ||
-                      contrib.contributor_email?.toLowerCase().includes(search) ||
-                      contrib.contributor_phone?.includes(search)
-                    );
-                  })
-                  .map(contrib => {
-                    const statusBadge = getStatusBadge(contrib.status);
-                    
-                    return (
-                      <tr key={contrib.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                        <td className="px-6 py-4">
-                          <input
-                            type="checkbox"
-                            checked={selectedContributions.has(contrib.id)}
-                            onChange={() => handleSelectRow(contrib.id)}
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="font-semibold text-slate-900 dark:text-white">
-                              {contrib.is_anonymous ? 'Anonymous' : contrib.contributor_name}
-                            </p>
-                            {!contrib.is_anonymous && (
-                              <>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">{contrib.contributor_email}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-500">{contrib.contributor_phone}</p>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-slate-700 dark:text-slate-300">
-                            {contrib.campaign_title || 'General Offering'}
+                filteredContributions.map(contrib => {
+                  const statusBadge = getStatusBadge(contrib.status);
+                  
+                  return (
+                    <tr key={contrib.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedContributions.has(contrib.id)}
+                          onChange={() => handleSelectRow(contrib.id)}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-semibold text-slate-900 dark:text-white">
+                            {contrib.is_anonymous ? 'Anonymous' : contrib.contributor_name}
                           </p>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
-                          {formatCurrency(contrib.amount)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-semibold px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">
-                            {contrib.payment_method?.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {contrib.mpesa_ref ? (
-                            <code className="text-xs bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                              {contrib.mpesa_ref}
-                            </code>
-                          ) : (
-                            <span className="text-xs text-slate-400">N/A</span>
+                          {!contrib.is_anonymous && (
+                            <>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">{contrib.contributor_email}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-500">{contrib.contributor_phone}</p>
+                            </>
                           )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.bg} ${statusBadge.text}`}>
-                            {statusBadge.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
-                          {formatDate(contrib.created_at)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            {contrib.status === 'pending' && (
-                              <button
-                                onClick={() => handleVerify(contrib.id)}
-                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 rounded-lg transition-colors"
-                                title="Verify Contribution"
-                              >
-                                <CheckCircle size={18} />
-                              </button>
-                            )}
+                          {contrib.created_by_name && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              Added by {contrib.created_by_name}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                          {contrib.campaign_title || 'General Offering'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                        {formatCurrency(contrib.amount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-semibold px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">
+                          {(contrib.payment_method || 'cash').toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {contrib.mpesa_ref ? (
+                          <code className="text-xs bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                            {contrib.mpesa_ref}
+                          </code>
+                        ) : (
+                          <span className="text-xs text-slate-400">N/A</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.bg} ${statusBadge.text}`}>
+                          {statusBadge.label}
+                        </span>
+                        {contrib.verified_by_name && contrib.status === 'verified' && (
+                          <p className="text-xs text-green-600 mt-1">
+                            By {contrib.verified_by_name}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
+                        {formatDate(contrib.created_at)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          {contrib.status === 'pending' && (
                             <button
-                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
-                              title="View Details"
-                              onClick={() => alert(JSON.stringify(contrib, null, 2))}
+                              onClick={() => handleVerify(contrib.id)}
+                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 rounded-lg transition-colors"
+                              title="Verify Contribution"
                             >
-                              <Eye size={18} />
+                              <CheckCircle size={18} />
                             </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
+                          )}
+                          <button
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
+                            title="View Details"
+                            onClick={() => alert(JSON.stringify(contrib, null, 2))}
+                          >
+                            <Eye size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Pagination */}
-      {pagination && pagination.pages > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
-            {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of{' '}
-            {pagination.total} contributions
-          </p>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilters({ ...filters, page: pagination.currentPage - 1 })}
-              disabled={pagination.currentPage === 1}
-              className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-
-            <div className="flex items-center gap-2">
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setFilters({ ...filters, page })}
-                  className={`w-10 h-10 rounded-lg font-semibold ${
-                    page === pagination.currentPage
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  {page}
-                </button>
+      {/* Top Campaigns */}
+      {Object.keys(stats.byCampaign).length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <h4 className="font-bold text-slate-900 dark:text-white mb-4">Top Campaigns by Contributions</h4>
+          <div className="space-y-2">
+            {Object.entries(stats.byCampaign)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([campaign, amount]) => (
+                <div key={campaign} className="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+                  <span className="text-slate-700 dark:text-slate-300">{campaign}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(amount)}</span>
+                </div>
               ))}
-            </div>
-
-            <button
-              onClick={() => setFilters({ ...filters, page: pagination.currentPage + 1 })}
-              disabled={pagination.currentPage === pagination.pages}
-              className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
           </div>
         </div>
       )}

@@ -15,12 +15,43 @@ export const galleryService = {
     }
   },
 
+  // galleryService.js - Replace the uploadPhoto function
+async uploadPhoto(formData) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // 15 seconds was likely killing the connection. 
+  // 500ms is enough to let the UI thread breathe.
+  if (isMobile) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  try {
+    const response = await api.post(API_ENDPOINTS.GALLERY.UPLOAD, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data'
+      },
+      // Increase timeout for slow mobile uploads, but don't wait 15s to start!
+      timeout: 120000, 
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Upload failed:`, error.message);
+    throw error;
+  }
+},
+
   
 
   /**
    * ✅ COMPLETE MOBILE FIX: Upload photo with retry + mobile optimization
    */
-  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
+/*  async uploadPhoto(formData, maxRetries = 3) { // ✅ Increased to 3 retries for mobile
     let lastError;
 
     // ✅ CRITICAL: Mobile needs delay AFTER FormData creation
@@ -86,7 +117,7 @@ export const galleryService = {
     }
 
     throw lastError;
-  }, 
+  }, */
 
   /**
    * Delete photo by ID

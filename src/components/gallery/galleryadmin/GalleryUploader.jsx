@@ -249,7 +249,7 @@ const handleUpload = async (e) => {
           const readyFile = await ensureFileReady(file);
 
           // ✅ CRITICAL ANDROID FIX: Recreate file with explicit MIME type
-          const fileWithType = new File(
+       /*   const fileWithType = new File(
             [readyFile],
             readyFile.name,
             { 
@@ -262,12 +262,16 @@ const handleUpload = async (e) => {
             name: fileWithType.name,
             type: fileWithType.type,
             size: fileWithType.size
-          });
+          });  */
 
           const uploadFormData = new FormData();
-          uploadFormData.append('photo', fileWithType);
+         // uploadFormData.append('photo', fileWithType);
 
-          if (useSingleCaption) {
+         // Explicitly define the blob to ensure the MIME type is locked in
+      const blob = new Blob([readyFile], { type: readyFile.type || 'image/jpeg' });
+      uploadFormData.append('photo', blob, readyFile.name || `photo-${idx}.jpg`);
+
+       /*   if (useSingleCaption) {
             uploadFormData.append('title', `${singleCaptionData.title}${totalFiles > 1 ? ` - ${idx + 1}` : ''}`);
             uploadFormData.append('description', singleCaptionData.description);
             uploadFormData.append('category', singleCaptionData.category);
@@ -275,9 +279,18 @@ const handleUpload = async (e) => {
             uploadFormData.append('title', multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
             uploadFormData.append('description', multipleCaptions[idx]?.description || '');
             uploadFormData.append('category', multipleCaptions[idx]?.category || 'Worship Services');
-          }
+          }  */
 
-          await uploadWithRetry(uploadFormData);
+         // 3. Add metadata
+      const title = useSingleCaption 
+        ? `${singleCaptionData.title}${files.length > 1 ? ` - ${idx + 1}` : ''}`
+        : (multipleCaptions[idx]?.title || `Photo ${idx + 1}`);
+      
+      uploadFormData.append('title', title);
+      uploadFormData.append('description', useSingleCaption ? singleCaptionData.description : (multipleCaptions[idx]?.description || ''));
+      uploadFormData.append('category', useSingleCaption ? singleCaptionData.category : (multipleCaptions[idx]?.category || 'Worship Services'));   
+
+        /*  await uploadWithRetry(uploadFormData);
           uploadedCount++;
           setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
 
@@ -289,7 +302,17 @@ const handleUpload = async (e) => {
           console.error(`Failed to upload ${file.name}:`, err);
           failedUploads.push(file.name);
         }
-      }
+      }  */
+
+        // 4. Send immediately
+      await onUpload(uploadFormData);
+      
+      uploadedCount++;
+      setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+    } catch (err) {
+      failedUploads.push(file.name);
+    }
+  }
       
     } else {
       console.log('💻 Parallel upload for desktop');
