@@ -415,20 +415,23 @@ export const analyticsService = {
 export const auditService = {
   getAll: async (filters = {}) => {
     const params = new URLSearchParams(filters);
-    const response = await api.get(`/audit?${params.toString()}`);
+    // ✅ FIXED: Use correct endpoint
+    const response = await api.get(`/transaction-audit?${params.toString()}`);
     return response?.data || { logs: [], success: false };
   },
 
   exportCSV: async (filters = {}) => {
     const params = new URLSearchParams(filters);
-    const response = await api.get(`/audit/export?${params.toString()}`, {
+    // ✅ FIXED: Use correct endpoint
+    const response = await api.get(`/transaction-audit/export?${params.toString()}`, {
       responseType: 'blob'
     });
     return response;
   },
 
   getStats: async () => {
-    const response = await api.get('/audit/stats');
+    // ✅ FIXED: Use correct endpoint
+    const response = await api.get('/transaction-audit/stats');
     return response?.data || { stats: {}, success: false };
   }
 };

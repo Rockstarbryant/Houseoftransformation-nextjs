@@ -26,9 +26,16 @@ export default function PortalHeader({ onSidebarToggle, sidebarOpen }) {
       <div className="flex items-center gap-4">
         <button
           onClick={onSidebarToggle}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors md:hidden"
+          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          <Menu size={20} className="text-slate-600 dark:text-slate-400" />
+          {sidebarOpen ? (
+            <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <Menu size={20} className="text-slate-600 dark:text-slate-400" />
+          )}
         </button>
 
         <div>

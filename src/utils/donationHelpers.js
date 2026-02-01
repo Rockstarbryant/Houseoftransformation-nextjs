@@ -113,7 +113,7 @@ export const calculateProgress = (paid, pledged) => {
  * @param {string} status - Pledge or payment status
  * @returns {object} Tailwind classes for badge
  */
-export const getStatusBadge = (status) => {
+/*export const getStatusBadge = (status) => {
   const badges = {
     pending: {
       bg: 'bg-yellow-100 dark:bg-yellow-950/30',
@@ -153,6 +153,53 @@ export const getStatusBadge = (status) => {
   };
 
   return badges[status] || badges.pending;
+}; */
+
+export const getStatusBadge = (status) => {
+  // Normalize the status to lowercase for comparison
+  const normalizedStatus = String(status || '').toLowerCase().trim();
+  
+  //console.log('[getStatusBadge] Input:', status, 'Normalized:', normalizedStatus);
+  
+  switch (normalizedStatus) {
+    case 'verified':
+      return {
+        label: 'Verified',
+        bg: 'bg-green-100 dark:bg-green-900/30',
+        text: 'text-green-800 dark:text-green-200'
+      };
+    
+    case 'pending':
+      return {
+        label: 'Pending',
+        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+        text: 'text-yellow-800 dark:text-yellow-200'
+      };
+    
+    case 'failed':
+      return {
+        label: 'Failed',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        text: 'text-red-800 dark:text-red-200'
+      };
+    
+    case 'cancelled':
+    case 'canceled':
+      return {
+        label: 'Cancelled',
+        bg: 'bg-gray-100 dark:bg-gray-900/30',
+        text: 'text-gray-800 dark:text-gray-200'
+      };
+    
+    default:
+      console.warn('[getStatusBadge] Unknown status:', status, 'Defaulting to pending');
+      // If status is unknown, return pending but log a warning
+      return {
+        label: 'Pending',
+        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+        text: 'text-yellow-800 dark:text-yellow-200'
+      };
+  }
 };
 
 /**

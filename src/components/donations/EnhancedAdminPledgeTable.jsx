@@ -1,24 +1,82 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown, Printer, History, Filter, X as CloseIcon } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown, Printer, History, Filter, X as CloseIcon, AlertTriangle, Info } from 'lucide-react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDateShort, getStatusBadge } from '@/utils/donationHelpers';
 import EditPledgeModal from './EditPledgeModal';
 import ManualPaymentModal from './ManualPaymentModal';
 import PledgeHistoryModal from './PledgeHistoryModal';
 
+// Modern Confirmation Dialog Component
+function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'warning', confirmText = 'Confirm', isLoading = false }) {
+  if (!isOpen) return null;
+
+  const typeStyles = {
+    warning: 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+    danger: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400',
+    info: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+  };
+
+  const typeIcons = {
+    warning: <AlertTriangle className="w-6 h-6" />,
+    danger: <AlertCircle className="w-6 h-6" />,
+    info: <Info className="w-6 h-6" />
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-full ${typeStyles[type]}`}>
+              {typeIcons[type]}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                {title}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-line">
+                {message}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-900 px-6 py-4 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 ${
+              type === 'danger' 
+                ? 'bg-red-600 hover:bg-red-700' 
+                : 'bg-[#8B1A1A] hover:bg-red-900'
+            }`}
+          >
+            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTrigger = 0 }) {
-  const [pledges, setPledges] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [users, setUsers] = useState([]);  // Added to store users
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+  
   const [selectedPledges, setSelectedPledges] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [payments, setPayments] = useState({});
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, action: null, pledgeId: null });
   
   // Filter states
   const [filterPledgeStatus, setFilterPledgeStatus] = useState('all');
@@ -33,25 +91,10 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
   const [recordingPaymentFor, setRecordingPaymentFor] = useState(null);
   const [viewingHistoryFor, setViewingHistoryFor] = useState(null);
 
-  // Fetch pledges and campaigns
-  useEffect(() => {
-    fetchPledges();
-    fetchCampaigns();
-    fetchUsers();  // Added users fetch
-  }, [campaignId, refreshTrigger]);
-
-  // Fetch payment details for each pledge
-  useEffect(() => {
-    if (pledges.length > 0) {
-      fetchPaymentDetails();
-    }
-  }, [pledges]);
-
-  const fetchPledges = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
+  // Fetch pledges with TanStack Query
+  const { data: pledges = [], isLoading, error } = useQuery({
+    queryKey: ['pledges', campaignId, refreshTrigger],
+    queryFn: async () => {
       let response;
       if (campaignId) {
         response = await donationApi.pledges.getCampaignPledges(campaignId);
@@ -60,48 +103,47 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
       }
 
       if (response.success && response.pledges) {
-        setPledges(response.pledges);
-      } else {
-        setError(response.message || 'Failed to fetch pledges');
+        return response.pledges;
       }
-    } catch (err) {
-      console.error('[PLEDGE-TABLE] Error:', err);
-      setError(err.message || 'Error fetching pledges');
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.message || 'Failed to fetch pledges');
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
 
-  const fetchCampaigns = async () => {
-    try {
+  // Fetch campaigns
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['campaigns'],
+    queryFn: async () => {
       const response = await donationApi.campaigns.getAll();
-      
       if (response.success && response.campaigns) {
-        setCampaigns(response.campaigns);
         console.log('[CAMPAIGNS] Loaded:', response.campaigns);
+        return response.campaigns;
       }
-    } catch (err) {
-      console.error('[CAMPAIGNS] Error:', err);
-    }
-  };
+      return [];
+    },
+    staleTime: 60000,
+  });
 
-  const fetchUsers = async () => {
-    try {
-      // Fetch users from API - adjust endpoint if needed
+  // Fetch users
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
       const response = await fetch('/api/users');
       const data = await response.json();
-      
       if (data.success && data.users) {
-        setUsers(data.users);
         console.log('[USERS] Loaded:', data.users);
+        return data.users;
       }
-    } catch (err) {
-      console.error('[USERS] Error:', err);
-    }
-  };
+      return [];
+    },
+    staleTime: 300000, // 5 minutes
+  });
 
-  const fetchPaymentDetails = async () => {
-    try {
+  // Fetch payment details
+  const { data: payments = {} } = useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
       const { success, payments: allPayments } = await donationApi.payments.getAll();
       
       if (success && allPayments) {
@@ -111,34 +153,48 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
             paymentMap[payment.pledge_id] = payment;
           }
         });
-        setPayments(paymentMap);
+        return paymentMap;
       }
-    } catch (err) {
-      console.error('[PAYMENT-DETAILS] Error:', err);
-    }
-  };
+      return {};
+    },
+    enabled: pledges.length > 0,
+    staleTime: 30000,
+  });
 
-  // Get campaign title - it should be in pledge.campaign_title from joinCampaignsWithPledges()
-  // If not available, return 'General'
+  // Mutations
+  const cancelMutation = useMutation({
+    mutationFn: (pledgeId) => donationApi.pledges.cancel(pledgeId),
+    onSuccess: (response, pledgeId) => {
+      if (response.success) {
+        queryClient.setQueryData(['pledges', campaignId, refreshTrigger], (old) =>
+          old.filter(p => p.id !== pledgeId)
+        );
+        queryClient.invalidateQueries({ queryKey: ['pledges'] });
+      } else {
+        alert(response.message || 'Failed to cancel pledge');
+      }
+    },
+    onError: (error) => {
+      alert('Error cancelling pledge: ' + error.message);
+    },
+  });
+
+  // Helper functions
   const getCampaignTitle = (pledge) => {
     if (!pledge) return 'General';
-    // Try campaign_title first (set by joinCampaignsWithPledges)
     if (pledge.campaign_title && pledge.campaign_title !== 'Unknown Campaign') {
       return pledge.campaign_title;
     }
-    // Fallback to other possible fields
     return pledge.title || pledge.name || 'General';
   };
 
   const getVerifiedByName = (verifiedById) => {
     if (!verifiedById) return 'Pending';
     
-    // If it's already a name (contains spaces or specific patterns), return it
     if (typeof verifiedById === 'string' && (verifiedById.includes(' ') || verifiedById.includes('@'))) {
       return verifiedById;
     }
     
-    // Try to find user by id
     const user = users.find(u => 
       String(u.id) === String(verifiedById) || 
       String(u._id) === String(verifiedById) ||
@@ -149,7 +205,6 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
       return user.name || user.full_name || user.username || user.email || verifiedById;
     }
     
-    // Return the ID if user not found (could be user ID that hasn't loaded)
     return verifiedById;
   };
 
@@ -167,19 +222,25 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     });
   };
 
-  const handleCancelPledge = async (pledgeId) => {
-    if (!window.confirm('Are you sure you want to cancel this pledge? This action cannot be undone.')) return;
+  const handleCancelPledge = (pledgeId) => {
+    setConfirmDialog({
+      isOpen: true,
+      action: 'cancel',
+      pledgeId,
+      title: 'Cancel Pledge',
+      message: 'Are you sure you want to cancel this pledge? This action cannot be undone.',
+      type: 'danger'
+    });
+  };
 
-    try {
-      const response = await donationApi.pledges.cancel(pledgeId);
-      if (response.success) {
-        setPledges(pledges.filter(p => p.id !== pledgeId));
-      } else {
-        alert(response.message || 'Failed to cancel pledge');
-      }
-    } catch (err) {
-      alert('Error cancelling pledge: ' + err.message);
+  const handleConfirmAction = () => {
+    const { action, pledgeId } = confirmDialog;
+    
+    if (action === 'cancel') {
+      cancelMutation.mutate(pledgeId);
     }
+    
+    setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
   };
 
   const handleSelectAll = (e) => {
@@ -322,14 +383,14 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
       filtered = filtered.filter(p => isOverdue(p));
     }
 
-      if (searchTerm) {
-        filtered = filtered.filter(p =>
-          p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.member_phone?.includes(searchTerm) ||
-          (p.campaign_title || 'General').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
+    if (searchTerm) {
+      filtered = filtered.filter(p =>
+        p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_phone?.includes(searchTerm) ||
+        (p.campaign_title || 'General').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
 
     // Sort
     const sorted = [...filtered].sort((a, b) => {
@@ -344,7 +405,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     return sorted;
   }, [pledges, sortConfig, filterPledgeStatus, filterCampaign, filterPaymentMethod, filterOverdueOnly, filterAmountMin, filterAmountMax, searchTerm, payments, campaigns]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -358,7 +419,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
         <AlertCircle className="text-red-600" size={24} />
         <div>
           <h3 className="font-bold text-red-900">Error Loading Pledges</h3>
-          <p className="text-red-700">{error}</p>
+          <p className="text-red-700">{error.message}</p>
         </div>
       </div>
     );
@@ -693,7 +754,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
           onClose={() => setEditingPledge(null)}
           onSuccess={() => {
             setEditingPledge(null);
-            fetchPledges();
+            queryClient.invalidateQueries({ queryKey: ['pledges'] });
           }}
         />
       )}
@@ -704,8 +765,8 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
           onClose={() => setRecordingPaymentFor(null)}
           onSuccess={() => {
             setRecordingPaymentFor(null);
-            fetchPledges();
-            fetchPaymentDetails();
+            queryClient.invalidateQueries({ queryKey: ['pledges'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
           }}
         />
       )}
@@ -716,6 +777,16 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
           onClose={() => setViewingHistoryFor(null)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, action: null, pledgeId: null })}
+        onConfirm={handleConfirmAction}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        isLoading={cancelMutation.isPending}
+      />
     </div>
   );
 }

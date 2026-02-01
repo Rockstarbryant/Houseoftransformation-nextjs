@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Heart, Search, Download, Printer, Calendar, DollarSign, TrendingUp, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { donationApi } from '@/services/api/donationService';
+import { joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
 const formatCurrency = (amount) => {
   if (!amount && amount !== 0) return 'KES 0.00';
@@ -15,6 +17,55 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  
+  // ✅ FIX: Fetch campaigns and enrich pledges
+  const [campaigns, setCampaigns] = useState([]);
+  const [enrichedPledges, setEnrichedPledges] = useState([]);
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
+
+  // ✅ Fetch campaigns when component mounts
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        setIsLoadingCampaigns(true);
+        console.log('[USER-PLEDGE-VIEW] Fetching campaigns...');
+        
+        const response = await donationApi.campaigns.getAll();
+        
+        if (response.success && response.campaigns) {
+          console.log('[USER-PLEDGE-VIEW] Campaigns loaded:', response.campaigns);
+          setCampaigns(response.campaigns);
+        } else {
+          console.error('[USER-PLEDGE-VIEW] Failed to load campaigns:', response);
+        }
+      } catch (error) {
+        console.error('[USER-PLEDGE-VIEW] Error fetching campaigns:', error);
+      } finally {
+        setIsLoadingCampaigns(false);
+      }
+    };
+
+    fetchCampaigns();
+  }, []);
+
+  // ✅ Join campaigns with pledges whenever either changes
+  useEffect(() => {
+    if (campaigns.length > 0 && pledges.length > 0) {
+      console.log('[USER-PLEDGE-VIEW] Joining campaigns with pledges...');
+      console.log('[USER-PLEDGE-VIEW] Pledges:', pledges);
+      console.log('[USER-PLEDGE-VIEW] Campaigns:', campaigns);
+      
+      const enriched = joinCampaignsWithPledges(pledges, campaigns);
+      
+      console.log('[USER-PLEDGE-VIEW] Enriched pledges:', enriched);
+      setEnrichedPledges(enriched);
+    } else if (pledges.length === 0) {
+      setEnrichedPledges([]);
+    } else {
+      // Campaigns not loaded yet, but show pledges with fallback
+      setEnrichedPledges(pledges);
+    }
+  }, [pledges, campaigns]);
 
   // Check if overdue
   const isOverdue = (pledge) => {
@@ -29,9 +80,9 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     return days;
   };
 
-  // Filter and sort pledges
+  // ✅ Filter and sort using enriched pledges
   const processedPledges = useMemo(() => {
-    let result = pledges.filter(p => {
+    let result = enrichedPledges.filter(p => {
       const searchMatch = !searchTerm || 
         p.campaign_title?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -58,23 +109,23 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     });
 
     return result;
-  }, [pledges, searchTerm, statusFilter, sortBy]);
+  }, [enrichedPledges, searchTerm, statusFilter, sortBy]);
 
-  // Calculate stats
+  // ✅ Calculate stats using enriched pledges
   const stats = useMemo(() => {
-    const active = pledges.filter(p => p.status === 'pending' || p.status === 'partial');
-    const overdue = pledges.filter(isOverdue);
+    const active = enrichedPledges.filter(p => p.status === 'pending' || p.status === 'partial');
+    const overdue = enrichedPledges.filter(isOverdue);
     
     return {
-      total: pledges.length,
+      total: enrichedPledges.length,
       active: active.length,
-      completed: pledges.filter(p => p.status === 'completed').length,
+      completed: enrichedPledges.filter(p => p.status === 'completed').length,
       overdue: overdue.length,
-      totalPledged: pledges.reduce((s, p) => s + (p.pledged_amount || 0), 0),
-      totalPaid: pledges.reduce((s, p) => s + (p.paid_amount || 0), 0),
-      totalRemaining: pledges.reduce((s, p) => s + (p.remaining_amount || 0), 0)
+      totalPledged: enrichedPledges.reduce((s, p) => s + (p.pledged_amount || 0), 0),
+      totalPaid: enrichedPledges.reduce((s, p) => s + (p.paid_amount || 0), 0),
+      totalRemaining: enrichedPledges.reduce((s, p) => s + (p.remaining_amount || 0), 0)
     };
-  }, [pledges]);
+  }, [enrichedPledges]);
 
   // Export CSV
   const handleExportCSV = () => {
@@ -101,102 +152,97 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
 
   // Print
   const handlePrint = () => {
-    const rows = processedPledges.map((p, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${p.campaign_title || 'General'}</td>
-        <td>${formatCurrency(p.pledged_amount)}</td>
-        <td>${formatCurrency(p.paid_amount)}</td>
-        <td>${formatCurrency(p.remaining_amount)}</td>
-        <td>${p.status}</td>
-        <td>${Math.round((p.paid_amount / p.pledged_amount) * 100)}%</td>
-      </tr>
-    `).join('');
-
-    const win = window.open('', '_blank');
-    win.document.write(`
+    const printWindow = window.open('', '', 'width=800,height=600');
+    const printContent = `
       <!DOCTYPE html>
-      <html><head><title>My Pledges</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h1 { color: #8B1A1A; border-bottom: 3px solid #8B1A1A; padding-bottom: 10px; margin-bottom: 20px; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
-        .stat { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #8B1A1A; }
-        .stat-label { font-size: 12px; color: #666; }
-        .stat-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #8B1A1A; color: white; padding: 12px; text-align: left; font-size: 12px; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 13px; }
-        tr:nth-child(even) { background: #f9fafb; }
-        @media print { .no-print { display: none; } }
-      </style></head><body>
-      <h1>My Pledges Summary</h1>
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-label">Total Pledged</div>
-          <div class="stat-value">${formatCurrency(stats.totalPledged)}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Total Paid</div>
-          <div class="stat-value" style="color: #059669;">${formatCurrency(stats.totalPaid)}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Remaining</div>
-          <div class="stat-value" style="color: #dc2626;">${formatCurrency(stats.totalRemaining)}</div>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>#</th><th>Campaign</th><th>Pledged</th><th>Paid</th><th>Balance</th><th>Status</th><th>Progress</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <p style="margin-top: 30px; text-align: center; color: #666; font-size: 13px;">Generated: ${new Date().toLocaleString()} | House of Transformation Church</p>
-      <button class="no-print" onclick="window.print()" style="position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #8B1A1A; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Print PDF</button>
-      </body></html>
-    `);
-    win.document.close();
+      <html>
+        <head>
+          <title>My Pledges</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #8B1A1A; border-bottom: 2px solid #8B1A1A; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #8B1A1A; color: white; }
+            .total-row { font-weight: bold; background-color: #f0f0f0; }
+          </style>
+        </head>
+        <body>
+          <h1>My Pledges Report</h1>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Pledged</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${processedPledges.map(p => `
+                <tr>
+                  <td>${p.campaign_title || 'General'}</td>
+                  <td>${formatCurrency(p.pledged_amount)}</td>
+                  <td>${formatCurrency(p.paid_amount)}</td>
+                  <td>${formatCurrency(p.remaining_amount)}</td>
+                  <td>${p.status}</td>
+                  <td>${formatDate(p.created_at)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td>TOTAL</td>
+                <td>${formatCurrency(stats.totalPledged)}</td>
+                <td>${formatCurrency(stats.totalPaid)}</td>
+                <td>${formatCurrency(stats.totalRemaining)}</td>
+                <td colspan="2">${stats.total} pledges</td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
   };
+
+  // ✅ Show loading state while fetching campaigns
+  if (isLoadingCampaigns && pledges.length > 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]" />
+        <p className="ml-4 text-slate-600">Loading campaign details...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold opacity-90">Total Pledges</p>
-            <Heart size={20} className="opacity-70" />
-          </div>
-          <p className="text-3xl font-black mb-1">{stats.total}</p>
-          <p className="text-sm opacity-90">{stats.active} active</p>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-sm text-slate-600 mb-1">Total Pledges</p>
+          <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold opacity-90">Total Pledged</p>
-            <DollarSign size={20} className="opacity-70" />
-          </div>
-          <p className="text-3xl font-black mb-1">{formatCurrency(stats.totalPledged)}</p>
-          <p className="text-sm opacity-90">Commitment</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-sm text-slate-600 mb-1">Total Pledged</p>
+          <p className="text-2xl font-bold text-[#8B1A1A]">{formatCurrency(stats.totalPledged)}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold opacity-90">Total Paid</p>
-            <CheckCircle size={20} className="opacity-70" />
-          </div>
-          <p className="text-3xl font-black mb-1">{formatCurrency(stats.totalPaid)}</p>
-          <p className="text-sm opacity-90">
-            {stats.totalPledged > 0 ? Math.round((stats.totalPaid / stats.totalPledged) * 100) : 0}% complete
-          </p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-sm text-slate-600 mb-1">Total Paid</p>
+          <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalPaid)}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold opacity-90">Remaining</p>
-            <TrendingUp size={20} className="opacity-70" />
-          </div>
-          <p className="text-3xl font-black mb-1">{formatCurrency(stats.totalRemaining)}</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-sm text-slate-600 mb-1">Balance Remaining</p>
+          <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats.totalRemaining)}</p>
           {stats.overdue > 0 && (
-            <p className="text-sm opacity-90 flex items-center gap-1">
+            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
               <AlertTriangle size={14} /> {stats.overdue} overdue
             </p>
           )}
@@ -270,6 +316,7 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-slate-900 mb-1">
+                        {/* ✅ FIX: Now shows actual campaign title */}
                         {pledge.campaign_title || 'General Offering'}
                       </h3>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
@@ -298,15 +345,15 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
 
                   {/* Amount Info */}
                   <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="bg-slate-50 rounded-lg p-3">
+                    <div>
                       <p className="text-xs text-slate-600 mb-1">Pledged</p>
                       <p className="text-lg font-bold text-slate-900">{formatCurrency(pledge.pledged_amount)}</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3">
+                    <div>
                       <p className="text-xs text-slate-600 mb-1">Paid</p>
                       <p className="text-lg font-bold text-green-600">{formatCurrency(pledge.paid_amount)}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-3">
+                    <div>
                       <p className="text-xs text-slate-600 mb-1">Balance</p>
                       <p className="text-lg font-bold text-red-600">{formatCurrency(pledge.remaining_amount)}</p>
                     </div>
@@ -315,41 +362,42 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                   {/* Progress Bar */}
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Progress</span>
+                      <span className="text-sm text-slate-600">Progress</span>
                       <span className="text-sm font-bold text-slate-900">{Math.round(progress)}%</span>
                     </div>
-                    <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+                    <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          progress === 100 ? 'bg-green-500' : progress > 50 ? 'bg-blue-500' : 'bg-orange-500'
+                        }`}
                         style={{ width: `${Math.min(progress, 100)}%` }}
                       />
                     </div>
                   </div>
 
-                  {/* Alerts */}
-                  {overdue && (
-                    <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-2">
-                      <AlertTriangle size={18} className="text-orange-600" />
-                      <p className="text-sm text-orange-800 font-semibold">
+                  {/* Warning/Info Messages */}
+                  {overdue && pledge.status !== 'completed' && pledge.status !== 'cancelled' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+                      <AlertTriangle className="text-red-600 flex-shrink-0" size={18} />
+                      <p className="text-sm text-red-800">
                         Payment overdue by {Math.abs(daysLeft)} day(s)
                       </p>
                     </div>
                   )}
 
-                  {!overdue && daysLeft !== null && daysLeft > 0 && daysLeft <= 7 && pledge.status !== 'completed' && (
-                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
-                      <Clock size={18} className="text-yellow-600" />
-                      <p className="text-sm text-yellow-800 font-semibold">
-                        Due in {daysLeft} day(s) - {formatDate(pledge.due_date)}
+                  {!overdue && daysLeft !== null && daysLeft <= 7 && pledge.status !== 'completed' && pledge.status !== 'cancelled' && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+                      <Clock className="text-amber-600 flex-shrink-0" size={18} />
+                      <p className="text-sm text-amber-800">
+                        Payment due in {daysLeft} day(s)
                       </p>
                     </div>
                   )}
 
-                  {/* Notes */}
-                  {pledge.notes && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-600 font-semibold mb-1">Notes</p>
-                      <p className="text-sm text-blue-800">{pledge.notes}</p>
+                  {pledge.status === 'completed' && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+                      <CheckCircle className="text-green-600 flex-shrink-0" size={18} />
+                      <p className="text-sm text-green-800 font-semibold">Pledge Completed</p>
                     </div>
                   )}
 
@@ -357,43 +405,16 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                   {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onPayPledge && (
                     <button
                       onClick={() => onPayPledge(pledge)}
-                      className="w-full py-3 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-[#8B1A1A] text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
                     >
                       <DollarSign size={20} />
                       Make Payment
                     </button>
                   )}
-
-                  {pledge.status === 'completed' && (
-                    <div className="flex items-center justify-center gap-2 text-green-600 font-semibold py-3">
-                      <CheckCircle size={20} />
-                      Pledge Completed
-                    </div>
-                  )}
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Summary Footer */}
-      {processedPledges.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex gap-6">
-              <div>
-                <span className="text-slate-600">Showing:</span>
-                <span className="ml-2 font-bold text-slate-900">{processedPledges.length} of {pledges.length}</span>
-              </div>
-              <div>
-                <span className="text-slate-600">Completion Rate:</span>
-                <span className="ml-2 font-bold text-slate-900">
-                  {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

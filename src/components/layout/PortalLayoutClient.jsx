@@ -28,13 +28,12 @@ export default function PortalLayoutClient({ children }) {
   }, [user, isLoading, checkAuth, router]);
 
   // Close sidebar when clicking outside on mobile
+  // Start with sidebar closed on all devices
   useEffect(() => {
     const handleResize = () => {
-      // Auto-open sidebar on desktop (md breakpoint = 768px)
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
+      // Keep sidebar state as user set it, don't auto-open on desktop
+      if (window.innerWidth < 768 && sidebarOpen) {
+        setSidebarOpen(false); // Only close on mobile if it was open
       }
     };
 
@@ -78,11 +77,11 @@ export default function PortalLayoutClient({ children }) {
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden">
-      {/* Sidebar - Mobile: Slides in from left, Desktop: Always visible */}
+      {/* Sidebar - Toggleable on all devices */}
       <aside className={`
-        fixed md:static left-0 top-0 h-full z-40
+        fixed left-0 top-0 h-full z-40
         transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         w-64
         bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
       `}>
@@ -93,7 +92,7 @@ export default function PortalLayoutClient({ children }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
         {/* Header */}
         <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex-shrink-0">
           <PortalHeader 
@@ -110,10 +109,10 @@ export default function PortalLayoutClient({ children }) {
         </main>
       </div>
 
-      {/* Mobile sidebar overlay - Click to close */}
+      {/* Sidebar overlay - Click to close (all devices) */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}

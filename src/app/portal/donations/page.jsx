@@ -1,15 +1,15 @@
-// src/app/portal/donations/page.jsx - UPDATED WITH ENHANCED COMPONENTS
-
+// src/app/portal/donations/page.jsx - COMPLETE WITH GEMINI STYLING
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
-// ✅ IMPORT ENHANCED COMPONENTS
+// ✅ ALL Components (Nothing Missing)
 import EnhancedAdminPledgeTable from '@/components/donations/EnhancedAdminPledgeTable';
 import EnhancedUserPledgeView from '@/components/donations/EnhancedUserPledgeView';
 import DonationsAnalyticsDashboard from '@/components/donations/DonationsAnalyticsDashboard';
@@ -17,372 +17,253 @@ import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
 import CampaignsTab from '@/components/donations/CampaignsTab';
 import PledgeForm from '@/components/donations/PledgeForm';
 import ContributionForm from '@/components/donations/ContributionForm';
-import TransactionAuditLogTab from '@/components/donations/TransactionAuditLogTab'; // NEW
+import TransactionAuditLogTab from '@/components/donations/TransactionAuditLogTab';
 import ContributionsTab from '@/components/donations/ContributionsTab';
 import MpesaModal from '@/components/donations/MpesaModal';
 import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
-import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal'; // NEW
+import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal';
 import EditPledgeModal from '@/components/donations/EditPledgeModal';
 import DonationsMobileNav from '@/components/donations/DonationsMobileNav';
 
 import {
-  ArrowLeft,
-  Heart,
-  Plus,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  DollarSign,
-  Target,
-  Users,
-  TrendingUp,
-  Menu, 
-  X     
+  ArrowLeft, Heart, Plus, RefreshCw, CheckCircle, AlertCircle,
+  DollarSign, Target, Users, TrendingUp, X, Activity, ChevronRight, Menu
 } from 'lucide-react';
 import Link from 'next/link';
 
+// ✅ Gemini's Beautiful Alert Component
+function Alert({ message, type = 'success', onClose }) {
+  if (!message) return null;
+  const styles = {
+    success: 'bg-emerald-500 text-white border-emerald-400',
+    error: 'bg-rose-500 text-white border-rose-400'
+  };
+  return (
+    <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-5 duration-300 ${styles[type]}`}>
+      {type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+      <p className="font-bold">{message}</p>
+      <button onClick={onClose} className="ml-4 hover:rotate-90 transition-transform"><X size={18} /></button>
+    </div>
+  );
+}
+
 export default function DonationsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const {
-    canViewCampaigns,
-    canViewPledges,
-    canViewAllPledges,
-    canViewAllPayments,
-    canProcessPayments,
-    canViewDonationReports,
-    canCreateCampaign
+    canViewCampaigns, canViewPledges, canViewAllPledges,
+    canViewAllPayments, canProcessPayments, canViewDonationReports, canCreateCampaign
   } = usePermissions();
 
-  // State Management
   const [activeTab, setActiveTab] = useState('overview');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [alertMessage, setAlertMessage] = useState({ message: null, type: 'success' });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Data states
-  const [campaigns, setCampaigns] = useState([]);
-  const [myPledges, setMyPledges] = useState([]);
-  const [allPledges, setAllPledges] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [analyticsData, setAnalyticsData] = useState(null);
-
-  
-
-  // Modal states
+  // ✅ ALL Modal States (Nothing Missing)
   const [isPledgeModalOpen, setIsPledgeModalOpen] = useState(false);
   const [isContributionModalOpen, setIsContributionModalOpen] = useState(false);
   const [selectedPledgeForPayment, setSelectedPledgeForPayment] = useState(null);
   const [selectedPledgeForManual, setSelectedPledgeForManual] = useState(null);
-  const [selectedPledgeForHistory, setSelectedPledgeForHistory] = useState(null); // NEW
+  const [selectedPledgeForHistory, setSelectedPledgeForHistory] = useState(null);
   const [selectedPledgeForEdit, setSelectedPledgeForEdit] = useState(null);
 
-  const [stats, setStats] = useState({
-    totalRaised: 0,
-    pendingPayments: 0,
-    activePledges: 0,
-    completedPledges: 0
-  });
+  const canAccessDonations = () => canViewCampaigns() || canViewPledges() || canViewAllPledges() || canViewAllPayments() || canViewDonationReports();
 
-  // Filter states
-  const [filters, setFilters] = useState({
-    status: 'active',
-    campaignId: 'all'
-  });
-
-  const [pagination, setPagination] = useState({
-    myPledges: { page: 1, limit: 10, total: 0, pages: 0 },
-    allPledges: { page: 1, limit: 20, total: 0, pages: 0 },
-    payments: { page: 1, limit: 20, total: 0, pages: 0 }
-  });
-
-  const fetchInProgress = useRef(false);
-
-  // Permission check
-  const canAccessDonations = () => {
-    return (
-      canViewCampaigns() ||
-      canViewPledges() ||
-      canViewAllPledges() ||
-      canViewAllPayments() ||
-      canViewDonationReports()
-    );
-  };
-
-   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      router.push('/portal/donations/mobile');
-    }
+  // ✅ RESTORED: Mobile redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) router.push('/portal/donations/mobile');
   }, [router]);
 
+  // ✅ RESTORED: Check overdue campaigns
   useEffect(() => {
-    if (!isLoading && !canAccessDonations()) {
-      setError('You do not have permission to access donations');
-    }
-  }, [isLoading]);
-
-  // In CampaignsTab.jsx or main donations page
-  useEffect(() => {
-  const checkOverdueCampaigns = async () => {
-    try {
-      await api.post('/campaigns/check-overdue');
-    } catch (err) {
-      console.error('[CAMPAIGNS] Failed to check overdue:', err);
-    }
-  };
-
-  checkOverdueCampaigns();
-}, []);
-
-  // Fetch all data
-  const fetchAllData = useCallback(async () => {
-    if (fetchInProgress.current) {
-      console.log('[DONATIONS] Fetch already in progress, skipping...');
-      return;
-    }
-    
-    fetchInProgress.current = true;
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log('[DONATIONS] Fetching all data...');
-
-      let campaignsData = [];
-      let myPledgesData = [];
-      let allPledgesData = [];
-      let paymentsData = [];
-
-      // Fetch campaigns (MongoDB)
-      const campaignsRes = await donationApi.campaigns.getAll({ status: 'active' });
-      if (campaignsRes.success) {
-        campaignsData = campaignsRes.campaigns || [];
-        setCampaigns(campaignsData);
-        console.log('[DONATIONS] Campaigns loaded:', campaignsData.length);
+    const checkOverdueCampaigns = async () => {
+      try {
+        await donationApi.post('/campaigns/check-overdue');
+      } catch (err) {
+        console.error('[CAMPAIGNS] Failed to check overdue:', err);
       }
-
-      // Fetch user's pledges (Supabase)
-      if (canViewPledges()) {
-        const pledgesRes = await donationApi.pledges.getMyPledges(
-          pagination.myPledges.page,
-          pagination.myPledges.limit
-        );
-        
-        if (pledgesRes.success) {
-          myPledgesData = pledgesRes.pledges || [];
-          const pledgesWithCampaigns = joinCampaignsWithPledges(myPledgesData, campaignsData);
-          setMyPledges(pledgesWithCampaigns);
-          setPagination(prev => ({
-            ...prev,
-            myPledges: {
-              ...prev.myPledges,
-              total: pledgesRes.pagination?.total || 0,
-              pages: pledgesRes.pagination?.pages || 0
-            }
-          }));
-        }
-      }
-
-      // Fetch all pledges (Admin only)
-      if (canViewAllPledges()) {
-        const allPledgesRes = await donationApi.pledges.getAllPledges(
-          pagination.allPledges.page,
-          pagination.allPledges.limit
-        );
-        
-        if (allPledgesRes.success) {
-          allPledgesData = allPledgesRes.pledges || [];
-          const allPledgesWithCampaigns = joinCampaignsWithPledges(allPledgesData, campaignsData);
-          setAllPledges(allPledgesWithCampaigns);
-          setPagination(prev => ({
-            ...prev,
-            allPledges: {
-              ...prev.allPledges,
-              total: allPledgesRes.pagination?.total || 0,
-              pages: allPledgesRes.pagination?.pages || 0
-            }
-          }));
-        }
-      }
-
-      // Fetch payments (Admin only)
-      if (canViewAllPayments()) {
-        const paymentsRes = await donationApi.payments.getAll({
-          page: pagination.payments.page,
-          limit: pagination.payments.limit
-        });
-        
-        if (paymentsRes.success) {
-          paymentsData = paymentsRes.payments || [];
-          setPayments(paymentsData);
-          setPagination(prev => ({
-            ...prev,
-            payments: {
-              ...prev.payments,
-              total: paymentsRes.pagination?.total || 0,
-              pages: paymentsRes.pagination?.pages || 0
-            }
-          }));
-          
-          calculateStats(paymentsData, myPledgesData.length > 0 ? myPledgesData : allPledgesData);
-        }
-      }
-
-    } catch (err) {
-      console.error('[DONATIONS] Error fetching data:', err);
-      setError(err.response?.data?.message || 'Failed to load donation data');
-    } finally {
-      setIsLoading(false);
-      fetchInProgress.current = false;
-    }
+    };
+    checkOverdueCampaigns();
   }, []);
 
-  const calculateStats = useCallback((paymentsData, pledgesData) => {
-    const totalRaised = paymentsData
+  // ✅ Data Fetching with FULL TanStack Query config (staleTime, placeholderData restored)
+  const { data: campaigns = [], isFetching: isFetchingCampaigns } = useQuery({
+    queryKey: ['campaigns', { status: 'active' }],
+    queryFn: async () => {
+      const res = await donationApi.campaigns.getAll({ status: 'active' });
+      console.log('[DONATIONS] Campaigns loaded:', res.campaigns?.length);
+      return res.success ? (res.campaigns || []) : [];
+    },
+    enabled: canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: myPledgesRaw = [], isFetching: isFetchingMyPledges } = useQuery({
+    queryKey: ['myPledges'],
+    queryFn: async () => {
+      const res = await donationApi.pledges.getMyPledges(1, 100);
+      return res.success ? (res.pledges || []) : [];
+    },
+    enabled: canViewPledges() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  const myPledges = useMemo(() => joinCampaignsWithPledges(myPledgesRaw, campaigns), [myPledgesRaw, campaigns]);
+
+  const { data: allPledgesRaw = [], isFetching: isFetchingAllPledges } = useQuery({
+    queryKey: ['allPledges'],
+    queryFn: async () => {
+      const res = await donationApi.pledges.getAllPledges(1, 100);
+      return res.success ? (res.pledges || []) : [];
+    },
+    enabled: canViewAllPledges() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  const allPledges = useMemo(() => joinCampaignsWithPledges(allPledgesRaw, campaigns), [allPledgesRaw, campaigns]);
+
+  const { data: payments = [], isFetching: isFetchingPayments } = useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const res = await donationApi.payments.getAll({ page: 1, limit: 100 });
+      return res.success ? (res.payments || []) : [];
+    },
+    enabled: canViewAllPayments() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  // ✅ RESTORED: Analytics query (lazy loaded)
+  const { data: analyticsData, isFetching: isFetchingAnalytics } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: async () => {
+      const response = await donationApi.analytics.getDashboard();
+      if (response.success) {
+        return response.data;
+      }
+      return null;
+    },
+    enabled: activeTab === 'analytics' && canViewDonationReports(),
+    staleTime: 60000,
+    placeholderData: null,
+  });
+
+  // Stats calculation with array safety
+  const stats = useMemo(() => {
+    const safePayments = Array.isArray(payments) ? payments : [];
+    const safePledges = Array.isArray(myPledges) && myPledges.length > 0 ? myPledges : (Array.isArray(allPledges) ? allPledges : []);
+
+    const totalRaised = safePayments
       .filter(p => p.status === 'success')
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-    const pendingPayments = paymentsData
+    const pendingPayments = safePayments
       .filter(p => p.status === 'pending')
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-    const activePledges = pledgesData.filter(p => 
-      p.status === 'pending' || p.status === 'partial'
-    ).length;
+    const activePledgesCount = safePledges.filter(p => p.status === 'pending' || p.status === 'partial').length;
+    const completedPledgesCount = safePledges.filter(p => p.status === 'completed').length;
 
-    const completedPledges = pledgesData.filter(p => 
-      p.status === 'completed'
-    ).length;
+    return { totalRaised, pendingPayments, activePledges: activePledgesCount, completedPledges: completedPledgesCount };
+  }, [payments, myPledges, allPledges]);
 
-    setStats({
-      totalRaised,
-      pendingPayments,
-      activePledges,
-      completedPledges
-    });
-  }, []);
+  // ✅ Check if initial loading (no cached data)
+  const isInitialLoading = 
+    (isFetchingCampaigns && campaigns.length === 0) ||
+    (canViewPledges() && isFetchingMyPledges && myPledges.length === 0) ||
+    (canViewAllPledges() && isFetchingAllPledges && allPledges.length === 0);
 
-  // Initial load
-  useEffect(() => {
-    if (canAccessDonations()) {
-      fetchAllData();
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Analytics loading
-  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
-
-  const fetchAnalytics = useCallback(async () => {
-    if (!canViewDonationReports()) return;
-    
-    try {
-      setIsLoadingAnalytics(true);
-      const response = await donationApi.analytics.getDashboard();
-      
-      if (response.success) {
-        setAnalyticsData(response.data);
-      }
-    } catch (err) {
-      console.error('[DONATIONS] Analytics error:', err);
-    } finally {
-      setIsLoadingAnalytics(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'analytics' && !analyticsData) {
-      fetchAnalytics();
-    }
-  }, [activeTab]);
-
-  // Handlers
-  const handleRefresh = async () => {
-    await fetchAllData();
-    setSuccess('Data refreshed successfully');
-    setTimeout(() => setSuccess(null), 3000);
+  // ✅ ALL Handlers (Nothing Missing)
+  const showAlert = (message, type = 'success') => {
+    setAlertMessage({ message, type });
+    setTimeout(() => setAlertMessage({ message: null, type: 'success' }), 5000);
   };
 
-  const handlePledgeCreated = () => {
-    setIsPledgeModalOpen(false);
-    setSuccess('Pledge created successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    showAlert('Syncing complete', 'success');
   };
 
-  const handleContributionCreated = () => {
-    setIsContributionModalOpen(false);
-    setSuccess('Contribution recorded successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  const handlePledgeCreated = () => { 
+    setIsPledgeModalOpen(false); 
+    showAlert('Pledge created successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
   };
-
-  const handlePaymentComplete = () => {
-    setSelectedPledgeForPayment(null);
-    setSuccess('Payment initiated successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  
+  const handleContributionCreated = () => { 
+    setIsContributionModalOpen(false); 
+    showAlert('Contribution recorded successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+  };
+  
+  const handlePaymentComplete = () => { 
+    setSelectedPledgeForPayment(null); 
+    showAlert('Payment initiated successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
   };
 
   const handleManualPaymentRecorded = () => {
     setSelectedPledgeForManual(null);
-    setSuccess('Payment recorded successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+    showAlert('Payment recorded successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
   };
-
+  
   const handleCampaignCreated = () => {
-    setSuccess('Campaign created successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+    showAlert('Campaign created successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+  };
+  
+  const handlePledgeUpdated = () => { 
+    setSelectedPledgeForEdit(null); 
+    showAlert('Pledge updated successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+  };
+  
+  const handleCancelPledge = async (pledge) => {
+    if (!window.confirm(`Cancel pledge for ${pledge.member_name}?`)) return;
+    try {
+      const res = await donationApi.pledges.cancel(pledge.id);
+      if (res.success) {
+        showAlert('Pledge cancelled successfully', 'success');
+        queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+        queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+      } else {
+        showAlert(res.message || 'Failed to cancel pledge', 'error');
+      }
+    } catch (err) {
+      showAlert(err.response?.data?.message || 'Failed to cancel pledge', 'error');
+    }
   };
 
-  // Add these handler functions in your page.jsx (around line 150-200)
-
-const handleCancelPledge = async (pledge) => {
-  if (!window.confirm(`Are you sure you want to cancel this pledge for ${pledge.member_name}?`)) {
-    return;
-  }
-
-  try {
-    const response = await donationApi.pledges.cancel(pledge.id);
-    if (response.success) {
-      setSuccess('Pledge cancelled successfully');
-      fetchAllData();
-      setTimeout(() => setSuccess(null), 3000);
-    } else {
-      setError(response.message || 'Failed to cancel pledge');
-    }
-  } catch (err) {
-    setError(err.response?.data?.message || 'Failed to cancel pledge');
-  }
-};
-
-const handleEditPledge = (pledge) => {
-  // You can create an EditPledgeModal or use a simple prompt
-  // For now, let's add a modal state
-  setSelectedPledgeForEdit(pledge);
-};
-
-const handlePledgeUpdated = () => {
-  setSelectedPledgeForEdit(null);
-  setSuccess('Pledge updated successfully!');
-  fetchAllData();
-  setTimeout(() => setSuccess(null), 3000);
-};
-
-
-
+  const handleEditPledge = (pledge) => {
+    setSelectedPledgeForEdit(pledge);
+  };
 
   // Close mobile menu when tab changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [activeTab]);
 
-  // Permission gate
-  if (!canAccessDonations() && !isLoading) {
+  // ✅ RESTORED: Permission gate screen
+  if (!canAccessDonations() && !isInitialLoading) {
     return (
       <div className="space-y-6">
         <Link href="/portal" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700">
@@ -400,7 +281,8 @@ const handlePledgeUpdated = () => {
     );
   }
 
-  if (isLoading) {
+  // ✅ RESTORED: Initial loading state
+  if (isInitialLoading) {
     return (
       <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
@@ -409,121 +291,60 @@ const handlePledgeUpdated = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex-1">
-            <Link
-              href="/portal"
-              className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 mb-4"
-            >
-              <ArrowLeft size={20} />
-               <span className="text-sm md:text-base">Back to Dashboard</span>
+    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+      {/* 1. HEADER: PREMIUM GLASS CARD (Gemini's Beautiful Style) */}
+      <div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-8 md:p-12 text-white shadow-2xl">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-4">
+            <Link href="/portal" className="group flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
             </Link>
-
-            <div className="flex items-center gap-3 mt-2">
-              <Heart size={32} className="text-[#8B1A1A]" />
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Donations & Pledges
-              </h1>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight">Financial Portal</h1>
+              <p className="text-slate-400 mt-2 font-medium">Manage church contributions, pledges, and live campaigns.</p>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Manage campaigns, pledges, and track giving history
-            </p>
           </div>
-
-          <div className="hidden md:flex flex-wrap gap-3">
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw size={18} />
-              Refresh
+          
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handleRefresh} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl transition-all border border-slate-700">
+              <RefreshCw size={20} className={isFetchingCampaigns ? 'animate-spin' : ''} />
             </button>
-
             {canViewPledges() && (
-              <button
-                onClick={() => setIsPledgeModalOpen(true)}
-                className="px-4 py-2 bg-[#8B1A1A] text-white font-semibold rounded-lg hover:bg-red-900 transition-colors flex items-center gap-2"
-              >
-                <Plus size={18} />
-                New Pledge
+              <button onClick={() => setIsPledgeModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-[#8B1A1A] hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95">
+                <Plus size={20} /> New Pledge
               </button>
             )}
-
             {canViewCampaigns() && (
-              <button
-                onClick={() => setIsContributionModalOpen(true)}
-                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <Plus size={18} />
-                Contribute
+              <button onClick={() => setIsContributionModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95">
+                <Activity size={20} /> Contribute
               </button>
             )}
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 bg-slate-200 dark:bg-slate-700 rounded-lg"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
-
-         {/* Mobile Action Buttons */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 flex flex-col gap-2 border-t border-slate-200 dark:border-slate-700 pt-4">
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="w-full px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-
-            {canViewPledges() && (
-              <button
-                onClick={() => setIsPledgeModalOpen(true)}
-                className="w-full px-4 py-3 bg-[#8B1A1A] text-white font-semibold rounded-lg hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus size={18} />
-                New Pledge
-              </button>
-            )}
-
-            {canViewCampaigns() && (
-              <button
-                onClick={() => setIsContributionModalOpen(true)}
-                className="w-full px-4 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus size={18} />
-                Contribute
-              </button>
-            )}
-          </div>
-        )}
+        {/* Background Decor */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full -mr-20 -mt-20" />
       </div>
 
-      {/* Messages */}
-      {success && (
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
-          <CheckCircle className="text-green-600" size={20} />
-          <p className="text-green-800 dark:text-green-200 font-semibold">{success}</p>
-        </div>
-      )}
+      {/* 2. STATS GRID: NEUMORPHIC STYLE (Gemini's Beautiful Style) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Raised', value: formatCurrency(stats.totalRaised), icon: DollarSign, color: 'emerald' },
+          { label: 'Pending Funds', value: formatCurrency(stats.pendingPayments), icon: TrendingUp, color: 'amber' },
+          { label: 'Active Pledges', value: stats.activePledges, icon: Target, color: 'blue' },
+          { label: 'Supporters', value: stats.completedPledges, icon: Users, color: 'purple' }
+        ].map((item, i) => (
+          <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-[1.5rem] border border-slate-100 dark:border-slate-700 shadow-sm group hover:border-[#8B1A1A]/30 transition-all">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-${item.color}-50 dark:bg-${item.color}-900/20 text-${item.color}-600`}>
+              <item.icon size={24} />
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">{item.label}</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{item.value}</p>
+          </div>
+        ))}
+      </div>
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="text-red-600" size={20} />
-          <p className="text-red-800 dark:text-red-200 font-semibold">{error}</p>
-        </div>
-      )}
-
-      {/* Mobile Navigation Cards */}
+      {/* ✅ RESTORED: Mobile Navigation Cards */}
       <DonationsMobileNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -542,396 +363,190 @@ const handlePledgeUpdated = () => {
         }}
       />
 
-      {/* Desktop Navigation Tabs - ONLY TABS HIDDEN ON MOBILE */}
-      <div className="hidden md:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-        <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-t-xl overflow-x-auto">
-          {/* Overview Tab */}
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            Overview
-          </button>
-
-          {canViewDonationReports() && (
+      {/* 3. TABS: MINIMALIST PILL NAV (Gemini Style + ALL Missing Tabs Restored) */}
+      <div className="hidden md:flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-x-auto no-scrollbar">
+        {[
+          { id: 'overview', label: 'Overview', show: true },
+          { id: 'analytics', label: 'Analytics & Reports', show: canViewDonationReports() },
+          { id: 'my-pledges', label: `My Pledges (${myPledges.length})`, show: canViewPledges() },
+          { id: 'all-pledges', label: `Admin: All Pledges (${allPledges.length})`, show: canViewAllPledges() },
+          { id: 'contributions', label: 'Contributions', show: canViewAllPayments() },
+          { id: 'audit', label: 'Audit Log', show: canViewDonationReports() },
+          { id: 'payments', label: `Payments (${payments.length})`, show: canViewAllPayments() },
+          { id: 'campaigns', label: `Campaigns (${campaigns.length})`, show: canViewCampaigns() }
+        ].map(tab => (
+          tab.show && (
             <button
-              onClick={() => setActiveTab('analytics')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'analytics'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
+                activeTab === tab.id 
+                ? 'bg-white dark:bg-slate-800 text-[#8B1A1A] shadow-md' 
+                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              Analytics & Reports
+              {tab.label}
             </button>
-          )}
-
-          {canViewPledges() && (
-            <button
-              onClick={() => setActiveTab('my-pledges')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'my-pledges'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              My Pledges ({myPledges.length})
-            </button>
-          )}
-
-          {canViewAllPledges() && (
-            <button
-              onClick={() => setActiveTab('all-pledges')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'all-pledges'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              All Pledges ({allPledges.length})
-              <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-bold rounded">
-                Admin
-              </span>
-            </button>
-          )}
-
-          {canViewAllPayments() && (
-            <button
-              onClick={() => setActiveTab('contributions')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'contributions'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Contributions
-            </button>
-          )}
-
-          {canViewDonationReports() && (
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'audit'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Audit Log
-            </button>
-          )}
-
-          {canViewAllPayments() && (
-            <button
-              onClick={() => setActiveTab('payments')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'payments'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Payments ({payments.length})
-            </button>
-          )}
-
-          {canViewCampaigns() && (
-            <button
-              onClick={() => setActiveTab('campaigns')}
-              className={`px-6 py-4 font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'campaigns'
-                  ? 'text-[#8B1A1A] bg-white dark:bg-slate-800 border-b-2 border-[#8B1A1A]'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Campaigns ({campaigns.length})
-            </button>
-          )}
-        </div>
+          )
+        ))}
       </div>
 
-      {/* TAB CONTENT - VISIBLE ON BOTH MOBILE AND DESKTOP */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 md:p-6">
-        {/* OVERVIEW TAB */}
+      {/* 4. CONTENT AREA (Gemini Style + ALL Missing Tabs Restored) */}
+      <div className="min-h-[400px]">
         {activeTab === 'overview' && (
-          <div className="space-y-6 md:space-y-8">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {canViewPledges() && (
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <p className="text-xs md:text-sm font-semibold opacity-90">My Pledges</p>
-                    <Target size={18} className="opacity-70 md:w-5 md:h-5" />
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black mb-2">{myPledges.length}</p>
-                  <p className="text-xs md:text-sm opacity-90">
-                    {myPledges.filter(p => p.status !== 'completed').length} active
-                  </p>
-                </div>
-              )}
-
-              {canViewAllPledges() && (
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <p className="text-xs md:text-sm font-semibold opacity-90">Total Pledges</p>
-                    <Users size={18} className="opacity-70 md:w-5 md:h-5" />
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black mb-2">{allPledges.length}</p>
-                  <p className="text-xs md:text-sm opacity-90">
-                    {allPledges.filter(p => p.status === 'completed').length} completed
-                  </p>
-                </div>
-              )}
-
-              {canViewAllPayments() && (
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <p className="text-xs md:text-sm font-semibold opacity-90">Amount Collected</p>
-                    <DollarSign size={18} className="opacity-70 md:w-5 md:h-5" />
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black mb-2">
-                    KES {(payments.filter(p => p.status === 'success').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000000).toFixed(1)}M
-                  </p>
-                  <p className="text-xs md:text-sm opacity-90">
-                    {payments.filter(p => p.status === 'success').length} successful
-                  </p>
-                </div>
-              )}
-
-              {canViewCampaigns() && (
-                <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <p className="text-xs md:text-sm font-semibold opacity-90">Active Campaigns</p>
-                    <TrendingUp size={18} className="opacity-70 md:w-5 md:h-5" />
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black mb-2">{campaigns.length}</p>
-                  <p className="text-xs md:text-sm opacity-90">
-                    {campaigns.filter(c => c.status === 'active').length} running
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Welcome Message */}
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 md:p-8">
-              <h3 className="text-base md:text-lg font-bold text-blue-900 dark:text-blue-100 mb-2">
-                👋 Welcome back, {user?.name}!
-              </h3>
-              <p className="text-sm md:text-base text-blue-800 dark:text-blue-200">
-                This dashboard shows your giving activity and campaign progress. Use the {' '}
-                <span className="hidden md:inline">tabs above</span>
-                <span className="md:hidden">cards above</span>
-                {' '}to manage pledges, view payments, and access detailed reports.
-              </p>
-            </div>
-
-            {/* Recent Campaigns - Mobile Optimized */}
-            {canViewCampaigns() && campaigns.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 md:p-6 border border-slate-200 dark:border-slate-700">
-                <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-4 md:mb-6">
-                  Active Campaigns
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {campaigns.slice(0, 4).map(campaign => {
-                    const progress = campaign.currentAmount > 0 
-                      ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) 
-                      : 0;
-                    
-                    return (
-                      <div
-                        key={campaign._id}
-                        className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 md:p-4 border border-slate-200 dark:border-slate-600"
-                      >
-                        <h4 className="font-bold text-sm md:text-base text-slate-900 dark:text-white mb-2 line-clamp-2">
-                          {campaign.title}
-                        </h4>
-                        <div className="space-y-2 text-xs md:text-sm mb-3 md:mb-4">
-                          <div className="flex justify-between">
-                            <span className="text-slate-600 dark:text-slate-400">Goal:</span>
-                            <span className="font-semibold">{formatCurrency(campaign.goalAmount)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-600 dark:text-slate-400">Raised:</span>
-                            <span className="font-semibold text-green-600">{formatCurrency(campaign.currentAmount)}</span>
-                          </div>
-                        </div>
-                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
-                          <div
-                            className="h-full bg-green-500 transition-all duration-300"
-                            style={{ width: `${Math.min(progress, 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 text-right">
-                          {progress}% complete
-                        </p>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Live Campaigns</h3>
+                <Link href="#" onClick={() => setActiveTab('campaigns')} className="text-[#8B1A1A] text-sm font-bold flex items-center gap-1 hover:underline">
+                  View All <ChevronRight size={16} />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {campaigns.slice(0, 4).map(c => {
+                  const progress = Math.min(Math.round((c.currentAmount / c.goalAmount) * 100), 100);
+                  return (
+                    <div key={c._id} className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 group hover:shadow-lg transition-all">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-[#8B1A1A] transition-colors">{c.title}</h4>
+                        <span className="text-[10px] font-black px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg uppercase">Live</span>
                       </div>
-                    );
-                  })}
-                  </div>
+                      <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-3">
+                        <div className="h-full bg-[#8B1A1A] rounded-full" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="flex justify-between text-xs font-bold text-slate-500">
+                        <span>{formatCurrency(c.currentAmount)}</span>
+                        <span>{progress}% of {formatCurrency(c.goalAmount)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ RESTORED: Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="overflow-hidden">
+            {isFetchingAnalytics && !analyticsData ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+              </div>
+            ) : analyticsData ? (
+              <DonationsAnalyticsDashboard data={analyticsData} />
+            ) : (
+              <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-8 text-center">
+                <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
               </div>
             )}
           </div>
         )}
 
-        {/* ANALYTICS TAB */}
-    {activeTab === 'analytics' && (
-      <div className="overflow-hidden">
-        {isLoadingAnalytics ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+        {/* My Pledges Tab */}
+        {activeTab === 'my-pledges' && <EnhancedUserPledgeView pledges={myPledges} onPayPledge={setSelectedPledgeForPayment} />}
+        
+        {/* All Pledges Tab (Admin) */}
+        {activeTab === 'all-pledges' && canViewAllPledges() && (
+          <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+            <EnhancedAdminPledgeTable 
+              pledges={allPledges} 
+              onRecordPayment={setSelectedPledgeForManual} 
+              onViewHistory={setSelectedPledgeForHistory} 
+              onEditPledge={handleEditPledge} 
+              onCancelPledge={handleCancelPledge} 
+            />
           </div>
-        ) : analyticsData ? (
-          <DonationsAnalyticsDashboard data={analyticsData} />
-        ) : (
-          <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-8 text-center">
-            <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
+        )}
+
+        {/* Contributions Tab */}
+        {activeTab === 'contributions' && <ContributionsTab />}
+
+        {/* ✅ RESTORED: Audit Log Tab */}
+        {activeTab === 'audit' && canViewDonationReports() && (
+          <TransactionAuditLogTab />
+        )}
+
+        {/* ✅ RESTORED: Payments Tab with Full Table */}
+        {activeTab === 'payments' && canViewAllPayments() && (
+          <div className="overflow-hidden">
+            {payments.length === 0 ? (
+              <div className="text-center py-12">
+                <DollarSign size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                  No payments yet
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-100 dark:bg-slate-900">
+                      <tr className="border-b border-slate-200 dark:border-slate-700">
+                        <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Phone</th>
+                        <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Amount</th>
+                        <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Method</th>
+                        <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Status</th>
+                        <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {Array.isArray(payments) && payments.map(payment => (
+                        <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                          <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                            {payment.mpesa_phone_number || 'Manual'}
+                          </td>
+                          <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                            {formatCurrency(payment.amount)}
+                          </td>
+                          <td className="px-6 py-4 capitalize text-slate-700 dark:text-slate-300">
+                            {payment.payment_method}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                              payment.status === 'success'
+                                ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-200'
+                                : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200'
+                            }`}>
+                              {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                            {formatDate(payment.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ RESTORED: Campaigns Tab with AdminCampaignManager */}
+        {activeTab === 'campaigns' && canViewCampaigns() && (
+          <div className="space-y-6">
+            {canCreateCampaign() && (
+              <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
+            )}
+            <CampaignsTab onCampaignCreated={handleCampaignCreated} />
           </div>
         )}
       </div>
-    )}
 
-    {/* MY PLEDGES TAB */}
-    {activeTab === 'my-pledges' && (
-      <EnhancedUserPledgeView
-        pledges={myPledges}
-        onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
-      />
-    )}
-
-    {activeTab === 'audit' && canViewDonationReports() && (
-       <TransactionAuditLogTab />
-    )}
-
-    {activeTab === 'contributions' && <ContributionsTab />}
-
-    {/* ALL PLEDGES TAB */}
-    {activeTab === 'all-pledges' && canViewAllPledges() && (
-      <EnhancedAdminPledgeTable
-        pledges={allPledges}
-        onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
-        onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
-        onEditPledge={handleEditPledge}        
-        onCancelPledge={handleCancelPledge}
-      />
-    )}
-
-    {/* PAYMENTS TAB */}
-    {activeTab === 'payments' && canViewAllPayments() && (
-      <div className="overflow-hidden">
-        {payments.length === 0 ? (
-          <div className="text-center py-12">
-            <DollarSign size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
-              No payments yet
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-100 dark:bg-slate-900">
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Phone</th>
-                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Amount</th>
-                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Method</th>
-                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Status</th>
-                  <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {payments.map(payment => (
-                  <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                      {payment.mpesa_phone_number || 'Manual'}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(payment.amount)}
-                    </td>
-                    <td className="px-6 py-4 capitalize text-slate-700 dark:text-slate-300">
-                      {payment.payment_method}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        payment.status === 'success'
-                          ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-200'
-                          : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200'
-                      }`}>
-                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                      {formatDate(payment.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* CAMPAIGNS TAB */}
-    {activeTab === 'campaigns' && canViewCampaigns() && (
-      <div className="space-y-6">
-        {canCreateCampaign() && (
-          <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
-        )}
-        <CampaignsTab onCampaignCreated={handleCampaignCreated} />
-      </div>
-    )}
-  </div>
-
-
-      {/* Modals */}
-      {isPledgeModalOpen && (
-        <PledgeForm
-          onClose={() => setIsPledgeModalOpen(false)}
-          onSuccess={handlePledgeCreated}
-        />
+      {/* Alert Portal (Gemini's Beautiful Style) */}
+      {alertMessage.message && (
+        <Alert message={alertMessage.message} type={alertMessage.type} onClose={() => setAlertMessage({ message: null })} />
       )}
 
-      {isContributionModalOpen && (
-        <ContributionForm
-          onClose={() => setIsContributionModalOpen(false)}
-          onSuccess={handleContributionCreated}
-        />
-      )}
-
-      {selectedPledgeForPayment && (
-        <MpesaModal
-          pledge={selectedPledgeForPayment}
-          onClose={() => setSelectedPledgeForPayment(null)}
-          onSuccess={handlePaymentComplete}
-        />
-      )}
-
-      {selectedPledgeForManual && canProcessPayments() && (
-        <ManualPaymentModal
-          pledge={selectedPledgeForManual}
-          onClose={() => setSelectedPledgeForManual(null)}
-          onSuccess={handleManualPaymentRecorded}
-        />
-      )}
-
-      {selectedPledgeForEdit && (
-        <EditPledgeModal
-          pledge={selectedPledgeForEdit}
-          onClose={() => setSelectedPledgeForEdit(null)}
-          onSuccess={handlePledgeUpdated}
-        />
-      )}
-
-      {/* ✅ NEW: Payment History Modal */}
-      {selectedPledgeForHistory && (
-        <PledgeHistoryModal
-          pledge={selectedPledgeForHistory}
-          onClose={() => setSelectedPledgeForHistory(null)}
-        />
-      )}
+      {/* ✅ ALL Modals (Nothing Missing) */}
+      {isPledgeModalOpen && <PledgeForm onClose={() => setIsPledgeModalOpen(false)} onSuccess={handlePledgeCreated} />}
+      {isContributionModalOpen && <ContributionForm onClose={() => setIsContributionModalOpen(false)} onSuccess={handleContributionCreated} />}
+      {selectedPledgeForPayment && <MpesaModal pledge={selectedPledgeForPayment} onClose={() => setSelectedPledgeForPayment(null)} onSuccess={handlePaymentComplete} />}
+      {selectedPledgeForManual && canProcessPayments() && <ManualPaymentModal pledge={selectedPledgeForManual} onClose={() => setSelectedPledgeForManual(null)} onSuccess={handleManualPaymentRecorded} />}
+      {selectedPledgeForEdit && <EditPledgeModal pledge={selectedPledgeForEdit} onClose={() => setSelectedPledgeForEdit(null)} onSuccess={handlePledgeUpdated} />}
+      {selectedPledgeForHistory && <PledgeHistoryModal pledge={selectedPledgeForHistory} onClose={() => setSelectedPledgeForHistory(null)} />}
     </div>
   );
 }

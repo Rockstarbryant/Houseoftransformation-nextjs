@@ -1,22 +1,25 @@
-// src/app/portal/donations/mobile/page.jsx - SECTION 1: MAIN STRUCTURE
-// This is a COMPLETELY SEPARATE mobile-only page
-// Copy this to: src/app/portal/donations/mobile/page.jsx
+// src/app/portal/donations/mobile/page.jsx
+// ✅ ENHANCED MOBILE VERSION - Complete with ALL PC features
+// Maintains mobile-optimized UI while adding TanStack Query, custom alerts, and all missing features
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
-// Import all your existing components (unchanged)
+// ✅ Import all mobile-optimized components
 import UserPledgeCards from '@/components/donations/mobile/UserPledgeCards';
-import AdminPledgeCards from '@/components/donations/mobile/AdminPledgeCards';
+import EnhancedAdminPledgeCards from '@/components/donations/mobile/AdminPledgeCards';
 import MobileAnalyticsDashboard from '@/components/donations/mobile/MobileAnalyticsDashboard';
-import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
 import MobileCampaignsTab from '@/components/donations/mobile/MobileCampaignsTab';
+import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
+
+// ✅ Import shared components
 import PledgeForm from '@/components/donations/PledgeForm';
 import ContributionForm from '@/components/donations/ContributionForm';
 import MpesaModal from '@/components/donations/MpesaModal';
@@ -24,27 +27,109 @@ import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
 import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal';
 import EditPledgeModal from '@/components/donations/EditPledgeModal';
 
+// ✅ NEW: Import missing PC components (will adapt for mobile)
+import MobileContributionsTab from '@/components/donations/mobile/MobileContributionsTab';
+import TransactionAuditLogTab from '@/components/donations/TransactionAuditLogTab';
+
 import {
-  ArrowLeft,
-  Heart,
-  Plus,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  DollarSign,
-  Target,
-  Users,
-  TrendingUp,
-  Home,
-  BarChart3,
-  CreditCard,
-  Sun,
-  Moon
+  ArrowLeft, Heart, Plus, RefreshCw, CheckCircle, AlertCircle,
+  DollarSign, Target, Users, TrendingUp, Home, BarChart3,
+  CreditCard, Sun, Moon, X, AlertTriangle, Info, Menu
 } from 'lucide-react';
 import Link from 'next/link';
 
+// ============================================
+// ✅ CUSTOM ALERT COMPONENT (From PC)
+// Beautiful animated toast notifications
+// ============================================
+function Alert({ message, type = 'success', onClose }) {
+  if (!message) return null;
+  
+  const styles = {
+    success: 'bg-emerald-500 text-white border-emerald-400',
+    error: 'bg-rose-500 text-white border-rose-400'
+  };
+  
+  return (
+    <div className={`fixed bottom-24 left-4 right-4 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-5 duration-300 ${styles[type]}`}>
+      {type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+      <p className="font-bold flex-1">{message}</p>
+      <button onClick={onClose} className="hover:rotate-90 transition-transform">
+        <X size={18} />
+      </button>
+    </div>
+  );
+}
+
+// ============================================
+// ✅ CUSTOM CONFIRM DIALOG COMPONENT (From PC)
+// Modern confirmation dialogs instead of native alert()
+// ============================================
+function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'warning', confirmText = 'Confirm', isLoading = false }) {
+  if (!isOpen) return null;
+
+  const typeStyles = {
+    warning: 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+    danger: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400',
+    info: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+  };
+
+  const typeIcons = {
+    warning: <AlertTriangle className="w-6 h-6" />,
+    danger: <AlertCircle className="w-6 h-6" />,
+    info: <Info className="w-6 h-6" />
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-full ${typeStyles[type]}`}>
+              {typeIcons[type]}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                {title}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-line">
+                {message}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-900 px-6 py-4 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 ${
+              type === 'danger' 
+                ? 'bg-red-600 hover:bg-red-700' 
+                : 'bg-[#8B1A1A] hover:bg-red-900'
+            }`}
+          >
+            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 export default function MobileDonationsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const {
     canViewCampaigns,
@@ -57,20 +142,22 @@ export default function MobileDonationsPage() {
   } = usePermissions();
 
   // ============================================
-  // STATE MANAGEMENT (Keep all your existing state)
+  // STATE MANAGEMENT
   // ============================================
   const [activeTab, setActiveTab] = useState('overview');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Data states
-  const [campaigns, setCampaigns] = useState([]);
-  const [myPledges, setMyPledges] = useState([]);
-  const [allPledges, setAllPledges] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [analyticsData, setAnalyticsData] = useState(null);
+  
+  // ✅ NEW: Alert state (replacing success/error states)
+  const [alertMessage, setAlertMessage] = useState({ message: null, type: 'success' });
+  
+  // ✅ NEW: Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState({ 
+    isOpen: false, 
+    action: null, 
+    pledgeId: null,
+    title: '',
+    message: ''
+  });
 
   // Modal states
   const [isPledgeModalOpen, setIsPledgeModalOpen] = useState(false);
@@ -80,23 +167,8 @@ export default function MobileDonationsPage() {
   const [selectedPledgeForHistory, setSelectedPledgeForHistory] = useState(null);
   const [selectedPledgeForEdit, setSelectedPledgeForEdit] = useState(null);
 
-  const [stats, setStats] = useState({
-    totalRaised: 0,
-    pendingPayments: 0,
-    activePledges: 0,
-    completedPledges: 0
-  });
-
-  const [pagination, setPagination] = useState({
-    myPledges: { page: 1, limit: 10, total: 0, pages: 0 },
-    allPledges: { page: 1, limit: 20, total: 0, pages: 0 },
-    payments: { page: 1, limit: 20, total: 0, pages: 0 }
-  });
-
-  const fetchInProgress = useRef(false);
-
   // ============================================
-  // PERMISSION CHECK (Keep your existing logic)
+  // PERMISSION CHECK
   // ============================================
   const canAccessDonations = () => {
     return (
@@ -108,235 +180,221 @@ export default function MobileDonationsPage() {
     );
   };
 
+  // ============================================
+  // ✅ NEW: Check overdue campaigns (from PC)
+  // ============================================
   useEffect(() => {
-    if (!isLoading && !canAccessDonations()) {
-      setError('You do not have permission to access donations');
-    }
-  }, [isLoading]);
-
-  // ============================================
-  // FETCH ALL DATA (Keep your existing logic)
-  // ============================================
-  const fetchAllData = useCallback(async () => {
-    if (fetchInProgress.current) {
-      console.log('[MOBILE-DONATIONS] Fetch already in progress, skipping...');
-      return;
-    }
-    
-    fetchInProgress.current = true;
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log('[MOBILE-DONATIONS] Fetching all data...');
-
-      let campaignsData = [];
-      let myPledgesData = [];
-      let allPledgesData = [];
-      let paymentsData = [];
-
-      // Fetch campaigns (MongoDB)
-      const campaignsRes = await donationApi.campaigns.getAll({ status: 'active' });
-      if (campaignsRes.success) {
-        campaignsData = campaignsRes.campaigns || [];
-        setCampaigns(campaignsData);
+    const checkOverdueCampaigns = async () => {
+      try {
+        await donationApi.campaigns.checkOverdue?.();
+      } catch (err) {
+        console.error('[CAMPAIGNS] Failed to check overdue:', err);
       }
-
-      // Fetch user's pledges (Supabase)
-      if (canViewPledges()) {
-        const pledgesRes = await donationApi.pledges.getMyPledges(
-          pagination.myPledges.page,
-          pagination.myPledges.limit
-        );
-        
-        if (pledgesRes.success) {
-          myPledgesData = pledgesRes.pledges || [];
-          const pledgesWithCampaigns = joinCampaignsWithPledges(myPledgesData, campaignsData);
-          setMyPledges(pledgesWithCampaigns);
-          setPagination(prev => ({
-            ...prev,
-            myPledges: {
-              ...prev.myPledges,
-              total: pledgesRes.pagination?.total || 0,
-              pages: pledgesRes.pagination?.pages || 0
-            }
-          }));
-        }
-      }
-
-      // Fetch all pledges (Admin only)
-      if (canViewAllPledges()) {
-        const allPledgesRes = await donationApi.pledges.getAllPledges(
-          pagination.allPledges.page,
-          pagination.allPledges.limit
-        );
-        
-        if (allPledgesRes.success) {
-          allPledgesData = allPledgesRes.pledges || [];
-          const allPledgesWithCampaigns = joinCampaignsWithPledges(allPledgesData, campaignsData);
-          setAllPledges(allPledgesWithCampaigns);
-          setPagination(prev => ({
-            ...prev,
-            allPledges: {
-              ...prev.allPledges,
-              total: allPledgesRes.pagination?.total || 0,
-              pages: allPledgesRes.pagination?.pages || 0
-            }
-          }));
-        }
-      }
-
-      // Fetch payments (Admin only)
-      if (canViewAllPayments()) {
-        const paymentsRes = await donationApi.payments.getAll({
-          page: pagination.payments.page,
-          limit: pagination.payments.limit
-        });
-        
-        if (paymentsRes.success) {
-          paymentsData = paymentsRes.payments || [];
-          setPayments(paymentsData);
-          setPagination(prev => ({
-            ...prev,
-            payments: {
-              ...prev.payments,
-              total: paymentsRes.pagination?.total || 0,
-              pages: paymentsRes.pagination?.pages || 0
-            }
-          }));
-          
-          calculateStats(paymentsData, myPledgesData.length > 0 ? myPledgesData : allPledgesData);
-        }
-      }
-
-    } catch (err) {
-      console.error('[MOBILE-DONATIONS] Error fetching data:', err);
-      setError(err.response?.data?.message || 'Failed to load donation data');
-    } finally {
-      setIsLoading(false);
-      fetchInProgress.current = false;
+    };
+    if (canAccessDonations()) {
+      checkOverdueCampaigns();
     }
   }, []);
 
-  const calculateStats = useCallback((paymentsData, pledgesData) => {
-    const totalRaised = paymentsData
+  // ============================================
+  // ✅ DATA FETCHING WITH TANSTACK QUERY (From PC)
+  // Replaces manual useState + useEffect
+  // ============================================
+  
+  // Fetch campaigns
+  const { data: campaigns = [], isFetching: isFetchingCampaigns } = useQuery({
+    queryKey: ['campaigns', { status: 'active' }],
+    queryFn: async () => {
+      const res = await donationApi.campaigns.getAll({ status: 'active' });
+      console.log('[MOBILE-DONATIONS] Campaigns loaded:', res.campaigns?.length);
+      return res.success ? (res.campaigns || []) : [];
+    },
+    enabled: canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  // Fetch user's pledges
+  const { data: myPledgesRaw = [], isFetching: isFetchingMyPledges } = useQuery({
+    queryKey: ['myPledges'],
+    queryFn: async () => {
+      const res = await donationApi.pledges.getMyPledges(1, 100);
+      return res.success ? (res.pledges || []) : [];
+    },
+    enabled: canViewPledges() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  const myPledges = useMemo(() => joinCampaignsWithPledges(myPledgesRaw, campaigns), [myPledgesRaw, campaigns]);
+
+  // Fetch all pledges (Admin)
+  const { data: allPledgesRaw = [], isFetching: isFetchingAllPledges } = useQuery({
+    queryKey: ['allPledges'],
+    queryFn: async () => {
+      const res = await donationApi.pledges.getAllPledges(1, 100);
+      return res.success ? (res.pledges || []) : [];
+    },
+    enabled: canViewAllPledges() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  const allPledges = useMemo(() => joinCampaignsWithPledges(allPledgesRaw, campaigns), [allPledgesRaw, campaigns]);
+
+  // Fetch payments
+  const { data: payments = [], isFetching: isFetchingPayments } = useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const res = await donationApi.payments.getAll({ page: 1, limit: 100 });
+      return res.success ? (res.payments || []) : [];
+    },
+    enabled: canViewAllPayments() && canAccessDonations(),
+    staleTime: 30000,
+    placeholderData: [],
+    refetchOnWindowFocus: true,
+  });
+
+  // ✅ Fetch analytics (lazy loaded when tab is active)
+  const { data: analyticsData, isFetching: isFetchingAnalytics } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: async () => {
+      const response = await donationApi.analytics.getDashboard();
+      if (response.success) {
+        return response.data;
+      }
+      return null;
+    },
+    enabled: activeTab === 'analytics' && canViewDonationReports(),
+    staleTime: 60000,
+    placeholderData: null,
+  });
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    const safePayments = Array.isArray(payments) ? payments : [];
+    const safePledges = Array.isArray(myPledges) && myPledges.length > 0 
+      ? myPledges 
+      : (Array.isArray(allPledges) ? allPledges : []);
+
+    const totalRaised = safePayments
       .filter(p => p.status === 'success')
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-    const pendingPayments = paymentsData
+    const pendingPayments = safePayments
       .filter(p => p.status === 'pending')
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-    const activePledges = pledgesData.filter(p => 
-      p.status === 'pending' || p.status === 'partial'
-    ).length;
+    const activePledgesCount = safePledges.filter(p => p.status === 'pending' || p.status === 'partial').length;
+    const completedPledgesCount = safePledges.filter(p => p.status === 'completed').length;
 
-    const completedPledges = pledgesData.filter(p => 
-      p.status === 'completed'
-    ).length;
+    return { 
+      totalRaised, 
+      pendingPayments, 
+      activePledges: activePledgesCount, 
+      completedPledges: completedPledgesCount 
+    };
+  }, [payments, myPledges, allPledges]);
 
-    setStats({
-      totalRaised,
-      pendingPayments,
-      activePledges,
-      completedPledges
-    });
-  }, []);
-
-  // Initial load
-  useEffect(() => {
-    if (canAccessDonations()) {
-      fetchAllData();
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Analytics loading
-  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
-
-  const fetchAnalytics = useCallback(async () => {
-    if (!canViewDonationReports()) return;
-    
-    try {
-      setIsLoadingAnalytics(true);
-      const response = await donationApi.analytics.getDashboard();
-      
-      if (response.success) {
-        setAnalyticsData(response.data);
-      }
-    } catch (err) {
-      console.error('[MOBILE-DONATIONS] Analytics error:', err);
-    } finally {
-      setIsLoadingAnalytics(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'analytics' && !analyticsData) {
-      fetchAnalytics();
-    }
-  }, [activeTab]);
+  // Check if initial loading
+  const isInitialLoading = 
+    (isFetchingCampaigns && campaigns.length === 0) ||
+    (canViewPledges() && isFetchingMyPledges && myPledges.length === 0) ||
+    (canViewAllPledges() && isFetchingAllPledges && allPledges.length === 0);
 
   // ============================================
-  // HANDLERS (Keep your existing handlers)
+  // ✅ HANDLERS (Enhanced with TanStack Query invalidation)
   // ============================================
-  const handleRefresh = async () => {
-    await fetchAllData();
-    setSuccess('Data refreshed successfully');
-    setTimeout(() => setSuccess(null), 3000);
+  
+  const showAlert = (message, type = 'success') => {
+    setAlertMessage({ message, type });
+    setTimeout(() => setAlertMessage({ message: null, type: 'success' }), 5000);
   };
 
-  const handlePledgeCreated = () => {
-    setIsPledgeModalOpen(false);
-    setSuccess('Pledge created successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    showAlert('Syncing complete', 'success');
   };
 
-  const handleContributionCreated = () => {
-    setIsContributionModalOpen(false);
-    setSuccess('Contribution recorded successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  const handlePledgeCreated = () => { 
+    setIsPledgeModalOpen(false); 
+    showAlert('Pledge created successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
   };
-
-  const handlePaymentComplete = () => {
-    setSelectedPledgeForPayment(null);
-    setSuccess('Payment initiated successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  
+  const handleContributionCreated = () => { 
+    setIsContributionModalOpen(false); 
+    showAlert('Contribution recorded successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+  };
+  
+  const handlePaymentComplete = () => { 
+    setSelectedPledgeForPayment(null); 
+    showAlert('Payment initiated successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
   };
 
   const handleManualPaymentRecorded = () => {
     setSelectedPledgeForManual(null);
-    setSuccess('Payment recorded successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+    showAlert('Payment recorded successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
   };
-
+  
   const handleCampaignCreated = () => {
-    setSuccess('Campaign created successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+    showAlert('Campaign created successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+  };
+  
+  const handlePledgeUpdated = () => { 
+    setSelectedPledgeForEdit(null); 
+    showAlert('Pledge updated successfully!', 'success');
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
   };
 
-  const handleCancelPledge = async (pledge) => {
-    if (!window.confirm(`Are you sure you want to cancel this pledge for ${pledge.member_name}?`)) {
-      return;
-    }
+  // ✅ NEW: Confirm dialog for cancel pledge
+  const handleCancelPledge = (pledge) => {
+    setConfirmDialog({
+      isOpen: true,
+      action: 'cancel',
+      pledgeId: pledge.id,
+      title: 'Cancel Pledge?',
+      message: `Are you sure you want to cancel the pledge for ${pledge.member_name}?\n\nThis action cannot be undone.`,
+      type: 'danger'
+    });
+  };
 
-    try {
-      const response = await donationApi.pledges.cancel(pledge.id);
-      if (response.success) {
-        setSuccess('Pledge cancelled successfully');
-        fetchAllData();
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        setError(response.message || 'Failed to cancel pledge');
+  const handleConfirmAction = async () => {
+    if (confirmDialog.action === 'cancel' && confirmDialog.pledgeId) {
+      setConfirmDialog(prev => ({ ...prev, isLoading: true }));
+      
+      try {
+        const res = await donationApi.pledges.cancel(confirmDialog.pledgeId);
+        if (res.success) {
+          showAlert('Pledge cancelled successfully', 'success');
+          queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+          queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+          setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+        } else {
+          showAlert(res.message || 'Failed to cancel pledge', 'error');
+          setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+        }
+      } catch (err) {
+        showAlert(err.response?.data?.message || 'Failed to cancel pledge', 'error');
+        setConfirmDialog(prev => ({ ...prev, isLoading: false }));
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to cancel pledge');
     }
   };
 
@@ -344,37 +402,27 @@ export default function MobileDonationsPage() {
     setSelectedPledgeForEdit(pledge);
   };
 
-  const handlePledgeUpdated = () => {
-    setSelectedPledgeForEdit(null);
-    setSuccess('Pledge updated successfully!');
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 3000);
+  // Dark mode toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
   };
-
-  // ============================================
-  // THEME CLASSES
-  // ============================================
-  const bg = isDarkMode ? 'bg-slate-900' : 'bg-[#F5F1E8]';
-  const cardBg = isDarkMode ? 'bg-slate-800' : 'bg-white';
-  const textPrimary = isDarkMode ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-600';
-  const border = isDarkMode ? 'border-slate-700' : 'border-slate-200';
 
   // ============================================
   // PERMISSION GATE
   // ============================================
-  if (!canAccessDonations() && !isLoading) {
+  if (!canAccessDonations() && !isInitialLoading) {
     return (
-      <div className={`min-h-screen ${bg} p-6`}>
-        <Link href="/portal" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 mb-6">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
+        <Link href="/portal" className="inline-flex items-center gap-2 text-[#FDB022] hover:text-[#FF9500] mb-6">
           <ArrowLeft size={20} />
-          <span className="text-sm">Back to Dashboard</span>
+          <span className="font-semibold">Back to Dashboard</span>
         </Link>
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-3xl p-8 text-center">
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center">
           <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
-          <h2 className="text-2xl font-bold text-red-900 dark:text-red-200 mb-2">Access Denied</h2>
-          <p className="text-red-700 dark:text-red-300">
-            You do not have permission to access the donations page
+          <h2 className="text-xl font-bold text-red-900 dark:text-red-200 mb-2">Access Denied</h2>
+          <p className="text-sm text-red-700 dark:text-red-300">
+            You don't have permission to access donations
           </p>
         </div>
       </div>
@@ -382,405 +430,345 @@ export default function MobileDonationsPage() {
   }
 
   // ============================================
-  // LOADING STATE
+  // INITIAL LOADING STATE
   // ============================================
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
-      <div className={`min-h-screen ${bg} flex justify-center items-center`}>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FDB022] mx-auto mb-4"></div>
-          <p className={`text-sm ${textSecondary}`}>Refreshing...</p>
+          <p className="text-slate-600 dark:text-slate-400 font-semibold">Loading donations...</p>
         </div>
       </div>
     );
   }
 
   // ============================================
-  // BOTTOM NAVIGATION ITEMS
+  // NAVIGATION ITEMS
   // ============================================
   const navigationItems = [
-    {
-      id: 'overview',
-      label: 'Home',
-      icon: Home,
-      show: true
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: BarChart3,
-      show: canViewDonationReports()
-    },
-    {
-      id: 'my-pledges',
-      label: 'My Pledges',
-      icon: Heart,
-      show: canViewPledges()
-    },
-    {
-      id: 'all-pledges',
-      label: 'All Pledges',
-      icon: Users,
-      show: canViewAllPledges()
-    },
-    {
-      id: 'campaigns',
-      label: 'Campaigns',
-      icon: Target,
-      show: canViewCampaigns()
-    }
+    { id: 'overview', label: 'Home', icon: Home, show: true },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, show: canViewDonationReports() },
+    { id: 'my-pledges', label: 'My Pledges', icon: Heart, show: canViewPledges() },
+    { id: 'all-pledges', label: 'All Pledges', icon: Users, show: canViewAllPledges() },
+    { id: 'contributions', label: 'Contributions', icon: DollarSign, show: canViewAllPayments() },
+    { id: 'campaigns', label: 'Campaigns', icon: Target, show: canViewCampaigns() },
   ].filter(item => item.show);
 
+  // Theme classes
+  const bgPrimary = isDarkMode ? 'bg-slate-950' : 'bg-slate-50';
+  const cardBg = isDarkMode ? 'bg-slate-900' : 'bg-white';
+  const border = isDarkMode ? 'border-slate-800' : 'border-slate-200';
+  const textPrimary = isDarkMode ? 'text-white' : 'text-slate-900';
+  const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-600';
+
   // ============================================
-  // MAIN RENDER
+  // RENDER
   // ============================================
   return (
-    <div className={`min-h-screen ${bg} pb-24 transition-colors duration-300`}>
+    <div className={`min-h-screen ${bgPrimary} pb-24`}>
       {/* HEADER */}
-      <div className={`${cardBg} px-6 pt-6 pb-6 rounded-b-3xl shadow-sm border-b ${border}`}>
-        {/* Greeting & Theme Toggle */}
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className={`text-3xl font-black ${textPrimary}`}>
-              Hi, {user?.name?.split(' ')[0] || 'Satya'}
-            </h1>
-            <p className={`text-sm ${textSecondary} mt-1`}>How are you today?</p>
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <Link href="/portal" className="flex items-center gap-2 text-white/80 hover:text-white">
+              <ArrowLeft size={20} />
+              <span className="text-sm font-semibold">Dashboard</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                disabled={isFetchingCampaigns}
+              >
+                <RefreshCw size={18} className={isFetchingCampaigns ? 'animate-spin' : ''} />
+              </button>
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              >
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`w-12 h-12 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'} flex items-center justify-center shadow-sm`}
-          >
-            {isDarkMode ? <Moon size={20} className="text-yellow-400" /> : <Sun size={20} className="text-yellow-500" />}
-          </button>
+          
+          <div>
+            <h1 className="text-2xl font-black mb-1">Financial Portal</h1>
+            <p className="text-white/70 text-sm">Manage pledges & contributions</p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-4 pb-4 flex gap-2">
+          {canViewPledges() && (
+            <button
+              onClick={() => setIsPledgeModalOpen(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white text-[#8B1A1A] rounded-xl font-bold shadow-lg active:scale-95 transition-transform"
+            >
+              <Plus size={18} />
+              <span className="text-sm">New Pledge</span>
+            </button>
+          )}
+          {canViewCampaigns() && (
+            <button
+              onClick={() => setIsContributionModalOpen(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform"
+            >
+              <DollarSign size={18} />
+              <span className="text-sm">Contribute</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Quick Action Buttons */}
-            <div className="grid grid-cols-2 gap-3 mb-6 px-4 mt-4">
-              {canViewPledges() && (
-                <button 
-                  onClick={() => setIsPledgeModalOpen(true)}
-                  className="bg-blue-500 text-white p-4 rounded-2xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus size={20} />
-                Pledge
-                </button>
-              )}
-              {canViewCampaigns() && (
-                <button 
-                  onClick={() => setIsContributionModalOpen(true)}
-                  className={`${cardBg} ${textPrimary} bg-green-500 p-4 rounded-2xl font-semibold shadow-md border ${border} hover:shadow-lg transition-all flex items-center justify-center gap-2`}
-                >
-                  <DollarSign size={20} />
-                  Contribute
-                </button>
-              )}
+      {/* STATS CARDS */}
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-4 shadow-md">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign size={16} />
+              <p className="text-xs font-medium opacity-90">Total Raised</p>
             </div>
-
-      {/* SUCCESS/ERROR MESSAGES */}
-      <div className="px-4 pt-4">
-        {success && (
-          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex items-center gap-3 mb-4 animate-fade-in">
-            <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
-            <p className="text-green-800 dark:text-green-200 font-semibold text-sm">{success}</p>
+            <p className="text-2xl font-black mb-1">
+              {(stats.totalRaised / 1000000).toFixed(1)}M
+            </p>
+            <p className="text-xs opacity-90">KES</p>
           </div>
-        )}
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-center gap-3 mb-4 animate-fade-in">
-            <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-            <p className="text-red-800 dark:text-red-200 font-semibold text-sm">{error}</p>
+          <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-4 shadow-md">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={16} />
+              <p className="text-xs font-medium opacity-90">Pending</p>
+            </div>
+            <p className="text-2xl font-black mb-1">
+              {(stats.pendingPayments / 1000).toFixed(0)}K
+            </p>
+            <p className="text-xs opacity-90">KES</p>
           </div>
-        )}
-      </div>
-      {/* MAIN CONTENT AREA */}
-      <div className="py-6">
-        {/* OVERVIEW TAB */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Featured Action Card */}
-            <div className="bg-gradient-to-br from-[#FDB022] to-[#FF9500] rounded-3xl p-6 text-white shadow-lg">
-              <div className="flex items-center gap-2 mb-3">
+
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-2xl p-4 shadow-md">
+            <div className="flex items-center gap-2 mb-2">
+              <Target size={16} />
+              <p className="text-xs font-medium opacity-90">Active</p>
+            </div>
+            <p className="text-2xl font-black">{stats.activePledges}</p>
+            <p className="text-xs opacity-90">Pledges</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-4 shadow-md">
+            <div className="flex items-center gap-2 mb-2">
+              <Users size={16} />
+              <p className="text-xs font-medium opacity-90">Supporters</p>
+            </div>
+            <p className="text-2xl font-black">{stats.completedPledges}</p>
+            <p className="text-xs opacity-90">Members</p>
+          </div>
+        </div>
+
+        {/* TABS CONTENT */}
+        <div className="space-y-6">
+          
+          {/* OVERVIEW TAB */}
+          {activeTab === 'overview' && (
+            <div className="space-y-4">
+              <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
+                <h3 className={`text-lg font-bold ${textPrimary} mb-4 flex items-center gap-2`}>
+                  <Target size={20} className="text-[#FDB022]" />
+                  Live Campaigns
+                </h3>
                 
-                <span className="font-bold text-lg">Daily Affirmations</span>
+                {campaigns.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Target size={40} className="mx-auto mb-3 text-slate-300" />
+                    <p className={`text-sm ${textSecondary}`}>No active campaigns</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {campaigns.slice(0, 4).map(campaign => {
+                      const progress = campaign.currentAmount > 0 
+                        ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) 
+                        : 0;
+                      
+                      return (
+                        <div key={campaign._id} className={`p-4 rounded-2xl border ${border} hover:shadow-md transition-shadow`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className={`font-bold ${textPrimary} flex-1`}>{campaign.title}</h4>
+                            <span className="text-[10px] font-black px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg uppercase">Live</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+                            <div 
+                              className="h-full bg-gradient-to-r from-[#FDB022] to-[#FF9500] rounded-full transition-all"
+                              style={{ width: `${Math.min(progress, 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className={textSecondary}>
+                              {formatCurrency(campaign.currentAmount)}
+                            </span>
+                            <span className="font-semibold text-[#FDB022]">
+                              {progress}% of {formatCurrency(campaign.goalAmount)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {campaigns.length > 4 && (
+                      <button
+                        onClick={() => setActiveTab('campaigns')}
+                        className="w-full py-3 text-[#FDB022] font-bold text-sm hover:underline"
+                      >
+                        View All {campaigns.length} Campaigns →
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-              <p className="text-white/90 text-sm mb-4 leading-relaxed">
-                Begin with mindful morning reflections.
-              </p>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                <p className="text-white text-xs italic">
-                  "Today I choose to focus on gratitude and abundance in all aspects of my life."
-                </p>
-                <p className="text-white/70 text-xs mt-2">— John Doe</p>
+
+              {/* Quick Stats */}
+              <div className={`${cardBg} rounded-2xl p-4 shadow-sm border ${border}`}>
+                <h4 className={`font-bold ${textPrimary} mb-3 text-sm`}>Quick Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>My Pledges:</span>
+                    <span className={`font-bold ${textPrimary}`}>{myPledges.length}</span>
+                  </div>
+                  {canViewAllPledges() && (
+                    <div className="flex justify-between">
+                      <span className={textSecondary}>All Pledges:</span>
+                      <span className={`font-bold ${textPrimary}`}>{allPledges.length}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className={textSecondary}>Active Campaigns:</span>
+                    <span className={`font-bold ${textPrimary}`}>{campaigns.length}</span>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Quick Stats - Entries Section */}
+          {/* ANALYTICS TAB */}
+          {activeTab === 'analytics' && canViewDonationReports() && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-bold ${textPrimary}`}>Entries</h3>
-                <span className={`text-sm ${textSecondary}`}>January 22, 2026</span>
-              </div>
-
-              <div className={`${cardBg} rounded-3xl p-5 shadow-sm border ${border} mb-4`}>
-                <div className="flex items-start gap-3">
-                  <div className="text-3xl">😊</div>
-                  <div className="flex-1">
-                    <h4 className={`font-semibold ${textPrimary} mb-1`}>Morning Reflection</h4>
-                    <p className={`text-xs ${textSecondary} mb-2`}>8:56 pm</p>
-                    <p className={`text-sm ${textSecondary} leading-relaxed`}>
-                      I woke up to the soft light filtering through my window, an...
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Journal Cards */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-bold ${textPrimary}`}>Quick Journal</h3>
-                <button className={`text-sm text-[#FDB022] font-medium`}>See all</button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Pause & Reflect Card */}
-                <div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 rounded-3xl p-4 border border-red-100 dark:border-red-900/30">
-                  <div className="text-2xl mb-2">🌺</div>
-                  <h4 className={`font-semibold text-sm ${textPrimary} mb-1`}>Pause & reflect</h4>
-                  <p className={`text-xs ${textSecondary} mb-3`}>What are you grateful fo...</p>
-                  <div className="flex gap-2 text-xs">
-                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full font-medium">
-                      Today
-                    </span>
-                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full font-medium">
-                      Personal
-                    </span>
-                  </div>
-                </div>
-
-                {/* Set Intentions Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-3xl p-4 border border-blue-100 dark:border-blue-900/30">
-                  <div className="text-2xl mb-2">😊</div>
-                  <h4 className={`font-semibold text-sm ${textPrimary} mb-1`}>Set intentions</h4>
-                  <p className={`text-xs ${textSecondary} mb-3`}>How do you want to feel?</p>
-                  <div className="flex gap-2 text-xs">
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                      Today
-                    </span>
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                      Personal
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Donations Stats Overview */}
-            <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-bold ${textPrimary}`}>Giving Overview</h3>
-                <button 
-                  onClick={handleRefresh}
-                  disabled={isLoading}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {canViewPledges() && (
-                  <div className="space-y-1">
-                    <p className={`text-sm ${textSecondary}`}>My Pledges</p>
-                    <p className={`text-3xl font-bold ${textPrimary}`}>{stats.activePledges}</p>
-                  </div>
-                )}
-                {canViewAllPayments() && (
-                  <div className="space-y-1">
-                    <p className={`text-sm ${textSecondary}`}>Total Raised</p>
-                    <p className={`text-3xl font-bold text-green-600`}>
-                      {(stats.totalRaised / 1000).toFixed(1)}K
-                    </p>
-                  </div>
-                )}
-                {canViewCampaigns() && (
-                  <div className="space-y-1">
-                    <p className={`text-sm ${textSecondary}`}>Campaigns</p>
-                    <p className={`text-3xl font-bold ${textPrimary}`}>{campaigns.length}</p>
-                  </div>
-                )}
-                {canViewAllPledges() && (
-                  <div className="space-y-1">
-                    <p className={`text-sm ${textSecondary}`}>All Pledges</p>
-                    <p className={`text-3xl font-bold ${textPrimary}`}>{allPledges.length}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        {/* ANALYTICS TAB */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
-              <h3 className={`text-xl font-bold ${textPrimary} mb-4 flex items-center gap-2`}>
-                <BarChart3 size={24} className="text-[#FDB022]" />
-                Analytics Dashboard
-              </h3>
-              {isLoadingAnalytics ? (
+              {isFetchingAnalytics && !analyticsData ? (
                 <div className="flex justify-center items-center py-20">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FDB022]"></div>
                 </div>
               ) : analyticsData ? (
-                <MobileAnalyticsDashboard data={analyticsData} />
+                <MobileAnalyticsDashboard data={analyticsData} isLoading={false} />
               ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📊</div>
-                  <p className={`${textSecondary}`}>No analytics data available</p>
-                  <button
-                    onClick={fetchAnalytics}
-                    className="mt-4 px-6 py-2 bg-[#FDB022] text-white rounded-full font-semibold"
-                  >
-                    Load Analytics
-                  </button>
+                <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-8 text-center">
+                  <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* MY PLEDGES TAB */}
-        {activeTab === 'my-pledges' && (
-          <div className="space-y-6">
-            <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
-              <div className="p-6 border-b dark:border-slate-700">
-                <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                  <Heart size={24} className="text-[#FDB022]" />
-                  My Pledges
-                </h3>
-                <p className={`text-sm ${textSecondary} mt-1`}>Track your commitments</p>
-              </div>
-              
-              {myPledges.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Heart size={48} className="mx-auto mb-4 text-slate-300" />
-                  <p className="text-lg font-semibold mb-2">No pledges yet</p>
-                  <p className={`text-sm ${textSecondary} mb-4`}>Start supporting our campaigns</p>
-                  <button
-                    onClick={() => setIsPledgeModalOpen(true)}
-                    className="px-6 py-3 bg-[#FDB022] text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Plus size={18} className="inline mr-2" />
-                    Create Your First Pledge
-                  </button>
+          {/* MY PLEDGES TAB */}
+          {activeTab === 'my-pledges' && canViewPledges() && (
+            <div className="space-y-6">
+              <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+                <div className="p-6 border-b dark:border-slate-700">
+                  <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
+                    <Heart size={24} className="text-[#FDB022]" />
+                    My Pledges
+                  </h3>
+                  <p className={`text-sm ${textSecondary} mt-1`}>Track your commitments</p>
                 </div>
-              ) : (
-                <div className="p-4">
-                  <UserPledgeCards
+                
+                {myPledges.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Heart size={48} className="mx-auto mb-4 text-slate-300" />
+                    <p className="text-lg font-semibold mb-2">No pledges yet</p>
+                    <p className={`text-sm ${textSecondary} mb-4`}>Start supporting our campaigns</p>
+                    <button
+                      onClick={() => setIsPledgeModalOpen(true)}
+                      className="px-6 py-3 bg-[#FDB022] text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all"
+                    >
+                      <Plus size={18} className="inline mr-2" />
+                      Create Your First Pledge
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    <UserPledgeCards
                       pledges={myPledges}
                       onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
                     />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ALL PLEDGES TAB (Admin) */}
-        {activeTab === 'all-pledges' && canViewAllPledges() && (
-          <div className="space-y-6">
-            <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
-              <div className="p-6 border-b dark:border-slate-700 bg-yellow-50 dark:bg-yellow-900/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                    <Users size={24} className="text-[#FDB022]" />
-                    All Member Pledges
-                  </h3>
-                  <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full font-semibold">
-                    Admin
-                  </span>
-                </div>
-                <p className={`text-sm ${textSecondary}`}>Comprehensive view of all pledges</p>
-              </div>
-              
-              <div className="p-4">
-                <AdminPledgeCards
-                  pledges={allPledges}
-                  onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
-                  onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
-                  onEditPledge={handleEditPledge}
-                  onCancelPledge={handleCancelPledge}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* CAMPAIGNS TAB */}
-        {activeTab === 'campaigns' && canViewCampaigns() && (
-          <div className="space-y-6">
-            {/* Admin Campaign Manager */}
-            <div className="space-y-6">
-                    {canCreateCampaign() && (
-                      <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
-                    )}
-                   
                   </div>
+                )}
+              </div>
+            </div>
+          )}
 
-            {/* Campaigns List */}
-            <div className={`${cardBg} rounded-3xl p-6 shadow-sm border ${border}`}>
-              <h3 className={`text-lg font-bold ${textPrimary} mb-4 flex items-center gap-2`}>
-                <Target size={20} className="text-[#FDB022]" />
-                Active Campaigns
-              </h3>
-              
-              {campaigns.length === 0 ? (
-                <div className="text-center py-12">
-                  <Target size={48} className="mx-auto mb-4 text-slate-300" />
-                  <p className="text-lg font-semibold mb-2">No campaigns yet</p>
+          {/* ALL PLEDGES TAB (Admin) */}
+          {activeTab === 'all-pledges' && canViewAllPledges() && (
+            <div className="space-y-6">
+              <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+                <div className="p-6 border-b dark:border-slate-700 bg-yellow-50 dark:bg-yellow-900/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
+                      <Users size={24} className="text-[#FDB022]" />
+                      All Member Pledges
+                    </h3>
+                    <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full font-semibold">
+                      Admin
+                    </span>
+                  </div>
+                  <p className={`text-sm ${textSecondary}`}>Comprehensive view of all pledges</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {campaigns.map(campaign => {
-                    const progress = campaign.currentAmount > 0 
-                      ? Math.round((campaign.currentAmount / campaign.goalAmount) * 100) 
-                      : 0;
-                    
-                    return (
-                      <div key={campaign._id} className={`p-4 rounded-2xl border ${border}`}>
-                        <h4 className={`font-bold ${textPrimary} mb-2`}>{campaign.title}</h4>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className={textSecondary}>
-                            Goal: KES {(campaign.goalAmount / 1000).toFixed(0)}K
-                          </span>
-                          <span className="font-semibold text-green-600">{progress}%</span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
-                          <div 
-                            className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        <p className={`text-xs ${textSecondary}`}>
-                          Raised: KES {(campaign.currentAmount / 1000).toFixed(1)}K
-                        </p>
-                      </div>
-                    );
-                  })}
+                
+                <div className="p-4">
+                  <EnhancedAdminPledgeCards
+                    pledges={allPledges}
+                    onRecordPayment={(pledge) => setSelectedPledgeForManual(pledge)}
+                    onViewHistory={(pledge) => setSelectedPledgeForHistory(pledge)}
+                    onEditPledge={handleEditPledge}
+                    onCancelPledge={handleCancelPledge}
+                  />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ✅ NEW: CONTRIBUTIONS TAB */}
+          {activeTab === 'contributions' && canViewAllPayments() && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                <div className="p-6 border-b dark:border-slate-700">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <CreditCard size={24} className="text-[#FDB022]" />
+                    Contributions
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    All standalone contributions
+                  </p>
+                </div>
+                <div className="p-4">
+                  <MobileContributionsTab />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CAMPAIGNS TAB */}
+          {activeTab === 'campaigns' && canViewCampaigns() && (
+            <div className="space-y-6">
+              {canCreateCampaign() && (
+                <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
               )}
+              
+              <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+                <MobileCampaignsTab onCampaignCreated={handleCampaignCreated} />
+              </div>
             </div>
-
-            {/* Full CampaignsTab Component */}
-            <div className={`${cardBg} rounded-3xl overflow-hidden shadow-sm border ${border}`}>
-              <MobileCampaignsTab onCampaignCreated={handleCampaignCreated} />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-      {/* BOTTOM NAVIGATION - JOURNAL STYLE */}
-      <div className={`fixed bottom-0 left-0 right-0 ${cardBg} border-t ${border} safe-area-bottom`}>
+
+      {/* BOTTOM NAVIGATION */}
+      <div className={`fixed bottom-0 left-0 right-0 ${cardBg} border-t ${border} safe-area-bottom z-40`}>
         <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -804,9 +792,28 @@ export default function MobileDonationsPage() {
         </div>
       </div>
 
-      {/* MODALS - All your existing components work as-is */}
-      
-      {/* Pledge Form Modal */}
+      {/* ✅ ALERT COMPONENT */}
+      {alertMessage.message && (
+        <Alert 
+          message={alertMessage.message} 
+          type={alertMessage.type} 
+          onClose={() => setAlertMessage({ message: null, type: 'success' })} 
+        />
+      )}
+
+      {/* ✅ CONFIRM DIALOG */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, action: null, pledgeId: null })}
+        onConfirm={handleConfirmAction}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type || 'warning'}
+        confirmText="Yes, Cancel Pledge"
+        isLoading={confirmDialog.isLoading}
+      />
+
+      {/* MODALS */}
       {isPledgeModalOpen && (
         <PledgeForm
           onClose={() => setIsPledgeModalOpen(false)}
@@ -814,7 +821,6 @@ export default function MobileDonationsPage() {
         />
       )}
 
-      {/* Contribution Form Modal */}
       {isContributionModalOpen && (
         <ContributionForm
           onClose={() => setIsContributionModalOpen(false)}
@@ -822,7 +828,6 @@ export default function MobileDonationsPage() {
         />
       )}
 
-      {/* M-Pesa Payment Modal */}
       {selectedPledgeForPayment && (
         <MpesaModal
           pledge={selectedPledgeForPayment}
@@ -831,7 +836,6 @@ export default function MobileDonationsPage() {
         />
       )}
 
-      {/* Manual Payment Modal (Admin) */}
       {selectedPledgeForManual && canProcessPayments() && (
         <ManualPaymentModal
           pledge={selectedPledgeForManual}
@@ -840,7 +844,6 @@ export default function MobileDonationsPage() {
         />
       )}
 
-      {/* Edit Pledge Modal */}
       {selectedPledgeForEdit && (
         <EditPledgeModal
           pledge={selectedPledgeForEdit}
@@ -849,7 +852,6 @@ export default function MobileDonationsPage() {
         />
       )}
 
-      {/* Payment History Modal */}
       {selectedPledgeForHistory && (
         <PledgeHistoryModal
           pledge={selectedPledgeForHistory}
