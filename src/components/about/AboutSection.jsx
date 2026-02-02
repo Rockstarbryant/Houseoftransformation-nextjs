@@ -58,21 +58,20 @@ const AboutSection = ({ preview = false }) => {
               <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
                 House of Transformation Ministries is a vibrant community in Busia County where the Gospel is preached with power and lives are genuinely changed.
               </p>
-              <Link href="/about" className="inline-block">
-                <Button variant="secondary" className="rounded-xl font-black uppercase text-xs tracking-widest px-8">
-                  View Our Full Story <ChevronRight size={16} className="ml-2" />
-                </Button>
-              </Link>
             </div>
-
             <div className="lg:w-1/2 relative min-h-[300px] md:min-h-[400px]">
               <img 
                 src={churchImages[0].url} 
-                className="absolute inset-0 w-full h-auto object-cover" 
+                className="absolute inset-0 w-full h-[600px] object-cover" 
                 alt="H.O.T Worship" 
               />
             </div>
           </div>
+          <Link href="/about" className="inline-block">
+                <Button variant="secondary" className="rounded-xl mt-6 items-center font-black uppercase text-xs tracking-widest px-8">
+                  View Our Full Story <ChevronRight size={16} className="ml-2" />
+                </Button>
+              </Link>
         </div>
       </section>
     );

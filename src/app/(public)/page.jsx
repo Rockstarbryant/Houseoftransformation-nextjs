@@ -31,12 +31,7 @@ export default async function HomePage() {
       <LiveStreamSection />
       <QuickInfoBar />
 
-      {/* About Section */}
-      <section className="py-12 md:py-20 border-b border-slate-50 dark:border-slate-300">
-        <div className="max-w-full mx-auto px-4 md:px-8">
-          <AboutSection preview />
-        </div>
-      </section>
+       <AboutSection preview />
 
       {/* Featured Sermon Section */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 relative overflow-hidden transition-colors">

@@ -469,7 +469,7 @@ export default function MobileDonationsPage() {
     <div className={`min-h-screen ${bgPrimary} pb-24`}>
       {/* HEADER */}
       <div className="bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
-        <div className="w-full px-4 py-4">
+        <div className="w-full px-2 py-4">
           <div className="flex items-center justify-between mb-3">
             <Link href="/portal" className="flex items-center gap-2 text-white/80 hover:text-white">
               <ArrowLeft size={20} />

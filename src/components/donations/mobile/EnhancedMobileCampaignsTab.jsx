@@ -334,7 +334,7 @@ function MobileCampaignAnalyticsModal({ campaign, analytics, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+      <div className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-h-[70vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
         <div className="sticky top-0 bg-gradient-to-br from-[#8B1A1A] to-red-800 text-white p-4 flex justify-between items-center z-10">
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -557,13 +557,13 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
 
   // RENDER
   return (
-    <div className="w-full space-y-4">
+    <div className="max-w-full px-0 space-y-4">
       {alertMessage && (
         <Alert message={alertMessage} onClose={() => setAlertMessage(null)} />
       )}
 
       {/* 5 TAB FILTERS */}
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-2">
         {[
           { id: 'all', label: 'All' },
           { id: 'active', label: 'Live' },
@@ -574,7 +574,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2 rounded-xl text-xs font-black uppercase whitespace-nowrap transition-all ${
+            className={`max-w-full px-5 py-2 rounded-xl text-xs font-black uppercase whitespace-nowrap transition-all ${
               activeTab === tab.id 
                 ? 'bg-[#FDB022] text-white shadow-md' 
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-500'

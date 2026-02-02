@@ -291,9 +291,9 @@ export default function DonationsPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+    <div className="w-full mx-auto md:p-8 space-y-8 animate-in fade-in duration-700">
       {/* 1. HEADER: PREMIUM GLASS CARD (Gemini's Beautiful Style) */}
-      <div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-8 md:p-12 text-white shadow-2xl">
+      <div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-6 md:p-6 mx-4 md:mx-0 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-4">
             <Link href="/portal" className="group flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
@@ -327,7 +327,7 @@ export default function DonationsPage() {
       </div>
 
       {/* 2. STATS GRID: NEUMORPHIC STYLE (Gemini's Beautiful Style) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-0">
         {[
           { label: 'Total Raised', value: formatCurrency(stats.totalRaised), icon: DollarSign, color: 'emerald' },
           { label: 'Pending Funds', value: formatCurrency(stats.pendingPayments), icon: TrendingUp, color: 'amber' },
@@ -378,7 +378,7 @@ export default function DonationsPage() {
       {/* 4. CONTENT AREA (Gemini Style + ALL Missing Tabs Restored) */}
       <div className="min-h-[400px]">
         {activeTab === 'overview' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 px-4 md:px-0">
             <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 p-8">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Live Campaigns</h3>

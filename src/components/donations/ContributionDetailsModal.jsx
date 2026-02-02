@@ -13,14 +13,14 @@ export default function ContributionDetailsModal({ contribution, onClose }) {
   const statusBadge = getStatusBadge(contribution.status);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-2 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-[2rem] max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-2 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-[2rem] max-w-3xl w-full max-h-[90vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
         
         {/* HERO HEADER - Gradient Background */}
         <div className="relative bg-gradient-to-br from-[#8B1A1A] via-red-700 to-red-900 text-white p-4 sm:p-6 md:p-8 overflow-hidden">
           {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 sm:w-64 sm:h-64 bg-white/5 rounded-full -translate-y-16 translate-x-16 sm:-translate-y-32 sm:translate-x-32"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-48 sm:h-48 bg-white/5 rounded-full translate-y-12 -translate-x-12 sm:translate-y-24 sm:-translate-x-24"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 sm:w-64 sm:h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 sm:-translate-y-32 sm:translate-x-32"></div>
+          <div className="absolute bottom-0 left-0 w-12 h-12 sm:w-48 sm:h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12 sm:translate-y-24 sm:-translate-x-24"></div>
           
           <div className="relative z-10">
             {/* Close Button */}
