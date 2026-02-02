@@ -557,13 +557,13 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
 
   // RENDER
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {alertMessage && (
         <Alert message={alertMessage} onClose={() => setAlertMessage(null)} />
       )}
 
       {/* 5 TAB FILTERS */}
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-4">
         {[
           { id: 'all', label: 'All' },
           { id: 'active', label: 'Live' },
@@ -586,7 +586,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
       </div>
 
       {/* TOOLBAR */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center px-4">
         <button 
           onClick={() => queryClient.invalidateQueries({ queryKey: ['campaigns'] })}
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-sm"
@@ -606,7 +606,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
 
       {/* EMPTY STATE */}
       {campaigns.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 mx-4 text-center border border-slate-200 dark:border-slate-700">
           <Target size={48} className="mx-auto mb-4 text-slate-300 opacity-40" />
           <p className="text-lg font-bold text-slate-900 dark:text-white">
             No {activeTab} campaigns found
@@ -632,7 +632,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
               return (
                 <div 
                   key={campaign._id}
-                  className={`bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
+                  className={`w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
                     index === 0 ? 'border-t' : ''
                   }`}
                 >
@@ -641,12 +641,12 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                     onClick={() => setExpandedCard(isExpanded ? null : campaign._id)}
                   >
                     <div className="flex items-start gap-3 mb-3">
-                      <div className={`p-2 rounded-xl ${campaign.isFeatured ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
+                      <div className={`p-2 rounded-xl flex-shrink-0 ${campaign.isFeatured ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
                         {campaign.isFeatured ? <Star size={20} /> : <Target size={20} />}
                       </div>
 
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900 dark:text-white mb-1 leading-tight">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-1 leading-tight truncate">
                           {campaign.title}
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
@@ -654,8 +654,8 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                         </p>
                       </div>
 
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-black uppercase border ${statusStyle}`}>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-black uppercase border whitespace-nowrap ${statusStyle}`}>
                           {activeTab === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                           {statusInfo.label}
                         </span>
@@ -667,9 +667,9 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                     </div>
 
                     <div className="mb-3">
-                      <div className="flex justify-between items-end mb-1">
-                        <span className="text-sm font-black text-[#FDB022]">{formatCurrency(campaign.currentAmount)}</span>
-                        <span className="text-[10px] font-bold text-slate-400">GOAL: {formatCurrency(campaign.goalAmount)}</span>
+                      <div className="flex justify-between items-end mb-1 gap-2">
+                        <span className="text-sm font-black text-[#FDB022] truncate">{formatCurrency(campaign.currentAmount)}</span>
+                        <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">GOAL: {formatCurrency(campaign.goalAmount)}</span>
                       </div>
                       <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div 
@@ -679,9 +679,9 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Calendar size={12} />
-                      {formatDateShort(campaign.startDate)} - {formatDateShort(campaign.endDate)}
+                    <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
+                      <Calendar size={12} className="flex-shrink-0" />
+                      <span className="truncate">{formatDateShort(campaign.startDate)} - {formatDateShort(campaign.endDate)}</span>
                     </div>
                   </div>
 

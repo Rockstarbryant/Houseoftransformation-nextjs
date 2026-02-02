@@ -23,7 +23,7 @@ import MpesaModal from '@/components/donations/MpesaModal';
 import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
 import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal';
 import EditPledgeModal from '@/components/donations/EditPledgeModal';
-import DonationsMobileNav from '@/components/donations/DonationsMobileNav';
+//import DonationsMobileNav from '@/components/donations/DonationsMobileNav';
 
 import {
   ArrowLeft, Heart, Plus, RefreshCw, CheckCircle, AlertCircle,
@@ -345,23 +345,7 @@ export default function DonationsPage() {
       </div>
 
       {/* ✅ RESTORED: Mobile Navigation Cards */}
-      <DonationsMobileNav
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        counts={{
-          myPledges: myPledges.length,
-          allPledges: allPledges.length,
-          payments: payments.length,
-          campaigns: campaigns.length
-        }}
-        permissions={{
-          canViewDonationReports: canViewDonationReports(),
-          canViewPledges: canViewPledges(),
-          canViewAllPledges: canViewAllPledges(),
-          canViewAllPayments: canViewAllPayments(),
-          canViewCampaigns: canViewCampaigns()
-        }}
-      />
+      
 
       {/* 3. TABS: MINIMALIST PILL NAV (Gemini Style + ALL Missing Tabs Restored) */}
       <div className="hidden md:flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-x-auto no-scrollbar">

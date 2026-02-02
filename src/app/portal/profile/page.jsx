@@ -262,7 +262,7 @@ export default function ProfilePage() {
       {/* Profile Card */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
         {/* Cover / Header */}
-        <div className="h-32 bg-gradient-to-r from-red-900 to-red-700"></div>
+        <div className="h-32 bg-[#b30000]"></div>
 
         {/* Profile Content */}
         <div className="px-6 pb-6">

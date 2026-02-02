@@ -13,7 +13,7 @@ import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
 // ✅ Import all mobile-optimized components
-import UserPledgeCards from '@/components/donations/mobile/UserPledgeCards';
+import MobileEnhancedUserPledgeView from '@/components/donations/mobile/MobileEnhancedUserPledgeView';
 import EnhancedAdminPledgeCards from '@/components/donations/mobile/AdminPledgeCards';
 import MobileAnalyticsDashboard from '@/components/donations/mobile/MobileAnalyticsDashboard';
 import MobileCampaignsTab from '@/components/donations/mobile/EnhancedMobileCampaignsTab';
@@ -82,7 +82,7 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="p-6">
           <div className="flex items-start gap-4">
             <div className={`p-3 rounded-full ${typeStyles[type]}`}>
@@ -413,7 +413,7 @@ export default function MobileDonationsPage() {
   // ============================================
   if (!canAccessDonations() && !isInitialLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
+      <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 p-6">
         <Link href="/portal" className="inline-flex items-center gap-2 text-[#FDB022] hover:text-[#FF9500] mb-6">
           <ArrowLeft size={20} />
           <span className="font-semibold">Back to Dashboard</span>
@@ -468,8 +468,8 @@ export default function MobileDonationsPage() {
   return (
     <div className={`min-h-screen ${bgPrimary} pb-24`}>
       {/* HEADER */}
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
-        <div className="px-4 py-4">
+      <div className="bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <Link href="/portal" className="flex items-center gap-2 text-white/80 hover:text-white">
               <ArrowLeft size={20} />
@@ -522,51 +522,11 @@ export default function MobileDonationsPage() {
       </div>
 
       {/* STATS CARDS */}
-      <div className="p-4">
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-4 shadow-md">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={16} />
-              <p className="text-xs font-medium opacity-90">Total Raised</p>
-            </div>
-            <p className="text-2xl font-black mb-1">
-              {(stats.totalRaised / 1000000).toFixed(1)}M
-            </p>
-            <p className="text-xs opacity-90">KES</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-4 shadow-md">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp size={16} />
-              <p className="text-xs font-medium opacity-90">Pending</p>
-            </div>
-            <p className="text-2xl font-black mb-1">
-              {(stats.pendingPayments / 1000).toFixed(0)}K
-            </p>
-            <p className="text-xs opacity-90">KES</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-2xl p-4 shadow-md">
-            <div className="flex items-center gap-2 mb-2">
-              <Target size={16} />
-              <p className="text-xs font-medium opacity-90">Active</p>
-            </div>
-            <p className="text-2xl font-black">{stats.activePledges}</p>
-            <p className="text-xs opacity-90">Pledges</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-4 shadow-md">
-            <div className="flex items-center gap-2 mb-2">
-              <Users size={16} />
-              <p className="text-xs font-medium opacity-90">Supporters</p>
-            </div>
-            <p className="text-2xl font-black">{stats.completedPledges}</p>
-            <p className="text-xs opacity-90">Members</p>
-          </div>
-        </div>
+      <div className="w-full p-4">
+        
 
         {/* TABS CONTENT */}
-        <div className="space-y-6">
+        <div className="w-full space-y-6">
           
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
@@ -692,7 +652,7 @@ export default function MobileDonationsPage() {
                   </div>
                 ) : (
                   <div className="p-4">
-                    <UserPledgeCards
+                    <MobileEnhancedUserPledgeView
                       pledges={myPledges}
                       onPayPledge={(pledge) => setSelectedPledgeForPayment(pledge)}
                     />
