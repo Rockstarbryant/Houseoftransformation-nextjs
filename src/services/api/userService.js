@@ -1,10 +1,10 @@
-// src/services/api/userService.js - FIXED for Role ObjectId
+// src/services/api/userService.js - UPDATED with new endpoints
 import api from '@/lib/api';
 
 /**
  * User Service
  * Handles all user-related API calls
- * Updated to work with Role ObjectId references
+ * Updated with ban, delete, manual registration, and self-deletion
  */
 
 // ============================================
@@ -65,9 +65,22 @@ export const getUserById = async (userId) => {
 };
 
 /**
+ * Get current user's profile
+ */
+export const getMyProfile = async () => {
+  try {
+    const response = await api.get('/users/me/profile');
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Get my profile error:', error);
+    throw error;
+  }
+};
+
+/**
  * Update user profile
  * @param {string} userId - User ID
- * @param {object} data - { name, email, phone, bio, location, avatar }
+ * @param {object} data - { name, email, phone, bio, location, avatar, gender }
  */
 export const updateUser = async (userId, data) => {
   try {
@@ -87,7 +100,7 @@ export const updateUser = async (userId, data) => {
 export const updateUserRole = async (userId, roleId) => {
   try {
     const response = await api.put(`/users/${userId}/role`, { 
-      roleId // Backend expects roleId (ObjectId)
+      roleId
     });
     return response.data;
   } catch (error) {
@@ -97,7 +110,7 @@ export const updateUserRole = async (userId, roleId) => {
 };
 
 /**
- * Delete user (Admin only)
+ * Delete user (Admin only) - Hard delete from both MongoDB and Supabase
  */
 export const deleteUser = async (userId) => {
   try {
@@ -105,6 +118,65 @@ export const deleteUser = async (userId) => {
     return response.data;
   } catch (error) {
     console.error('[UserService] Delete user error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Ban user permanently (Admin only)
+ * @param {string} userId - User ID
+ * @param {string} reason - Ban reason
+ */
+export const banUser = async (userId, reason) => {
+  try {
+    const response = await api.post(`/users/${userId}/ban`, { reason });
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Ban user error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Manual user registration by admin
+ * @param {object} userData - { name, email, phone, location, gender, roleId }
+ */
+export const manualRegisterUser = async (userData) => {
+  try {
+    const response = await api.post('/users/manual-register', userData);
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Manual register error:', error);
+    throw error;
+  }
+};
+
+/**
+ * User self-deletion (delete own account)
+ * @param {string} password - User's password for verification
+ */
+export const deleteSelfAccount = async (password) => {
+  try {
+    const response = await api.delete('/users/me/delete-account', {
+      data: { password }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Self delete error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if email or IP is banned
+ * @param {string} email - Email to check
+ */
+export const checkBanStatus = async (email) => {
+  try {
+    const response = await api.post('/users/check-ban', { email });
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Check ban error:', error);
     throw error;
   }
 };
@@ -122,7 +194,7 @@ export const bulkUpdateRoles = async (userIds, roleId) => {
   try {
     const response = await api.post('/users/bulk/role-update', {
       userIds,
-      role: roleId // Backend expects 'role' field with ObjectId
+      role: roleId
     });
     return response.data;
   } catch (error) {
@@ -172,7 +244,7 @@ export const searchUsers = async (query) => {
 };
 
 /**
- * Get users by role (legacy - for backwards compatibility)
+ * Get users by role
  * @param {string} roleName - Role name (string)
  */
 export const getUsersByRole = async (roleName) => {
@@ -218,6 +290,7 @@ export const formatUserDisplay = (user) => {
     email: user.email || 'No email',
     phone: user.phone || 'No phone',
     avatar: user.avatar || null,
+    gender: user.gender || null,
     initials: user.name ? user.name.charAt(0).toUpperCase() : 'U',
     role: user.role ? {
       id: user.role._id || user.role,
@@ -227,6 +300,7 @@ export const formatUserDisplay = (user) => {
         : 'Member'
     } : null,
     isActive: user.isActive !== false,
+    isBanned: user.isBanned || false,
     joinedDate: user.createdAt 
       ? new Date(user.createdAt).toLocaleDateString()
       : 'Unknown',
@@ -253,6 +327,10 @@ export const validateUserData = (data) => {
     errors.phone = 'Invalid phone format';
   }
 
+  if (data.gender && !['male', 'female'].includes(data.gender)) {
+    errors.gender = 'Gender must be either male or female';
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors
@@ -267,13 +345,14 @@ export const exportUsersToCSV = (users) => {
     return null;
   }
 
-  const headers = ['Name', 'Email', 'Role', 'Phone', 'Status', 'Joined Date'];
+  const headers = ['Name', 'Email', 'Role', 'Gender', 'Phone', 'Status', 'Joined Date'];
   const rows = users.map(user => {
     const formatted = formatUserDisplay(user);
     return [
       formatted.name,
       formatted.email,
       formatted.role?.displayName || 'Member',
+      formatted.gender || 'N/A',
       formatted.phone || 'N/A',
       formatted.isActive ? 'Active' : 'Inactive',
       formatted.joinedDate

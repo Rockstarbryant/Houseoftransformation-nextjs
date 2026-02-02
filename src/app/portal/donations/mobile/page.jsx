@@ -16,7 +16,7 @@ import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/do
 import UserPledgeCards from '@/components/donations/mobile/UserPledgeCards';
 import EnhancedAdminPledgeCards from '@/components/donations/mobile/AdminPledgeCards';
 import MobileAnalyticsDashboard from '@/components/donations/mobile/MobileAnalyticsDashboard';
-import MobileCampaignsTab from '@/components/donations/mobile/MobileCampaignsTab';
+import MobileCampaignsTab from '@/components/donations/mobile/EnhancedMobileCampaignsTab';
 import AdminCampaignManager from '@/components/donations/AdminCampaignManager';
 
 // ✅ Import shared components

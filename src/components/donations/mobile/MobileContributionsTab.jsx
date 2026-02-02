@@ -1,5 +1,5 @@
 // components/donations/mobile/MobileContributionsTab.jsx
-// ✅ MOBILE VERSION - All PC features with edge-to-edge card design
+// ✅ MOBILE VERSION - All PC features with FULL-WIDTH edge-to-edge card design
 
 'use client';
 
@@ -112,6 +112,7 @@ export default function MobileContributionsTab() {
   const [alertMessage, setAlertMessage] = useState({ message: null, type: 'success' });
   const [showFilters, setShowFilters] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
+  const [longPressTimer, setLongPressTimer] = useState(null);
   
   const [filters, setFilters] = useState({
     status: '',
@@ -313,6 +314,21 @@ export default function MobileContributionsTab() {
     setSelectedContributions(newSelected);
   };
 
+  const handleLongPressStart = (contributionId) => {
+  const timer = setTimeout(() => {
+    handleSelectRow(contributionId);
+    if (navigator.vibrate) navigator.vibrate(50);
+  }, 500);
+  setLongPressTimer(timer);
+};
+
+const handleLongPressEnd = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    setLongPressTimer(null);
+  }
+};
+
   const handleExport = () => {
     const dataToPrint = selectedContributions.size > 0
       ? filteredContributions.filter(c => selectedContributions.has(c.id))
@@ -444,7 +460,7 @@ export default function MobileContributionsTab() {
   // RENDER
   // ============================================
   return (
-    <div className="space-y-4">
+    <div className="-mx-4 space-y-4">
       {alertMessage.message && (
         <Alert 
           message={alertMessage.message} 
@@ -454,7 +470,7 @@ export default function MobileContributionsTab() {
       )}
 
       {/* ✅ FULL-WIDTH STATS - EDGE TO EDGE */}
-      <div className="-mx-4 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white p-4">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white p-4">
         <div className="grid grid-cols-2 gap-2 mb-2">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
             <div className="flex items-center gap-1 mb-1">
@@ -493,8 +509,8 @@ export default function MobileContributionsTab() {
       </div>
 
       {/* SEARCH BAR */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+      <div className="relative px-4">
+        <Search className="absolute left-7 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
         <input
           type="text"
           value={filters.searchTerm}
@@ -505,7 +521,7 @@ export default function MobileContributionsTab() {
         {filters.searchTerm && (
           <button
             onClick={() => setFilters(prev => ({ ...prev, searchTerm: '' }))}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute right-7 top-1/2 -translate-y-1/2 text-slate-400"
           >
             <X size={18} />
           </button>
@@ -513,7 +529,7 @@ export default function MobileContributionsTab() {
       </div>
 
       {/* TOOLBAR */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 px-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
@@ -558,7 +574,7 @@ export default function MobileContributionsTab() {
 
       {/* FILTERS PANEL */}
       {showFilters && (
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 space-y-3 border border-slate-200 dark:border-slate-700">
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 mx-4 space-y-3 border border-slate-200 dark:border-slate-700">
           <div className="grid grid-cols-1 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
@@ -624,7 +640,7 @@ export default function MobileContributionsTab() {
 
       {/* NO RESULTS */}
       {filteredContributions.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 mx-4 text-center border border-slate-200 dark:border-slate-700">
           <DollarSign size={48} className="mx-auto mb-4 text-slate-300" />
           <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             No contributions found
@@ -644,7 +660,7 @@ export default function MobileContributionsTab() {
       ) : (
         <>
           {/* ✅ CONTRIBUTION CARDS - FULL WIDTH EDGE TO EDGE */}
-          <div className="-mx-4 space-y-0">
+          <div className="space-y-0">
             {filteredContributions.map((contribution, index) => {
               const isExpanded = expandedCard === contribution.id;
               const isSelected = selectedContributions.has(contribution.id);
@@ -653,61 +669,57 @@ export default function MobileContributionsTab() {
               return (
                 <div 
                   key={contribution.id}
-                  className={`bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
+                  className={`w-full border-b border-slate-200 dark:border-slate-700 ${
                     index === 0 ? 'border-t' : ''
-                  } ${isSelected ? 'bg-blue-50 dark:bg-blue-950/30' : ''}`}
+                  } ${isSelected ? 'bg-green-500 dark:bg-green-950/30 border-l-4 border-l-green-500' : 'bg-white dark:bg-slate-800'} transition-colors`}
                 >
                   {/* Card Header */}
                   <div 
-                    className="p-4 cursor-pointer"
+                    className="p-4 cursor-pointer relative"
                     onClick={() => setExpandedCard(isExpanded ? null : contribution.id)}
+                    onTouchStart={() => handleLongPressStart(contribution.id)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleLongPressEnd}
+                    onMouseDown={() => handleLongPressStart(contribution.id)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
                   >
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 z-10">
+                        <CheckSquare size={16} />
+                      </div>
+                    )}
                     <div className="flex items-start gap-3 mb-3">
-                      {/* Checkbox */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectRow(contribution.id);
-                        }}
-                        className="mt-1"
-                      >
-                        {isSelected ? (
-                          <CheckSquare size={20} className="text-[#FDB022]" />
-                        ) : (
-                          <Square size={20} className="text-slate-400" />
-                        )}
-                      </button>
-
                       {/* Contributor Info */}
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900 dark:text-white mb-1">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-1 truncate">
                           {contribution.is_anonymous ? '👤 Anonymous' : contribution.contributor_name}
                         </h3>
                         {!contribution.is_anonymous && (
                           <>
                             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-                              <Mail size={12} />
-                              {contribution.contributor_email}
+                              <Mail size={12} className="flex-shrink-0" />
+                              <span className="truncate">{contribution.contributor_email}</span>
                             </div>
                             {contribution.contributor_phone && (
                               <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                <Phone size={12} />
-                                {contribution.contributor_phone}
+                                <Phone size={12} className="flex-shrink-0" />
+                                <span>{contribution.contributor_phone}</span>
                               </div>
                             )}
                           </>
                         )}
-                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-semibold">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-semibold truncate">
                           {contribution.campaign_title || 'General Offering'}
                         </p>
                       </div>
 
                       {/* Amount & Status */}
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <p className="text-lg font-black text-[#FDB022]">
                           {(contribution.amount / 1000).toFixed(0)}K
                         </p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusInfo.bg} ${statusInfo.text}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${statusInfo.bg} ${statusInfo.text}`}>
                           {statusInfo.label}
                         </span>
                         <ChevronDown 
@@ -721,7 +733,7 @@ export default function MobileContributionsTab() {
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
                         <p className="text-[10px] text-slate-500">Method</p>
-                        <p className="font-bold text-xs">{(contribution.payment_method || 'cash').toUpperCase()}</p>
+                        <p className="font-bold text-xs truncate">{(contribution.payment_method || 'cash').toUpperCase()}</p>
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
                         <p className="text-[10px] text-slate-500">Date</p>
@@ -741,7 +753,7 @@ export default function MobileContributionsTab() {
                       {contribution.mpesa_ref && (
                         <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800">
                           <p className="text-xs text-green-700 dark:text-green-300 mb-1">M-Pesa Reference</p>
-                          <p className="font-mono font-bold text-green-900 dark:text-green-100">{contribution.mpesa_ref}</p>
+                          <p className="font-mono font-bold text-green-900 dark:text-green-100 break-all">{contribution.mpesa_ref}</p>
                         </div>
                       )}
 
@@ -791,7 +803,7 @@ export default function MobileContributionsTab() {
           </div>
 
           {/* Footer Summary */}
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-sm border border-slate-200 dark:border-slate-700">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 mx-4 text-sm border border-slate-200 dark:border-slate-700">
             <div className="flex justify-between mb-2">
               <span className="text-slate-600 dark:text-slate-400">Total Showing</span>
               <span className="font-bold text-slate-900 dark:text-white">

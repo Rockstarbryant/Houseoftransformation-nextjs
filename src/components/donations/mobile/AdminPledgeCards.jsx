@@ -53,6 +53,7 @@ export default function EnhancedAdminPledgeCards({
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [expandedCard, setExpandedCard] = useState(null);
   const [selectedPledges, setSelectedPledges] = useState([]);
+  const [longPressTimer, setLongPressTimer] = useState(null);
 
   // ✅ Filter states (from PC)
   const [filterPledgeStatus, setFilterPledgeStatus] = useState('all');
@@ -251,6 +252,22 @@ export default function EnhancedAdminPledgeCards({
         : [...prev, pledgeId]
     );
   };
+
+  const handleLongPressStart = (pledgeId) => {
+  const timer = setTimeout(() => {
+    handleSelectPledge(pledgeId);
+    // Optional: Add haptic feedback if supported
+    if (navigator.vibrate) navigator.vibrate(50);
+  }, 500);
+  setLongPressTimer(timer);
+};
+
+const handleLongPressEnd = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    setLongPressTimer(null);
+  }
+};
 
   // ✅ Export to CSV
   const handleExport = () => {
@@ -693,31 +710,27 @@ export default function EnhancedAdminPledgeCards({
               return (
                 <div 
                   key={pledge.id}
-                  className={`w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
+                  className={`w-full border-b border-slate-200 dark:border-slate-700 ${
                     index === 0 ? 'border-t' : ''
-                  } ${isSelected ? 'bg-blue-50 dark:bg-blue-950/30' : ''}`}
+                  } ${isSelected ? 'bg-blue-50 dark:bg-blue-950/30 border-l-4 border-l-blue-500' : 'bg-white dark:bg-slate-800'} transition-colors`}
                 >
                   {/* Card Header - Always Visible */}
                   <div 
-                    className="p-4 cursor-pointer"
+                    className="p-4 cursor-pointer relative"
                     onClick={() => setExpandedCard(isExpanded ? null : pledge.id)}
+                    onTouchStart={() => handleLongPressStart(pledge.id)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleLongPressEnd}
+                    onMouseDown={() => handleLongPressStart(pledge.id)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
                   >
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
+                        <CheckSquare size={16} />
+                      </div>
+                    )}
                     <div className="flex items-start gap-3 mb-3">
-                      {/* Checkbox */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPledge(pledge.id);
-                        }}
-                        className="mt-1 flex-shrink-0"
-                      >
-                        {isSelected ? (
-                          <CheckSquare size={20} className="text-[#FDB022]" />
-                        ) : (
-                          <Square size={20} className="text-slate-400" />
-                        )}
-                      </button>
-
                       {/* Member Info */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-slate-900 dark:text-white mb-1 truncate">
