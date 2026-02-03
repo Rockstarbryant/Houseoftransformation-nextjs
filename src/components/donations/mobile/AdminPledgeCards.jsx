@@ -698,7 +698,7 @@ const handleLongPressEnd = () => {
       ) : (
         <>
           {/* ✅ PLEDGE CARDS - FULL WIDTH EDGE TO EDGE */}
-          <div className="space-y-0">
+          <div className="space-y-3">
             {processedPledges.map((pledge, index) => {
               const overdue = isOverdue(pledge);
               const isExpanded = expandedCard === pledge.id;

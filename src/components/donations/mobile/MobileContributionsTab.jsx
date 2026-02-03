@@ -660,7 +660,7 @@ const handleLongPressEnd = () => {
       ) : (
         <>
           {/* ✅ CONTRIBUTION CARDS - FULL WIDTH EDGE TO EDGE */}
-          <div className="space-y-0">
+          <div className="space-y-3">
             {filteredContributions.map((contribution, index) => {
               const isExpanded = expandedCard === contribution.id;
               const isSelected = selectedContributions.has(contribution.id);
@@ -675,7 +675,7 @@ const handleLongPressEnd = () => {
                 >
                   {/* Card Header */}
                   <div 
-                    className="p-4 cursor-pointer relative"
+                    className="px-4 sm:px-5"
                     onClick={() => setExpandedCard(isExpanded ? null : contribution.id)}
                     onTouchStart={() => handleLongPressStart(contribution.id)}
                     onTouchEnd={handleLongPressEnd}
@@ -803,7 +803,7 @@ const handleLongPressEnd = () => {
           </div>
 
           {/* Footer Summary */}
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 mx-4 text-sm border border-slate-200 dark:border-slate-700">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-sm border border-slate-200 dark:border-slate-700">
             <div className="flex justify-between mb-2">
               <span className="text-slate-600 dark:text-slate-400">Total Showing</span>
               <span className="font-bold text-slate-900 dark:text-white">

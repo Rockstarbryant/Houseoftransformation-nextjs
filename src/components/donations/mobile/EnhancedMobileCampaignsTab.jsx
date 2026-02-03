@@ -563,7 +563,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
       )}
 
       {/* 5 TAB FILTERS */}
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-2">
+      <div className="flex gap-2 mt-4 overflow-x-auto pb-2 no-scrollbar px-2">
         {[
           { id: 'all', label: 'All' },
           { id: 'active', label: 'Live' },
@@ -586,7 +586,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
       </div>
 
       {/* TOOLBAR */}
-      <div className="flex justify-between items-center px-4">
+      <div className="flex justify-between mt-4 items-center px-4">
         <button 
           onClick={() => queryClient.invalidateQueries({ queryKey: ['campaigns'] })}
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-sm"
@@ -615,7 +615,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
       ) : (
         <>
           {/* CAMPAIGN CARDS - EDGE TO EDGE */}
-          <div className="-mx-4 space-y-0">
+          <div className="-mx-3 mt-4 space-y-5">
             {campaigns.map((campaign, index) => {
               const isExpanded = expandedCard === campaign._id;
               const statusInfo = getCampaignStatusLabel(campaign.status);
@@ -632,12 +632,12 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
               return (
                 <div 
                   key={campaign._id}
-                  className={`w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
+                  className={`w-full space-y-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 ${
                     index === 0 ? 'border-t' : ''
                   }`}
                 >
                   <div 
-                    className="p-4 cursor-pointer"
+                    className="px-4 sm:px-3 cursor-pointer relative"
                     onClick={() => setExpandedCard(isExpanded ? null : campaign._id)}
                   >
                     <div className="flex items-start gap-3 mb-3">
