@@ -175,12 +175,12 @@ function AdminEditCampaignModal({ campaign, onClose, onSuccess }) {
                 onChange={(e) => setFormData({...formData, campaignType: e.target.value})}
                 className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-[#8B1A1A] transition-all font-bold text-slate-900 dark:text-white"
               >
-                <option value="building">🏛️ Building</option>
-                <option value="mission">🌍 Mission</option>
-                <option value="event">🎉 Event</option>
-                <option value="equipment">🎸 Equipment</option>
-                <option value="benevolence">❤️ Benevolence</option>
-                <option value="offering">🙏 General Offering</option>
+                <option value="building">Building</option>
+                <option value="mission">Mission</option>
+                <option value="event">Event</option>
+                <option value="equipment">Equipment</option>
+                <option value="benevolence">Benevolence</option>
+                <option value="offering">General Offering</option>
               </select>
             </div>
 
@@ -351,11 +351,11 @@ function CampaignAnalyticsModal({ campaign, analytics, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/60 animate-in fade-in">
+    <div className="fixed inset-0 z-50 p-4 flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/60 animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
         
         {/* Header */}
-        <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+        <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-black flex items-center gap-3">
               <div className="p-2 bg-white/10 rounded-xl"><TrendingUp size={24} /></div>
@@ -370,7 +370,7 @@ function CampaignAnalyticsModal({ campaign, analytics, onClose }) {
           </button>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className="p-6 space-y-8">
           {/* Main Stats Grid */}
           <div className="grid grid-cols-3 gap-4">
             {stats.map((s, i) => (

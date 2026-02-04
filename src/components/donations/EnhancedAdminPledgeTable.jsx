@@ -125,7 +125,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     staleTime: 60000,
   });
 
-  // Fetch users
+  // ✅ FIX: Fetch users properly
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
@@ -140,25 +140,36 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     staleTime: 300000, // 5 minutes
   });
 
-  // Fetch payment details
-  const { data: payments = {} } = useQuery({
-    queryKey: ['payments'],
+  // ✅ FIX: Fetch ALL payments and create proper lookup map
+  const { data: paymentsMap = {} } = useQuery({
+    queryKey: ['payments-map'],
     queryFn: async () => {
-      const { success, payments: allPayments } = await donationApi.payments.getAll();
+      const { success, payments: allPayments } = await donationApi.payments.getAll({ limit: 10000 });
+      
+      console.log('[PAYMENTS] Raw payments data:', allPayments);
       
       if (success && allPayments) {
+        // Create a map where key is pledge_id and value is the LATEST payment for that pledge
         const paymentMap = {};
+        
         allPayments.forEach(payment => {
           if (payment.pledge_id) {
-            paymentMap[payment.pledge_id] = payment;
+            // If we already have a payment for this pledge, keep the most recent one
+            if (!paymentMap[payment.pledge_id] || 
+                new Date(payment.created_at) > new Date(paymentMap[payment.pledge_id].created_at)) {
+              paymentMap[payment.pledge_id] = payment;
+            }
           }
         });
+        
+        console.log('[PAYMENTS] Payment map created:', paymentMap);
         return paymentMap;
       }
       return {};
     },
     enabled: pledges.length > 0,
     staleTime: 30000,
+    refetchOnWindowFocus: true,
   });
 
   // Mutations
@@ -179,49 +190,139 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     },
   });
 
+  // ✅ FIX: Helper function to get user name by ID
+  const getUserName = (userId) => {
+    if (!userId) return 'N/A';
+    
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      return user.full_name || user.email || 'Unknown User';
+    }
+    
+    return 'Unknown User';
+  };
+
   // Helper functions
   const getCampaignTitle = (pledge) => {
     if (!pledge) return 'General';
     if (pledge.campaign_title && pledge.campaign_title !== 'Unknown Campaign') {
       return pledge.campaign_title;
     }
-    return pledge.title || pledge.name || 'General';
-  };
-
-  const getVerifiedByName = (verifiedById) => {
-    if (!verifiedById) return 'Pending';
     
-    if (typeof verifiedById === 'string' && (verifiedById.includes(' ') || verifiedById.includes('@'))) {
-      return verifiedById;
-    }
-    
-    const user = users.find(u => 
-      String(u.id) === String(verifiedById) || 
-      String(u._id) === String(verifiedById) ||
-      String(u.user_id) === String(verifiedById)
-    );
-    
-    if (user) {
-      return user.name || user.full_name || user.username || user.email || verifiedById;
-    }
-    
-    return verifiedById;
+    const campaign = campaigns.find(c => c.supabaseId === pledge.campaign_id);
+    return campaign?.title || 'General Offering';
   };
 
   const isOverdue = (pledge) => {
-    if (!pledge.due_date || pledge.status === 'completed' || pledge.status === 'cancelled') {
-      return false;
-    }
+    if (!pledge.due_date || pledge.status === 'completed' || pledge.status === 'cancelled') return false;
     return new Date(pledge.due_date) < new Date();
   };
 
+  // Sorting function
+  const sortedPledges = useMemo(() => {
+    if (!pledges) return [];
+    
+    let sorted = [...pledges];
+    
+    if (sortConfig.key) {
+      sorted.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        
+        if (sortConfig.key === 'campaign_title') {
+          aVal = getCampaignTitle(a);
+          bVal = getCampaignTitle(b);
+        }
+        
+        if (aVal === null || aVal === undefined) aVal = '';
+        if (bVal === null || bVal === undefined) bVal = '';
+        
+        if (typeof aVal === 'string') {
+          return sortConfig.direction === 'asc'
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+        
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+    }
+    
+    return sorted;
+  }, [pledges, sortConfig, campaigns]);
+
+  // Advanced filtering
+  const processedPledges = useMemo(() => {
+    let filtered = sortedPledges;
+
+    if (searchTerm) {
+      filtered = filtered.filter(p =>
+        p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.member_phone?.includes(searchTerm) ||
+        getCampaignTitle(p).toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filterPledgeStatus !== 'all') {
+      filtered = filtered.filter(p => p.status === filterPledgeStatus);
+    }
+
+    if (filterCampaign !== 'all') {
+      filtered = filtered.filter(p => p.campaign_id === filterCampaign);
+    }
+
+    if (filterPaymentMethod !== 'all') {
+      // ✅ FIX: Filter by payment method from payments map
+      filtered = filtered.filter(p => {
+        const payment = paymentsMap[p.id];
+        return payment?.payment_method === filterPaymentMethod;
+      });
+    }
+
+    if (filterOverdueOnly) {
+      filtered = filtered.filter(p => isOverdue(p));
+    }
+
+    if (filterAmountMin) {
+      filtered = filtered.filter(p => p.pledged_amount >= parseFloat(filterAmountMin));
+    }
+
+    if (filterAmountMax) {
+      filtered = filtered.filter(p => p.pledged_amount <= parseFloat(filterAmountMax));
+    }
+
+    return filtered;
+  }, [sortedPledges, searchTerm, filterPledgeStatus, filterCampaign, filterPaymentMethod, filterOverdueOnly, filterAmountMin, filterAmountMax, paymentsMap]);
+
+  // Handle sort
   const handleSort = (key) => {
-    setSortConfig({
+    setSortConfig(prevConfig => ({
       key,
-      direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-    });
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
+  // Reset filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setFilterPledgeStatus('all');
+    setFilterCampaign('all');
+    setFilterPaymentMethod('all');
+    setFilterOverdueOnly(false);
+    setFilterAmountMin('');
+    setFilterAmountMax('');
+  };
+
+  // Handle select all
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedPledges(processedPledges.map(p => p.id));
+    } else {
+      setSelectedPledges([]);
+    }
+  };
+
+  // Handle cancel pledge
   const handleCancelPledge = (pledgeId) => {
     setConfirmDialog({
       isOpen: true,
@@ -233,103 +334,36 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     });
   };
 
+  // Handle confirm action
   const handleConfirmAction = () => {
-    const { action, pledgeId } = confirmDialog;
-    
-    if (action === 'cancel') {
-      cancelMutation.mutate(pledgeId);
+    if (confirmDialog.action === 'cancel') {
+      cancelMutation.mutate(confirmDialog.pledgeId);
     }
-    
     setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedPledges(processedPledges.map(p => p.id));
-    } else {
-      setSelectedPledges([]);
+  // Export to CSV
+  const exportToCSV = () => {
+    if (processedPledges.length === 0) {
+      alert('No pledges to export');
+      return;
     }
-  };
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    const html = `
-      <html>
-        <head>
-          <title>Pledges Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-            th { background-color: #f5f5f5; font-weight: bold; }
-            .text-right { text-align: right; }
-          </style>
-        </head>
-        <body>
-          <h2>Pledges Report</h2>
-          <p>Generated: ${new Date().toLocaleString()}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Campaign</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th class="text-right">Pledged</th>
-                <th class="text-right">Paid</th>
-                <th class="text-right">Balance</th>
-                <th>Status</th>
-                <th>Due Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${processedPledges.map(pledge => `
-                <tr>
-                  <td>${pledge.member_name}</td>
-                  <td>${getCampaignTitle(pledge)}</td>
-                  <td>${pledge.member_email}</td>
-                  <td>${pledge.member_phone}</td>
-                  <td class="text-right">KES ${Number(pledge.pledged_amount).toFixed(2)}</td>
-                  <td class="text-right">KES ${Number(pledge.paid_amount).toFixed(2)}</td>
-                  <td class="text-right">KES ${Number(pledge.remaining_amount).toFixed(2)}</td>
-                  <td>${pledge.status.toUpperCase()}</td>
-                  <td>${pledge.due_date ? new Date(pledge.due_date).toLocaleDateString() : 'N/A'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.print();
-  };
+    const headers = ['Name', 'Email', 'Phone', 'Campaign', 'Pledged', 'Paid', 'Balance', 'Status', 'Due Date'];
+    const rows = processedPledges.map(pledge => [
+      pledge.member_name,
+      pledge.member_email,
+      pledge.member_phone,
+      getCampaignTitle(pledge),
+      pledge.pledged_amount,
+      pledge.paid_amount,
+      pledge.remaining_amount,
+      pledge.status,
+      pledge.due_date ? new Date(pledge.due_date).toLocaleDateString() : 'N/A'
+    ]);
 
-  const handleExport = () => {
-    const csv = [
-      ['Member', 'Campaign', 'Email', 'Phone', 'Pledged', 'Paid', 'Balance', 'Status', 'Payment Method', 'Verified By', 'Processed At', 'Due Date'],
-      ...processedPledges.map(pledge => {
-        const payment = payments[pledge.id];
-        return [
-          pledge.member_name,
-          getCampaignTitle(pledge),
-          pledge.member_email,
-          pledge.member_phone,
-          pledge.pledged_amount,
-          pledge.paid_amount,
-          pledge.remaining_amount,
-          pledge.status,
-          payment?.payment_method || 'N/A',
-          payment?.verified_by_id ? getVerifiedByName(payment.verified_by_id) : 'N/A',
-          payment?.processed_at ? new Date(payment.processed_at).toLocaleDateString() : 'N/A',
-          pledge.due_date ? new Date(pledge.due_date).toLocaleDateString() : 'N/A'
-        ];
-      })
-    ];
-
-    const csvContent = csv.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -337,255 +371,200 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     a.click();
   };
 
-  const resetFilters = () => {
-    setFilterPledgeStatus('all');
-    setFilterCampaign('all');
-    setFilterPaymentMethod('all');
-    setFilterOverdueOnly(false);
-    setFilterAmountMin('');
-    setFilterAmountMax('');
-    setSearchTerm('');
-    setShowAdvancedFilters(false);
+  // Print table
+  const handlePrint = () => {
+    window.print();
   };
-
-  // Filter and sort
-  const processedPledges = useMemo(() => {
-    let filtered = pledges;
-
-    // Status filter
-    if (filterPledgeStatus !== 'all') {
-      filtered = filtered.filter(p => p.status === filterPledgeStatus);
-    }
-
-    // Campaign filter - match campaign_title from pledge
-    if (filterCampaign !== 'all') {
-      filtered = filtered.filter(p => (p.campaign_title || 'General') === filterCampaign);
-    }
-
-    // Payment method filter
-    if (filterPaymentMethod !== 'all') {
-      filtered = filtered.filter(p => {
-        const payment = payments[p.id];
-        return payment?.payment_method === filterPaymentMethod;
-      });
-    }
-
-    // Amount range filter
-    if (filterAmountMin) {
-      filtered = filtered.filter(p => p.pledged_amount >= Number(filterAmountMin));
-    }
-    if (filterAmountMax) {
-      filtered = filtered.filter(p => p.pledged_amount <= Number(filterAmountMax));
-    }
-
-    // Overdue filter
-    if (filterOverdueOnly) {
-      filtered = filtered.filter(p => isOverdue(p));
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(p =>
-        p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.member_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.member_phone?.includes(searchTerm) ||
-        (p.campaign_title || 'General').toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Sort
-    const sorted = [...filtered].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [pledges, sortConfig, filterPledgeStatus, filterCampaign, filterPaymentMethod, filterOverdueOnly, filterAmountMin, filterAmountMax, searchTerm, payments, campaigns]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center gap-3">
-        <AlertCircle className="text-red-600" size={24} />
-        <div>
-          <h3 className="font-bold text-red-900">Error Loading Pledges</h3>
-          <p className="text-red-700">{error.message}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-red-800">
+          <AlertCircle size={20} />
+          <p className="font-semibold">Error loading pledges: {error.message}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      
-      {/* Toolbar */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex-1 min-w-[250px]">
-            <input
-              type="text"
-              placeholder="Search by name, email, phone, or campaign..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-          
-          <button
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-            title="Show/hide advanced filters"
-          >
-            <Filter size={18} />
-            Filters
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            title="Print pledges"
-          >
-            <Printer size={18} />
-            Print
-          </button>
-
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            title="Export to CSV"
-          >
-            <Download size={18} />
-            Export
-          </button>
+    <div className="space-y-4">
+      {/* Search and Actions Bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[300px]">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by name, email, phone, or campaign..."
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent"
+          />
         </div>
+        
+        <button
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <Filter size={18} />
+          Filters
+          {showAdvancedFilters && <ChevronUp size={16} />}
+          {!showAdvancedFilters && <ChevronDown size={16} />}
+        </button>
 
-        {/* Advanced Filters */}
-        {showAdvancedFilters && (
-          <div className="border-t border-slate-200 pt-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
-                <select
-                  value={filterPledgeStatus}
-                  onChange={(e) => setFilterPledgeStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="partial">Partial</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
+        <button
+          onClick={handlePrint}
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <Printer size={18} />
+          Print
+        </button>
 
-              {/* Campaign Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Campaign</label>
-                <select
-                  value={filterCampaign}
-                  onChange={(e) => setFilterCampaign(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="all">All Campaigns</option>
-                  {campaigns.map(campaign => (
-                    <option key={campaign.id || campaign._id} value={campaign.id || campaign._id}>
-                      {campaign.title || campaign.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Payment Method Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
-                <select
-                  value={filterPaymentMethod}
-                  onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="all">All Methods</option>
-                  <option value="mpesa">M-Pesa</option>
-                  <option value="cash">Cash</option>
-                  <option value="bank-transfer">Bank Transfer</option>
-                  <option value="manual">Manual</option>
-                </select>
-              </div>
-
-              {/* Min Amount */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Min Amount</label>
-                <input
-                  type="number"
-                  value={filterAmountMin}
-                  onChange={(e) => setFilterAmountMin(e.target.value)}
-                  placeholder="Min amount"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                />
-              </div>
-
-              {/* Max Amount */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Max Amount</label>
-                <input
-                  type="number"
-                  value={filterAmountMax}
-                  onChange={(e) => setFilterAmountMax(e.target.value)}
-                  placeholder="Max amount"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                />
-              </div>
-
-              {/* Overdue Only */}
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer w-full">
-                  <input
-                    type="checkbox"
-                    checked={filterOverdueOnly}
-                    onChange={(e) => setFilterOverdueOnly(e.target.checked)}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-medium text-slate-700">Overdue Only</span>
-                </label>
-              </div>
-
-              {/* Reset Button */}
-              <div className="flex items-end">
-                <button
-                  onClick={resetFilters}
-                  className="w-full px-3 py-2 bg-slate-300 text-slate-900 rounded-lg hover:bg-slate-400 transition-colors text-sm font-medium"
-                >
-                  Reset All
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedPledges.length > 0 && (
-          <div className="text-sm text-slate-600">
-            {selectedPledges.length} pledge(s) selected | Showing {processedPledges.length} of {pledges.length}
-          </div>
-        )}
+        <button
+          onClick={exportToCSV}
+          className="px-4 py-2 bg-[#8B1A1A] hover:bg-red-900 text-white rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <Download size={18} />
+          Export
+        </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      {/* Advanced Filters */}
+      {showAdvancedFilters && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+              <select
+                value={filterPledgeStatus}
+                onChange={(e) => setFilterPledgeStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="partial">Partial</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Campaign</label>
+              <select
+                value={filterCampaign}
+                onChange={(e) => setFilterCampaign(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              >
+                <option value="all">All Campaigns</option>
+                {campaigns.map(campaign => (
+                  <option key={campaign.supabaseId} value={campaign.supabaseId}>
+                    {campaign.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+              <select
+                value={filterPaymentMethod}
+                onChange={(e) => setFilterPaymentMethod(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              >
+                <option value="all">All Methods</option>
+                <option value="mpesa">M-Pesa</option>
+                <option value="cash">Cash</option>
+                <option value="bank-transfer">Bank Transfer</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Min Amount</label>
+              <input
+                type="number"
+                value={filterAmountMin}
+                onChange={(e) => setFilterAmountMin(e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Max Amount</label>
+              <input
+                type="number"
+                value={filterAmountMax}
+                onChange={(e) => setFilterAmountMax(e.target.value)}
+                placeholder="100000"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filterOverdueOnly}
+                  onChange={(e) => setFilterOverdueOnly(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm font-medium text-slate-700">Show Overdue Only</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 flex items-center gap-2"
+            >
+              <CloseIcon size={16} />
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <p className="text-sm text-slate-600">Total Pledges</p>
+          <p className="text-2xl font-bold text-slate-900">{processedPledges.length}</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <p className="text-sm text-slate-600">Total Pledged</p>
+          <p className="text-2xl font-bold text-slate-900">
+            {formatCurrency(processedPledges.reduce((sum, p) => sum + p.pledged_amount, 0))}
+          </p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <p className="text-sm text-slate-600">Total Paid</p>
+          <p className="text-2xl font-bold text-green-600">
+            {formatCurrency(processedPledges.reduce((sum, p) => sum + p.paid_amount, 0))}
+          </p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <p className="text-sm text-slate-600">Total Balance</p>
+          <p className="text-2xl font-bold text-red-600">
+            {formatCurrency(processedPledges.reduce((sum, p) => sum + p.remaining_amount, 0))}
+          </p>
+        </div>
+      </div>
+
+      {/* Pledges Table */}
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 w-10">
+                <th className="px-4 py-3">
                   <input
                     type="checkbox"
                     checked={selectedPledges.length === processedPledges.length && processedPledges.length > 0}
@@ -593,14 +572,32 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
                     className="rounded"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Member</th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Campaign</th>
+                <th 
+                  className="px-4 py-3 text-left text-sm font-bold text-slate-700 cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('member_name')}
+                >
+                  Name {sortConfig.key === 'member_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-sm font-bold text-slate-700 cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('campaign_title')}
+                >
+                  Campaign {sortConfig.key === 'campaign_title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Email</th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Phone</th>
-                <th className="px-4 py-3 text-right text-sm font-bold text-slate-700 cursor-pointer" onClick={() => handleSort('pledged_amount')}>
+                <th 
+                  className="px-4 py-3 text-right text-sm font-bold text-slate-700 cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('pledged_amount')}
+                >
                   Pledged {sortConfig.key === 'pledged_amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-bold text-slate-700">Paid</th>
+                <th 
+                  className="px-4 py-3 text-right text-sm font-bold text-slate-700 cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('paid_amount')}
+                >
+                  Paid {sortConfig.key === 'paid_amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="px-4 py-3 text-right text-sm font-bold text-slate-700">Balance</th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">Payment Method</th>
@@ -614,7 +611,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
               {processedPledges.map(pledge => {
                 const badge = getStatusBadge(pledge.status);
                 const overdue = isOverdue(pledge);
-                const payment = payments[pledge.id];
+                const payment = paymentsMap[pledge.id]; // ✅ FIX: Get payment from map
                 const campaignName = getCampaignTitle(pledge);
 
                 return (
@@ -649,17 +646,26 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
                         {badge.label}
                       </span>
                     </td>
+                    {/* ✅ FIX: Payment Method - now properly displays from payment data */}
                     <td className="px-4 py-3 text-sm">
-                      {payment ? (
-                        <span className="capitalize text-slate-700 font-medium">{payment.payment_method}</span>
+                      {payment?.payment_method ? (
+                        <span className="capitalize text-slate-700 font-medium">
+                          {payment.payment_method === 'mpesa' ? 'M-Pesa' : 
+                           payment.payment_method === 'bank-transfer' ? 'Bank Transfer' :
+                           payment.payment_method === 'cash' ? 'Cash' : 
+                           payment.payment_method}
+                        </span>
                       ) : (
                         <span className="text-slate-400 italic">N/A</span>
                       )}
                     </td>
+                    {/* ✅ FIX: Verified By - now properly shows name instead of ID */}
                     <td className="px-4 py-3 text-sm">
                       {payment?.verified_by_id ? (
                         <div>
-                          <p className="font-semibold text-slate-900">{getVerifiedByName(payment.verified_by_id)}</p>
+                          <p className="font-semibold text-slate-900">
+                            {getUserName(payment.verified_by_id)}
+                          </p>
                           <p className="text-xs text-slate-500">
                             {payment.verified_at ? new Date(payment.verified_at).toLocaleDateString() : 'N/A'}
                           </p>
@@ -668,6 +674,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
                         <span className="text-slate-400 italic">Pending</span>
                       )}
                     </td>
+                    {/* ✅ FIX: Processed At - now properly displays from payment data */}
                     <td className="px-4 py-3 text-sm">
                       {payment?.processed_at ? (
                         <div>
@@ -755,6 +762,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
           onSuccess={() => {
             setEditingPledge(null);
             queryClient.invalidateQueries({ queryKey: ['pledges'] });
+            queryClient.invalidateQueries({ queryKey: ['payments-map'] }); // ✅ Also invalidate payments
           }}
         />
       )}
@@ -766,7 +774,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
           onSuccess={() => {
             setRecordingPaymentFor(null);
             queryClient.invalidateQueries({ queryKey: ['pledges'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['payments-map'] }); // ✅ Also invalidate payments
           }}
         />
       )}

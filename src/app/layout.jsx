@@ -15,21 +15,17 @@ export const metadata = {
   description: 'Welcome to House of Transformation Church - A place of worship, community, and spiritual growth.',
   keywords: 'church, worship, community, spiritual growth, sermons, events',
   manifest: '/manifest.json',
+
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'HOT Church',
   },
+
   formatDetection: {
     telephone: false,
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: 'cover',
-  },
+
   icons: {
     icon: [
       {
@@ -39,7 +35,7 @@ export const metadata = {
       },
     ],
     apple: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect fill="%23dc2626" width="180" height="180" rx="40"/><text x="90" y="90" font-size="70" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">HOT</text></svg>',
-  },
+  }
 };
 
 export default function RootLayout({ children }) {
@@ -71,3 +67,11 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover'
+};
