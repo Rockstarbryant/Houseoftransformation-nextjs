@@ -769,16 +769,16 @@ const handleLongPressEnd = () => {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Pledged</p>
-                        <p className="font-bold text-sm">{(pledge.pledged_amount / 1000).toFixed(0)}K</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Pledged</p>
+                        <p className="font-bold text-sm dark:text-slate-300">{(pledge.pledged_amount / 1000).toFixed(0)}K</p>
                       </div>
                       <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Paid</p>
-                        <p className="font-bold text-sm text-green-600">{(pledge.paid_amount / 1000).toFixed(0)}K</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Paid</p>
+                        <p className="font-bold text-sm text-green-600 dark:text-green-300">{(pledge.paid_amount / 1000).toFixed(0)}K</p>
                       </div>
                       <div className="bg-red-50 dark:bg-red-950/30 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Balance</p>
-                        <p className="font-bold text-sm text-red-600">{(pledge.remaining_amount / 1000).toFixed(0)}K</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Balance</p>
+                        <p className="font-bold text-sm text-red-600 dark:text-red-300">{(pledge.remaining_amount / 1000).toFixed(0)}K</p>
                       </div>
                     </div>
 
@@ -806,26 +806,26 @@ const handleLongPressEnd = () => {
                       {/* Full Details */}
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         <div>
-                          <p className="text-slate-500">Created</p>
-                          <p className="font-semibold">{formatDateShort(pledge.created_at)}</p>
+                          <p className="text-slate-500 dark:text-slate-300">Created</p>
+                          <p className="font-semibold dark:text-slate-300">{formatDateShort(pledge.created_at)}</p>
                         </div>
                         {pledge.due_date && (
                           <div>
-                            <p className="text-slate-500">Due Date</p>
-                            <p className="font-semibold">{formatDateShort(pledge.due_date)}</p>
+                            <p className="text-slate-500 dark:text-slate-300">Due Date</p>
+                            <p className="font-semibold dark:text-slate-300">{formatDateShort(pledge.due_date)}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-slate-500">Pledged</p>
-                          <p className="font-semibold">{formatCurrency(pledge.pledged_amount)}</p>
+                          <p className="text-slate-500 dark:text-slate-300">Pledged</p>
+                          <p className="font-semibold dark:text-slate-300">{formatCurrency(pledge.pledged_amount)}</p>
                         </div>
                         <div>
-                          <p className="text-slate-500">Paid</p>
-                          <p className="font-semibold text-green-600">{formatCurrency(pledge.paid_amount)}</p>
+                          <p className="text-slate-500 dark:text-slate-300">Paid</p>
+                          <p className="font-semibold text-green-600 dark:text-green-300">{formatCurrency(pledge.paid_amount)}</p>
                         </div>
                         <div className="col-span-2">
-                          <p className="text-slate-500">Payment Method</p>
-                          <p className="font-semibold">{payments[pledge.id]?.payment_method?.toUpperCase() || 'N/A'}</p>
+                          <p className="text-slate-500 dark:text-slate-300">Payment Method</p>
+                          <p className="font-semibold dark:text-slate-300">{payments[pledge.id]?.payment_method?.toUpperCase() || 'N/A'}</p>
                         </div>
                       </div>
 

@@ -732,16 +732,16 @@ const handleLongPressEnd = () => {
                     {/* Quick Info */}
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Method</p>
-                        <p className="font-bold text-xs truncate">{(contribution.payment_method || 'cash').toUpperCase()}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Method</p>
+                        <p className="font-bold text-xs truncate dark:text-slate-300">{(contribution.payment_method || 'cash').toUpperCase()}</p>
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Date</p>
-                        <p className="font-bold text-xs">{new Date(contribution.created_at).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Date</p>
+                        <p className="font-bold text-xs dark:text-slate-300">{new Date(contribution.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
-                        <p className="text-[10px] text-slate-500">Amount</p>
-                        <p className="font-bold text-xs">{formatCurrency(contribution.amount)}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">Amount</p>
+                        <p className="font-bold text-xs dark:text-slate-300">{formatCurrency(contribution.amount)}</p>
                       </div>
                     </div>
                   </div>

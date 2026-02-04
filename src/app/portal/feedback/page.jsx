@@ -5,20 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import {
-  ArrowLeft,
-  MessageSquare,
-  Filter,
-  RefreshCw,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertCircle,
-  Send,
-  Archive,
-  Trash2,
-  RotateCcw
-} from 'lucide-react';
+  ArrowLeft, MessageSquare, Filter, RefreshCw, Eye, CheckCircle, XCircle, Clock, AlertCircle, Send, Archive, Trash2, RotateCcw, BookOpen, Sparkles, Users, Lightbulb, Heart, MessageCircle, Lock, FileText } from 'lucide-react';
 import { feedbackService } from '@/services/api/feedbackService';
 import Loader from '@/components/common/Loader';
 
@@ -360,15 +347,28 @@ const fetchData = async () => {
   };
 
   const getCategoryIcon = (category) => {
-    const icons = {
-      sermon: '📖',
-      service: '⛪',
-      testimony: '🙏',
-      suggestion: '💡',
-      prayer: '🙌',
-      general: '💬'
+    const iconMap = {
+      sermon: BookOpen,
+      service: Sparkles,
+      testimony: Users,
+      suggestion: Lightbulb,
+      prayer: Heart,
+      general: MessageCircle
     };
-    return icons[category] || '📋';
+    return iconMap[category] || FileText;
+  };
+
+   // Helper function to get category color
+  const getCategoryColor = (category) => {
+    const colorMap = {
+      sermon: 'text-blue-600 dark:text-blue-400',
+      service: 'text-purple-600 dark:text-purple-400',
+      testimony: 'text-amber-600 dark:text-amber-400',
+      suggestion: 'text-emerald-600 dark:text-emerald-400',
+      prayer: 'text-red-600 dark:text-red-400',
+      general: 'text-slate-600 dark:text-slate-400'
+    };
+    return colorMap[category] || 'text-slate-600 dark:text-slate-400';
   };
 
   const formatDate = (date) => {
@@ -573,22 +573,35 @@ const fetchData = async () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{getCategoryIcon(item.category)}</span>
+                      {/* ✅ ICON INSTEAD OF EMOJI */}
+                      <div className={`p-2 rounded-lg bg-slate-50 dark:bg-slate-900 ${getCategoryColor(item.category)}`}>
+                        {(() => {
+                          const IconComponent = getCategoryIcon(item.category);
+                          return <IconComponent size={24} />;
+                        })()}
+                      </div>
                       <div>
                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                           {item.category.charAt(0).toUpperCase() + item.category.slice(1)} Feedback
                         </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {item.isAnonymous ? '🔒 Anonymous' : item.name} • {formatDate(item.submittedAt)}
+                        <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                          {/* ✅ ICON FOR ANONYMOUS */}
+                          {item.isAnonymous ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Lock size={14} /> Anonymous
+                            </span>
+                          ) : item.name} 
+                          <span>•</span> 
+                          {formatDate(item.submittedAt)}
                         </p>
                       </div>
                     </div>
 
+
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {getStatusBadge(item.status)}
                       {item.isAnonymous && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                          🔒 Anonymous
+                          <Lock size={14} /> Anonymous
                         </span>
                       )}
                     </div>
@@ -652,17 +665,30 @@ const fetchData = async () => {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{getCategoryIcon(item.category)}</span>
-                    <div>
-                      <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {item.category.charAt(0).toUpperCase() + item.category.slice(1)} Feedback
-                      </h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {item.isAnonymous ? '🔒 Anonymous' : item.name} • {formatDate(item.deletedAt)}
-                      </p>
-                    </div>
-                  </div>
+                   <div className="flex items-center gap-3 mb-2">
+                {/* ✅ ICON INSTEAD OF EMOJI */}
+                <div className={`p-2 rounded-lg bg-slate-50 dark:bg-slate-900 opacity-50 ${getCategoryColor(item.category)}`}>
+                  {(() => {
+                    const IconComponent = getCategoryIcon(item.category);
+                    return <IconComponent size={24} />;
+                  })()}
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white line-through">
+                    {item.category.charAt(0).toUpperCase() + item.category.slice(1)} Feedback
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                    {/* ✅ ICON FOR ANONYMOUS */}
+                    {item.isAnonymous ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Lock size={14} /> Anonymous
+                      </span>
+                    ) : item.name} 
+                    <span>•</span> 
+                    Deleted {formatDate(item.deletedAt)}
+                  </p>
+                </div>
+              </div>
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200">
@@ -777,12 +803,528 @@ const fetchData = async () => {
                     <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Email</label>
                     <p className="text-slate-900 dark:text-white">{selectedFeedback.email || 'N/A'}</p>
                   </div>
+                  {/* ✅ NEW: PHONE NUMBER FIELD */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Phone</label>
+                    <p className="text-slate-900 dark:text-white">{selectedFeedback.phone || 'Not provided'}</p>
+                  </div>
                 </div>
               )}
 
+
               {/* Content */}
               <div className="space-y-4">
+                {/* ============================================ */}
+                {/* SERMON FEEDBACK - Already complete ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'sermon' && (
+                  <>
+                    {selectedFeedback.feedbackData.sermonTitle && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Sermon Title
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                          {selectedFeedback.feedbackData.sermonTitle}
+                        </p>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.sermonDate && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Sermon Date
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                          {new Date(selectedFeedback.feedbackData.sermonDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.rating && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Rating
+                        </label>
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                          <span className="text-2xl font-bold text-yellow-500">
+                            {'⭐'.repeat(selectedFeedback.feedbackData.rating)}
+                          </span>
+                          <span className="text-slate-600 dark:text-slate-400">
+                            ({selectedFeedback.feedbackData.rating}/5)
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.resonatedMost && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          What Resonated Most
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.resonatedMost}
+                        </p>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.application && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Application Steps
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.application}
+                        </p>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.questions && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Questions
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.questions}
+                        </p>
+                      </div>
+                    )}
+                    {selectedFeedback.feedbackData.wouldRecommend !== undefined && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Would Recommend
+                        </label>
+                        <p className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                          selectedFeedback.feedbackData.wouldRecommend 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {selectedFeedback.feedbackData.wouldRecommend ? '✅ Yes' : '❌ No'}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* SERVICE FEEDBACK - NEW FIELDS ADDED ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'service' && (
+                  <>
+                    {/* ✅ NEW: First Time Visitor Badge */}
+                    {selectedFeedback.isFirstTimeVisitor && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">👋</span>
+                          <div>
+                            <p className="text-sm font-bold text-blue-900 dark:text-blue-200">First Time Visitor</p>
+                            <p className="text-xs text-blue-700 dark:text-blue-300">This person is new to our church!</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Ratings Display */}
+                    {selectedFeedback.feedbackData.ratings && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-3">
+                          Service Ratings
+                        </label>
+                        <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
+                          {Object.entries(selectedFeedback.feedbackData.ratings).map(([category, rating]) => (
+                            rating > 0 && (
+                              <div key={category} className="bg-white dark:bg-slate-800 p-3 rounded-lg">
+                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                                  {category.replace(/([A-Z])/g, ' $1').trim()}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-yellow-500">{'⭐'.repeat(rating)}</span>
+                                  <span className="text-xs text-slate-600 dark:text-slate-400">({rating}/5)</span>
+                                </div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: What Went Well */}
+                    {selectedFeedback.feedbackData.whatWentWell && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          What Went Well
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.whatWentWell}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Improvements */}
+                    {selectedFeedback.feedbackData.improvements && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Suggestions for Improvement
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.improvements}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Would Return */}
+                    {selectedFeedback.feedbackData.wouldReturn && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Would Return / Recommend
+                        </label>
+                        <p className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                          selectedFeedback.feedbackData.wouldReturn === 'Yes' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : selectedFeedback.feedbackData.wouldReturn === 'Maybe'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {selectedFeedback.feedbackData.wouldReturn === 'Yes' && 'Yes'}
+                          {selectedFeedback.feedbackData.wouldReturn === 'Maybe' && 'Maybe'}
+                          {selectedFeedback.feedbackData.wouldReturn === 'No' && 'No'}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* TESTIMONY FEEDBACK - NEW FIELDS ADDED ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'testimony' && (
+                  <>
+                    {/* ✅ NEW: Testimony Type */}
+                    {selectedFeedback.feedbackData.testimonyType && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Testimony Type
+                        </label>
+                        <p className="inline-block px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-bold">
+                          {selectedFeedback.feedbackData.testimonyType}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Testimony Title */}
+                    {selectedFeedback.feedbackData.title && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Title
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg font-bold text-lg">
+                          {selectedFeedback.feedbackData.title}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Testimony Date */}
+                    {selectedFeedback.feedbackData.testimonyDate && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Date of Occurrence
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                          {new Date(selectedFeedback.feedbackData.testimonyDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Story */}
+                    {selectedFeedback.feedbackData.story && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Testimony Story
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.story}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Share in Service */}
+                    {selectedFeedback.feedbackData.shareInService && (
+                      <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">🎤</span>
+                          <div>
+                            <p className="text-sm font-bold text-green-900 dark:text-green-200">Willing to Share in Service</p>
+                            <p className="text-xs text-green-700 dark:text-green-300">This person is open to sharing publicly</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Allow Contact */}
+                    {selectedFeedback.allowFollowUp && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">📞</span>
+                          <div>
+                            <p className="text-sm font-bold text-blue-900 dark:text-blue-200">Open to Contact</p>
+                            <p className="text-xs text-blue-700 dark:text-blue-300">Permission granted for follow-up</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* SUGGESTION FEEDBACK - NEW FIELDS ADDED ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'suggestion' && (
+                  <>
+                    {/* ✅ NEW: Suggestion Type */}
+                    {selectedFeedback.feedbackData.suggestionType && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Suggestion Category
+                        </label>
+                        <p className="inline-block px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 rounded-full text-sm font-bold">
+                          {selectedFeedback.feedbackData.suggestionType}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Suggestion Title */}
+                    {selectedFeedback.feedbackData.suggestionTitle && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Title
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg font-bold text-lg">
+                          {selectedFeedback.feedbackData.suggestionTitle}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Priority Level */}
+                    {selectedFeedback.feedbackData.priority && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Priority Level
+                        </label>
+                        <p className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                          selectedFeedback.feedbackData.priority === 'High' 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                            : selectedFeedback.feedbackData.priority === 'Medium'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {selectedFeedback.feedbackData.priority === 'High' && 'High Priority'}
+                          {selectedFeedback.feedbackData.priority === 'Medium' && 'Medium Priority'}
+                          {selectedFeedback.feedbackData.priority === 'Low' && 'Low Priority'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    {selectedFeedback.feedbackData.description && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Detailed Description
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.description}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Importance */}
+                    {selectedFeedback.feedbackData.importance && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Why It's Important
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.importance}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Expected Benefit */}
+                    {selectedFeedback.feedbackData.benefit && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Expected Impact / Benefit
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.benefit}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Willing to Help */}
+                    {selectedFeedback.feedbackData.willingToHelp && (
+                      <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          
+                          <div>
+                            <p className="text-sm font-bold text-green-900 dark:text-green-200">Willing to Help Implement</p>
+                            <p className="text-xs text-green-700 dark:text-green-300">This person volunteered to assist</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* PRAYER REQUEST - NEW FIELDS ADDED ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'prayer' && (
+                  <>
+                    {/* ✅ NEW: Urgency Badge */}
+                    {selectedFeedback.feedbackData.urgency && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Urgency Level
+                        </label>
+                        <p className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                          selectedFeedback.feedbackData.urgency === 'Urgent' 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 animate-pulse' 
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {selectedFeedback.feedbackData.urgency === 'Urgent' ? 'URGENT PRAYER' : 'Regular Prayer'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Prayer Category */}
+                    {selectedFeedback.feedbackData.prayerCategory && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Prayer Category
+                        </label>
+                        <p className="inline-block px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-bold">
+                          {selectedFeedback.feedbackData.prayerCategory}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Prayer Request */}
+                    {selectedFeedback.feedbackData.request && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Prayer Request
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.request}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Share on Prayer List */}
+                    {selectedFeedback.shareOnPrayerList && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-bold text-blue-900 dark:text-blue-200">Share on Church Prayer List</p>
+                            <p className="text-xs text-blue-700 dark:text-blue-300">Permission to share with congregation</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Personal Prayer Follow-up */}
+                    {selectedFeedback.feedbackData.prayerNeeded && (
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Requesting Personal Prayer</p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300">Wants someone to pray with them</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Contact Preferences */}
+                    {(selectedFeedback.feedbackData.preferredContact || selectedFeedback.feedbackData.bestTimeToContact) && (
+                      <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg space-y-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block">
+                          Contact Preferences
+                        </label>
+                        {selectedFeedback.feedbackData.preferredContact && (
+                          <p className="text-slate-900 dark:text-white">
+                            <span className="font-bold">Method:</span> {selectedFeedback.feedbackData.preferredContact}
+                          </p>
+                        )}
+                        {selectedFeedback.feedbackData.bestTimeToContact && (
+                          <p className="text-slate-900 dark:text-white">
+                            <span className="font-bold">Best Time:</span> {selectedFeedback.feedbackData.bestTimeToContact}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* GENERAL FEEDBACK - NEW FIELDS ADDED ✅ */}
+                {/* ============================================ */}
+                {selectedFeedback.category === 'general' && (
+                  <>
+                    {/* ✅ NEW: Feedback Type */}
+                    {selectedFeedback.feedbackData.feedbackType && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Feedback Type
+                        </label>
+                        <p className="inline-block px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-full text-sm font-bold">
+                          {selectedFeedback.feedbackData.feedbackType}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Subject */}
+                    {selectedFeedback.feedbackData.subject && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Subject
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg font-bold">
+                          {selectedFeedback.feedbackData.subject}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Message */}
+                    {selectedFeedback.feedbackData.message && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-2">
+                          Message
+                        </label>
+                        <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 p-3 rounded-lg whitespace-pre-wrap">
+                          {selectedFeedback.feedbackData.message}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ============================================ */}
+                {/* FALLBACK: Show any remaining fields not handled above */}
+                {/* ============================================ */}
                 {Object.entries(selectedFeedback.feedbackData || {})
+                  .filter(([key]) => {
+                    // Skip fields we've already displayed
+                    const displayedFields = [
+                      // Sermon
+                      'sermonTitle', 'sermonDate', 'rating', 'resonatedMost', 'application', 'questions', 'wouldRecommend',
+                      // Service
+                      'ratings', 'whatWentWell', 'improvements', 'wouldReturn',
+                      // Testimony
+                      'testimonyType', 'title', 'story', 'testimonyDate', 'shareInService',
+                      // Suggestion
+                      'suggestionType', 'suggestionTitle', 'description', 'importance', 'benefit', 'priority', 'willingToHelp',
+                      // Prayer
+                      'prayerCategory', 'request', 'urgency', 'prayerNeeded', 'preferredContact', 'bestTimeToContact',
+                      // General
+                      'feedbackType', 'subject', 'message'
+                    ];
+                    return !displayedFields.includes(key);
+                  })
                   .filter(([, value]) => value && typeof value !== 'object')
                   .map(([key, value]) => (
                     <div key={key}>
