@@ -14,6 +14,7 @@ const EventCarousel = ({ limit, showViewAll = false, autoPlayInterval = 5000 }) 
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isUserInteracting, setIsUserInteracting] = useState(false); // NEW
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const autoPlayRef = useRef(null);
@@ -33,13 +34,14 @@ const EventCarousel = ({ limit, showViewAll = false, autoPlayInterval = 5000 }) 
     fetchEvents();
   }, [limit]);
 
+  // UPDATED: Stop auto-play when user is interacting
   useEffect(() => {
-    if (events.length <= 1 || !isAutoPlaying) return;
+    if (events.length <= 1 || !isAutoPlaying || isUserInteracting) return;
     autoPlayRef.current = setInterval(() => {
       paginate(1);
     }, autoPlayInterval);
     return () => clearInterval(autoPlayRef.current);
-  }, [events.length, isAutoPlaying, currentIndex]);
+  }, [events.length, isAutoPlaying, currentIndex, isUserInteracting]);
 
   const fetchEvents = async () => {
     try {
@@ -118,8 +120,8 @@ const EventCarousel = ({ limit, showViewAll = false, autoPlayInterval = 5000 }) 
       onMouseEnter={() => setIsAutoPlaying(false)} 
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
-      {/* Main Slide Container - Fixed Height for consistency */}
-      <div className="relative w-full min-h-[480px] sm:min-h-[450px] md:min-h-[420px] flex items-center justify-center">
+      {/* Main Slide Container - Min Height for expansion */}
+      <div className="relative w-full min-h-[580px] sm:min-h-[450px] md:min-h-[420px] flex items-center justify-center">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={currentIndex}
@@ -136,11 +138,15 @@ const EventCarousel = ({ limit, showViewAll = false, autoPlayInterval = 5000 }) 
                     opacity: { duration: 0.3 }
                   }
             }
-            className="absolute w-full px-2 sm:px-0 max-w-full sm:max-w-lg md:max-w-2xl"
+            className="absolute w-full px-6 sm:px-8 md:px-0 max-w-full sm:max-w-lg md:max-w-2xl"
           >
-            {/* Fixed Height Container */}
+            {/* Min Height Container for expansion */}
             <div className="min-h-[480px] sm:min-h-[450px] md:min-h-[420px]">
-              <EventCard event={events[currentIndex]} />
+              <EventCard 
+                event={events[currentIndex]} 
+                onInteractionStart={() => setIsUserInteracting(true)}
+                onInteractionEnd={() => setIsUserInteracting(false)}
+              />
             </div>
           </motion.div>
         </AnimatePresence>

@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 // Revalidate every hour (3600 seconds)
-export const revalidate = 3600;
+//export const revalidate = 3600;
 
 export default async function EventsPage() {
   // Fetch events on the server using lib/events

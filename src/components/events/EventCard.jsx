@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Clock, MapPin, Calendar, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Card from '../common/Card';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, onInteractionStart, onInteractionEnd }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
@@ -74,47 +74,48 @@ const EventCard = ({ event }) => {
 
   // Registration handler for visitors
   const handleVisitorRegistration = async (e) => {
-    e.preventDefault();
-    
-    try {
-      setRegistering(true);
-      setError(null);
+  e.preventDefault();
+  
+  try {
+    setRegistering(true);
+    setError(null);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          visitorDetails: {
-            name: visitorDetails.name,
-            email: visitorDetails.email,
-            phone: visitorDetails.phone,
-            attendanceTime: visitorDetails.attendanceTime,
-            isVisitor: true
-          }
-        })
-      });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        visitorDetails: {
+          name: visitorDetails.name,
+          email: visitorDetails.email,
+          phone: visitorDetails.phone,
+          attendanceTime: visitorDetails.attendanceTime,
+          isVisitor: true
+        }
+      })
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (data.success) {
-        setRegistered(true);
-        setShowRegistrationForm(false);
-        setTimeout(() => {
-          setRegistered(false);
-          setVisitorDetails({ name: '', email: '', phone: '', attendanceTime: event.time || '' });
-        }, 3000);
-      } else {
-        setError(data.message || 'Registration failed');
-      }
-    } catch (err) {
-      console.error('Visitor registration error:', err);
-      setError('Failed to register. Please try again.');
-    } finally {
-      setRegistering(false);
+    if (data.success) {
+      setRegistered(true);
+      setShowRegistrationForm(false);
+      onInteractionEnd?.(); // Resume carousel after successful registration
+      setTimeout(() => {
+        setRegistered(false);
+        setVisitorDetails({ name: '', email: '', phone: '', attendanceTime: event.time || '' });
+      }, 3000);
+    } else {
+      setError(data.message || 'Registration failed');
     }
-  };
+  } catch (err) {
+    console.error('Visitor registration error:', err);
+    setError('Failed to register. Please try again.');
+  } finally {
+    setRegistering(false);
+  }
+};
 
   return (
     <Card 
@@ -174,7 +175,14 @@ const EventCard = ({ event }) => {
             
             {needsTruncation && (
               <button
-                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                onClick={() => {
+                  setIsDescriptionExpanded(!isDescriptionExpanded);
+                  if (!isDescriptionExpanded) {
+                    onInteractionStart?.(); // Pause carousel when expanding
+                  } else {
+                    onInteractionEnd?.(); // Resume when collapsing
+                  }
+                }}
                 className="mt-2 flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 font-bold text-[10px] uppercase tracking-wider transition-colors"
               >
                 {isDescriptionExpanded ? (
@@ -202,10 +210,13 @@ const EventCard = ({ event }) => {
                 </div>
               ) : (
                 <button 
-                  onClick={handleRegister}
-                  disabled={registering}
-                  className="w-full bg-slate-900 dark:bg-slate-100 hover:bg-red-600 dark:hover:bg-red-600 text-white dark:text-slate-900 dark:hover:text-white font-bold py-3 px-4 rounded-xl uppercase tracking-wider text-[10px] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
+                    onClick={() => {
+                      handleRegister();
+                      onInteractionStart?.(); // Pause carousel when opening form
+                    }}
+                    disabled={registering}
+                    className="w-full bg-slate-900 dark:bg-slate-100 hover:bg-red-600 dark:hover:bg-red-600 text-white dark:text-slate-900 dark:hover:text-white font-bold py-3 px-4 rounded-xl uppercase tracking-wider text-[10px] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
                   {registering ? (
                     <>
                       <Loader className="animate-spin" size={14} />
@@ -304,15 +315,16 @@ const EventCard = ({ event }) => {
                     )}
                   </button>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setShowRegistrationForm(false);
-                      setError(null);
-                    }}
-                    className="px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-[10px] transition-colors"
-                  >
-                    Cancel
-                  </button>
+                  type="button"
+                  onClick={() => {
+                    setShowRegistrationForm(false);
+                    setError(null);
+                    onInteractionEnd?.(); // Resume carousel when canceling
+                  }}
+                  className="px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-[10px] transition-colors"
+                >
+                  Cancel
+                </button>
                 </div>
               </form>
             </div>
