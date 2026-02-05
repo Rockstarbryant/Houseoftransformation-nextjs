@@ -14,7 +14,7 @@ export async function getEvents(options = {}) {
     search, 
     startDate, 
     endDate,
-    cache = 'no-store' // or 'force-cache', 'no-store'
+    //cache = 'no-store' // or 'force-cache', 'no-store'
   } = options;
 
   try {
