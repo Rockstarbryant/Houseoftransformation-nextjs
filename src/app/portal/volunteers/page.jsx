@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, CheckCircle, XCircle, Clock, Eye, Filter, Calendar, RefreshCw, AlertCircle, Info
+  Users, CheckCircle, XCircle, Clock, Eye, Filter, Calendar, RefreshCw, AlertCircle, Info, Trash2
 } from 'lucide-react';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
@@ -87,6 +87,7 @@ const VolunteerApplicationsAdmin = () => {
   });
   const [stats, setStats] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // Add this line
 
   // Toast utilities
   const showToast = (message, type = 'info') => {
@@ -180,6 +181,29 @@ const VolunteerApplicationsAdmin = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleDeleteApplication = async (applicationId) => {
+  setIsSubmitting(true);
+  try {
+    const response = await volunteerService.deleteApplication(applicationId);
+
+    if (response.success) {
+      await fetchApplications();
+      await fetchStats();
+      setDeleteConfirm(null);
+      setIsModalOpen(false);
+      setSelectedApp(null);
+      showToast('Application deleted successfully!', 'success');
+    } else {
+      showToast('Failed to delete application', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    showToast('Failed to delete application', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -337,9 +361,18 @@ const VolunteerApplicationsAdmin = () => {
                     </div>
                   </div>
 
+                  <div className="flex gap-2">
                   <Button variant="primary" onClick={() => handleViewDetails(app)}>
                     <Eye size={16} /> View Details
                   </Button>
+                  <Button 
+                    variant="secondary"
+                    onClick={() => setDeleteConfirm(app._id)}
+                    className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
                 </div>
               </div>
             ))}
@@ -482,8 +515,57 @@ const VolunteerApplicationsAdmin = () => {
                 </Button>
               </div>
             )}
+            {/* Delete Button - Available for all statuses */}
+            <div className="pt-4 border-t dark:border-slate-700">
+              <Button
+                variant="secondary"
+                onClick={() => setDeleteConfirm(selectedApp._id)}
+                disabled={isSubmitting}
+                className="w-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
+              >
+                <Trash2 size={16} />
+                Delete Application
+              </Button>
+            </div>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirm !== null}
+        onClose={() => !isSubmitting && setDeleteConfirm(null)}
+        title="Confirm Delete"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <AlertCircle className="text-red-600 dark:text-red-400" size={24} />
+            <p className="text-red-800 dark:text-red-200 font-medium">
+              Are you sure you want to delete this application? This action cannot be undone.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteConfirm(null)}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => handleDeleteApplication(deleteConfirm)}
+              disabled={isSubmitting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 size={16} />
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -138,7 +138,7 @@ const EventCarousel = ({ limit, showViewAll = false, autoPlayInterval = 5000 }) 
                     opacity: { duration: 0.3 }
                   }
             }
-            className="absolute w-full px-6 sm:px-8 md:px-0 max-w-full sm:max-w-lg md:max-w-2xl"
+            className="absolute w-full px-2 sm:px-8 md:px-0 max-w-full sm:max-w-lg md:max-w-2xl"
           >
             {/* Min Height Container for expansion */}
             <div className="min-h-[480px] sm:min-h-[450px] md:min-h-[420px]">

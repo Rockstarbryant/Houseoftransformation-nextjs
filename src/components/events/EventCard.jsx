@@ -127,7 +127,7 @@ const EventCard = ({ event, onInteractionStart, onInteractionEnd }) => {
       
 
       {/* Main Content */}
-      <div className="p-6 pt-20 flex-1 flex flex-col">
+      <div className="p-4 pt-20 flex-1 flex flex-col">
         {/* Title - Compact */}
         <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-4">
           {event.title}
