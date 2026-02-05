@@ -14,7 +14,7 @@ export async function getEvents(options = {}) {
     search, 
     startDate, 
     endDate,
-    //cache = 'no-store' // or 'force-cache', 'no-store'
+   // cache = 'no-store' // or 'force-cache', 'no-store'
   } = options;
 
   try {
@@ -30,10 +30,8 @@ export async function getEvents(options = {}) {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/events${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetch(url, {
-      cache, // 'no-store' for dynamic, 'force-cache' for static
-      next: { 
-        revalidate: cache === 'no-store' ? 0 : 3600 // Revalidate every hour for cached requests
-      },
+     // cache, // 'no-store' for dynamic, 'force-cache' for static
+      next: { revalidate: 60 }, // refresh every 60 seconds
     });
 
     if (!response.ok) {
