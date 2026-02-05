@@ -12,15 +12,15 @@ const HeroSection = () => {
   const churchImages = [
     {
       url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg',
-      alt: 'Church worship'
+      alt: 'Praise and worship service at House of Transformation Church Busia'
     },
     {
       url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg',
-      alt: 'Church community'
+      alt: 'The vibrant Christian community gathering in Busia County'
     },
     {
       url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768895135/church-gallery/jy2zygpn8zqqddq7aqjv.jpg',
-      alt: 'Church fellowship'
+      alt: 'Church fellowship and ministry at H.O.T Busia'
     }
   ];
 
@@ -30,6 +30,8 @@ const HeroSection = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-60 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
+        role="img"
+        aria-label="House of Transformation Church building and worship atmosphere"
       />
       <div className="absolute inset-0 bg-white/5" />
       
@@ -47,11 +49,11 @@ const HeroSection = () => {
             </div>
 
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-red-600 mb-8 leading-[0.9] tracking-tighter">
+              <span className="sr-only">House of Transformation Busia</span>
               H.O.T
               <span className="block text-blue-500 drop-shadow-sm">Transforming.</span>
               <span className="block text-blue-500">Lives.</span>
             </h1>
-
             <p className="max-w-lg text-lg md:text-xl text-slate-200 font-medium leading-relaxed mb-8 border-l-2 border-[#8B1A1A] pl-6">
               Touching and transforming lives through the anointed gospel of Jesus Christ. Join a community built on love and power.
             </p>
@@ -134,7 +136,7 @@ const HeroSection = () => {
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src={`${youtubeEmbedUrl}&autoplay=1`}
-                title="Live Stream"
+                title="House of Transformation Busia Live Sunday Service"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

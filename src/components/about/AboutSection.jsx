@@ -21,15 +21,15 @@ import Button from '../common/Button';
 const churchImages = [
   {
     url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg',
-    alt: 'Powerful worship service at House of Transformation'
+    alt: 'Sunday worship service at House of Transformation Main Campus Busia'
   },
   {
     url: 'https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg',
-    alt: 'Church community gathering'
+    alt: 'Members of the House of Transformation community gathering in Busia County'
   },
   {
     url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767445662/copy_of_ot_ibz2xp_6e0397.jpg',
-    alt: 'Fellowship and celebration'
+    alt: 'Community fellowship and ministry outreach in Western Kenya'
   }
 ];
 
@@ -85,6 +85,7 @@ const AboutSection = ({ preview = false }) => {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center">
             <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-4 md:mb-6">
+              <span className="sr-only">About House of Transformation Busia</span>
               THE <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
             </h1>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-xl">
@@ -114,7 +115,7 @@ const AboutSection = ({ preview = false }) => {
             </h2>
             <div className="grid md:grid-cols-2 gap-8 text-slate-600 dark:text-slate-300 leading-relaxed text-base md:text-lg">
               <p className="font-bold text-slate-900 dark:text-white">
-                House of Transformation Ministries (H.O.T) is a dynamic community located in Busia County, Kenya. We are a ministry outreach with deep roots in Nairobi.
+                House of Transformation Ministries (H.O.T) is a dynamic community located in Busia Town, Busia County. As a premier Christian ministry in Western Kenya, we have deep roots in Nairobi.
               </p>
               <p>
                 Dedicated to preaching the powerful Gospel of the Kingdom of God and seeing real transformation in people's lives spiritually, physically, and communally.
@@ -217,7 +218,11 @@ const AboutSection = ({ preview = false }) => {
               { name: "The Dedicated Team", role: "Pastors & Volunteers", img: churchImages[1].url }
             ].map((leader, i) => (
               <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-100 text-center space-y-4">
-                <img src={leader.img} className="w-28 h-28 md:w-32 md:h-32 mx-auto rounded-2xl md:rounded-3xl object-cover shadow-md" alt={leader.name} />
+                <img 
+                  src={leader.img} 
+                  className="w-28 h-28 md:w-32 md:h-32 mx-auto rounded-2xl md:rounded-3xl object-cover shadow-md" 
+                  alt={`${leader.name} - ${leader.role} at House of Transformation Busia`} 
+                />
                 <div>
                   <h4 className="text-lg md:text-xl font-black text-slate-900">{leader.name}</h4>
                   <p className="text-[#8B1A1A] font-bold text-[10px] uppercase tracking-widest">{leader.role}</p>
@@ -237,7 +242,17 @@ const AboutSection = ({ preview = false }) => {
             </h2>
             <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-slate-500 dark:text-slate-400 font-bold text-sm md:text-base">
               <div className="flex items-center gap-2"><Clock size={20} className="text-[#8B1A1A]" /> 9:00 AM • 11:00 AM</div>
-              <div className="flex items-center gap-2"><MapPin size={20} className="text-[#8B1A1A]" /> Busia Main Campus</div>
+              <div className="flex items-center gap-2"><MapPin size={20} className="text-[#8B1A1A]" />
+              <a 
+                href="https://www.google.com/maps?q=Busia+Main+Campus" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:text-[#8B1A1A] transition-colors"
+              >
+                <MapPin size={20} className="text-[#8B1A1A]" /> Busia Main Campus
+              </a>
+               Busia Main Campus
+              </div>
             </div>
             <Button variant="secondary" className="bg-[#8B1A1A] text-white rounded-2xl px-10 md:px-12 py-5 md:py-6 font-black uppercase text-sm tracking-[0.2em] shadow-lg shadow-red-900/20">
               <Play size={18} fill="white" className="mr-2" /> Watch Live

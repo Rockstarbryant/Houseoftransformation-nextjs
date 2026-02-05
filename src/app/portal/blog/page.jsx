@@ -137,7 +137,7 @@ const SimpleMarkdownEditor = ({ value, onChange, disabled }) => {
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-2 p-3 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600">
+      <div className="flex flex-wrap gap-2 p-2 -mx-4 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600">
         <button
           type="button"
           onClick={() => insertMarkdown('**', '**')}
@@ -232,11 +232,11 @@ const SimpleMarkdownEditor = ({ value, onChange, disabled }) => {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 font-mono text-sm resize-vertical"
+          className="w-full h-96 px-2 py-3 -mx-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 font-mono text-sm resize-vertical"
           placeholder="Start writing... Supports **bold**, *italic*, # headings, lists, and more!"
         />
       ) : (
-        <div className="min-h-64 p-4 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg overflow-auto">
+        <div className="min-h-64 p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg overflow-auto">
           <div className="prose dark:prose-invert max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {value}
@@ -501,7 +501,7 @@ const ManageBlog = () => {
 
   // Render
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-full mx-auto px-2 py-6">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <ConfirmDialog
         {...confirmDialog}
@@ -599,7 +599,7 @@ const ManageBlog = () => {
 
       {/* Form */}
       {showForm && canCreateBlog && (
-        <Card className="mb-6 p-6">
+        <Card className="mb-6 p-2">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold dark:text-white">
               {editingId ? 'Edit Post' : 'New Post'}
@@ -677,7 +677,7 @@ const ManageBlog = () => {
                 accept="image/*"
                 onChange={handleFeaturedImageUpload}
                 disabled={loading || uploading}
-                className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
+                className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-2 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
               />
               {uploading && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">Uploading featured image...</p>}
               {imagePreview && (
@@ -685,7 +685,7 @@ const ManageBlog = () => {
                   <img
                     src={imagePreview}
                     alt="Featured preview"
-                    className="max-w-md h-48 object-cover rounded-lg border dark:border-slate-700"
+                    className="max-w-full h-48 object-cover rounded-lg border dark:border-slate-700"
                   />
                 </div>
               )}
@@ -693,7 +693,7 @@ const ManageBlog = () => {
 
             {/* Content Editor */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm p-2 font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Content * (Markdown)
               </label>
               <SimpleMarkdownEditor

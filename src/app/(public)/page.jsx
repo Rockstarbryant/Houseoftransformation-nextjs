@@ -18,16 +18,51 @@ import { getFeaturedSermon, detectSermonType } from '@/lib/sermons';
 //export const revalidate = 3600; // revalidate every 3600 seconds (1 hour)
 // Server Component - runs on server, fetches data
 //export const dynamic = 'force-dynamic';
+
+// /app/(public)/page.jsx
+
+export const metadata = {
+  title: 'House of Transformation | Best Church in Busia, Kenya',
+  description: 'Join House of Transformation (H.O.T) in Busia County. Experience powerful apostolic teachings, divine worship, and a community dedicated to spiritual growth and impact.',
+  keywords: ['Church in Busia', 'House of Transformation Busia', 'Christian Ministry Kenya', 'Apostolic teachings Busia', 'Praise and Worship Busia', 'The Breeze Hotel Church Busia'],
+  openGraph: {
+    title: 'House of Transformation Busia - Transforming Lives',
+    description: 'Touching and transforming lives through the anointed gospel of Jesus Christ.',
+    images: ['https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg'],
+  },
+};
+
 export default async function HomePage() {
   // Fetch sermon data on the server
   const featuredSermon = await getFeaturedSermon();
   const sermonType = detectSermonType(featuredSermon);
 
   return (
-    <div className="home-page bg-white dark:bg-slate-950 selection:bg-red-100 dark:selection:bg-red-900 transition-colors">
-      {/* All sections remain exactly the same - just removed client-side fetching */}
-      
-      <HeroSection />
+    <div className="home-page ...">
+      {/* Add Schema.org JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Church",
+            "name": "House of Transformation",
+            "alternateName": "H.O.T Ministry",
+            "url": "https://busiahouseoftransformation.netlify.app",
+            "logo": "https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Main Street",
+              "addressLocality": "Busia Town",
+              "addressRegion": "Busia County",
+              "addressCountry": "KE"
+            },
+            "openingHours": "Su 09:00-12:00",
+            "description": "Transforming lives through the gospel of Jesus Christ in Busia, Kenya."
+          })
+        }}
+      />
+     <HeroSection />
       <LiveStreamSection />
       <QuickInfoBar />
 

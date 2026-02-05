@@ -11,31 +11,34 @@ import QueryProvider from '@/components/providers/QueryProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'House of Transformation Church',
-  description: 'Welcome to House of Transformation Church - A place of worship, community, and spiritual growth.',
-  keywords: 'church, worship, community, spiritual growth, sermons, events',
+  // This is the default title if a page doesn't have one
+  title: {
+    template: '%s | House of Transformation Church',
+    default: 'House of Transformation Church | Busia, Kenya', 
+  },
+  description: 'Transforming lives through the anointed gospel of Jesus Christ. Join our community in Busia for worship, spiritual growth, and fellowship.',
+  keywords: 'church in Busia, worship in Busia, HOT church Kenya, spiritual growth, Christian community Busia, M-Pesa church offerings',
+  
+  // PWA and Web App settings
   manifest: '/manifest.json',
-
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'HOT Church',
   },
-
-  formatDetection: {
-    telephone: false,
+  
+  // SEO Bots instructions
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
-
-  icons: {
-    icon: [
-      {
-        url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23dc2626" width="192" height="192"/><text x="50%" y="50%" font-size="80" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">HOT</text></svg>',
-        type: 'image/svg+xml',
-        sizes: '192x192',
-      },
-    ],
-    apple: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect fill="%23dc2626" width="180" height="180" rx="40"/><text x="90" y="90" font-size="70" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">HOT</text></svg>',
-  }
 };
 
 export default function RootLayout({ children }) {

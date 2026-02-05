@@ -426,11 +426,7 @@ const fetchData = async () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link href="/portal" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 mb-4">
-          <ArrowLeft size={20} />
-          Back to Dashboard
-        </Link>
-
+        
         <div className="flex items-center gap-3 mb-2">
           <MessageSquare size={40} className="text-[#8B1A1A]" />
           <h1 className="text-4xl font-black text-slate-900 dark:text-white">
@@ -548,7 +544,7 @@ const fetchData = async () => {
       {/* Feedback List */}
       {/* Feedback List */}
       {!isLoading && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
           Feedback ({filteredFeedback.length})
         </h3>
@@ -568,11 +564,11 @@ const fetchData = async () => {
             {filteredFeedback.map((item) => (
               <div
                 key={item._id}
-                className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className="border border-slate-200 dark:border-slate-700 rounded-lg p-0 hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col py-2 md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2 mb-1">
                       {/* ✅ ICON INSTEAD OF EMOJI */}
                       <div className={`p-2 rounded-lg bg-slate-50 dark:bg-slate-900 ${getCategoryColor(item.category)}`}>
                         {(() => {
@@ -595,16 +591,7 @@ const fetchData = async () => {
                           {formatDate(item.submittedAt)}
                         </p>
                       </div>
-                    </div>
-
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {item.isAnonymous && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                          <Lock size={14} /> Anonymous
-                        </span>
-                      )}
-                    </div>
+                    </div>      
                   </div>
 
                   {canReadCategory(item.category) && (
@@ -908,11 +895,10 @@ const fetchData = async () => {
                   <>
                     {/* ✅ NEW: First Time Visitor Badge */}
                     {selectedFeedback.isFirstTimeVisitor && (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                      <div className="bg-slate-300 dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-800 p-4 rounded-lg">
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl">👋</span>
                           <div>
-                            <p className="text-sm font-bold text-blue-900 dark:text-blue-200">First Time Visitor</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-blue-200">First Time Visitor</p>
                             <p className="text-xs text-blue-700 dark:text-blue-300">This person is new to our church!</p>
                           </div>
                         </div>
@@ -925,16 +911,23 @@ const fetchData = async () => {
                         <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase block mb-3">
                           Service Ratings
                         </label>
-                        <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
+                        <div className="grid grid-cols-2 gap-1 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">
                           {Object.entries(selectedFeedback.feedbackData.ratings).map(([category, rating]) => (
                             rating > 0 && (
-                              <div key={category} className="bg-white dark:bg-slate-800 p-3 rounded-lg">
-                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                              <div 
+                                key={category} 
+                                className="bg-white dark:bg-slate-800 px-2.5 py-2.5 rounded-lg flex flex-col min-w-0"
+                              >
+                                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 tracking-wide">
                                   {category.replace(/([A-Z])/g, ' $1').trim()}
                                 </p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-yellow-500">{'⭐'.repeat(rating)}</span>
-                                  <span className="text-xs text-slate-600 dark:text-slate-400">({rating}/5)</span>
+                                <div className="flex items-center shrink-0 gap-1 flex-wrap text-base">
+                                  <span className="text-emerald-500 text-base leading-none">
+                                    {'⭐'.repeat(rating)}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {rating}/5
+                                  </span>
                                 </div>
                               </div>
                             )

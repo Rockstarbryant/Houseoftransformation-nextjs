@@ -39,6 +39,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('fetch', (event) => {
+  // This empty handler is enough to satisfy the "Installable" requirement
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
+
 // Fetch event - network first, then cache
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
