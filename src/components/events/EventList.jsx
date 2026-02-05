@@ -7,7 +7,6 @@ import Loader from '../common/Loader';
 import Button from '../common/Button';
 import { getEvents } from '@/services/api/eventService';
 
-
 const EventList = ({ limit, showViewAll = false }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +43,7 @@ const EventList = ({ limit, showViewAll = false }) => {
 
   return (
     <div className="w-full">
-      {/* Container for the cards - strictly following your mapping logic */}
+      {/* Container for the cards */}
       <div className="space-y-8 max-w-4xl mx-auto">
         {events.length > 0 ? (
           events.map(event => (
@@ -59,14 +58,14 @@ const EventList = ({ limit, showViewAll = false }) => {
         )}
       </div>
 
-      {/* View All Action - Preserved logic with updated styling */}
+      {/* View All Action */}
       {showViewAll && events.length > 0 && (
         <div className="flex justify-center mt-20 relative">
           {/* Decorative line behind the button */}
-          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-100 -z-10" />
+          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-100 dark:bg-slate-800 -z-10" />
           
           <Link href="/events">
-            <div className="bg-[#F8FAFC] dark:bg-slate-800 px-8">
+            <div className="bg-[#F8FAFC] dark:bg-slate-900 px-8">
               <Button variant="primary">
                 <span className="flex items-center gap-2">
                   View All Events

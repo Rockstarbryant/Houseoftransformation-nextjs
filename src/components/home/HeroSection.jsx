@@ -3,11 +3,28 @@
 import React, { useState } from 'react';
 import { Play, X, Sparkles, MoveRight, Calendar } from 'lucide-react';
 import Button from '../common/Button';
+import Link from 'next/link';
 
 const HeroSection = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNewHereOpen, setIsNewHereOpen] = useState(false); 
 
-  const youtubeEmbedUrl = "https://www.youtube.com/embed/peKWWYI70wI?si=4_lY8fmBlagW4x4";
+const welcomeSteps = [
+  {
+    title: "Welcome Home",
+    desc: "We are so glad you're here. House of Transformation is a community dedicated to your growth.",
+    icon: <Sparkles className="text-red-500" size={24} />
+  },
+  {
+    title: "Join a Service",
+    desc: "We meet every Sunday at 9:00 AM & 11:00 AM at our Busia Main Campus.",
+    icon: <Calendar className="text-blue-500" size={24} />
+  },
+  {
+    title: "Get Connected",
+    desc: "Whether you want to join a department or a life group, there's a place for you.",
+    icon: <MoveRight className="text-[#8B1A1A]" size={24} />
+  }
+];
 
   const churchImages = [
     {
@@ -68,20 +85,28 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                variant="primary"
-                size="lg"
-                icon={Play}
-                onClick={() => setIsModalOpen(true)}
-                className="bg-[#8B1A1A] hover:bg-white hover:text-slate-900 border-none px-8 py-6 rounded-2xl shadow-2xl shadow-red-900/20 group transition-all"
-              >
-                <span className="font-black uppercase text-xs tracking-widest">Watch Service</span>
-              </Button>
+              {/* Change your Watch Live button to this */}
+              <Link href="/livestream">
+                <Button 
+                  variant="primary" 
+                  className="bg-[#8B1A1A] hover:bg-[#6B1515] text-white px-8 py-4 rounded-full flex items-center gap-3 shadow-xl transition-all hover:scale-105 active:scale-95"
+                >
+                  <div className="relative flex items-center justify-center">
+                    <Play size={20} fill="currentColor" />
+                    <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-20"></span>
+                  </div>
+                  <span className="font-bold text-sm uppercase tracking-widest">Watch Live</span>
+                </Button>
+              </Link>
 
-              <button className="flex items-center justify-center gap-3 px-8 py-6 rounded-2xl border border-white/20 bg-white/5 hover:bg-white/10 transition-all group backdrop-blur-sm">
-                <span className="font-black uppercase text-xs tracking-widest text-white">New Here?</span>
-                <MoveRight size={18} className="text-[#8B1A1A] group-hover:translate-x-2 transition-transform" />
-              </button>
+              {/* CORRECT: Pass the onClick directly to the custom Button component */}
+              <Button 
+                variant="secondary" 
+                className="border-white/20 text-white hover:bg-white/10 px-8 py-4 rounded-full"
+                onClick={() => setIsNewHereOpen(true)}
+              >
+                New Here?
+              </Button>
             </div>
           </div>
 
@@ -121,26 +146,52 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* ================= MODAL ================= */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-xl px-4 animate-in fade-in duration-300">
-          <div className="relative w-full max-w-5xl shadow-[0_0_100px_rgba(139,26,26,0.3)]">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute -top-16 right-0 text-white/50 hover:text-white transition-all bg-white/5 p-3 rounded-full hover:rotate-90"
-            >
-              <X size={32} />
-            </button>
+      {/* ================= NEW HERE MODAL ================= */}
+      {isNewHereOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setIsNewHereOpen(false)} />
+          
+          {/* Modal Card */}
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="p-8 md:p-12">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
+                    WE'VE BEEN <span className="text-[#8B1A1A]">EXPECTING</span> YOU.
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Everything you need to know to get started.</p>
+                </div>
+                <button onClick={() => setIsNewHereOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
 
-            <div className="relative pt-[56.25%] bg-black rounded-[2rem] overflow-hidden border border-white/10">
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src={`${youtubeEmbedUrl}&autoplay=1`}
-                title="House of Transformation Busia Live Sunday Service"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <div className="space-y-6">
+                {welcomeSteps.map((step, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-[#8B1A1A]/30 transition-colors">
+                    <div className="shrink-0 mt-1">{step.icon}</div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white">{step.title}</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 flex flex-col gap-3">
+                <Link href="/about" className="w-full">
+                  <Button className="w-full py-4 rounded-xl bg-[#8B1A1A] text-white font-bold">
+                    Learn More About Our Vision
+                  </Button>
+                </Link>
+                <button 
+                  onClick={() => setIsNewHereOpen(false)}
+                  className="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-[#8B1A1A] transition-colors"
+                >
+                  Maybe Later
+                </button>
+              </div>
             </div>
           </div>
         </div>

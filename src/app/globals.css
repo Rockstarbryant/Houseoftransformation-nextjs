@@ -205,6 +205,15 @@ img {
   animation: bounce-slow 6s ease-in-out infinite;
 }
 
+@keyframes splash-zoom {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-splash {
+  animation: splash-zoom 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @media print {
   body {
     background: white;

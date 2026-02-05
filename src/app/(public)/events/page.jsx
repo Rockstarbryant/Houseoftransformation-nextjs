@@ -1,11 +1,20 @@
-import EventList from '@/components/events/EventList';
+import EventsClient from '@/components/events/EventsClient';
+import { getEvents } from '@/lib/events';
 
 export const metadata = {
   title: 'Events - House of Transformation Church',
   description: 'Join us for upcoming events and special gatherings',
 };
-//export const revalidate = 3600; // revalidate every 3600 seconds (1 hour)
-export default function EventsPage() {
+
+// Revalidate every hour (3600 seconds)
+export const revalidate = 3600;
+
+export default async function EventsPage() {
+  // Fetch events on the server using lib/events
+  const events = await getEvents({ 
+    cache: 'no-store' // Use 'force-cache' for static generation
+  });
+
   return (
     <div className="pt-24 pb-24 bg-[#F8FAFC] dark:bg-slate-900 min-h-screen font-sans">
       <div className="max-w-7xl mx-auto px-6">
@@ -25,12 +34,12 @@ export default function EventsPage() {
           </h1>
           
           <p className="max-w-xl text-slate-500 dark:text-slate-400 font-bold text-lg uppercase tracking-tight">
-            Strategic gatherings designed for <span className="text-slate-900 dark:text-white">spiritual acceleration</span> and community impact.
+            Discover events that bring faith,<span className="text-slate-900 dark:text-white"> purpose</span> & community together.
           </p>
         </div>
 
-        {/* Logic Preserved: Calling the EventList component */}
-        <EventList />
+        {/* Client Component with Server-Fetched Data */}
+        <EventsClient events={events} />
         
       </div>
     </div>

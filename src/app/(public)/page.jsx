@@ -6,7 +6,7 @@ import HeroSection from '@/components/home/HeroSection';
 import QuickInfoBar from '@/components/home/QuickInfoBar';
 import AboutSection from '@/components/about/AboutSection';
 import LiveStreamSection from '@/components/home/LiveStreamSection';
-import EventList from '@/components/events/EventList';
+import EventCarousel from '@/components/events/EventCarousel';
 import ServiceAreaCard from '@/components/serviceAreas/ServiceAreaCard';
 import DonationSection from '@/components/donations/DonationSection';
 import SermonCard from '@/components/sermons/SermonCard';
@@ -118,28 +118,30 @@ export default async function HomePage() {
       </section>
 
       {/* Upcoming Events */}
-      <section className="py-20 md:py-32 bg-slate-50 dark:bg-slate-800 relative transition-colors">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 mb-12 md:mb-16">
-            <div className="text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-100/50 dark:bg-orange-900/30 rounded-full mb-4">
-                <Calendar size={14} className="text-orange-700 dark:text-orange-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700 dark:text-orange-400">Get Involved</span>
+        <section className="pt-36 pb-16 md:py-32 bg-slate-50 dark:bg-slate-800 relative transition-colors overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 md:px-8">
+            <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-10 md:mb-16">
+              <div className="text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-100/50 dark:bg-orange-900/30 rounded-full mb-4">
+                  <Calendar size={14} className="text-orange-700 dark:text-orange-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700 dark:text-orange-400">Get Involved</span>
+                </div>
+                {/* Adjusted text size for mobile: text-3xl instead of 4xl */}
+                <h2 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">
+                  Upcoming <span className="text-[#8B1A1A]">Events</span>
+                </h2>
               </div>
-              <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
-                Upcoming <span className="text-[#8B1A1A]">Events</span>
-              </h2>
+              <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium md:max-w-xs text-center md:text-right leading-relaxed">
+                Join our vibrant community for special gatherings, workshops, and worship experiences.
+              </p>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 font-medium md:max-w-xs text-center md:text-right leading-relaxed">
-              Join our vibrant community for special gatherings, workshops, and worship experiences.
-            </p>
+            
+            {/* Carousel Container */}
+            <div className="relative">
+              <EventCarousel limit={5} showViewAll autoPlayInterval={5000} />
+            </div>
           </div>
-          
-          <div className="rounded-[3rem] overflow-hidden shadow-2xl shadow-slate-200 dark:shadow-slate-900">
-            <EventList limit={1} showViewAll />
-          </div>
-        </div>
-      </section>
+        </section>
 
       {/* Service Areas */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 transition-colors">

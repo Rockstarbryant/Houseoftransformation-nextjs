@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, MapPin, X, Calendar, User, ArrowUpRight, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Clock, MapPin, Calendar, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Card from '../common/Card';
-import Button from '../common/Button';
 
 const EventCard = ({ event }) => {
-  const [showModal, setShowModal] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [error, setError] = useState(null);
@@ -30,23 +29,26 @@ const EventCard = ({ event }) => {
 
   const dateInfo = formatDate(event.date);
 
+  // Determine if description needs truncation
+  const needsTruncation = event.description && event.description.length > 100;
+  const displayDescription = isDescriptionExpanded || !needsTruncation 
+    ? event.description 
+    : event.description?.substring(0, 100) + '...';
+
   // Registration handler for authenticated users
   const handleRegister = async () => {
     try {
       setRegistering(true);
       setError(null);
 
-      // Check if user is authenticated
       const token = localStorage.getItem('token');
       
       if (!token) {
-        // Show form for visitors
         setShowRegistrationForm(true);
         setRegistering(false);
         return;
       }
 
-      // For authenticated users - direct registration
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}/register`, {
         method: 'POST',
         headers: {
@@ -59,10 +61,6 @@ const EventCard = ({ event }) => {
 
       if (data.success) {
         setRegistered(true);
-        setTimeout(() => {
-          setShowModal(false);
-          setRegistered(false);
-        }, 2000);
       } else {
         setError(data.message || 'Registration failed');
       }
@@ -104,10 +102,9 @@ const EventCard = ({ event }) => {
         setRegistered(true);
         setShowRegistrationForm(false);
         setTimeout(() => {
-          setShowModal(false);
           setRegistered(false);
           setVisitorDetails({ name: '', email: '', phone: '', attendanceTime: event.time || '' });
-        }, 2000);
+        }, 3000);
       } else {
         setError(data.message || 'Registration failed');
       }
@@ -120,260 +117,209 @@ const EventCard = ({ event }) => {
   };
 
   return (
-    <>
-      <Card 
-        hover 
-        padding="none" 
-        shadow="none"
-        className="group border-2 border-slate-100 hover:border-slate-900 rounded-[32px] overflow-hidden transition-all duration-300 bg-white dark:bg-slate-900 dark:text-white transition-colors"
-      >
-        <div className="flex flex-col md:flex-row items-stretch">
-          {/* Date Block: HQ Style */}
-          <div className="bg-slate-900 dark:bg-slate-800 text-white dark:text-white p-8 text-center md:min-w-[140px] flex flex-col justify-center border-b-4 border-red-600 md:border-b-0 md:border-r-4">
-            <p className="text-5xl font-black leading-none tracking-tighter">{dateInfo.day}</p>
-            <p className="text-xs font-black mt-2 uppercase tracking-[0.3em] text-red-500">{dateInfo.month}</p>
-            <p className="text-[10px] font-bold opacity-40 mt-1 uppercase tracking-widest">{dateInfo.year}</p>
-          </div>
+    <Card 
+      padding="none" 
+      shadow="none"
+      className="group border-2 border-slate-100 dark:border-slate-800 hover:border-slate-900 dark:hover:border-slate-600 rounded-3xl overflow-hidden transition-all duration-300 bg-white dark:bg-slate-900 h-full flex flex-col"
+    >
+      {/* Date Badge - Floating on top left */}
+      
 
-          {/* Event Details */}
-          <div className="flex-1 p-8">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none group-hover:text-red-600 transition-colors">
-                {event.title}
-              </h3>
-              <ArrowUpRight className="text-slate-200 group-hover:text-slate-900 transition-colors shrink-0" size={24} />
+      {/* Main Content */}
+      <div className="p-6 pt-20 flex-1 flex flex-col">
+        {/* Title - Compact */}
+        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-4">
+          {event.title}
+        </h3>
+        
+        {/* Quick Info Grid - Compact 2-column layout */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* Time */}
+          {event.time && (
+            <div className="flex items-start gap-2">
+              <Clock size={14} className="text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Time</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">{event.time}</p>
+              </div>
             </div>
+          )}
+          
+          {/* Location */}
+          {event.location && (
+            <div className="flex items-start gap-2">
+              <MapPin size={14} className="text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Location</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">{event.location}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Full Date */}
+        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <Calendar size={12} className="text-slate-400" />
+          <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            {dateInfo.full}
+          </p>
+        </div>
+
+        {/* Description */}
+        {event.description && (
+          <div className="mb-4 flex-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              {displayDescription}
+            </p>
             
-            <div className="flex flex-wrap gap-6 mb-6">
-              {event.time && (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <Clock size={14} className="text-red-600" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{event.time}</span>
-                </div>
-              )}
-              
-              {event.location && (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <MapPin size={14} className="text-red-600" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{event.location}</span>
-                </div>
-              )}
-
-              {event.category && (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <Calendar size={14} className="text-red-600" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{event.category}</span>
-                </div>
-              )}
-            </div>
-
-            {event.description && (
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium line-clamp-2 leading-relaxed">
-                {event.description}
-              </p>
+            {needsTruncation && (
+              <button
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="mt-2 flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 font-bold text-[10px] uppercase tracking-wider transition-colors"
+              >
+                {isDescriptionExpanded ? (
+                  <>
+                    Less <ChevronUp size={14} />
+                  </>
+                ) : (
+                  <>
+                    More <ChevronDown size={14} />
+                  </>
+                )}
+              </button>
             )}
           </div>
+        )}
 
-          {/* CTA Section */}
-          <div className="p-8 md:border-l border-slate-50 flex items-center">
-            <Button 
-              variant="secondary"
-              onClick={() => setShowModal(true)}
-              className="md:w-auto w-full font-black uppercase tracking-widest text-[10px] py-4 px-8 border-2"
-            >
-              View More
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Event Details Modal: Refactored for HQ Aesthetic */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4 backdrop-blur-md"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-900 rounded-[40px] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-slate-900 dark:border-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-10 py-6 flex justify-between items-center z-20">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Upcoming Event</span>
-              <button
-                onClick={() => setShowModal(false)}
-                className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 p-2 rounded-xl hover:bg-red-600 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="px-10 pb-12">
-              <div className="mb-10">
-                <h1 className="text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-4">
-                  {event.title}
-                </h1>
-                <div className="h-2 w-20 bg-red-600" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-10">
-                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                  <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">Schedule</p>
-                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{event.time}</p>
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">{dateInfo.full}</p>
+        {/* Registration Section */}
+        <div className="mt-auto">
+          {!showRegistrationForm ? (
+            <>
+              {registered ? (
+                <div className="bg-green-600 text-white font-bold py-3 px-4 rounded-xl uppercase tracking-wider text-[10px] flex items-center justify-center gap-2">
+                  <CheckCircle size={16} />
+                  Registered!
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                  <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">Location</p>
-                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{event.location}</p>
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">H.O.T</p>
-                </div>
-              </div>
-
-              {event.description && (
-                <div className="mb-10">
-                  <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Briefing Details</h3>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                    {event.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Registration Section */}
-              {!showRegistrationForm ? (
-                <div className="flex gap-4">
-                  {registered ? (
-                    <div className="flex-1 bg-green-600 text-white font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-2 shadow-xl">
-                      <CheckCircle size={20} />
-                      Registered Successfully!
-                    </div>
+              ) : (
+                <button 
+                  onClick={handleRegister}
+                  disabled={registering}
+                  className="w-full bg-slate-900 dark:bg-slate-100 hover:bg-red-600 dark:hover:bg-red-600 text-white dark:text-slate-900 dark:hover:text-white font-bold py-3 px-4 rounded-xl uppercase tracking-wider text-[10px] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {registering ? (
+                    <>
+                      <Loader className="animate-spin" size={14} />
+                      Processing...
+                    </>
                   ) : (
-                    <button 
-                      onClick={handleRegister}
-                      disabled={registering}
-                      className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 text-white dark:text-slate-900 font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {registering ? (
-                        <>
-                          <Loader className="animate-spin" size={16} />
-                          Processing...
-                        </>
-                      ) : (
-                        'Confirm your Attendance'
-                      )}
-                    </button>
+                    'Confirm Attendance'
                   )}
+                </button>
+              )}
+            </>
+          ) : null}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-center gap-2">
+              <AlertCircle className="text-red-600 flex-shrink-0" size={14} />
+              <p className="text-red-800 dark:text-red-200 text-[10px] font-semibold">{error}</p>
+            </div>
+          )}
+
+          {/* Visitor Registration Form */}
+          {showRegistrationForm && (
+            <div className="mt-4 space-y-3">
+              <h4 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">
+                Visitor Registration
+              </h4>
+              <form onSubmit={handleVisitorRegistration} className="space-y-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={visitorDetails.name}
+                    onChange={(e) => setVisitorDetails({...visitorDetails, name: e.target.value})}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={visitorDetails.email}
+                    onChange={(e) => setVisitorDetails({...visitorDetails, email: e.target.value})}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                    placeholder="john@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={visitorDetails.phone}
+                    onChange={(e) => setVisitorDetails({...visitorDetails, phone: e.target.value})}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                    placeholder="+254 700 000 000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Attendance Time *
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={visitorDetails.attendanceTime}
+                    onChange={(e) => setVisitorDetails({...visitorDetails, attendanceTime: e.target.value})}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => setShowModal(false)}
-                    className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 dark:text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
+                    type="submit"
+                    disabled={registering}
+                    className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 dark:hover:bg-red-600 text-white dark:text-slate-900 dark:hover:text-white font-bold py-2.5 px-4 rounded-xl uppercase tracking-wider text-[10px] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Close
+                    {registering ? (
+                      <>
+                        <Loader className="animate-spin" size={12} />
+                        Registering...
+                      </>
+                    ) : (
+                      'Confirm'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRegistrationForm(false);
+                      setError(null);
+                    }}
+                    className="px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-[10px] transition-colors"
+                  >
+                    Cancel
                   </button>
                 </div>
-              ) : null}
-
-              {/* Error Message */}
-              {error && (
-                <div className="mt-4 bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-center gap-3">
-                  <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-                  <p className="text-red-800 dark:text-red-200 text-sm font-semibold">{error}</p>
-                </div>
-              )}
-
-              {/* Visitor Registration Form */}
-              {showRegistrationForm && (
-                <div className="mt-6 space-y-4 border-t-2 border-slate-100 dark:border-slate-800 pt-6">
-                  <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">
-                    Visitor Registration
-                  </h3>
-                  <form onSubmit={handleVisitorRegistration} className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={visitorDetails.name}
-                        onChange={(e) => setVisitorDetails({...visitorDetails, name: e.target.value})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
-                        placeholder="John Doe"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={visitorDetails.email}
-                        onChange={(e) => setVisitorDetails({...visitorDetails, email: e.target.value})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
-                        placeholder="john@example.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={visitorDetails.phone}
-                        onChange={(e) => setVisitorDetails({...visitorDetails, phone: e.target.value})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
-                        placeholder="+254 700 000 000"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
-                        Expected Attendance Time *
-                      </label>
-                      <input
-                        type="time"
-                        required
-                        value={visitorDetails.attendanceTime}
-                        onChange={(e) => setVisitorDetails({...visitorDetails, attendanceTime: e.target.value})}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-red-600 outline-none transition-all"
-                      />
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                      <button
-                        type="submit"
-                        disabled={registering}
-                        className="flex-1 bg-slate-900 dark:bg-slate-100 hover:bg-red-600 text-white dark:text-slate-900 font-black py-5 px-6 rounded-2xl uppercase tracking-[0.2em] text-[11px] transition-all transform active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {registering ? (
-                          <>
-                            <Loader className="animate-spin" size={16} />
-                            Registering...
-                          </>
-                        ) : (
-                          'Confirm Registration'
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowRegistrationForm(false);
-                          setError(null);
-                        }}
-                        className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[11px] transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
+              </form>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </>
+      </div>
+    </Card>
   );
 };
 
