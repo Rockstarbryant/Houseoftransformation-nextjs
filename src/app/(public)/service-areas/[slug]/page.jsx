@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, Users, Clock, Mail, Phone, Plus } from 'lucide-react';
 import Modal from '@/components/common/Modal';
 import ApplicationForm from '@/components/volunteer/ApplicationForm';
@@ -86,11 +87,14 @@ export default function ServiceAreaDetailPage() {
       <div className="max-w-5xl mx-auto px-4">
         {/* Header Section */}
         <div className="mb-12">
-          <img 
-            src={data.imageUrl} 
-            alt={data.name}
-            className="w-full h-96 object-cover rounded-2xl mb-8 shadow-lg"
-          />
+          <div className="relative w-full h-96 mb-8">
+            <Image 
+              src={data.imageUrl} 
+              alt={data.name}
+              fill
+              className="object-cover rounded-2xl shadow-lg"
+            />
+          </div>
           <div className="bg-white rounded-2xl p-8 shadow-lg">
             <h1 className="text-5xl font-bold text-blue-900 mb-4">{data.name}</h1>
             <p className="text-xl text-gray-600 mb-8">{data.description}</p>
@@ -199,35 +203,43 @@ export default function ServiceAreaDetailPage() {
         </div>
 
         {/* Gallery Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
-          <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team in Action</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data.galleryImages.map((image, idx) => (
-              <img
-                key={idx}
-                src={image}
-                alt={`${data.name} team`}
-                className="w-full h-48 object-cover rounded-xl shadow-md hover:shadow-lg transition"
-              />
-            ))}
+        {data.galleryImages && data.galleryImages.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
+            <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team in Action</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data.galleryImages.map((image, idx) => (
+                <div key={idx} className="relative w-full h-48">
+                  <Image
+                    src={image}
+                    alt={`${data.name} team`}
+                    fill
+                    className="object-cover rounded-xl shadow-md hover:shadow-lg transition"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Testimonials Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
-          <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team Member Testimonials</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {data.testimonials.map((testimonial, idx) => (
-              <div key={idx} className="border-l-4 border-blue-600 pl-6 py-4">
-                <p className="text-gray-700 dark:text-gray-300 italic mb-4">"{testimonial.quote}"</p>
-                <div>
-                  <p className="font-bold text-blue-900 dark:text-white">{testimonial.name}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
-                </div>
-              </div>
-            ))}
+        {data.testimonials && data.testimonials.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg mb-12">
+            <h2 className="text-3xl font-bold text-blue-900 dark:text-white mb-8">Team Member Testimonials</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              {data.testimonials.map((testimonial, idx) => (
+                testimonial?.quote ? (
+                  <div key={idx} className="border-l-4 border-blue-600 pl-6 py-4">
+                    <p className="text-gray-700 dark:text-gray-300 italic mb-4">&ldquo;{testimonial.quote}&rdquo;</p>
+                    <div>
+                      <p className="font-bold text-blue-900 dark:text-white">{testimonial.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
+                    </div>
+                  </div>
+                ) : null
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-12 text-center text-white shadow-lg mb-12">

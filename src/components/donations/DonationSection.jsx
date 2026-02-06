@@ -2,72 +2,59 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, TrendingUp, Users, Target, ArrowRight, Zap, Loader } from 'lucide-react';
+import { donationApi } from '@/services/api/donationService';
+import { 
+  Heart, 
+  ArrowRight, 
+  Sparkles, 
+  ChevronLeft, 
+  ChevronRight,
+  Smartphone,
+  Building2,
+  CreditCard,
+  Copy,
+  Check,
+  HandHeart,
+  Gift,
+  Church
+} from 'lucide-react';
 
 export default function DonationSection() {
   const [campaigns, setCampaigns] = useState([]);
-  const [stats, setStats] = useState({
-    totalRaised: 0,
-    activeCampaigns: 0,
-    membersGiving: 0,
-    impactReach: 0
-  });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [featuredCampaign, setFeaturedCampaign] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [copiedField, setCopiedField] = useState(null);
+  const [showTithePayment, setShowTithePayment] = useState(false);
+  const [showOfferingPayment, setShowOfferingPayment] = useState(false);
 
   useEffect(() => {
-    fetchCampaignData();
+    fetchCampaigns();
   }, []);
 
-  const fetchCampaignData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Auto-slide for campaigns
+  useEffect(() => {
+    if (campaigns.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % campaigns.length);
+      }, 5000); // Change slide every 5 seconds
 
-      // Fetch all active campaigns
-      const response = await fetch('/api/campaigns?status=active&visibility=public', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
-      }
-
-      const data = await response.json();
-      
-      if (data.success && data.campaigns) {
-        setCampaigns(data.campaigns);
-
-        // Calculate stats
-        const totalRaised = data.campaigns.reduce((sum, c) => sum + (c.currentAmount || 0), 0);
-        const activeCampaigns = data.campaigns.filter(c => c.status === 'active').length;
-
-        setStats({
-          totalRaised,
-          activeCampaigns,
-          membersGiving: data.campaigns.reduce((sum, c) => sum + (c.pledges || 0), 0),
-          impactReach: 500 // This would come from a separate API if available
-        });
-
-        // Set featured campaign (first active one or marked as featured)
-        const featured = data.campaigns.find(c => c.isFeatured === true) || data.campaigns[0];
-        setFeaturedCampaign(featured);
-      }
-    } catch (err) {
-      console.error('Error fetching campaigns:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      return () => clearInterval(interval);
     }
-  };
+  }, [campaigns.length]);
 
-  const getProgressPercent = (raised, goal) => {
-    if (!goal || goal === 0) return 0;
-    return Math.round((raised / goal) * 100);
+  const fetchCampaigns = async () => {
+  try {
+    setIsLoading(true);
+    const response = await donationApi.campaigns.getFeatured();
+    
+    if (response.success && response.campaigns) {
+      setCampaigns(response.campaigns.slice(0, 5)); // Show max 5 featured campaigns
+    }
+  } catch (err) {
+    console.error('Error fetching featured campaigns:', err);
+  } finally {
+    setIsLoading(false);
+  }
   };
 
   const formatCurrency = (amount) => {
@@ -79,257 +66,360 @@ export default function DonationSection() {
     }).format(amount);
   };
 
+  const getProgressPercent = (raised, goal) => {
+    if (!goal || goal === 0) return 0;
+    return Math.min(100, Math.round((raised / goal) * 100));
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % campaigns.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + campaigns.length) % campaigns.length);
+  };
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  // Payment methods for tithe and offerings
+  const paymentMethods = [
+    {
+      id: 'mpesa-paybill',
+      icon: Smartphone,
+      title: 'M-Pesa Paybill',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50 dark:bg-green-950/30',
+      details: [
+        { label: 'Paybill Number', value: '247247', field: 'paybill' },
+        { label: 'Account Number', value: 'TITHE', field: 'account' }
+      ]
+    },
+    {
+      id: 'mpesa-till',
+      icon: CreditCard,
+      title: 'M-Pesa Till',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50 dark:bg-green-950/30',
+      details: [
+        { label: 'Till Number', value: '5678901', field: 'till' }
+      ]
+    },
+    {
+      id: 'bank',
+      icon: Building2,
+      title: 'Bank Transfer',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+      details: [
+        { label: 'Bank', value: 'Kenya Commercial Bank', field: 'bank' },
+        { label: 'Account', value: '1234567890', field: 'bankaccount' }
+      ]
+    }
+  ];
+
   return (
-    <section className="relative overflow-hidden py-24 bg-gradient-to-br from-slate-900 via-[#8B1A1A] to-red-900">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      </div>
+    <section className="relative py-16 bg-gradient-to-br from-slate-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-red-100 dark:bg-red-900/10 rounded-full blur-3xl opacity-30 -z-10"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-100 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30 -z-10"></div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-          {/* Left Content */}
-          <div className="text-white space-y-8">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-400/30 rounded-full mb-6 backdrop-blur-sm">
-                <Zap size={16} className="text-red-300" />
-                <span className="text-sm font-semibold text-red-100">Make an Impact Today</span>
-              </div>
-              
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                Support Our <span className="bg-gradient-to-r from-red-200 to-red-400 bg-clip-text text-transparent">Mission</span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-red-100 leading-relaxed max-w-2xl">
-                Your generous giving transforms lives and strengthens our community. Every contribution brings us closer to our vision of hope and healing.
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4">
-              <Link 
-                href="/donate"
-                className="group px-8 py-4 bg-white text-[#8B1A1A] font-bold rounded-xl hover:bg-red-50 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
-              >
-                <Heart size={20} />
-                Start Giving
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              
-              <Link 
-                href="/portal/donations"
-                className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
-              >
-                View Pledges
-              </Link>
-            </div>
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8">
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                <p className="text-sm text-red-100 font-semibold mb-1">Raised</p>
-                <p className="text-2xl font-black text-white">KES {(stats.totalRaised / 1000000).toFixed(1)}M</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                <p className="text-sm text-red-100 font-semibold mb-1">Active</p>
-                <p className="text-2xl font-black text-white">{stats.activeCampaigns}</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                <p className="text-sm text-red-100 font-semibold mb-1">Givers</p>
-                <p className="text-2xl font-black text-white">{stats.membersGiving}</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                <p className="text-sm text-red-100 font-semibold mb-1">Impact</p>
-                <p className="text-2xl font-black text-white">{stats.impactReach}</p>
-              </div>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-950/30 rounded-full mb-4">
+            <Sparkles size={16} className="text-[#8B1A1A]" />
+            <span className="text-sm font-bold text-[#8B1A1A] dark:text-red-400">Give Generously</span>
           </div>
-
-          {/* Right: Featured Campaign Card */}
-          {!isLoading && featuredCampaign && (
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl blur-2xl opacity-50"></div>
-              
-              <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                {/* Card Header */}
-                <div className="h-32 bg-gradient-to-br from-[#8B1A1A] to-red-900 p-6 text-white flex items-end">
-                  <div>
-                    <p className="text-4xl mb-2">🎯</p>
-                    <h3 className="text-2xl font-black">{featuredCampaign.title}</h3>
-                  </div>
-                </div>
-
-                {/* Card Content */}
-                <div className="p-8 space-y-6">
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {featuredCampaign.description?.substring(0, 120)}...
-                  </p>
-
-                  {/* Progress */}
-                  <div>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(featuredCampaign.currentAmount)} raised
-                      </span>
-                      <span className="text-sm font-bold text-green-600">
-                        {getProgressPercent(featuredCampaign.currentAmount, featuredCampaign.goalAmount)}%
-                      </span>
-                    </div>
-                    <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
-                        style={{ width: `${Math.min(getProgressPercent(featuredCampaign.currentAmount, featuredCampaign.goalAmount), 100)}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                      {formatCurrency(featuredCampaign.goalAmount - featuredCampaign.currentAmount)} to goal
-                    </p>
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-1">GOAL</p>
-                      <p className="text-lg font-black text-blue-600 dark:text-blue-400">
-                        {formatCurrency(featuredCampaign.goalAmount)}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-1">RAISED</p>
-                      <p className="text-lg font-black text-green-600 dark:text-green-400">
-                        {formatCurrency(featuredCampaign.currentAmount)}
-                      </p>
-                    </div>
-                    <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-1">TYPE</p>
-                      <p className="text-lg font-black text-orange-600 dark:text-orange-400 capitalize">
-                        {featuredCampaign.campaignType}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <Link
-                    href={`/campaigns/${featuredCampaign._id}`}
-                    className="w-full bg-gradient-to-r from-[#8B1A1A] to-red-700 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-                  >
-                    <Heart size={20} />
-                    View Campaign
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="flex justify-center items-center h-96">
-              <Loader className="animate-spin text-white" size={40} />
-            </div>
-          )}
+          
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
+            Transform Lives Through Giving
+          </h2>
+          
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
+            Every seed sown in faith multiplies into blessings. Your generosity fuels our mission to spread God&apos;s love 
+            and transform communities across Busia and beyond.
+          </p>
         </div>
 
-        {/* Featured Campaigns Grid */}
-        {!isLoading && campaigns.length > 0 && (
-          <div className="mt-20">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-black text-white mb-4">Active Campaigns</h2>
-              <p className="text-xl text-red-100">Choose a campaign to support our mission</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {campaigns.slice(0, 3).map((campaign) => {
-                const progress = getProgressPercent(campaign.currentAmount, campaign.goalAmount);
-                
-                return (
-                  <Link
-                    key={campaign._id}
-                    href={`/campaigns/${campaign._id}`}
-                    className="group bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden hover:scale-105"
-                  >
-                    {/* Header */}
-                    <div className="h-24 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
-                      <span className="text-5xl">🎯</span>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          
+          {/* Left: Campaigns Carousel */}
+          <div className="lg:col-span-2">
+            {!isLoading && campaigns.length > 0 ? (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                <div className="relative">
+                  
+                  {/* Campaign Slide */}
+                  <div className="p-6 sm:p-8">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
+                      <span className="text-3xl sm:text-4xl">
+                        {campaigns[currentSlide]?.campaignType === 'building' && '🏛️'}
+                        {campaigns[currentSlide]?.campaignType === 'mission' && '🌍'}
+                        {campaigns[currentSlide]?.campaignType === 'event' && '🎉'}
+                        {campaigns[currentSlide]?.campaignType === 'equipment' && '🎸'}
+                        {campaigns[currentSlide]?.campaignType === 'benevolence' && '❤️'}
+                        {campaigns[currentSlide]?.campaignType === 'offering' && '🙏'}
+                      </span>
+                      <span className="px-3 py-1 bg-[#8B1A1A] text-white text-xs font-bold rounded-full uppercase">
+                        Featured
+                      </span>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-6 space-y-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-[#8B1A1A] transition-colors">
-                          {campaign.title}
-                        </h3>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2">
-                          {campaign.description}
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3">
+                      {campaigns[currentSlide]?.title}
+                    </h3>
+
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
+                      {campaigns[currentSlide]?.description}
+                    </p>
+
+                    {campaigns[currentSlide]?.impactStatement && (
+                      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                        <p className="text-blue-800 dark:text-blue-200 text-xs sm:text-sm font-semibold">
+                          💡 {campaigns[currentSlide]?.impactStatement}
                         </p>
                       </div>
+                    )}
 
-                      {/* Progress Bar */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            {formatCurrency(campaign.currentAmount)}
-                          </span>
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            {progress}%
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-green-500 to-green-600"
-                            style={{ width: `${Math.min(progress, 100)}%` }}
-                          ></div>
-                        </div>
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Raised</span>
+                        <span className="font-bold text-green-600">{formatCurrency(campaigns[currentSlide]?.currentAmount || 0)}</span>
                       </div>
-
-                      {/* CTA */}
-                      <button className="w-full mt-4 px-4 py-3 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition-colors text-center">
-                        Support Campaign
-                      </button>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Goal</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(campaigns[currentSlide]?.goalAmount || 0)}</span>
+                      </div>
+                      
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all"
+                          style={{ width: `${Math.min(getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0), 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-center text-sm font-bold text-slate-900 dark:text-white">
+                        {getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0)}% Complete
+                      </p>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
 
-            {campaigns.length > 3 && (
-              <div className="text-center mt-12">
-                <Link
-                  href="/donate"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#8B1A1A] font-bold rounded-xl hover:bg-red-50 transition-all duration-300"
-                >
-                  View All Campaigns
-                  <ArrowRight size={20} />
-                </Link>
+                    <Link
+                      href={`/campaigns/${campaigns[currentSlide]?._id}`}
+                      className="w-full bg-[#8B1A1A] text-white py-3 sm:py-4 rounded-xl font-bold hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Heart size={20} />
+                      Support Campaign
+                    </Link>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {campaigns.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevSlide}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                      >
+                        <ChevronLeft size={24} className="text-slate-900 dark:text-white" />
+                      </button>
+                      
+                      <button
+                        onClick={nextSlide}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                      >
+                        <ChevronRight size={24} className="text-slate-900 dark:text-white" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Slide Indicators */}
+                  {campaigns.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      {campaigns.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentSlide(index)}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            index === currentSlide 
+                              ? 'w-8 bg-[#8B1A1A]' 
+                              : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-800">
+                <div className="text-center py-12">
+                  <Heart size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    No Active Campaigns
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Check back soon for new opportunities to give
+                  </p>
+                </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Why Give Section */}
-        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20 text-white">
-            <div className="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center mb-4">
-              <Users size={24} className="text-red-200" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">Community Impact</h3>
-            <p className="text-red-100">Your giving directly supports families and strengthens communities across Mombasa.</p>
+            
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20 text-white">
-            <div className="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center mb-4">
-              <Target size={24} className="text-red-200" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">Transparent Giving</h3>
-            <p className="text-red-100">Track your pledges and see exactly where your donations make a difference.</p>
-          </div>
+          {/* Right: Tithe & Offerings */}
+          <div className="space-y-6">
+            
+            {/* Tithe Card */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl overflow-hidden">
+              <div className="p-6 text-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <Church size={32} />
+                  <div>
+                    <h3 className="text-2xl font-black">Tithe</h3>
+                    <p className="text-blue-100 text-sm">Honor God with your first fruits</p>
+                  </div>
+                </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20 text-white">
-            <div className="w-12 h-12 bg-red-400/20 rounded-lg flex items-center justify-center mb-4">
-              <TrendingUp size={24} className="text-red-200" />
+                <p className="text-blue-50 text-sm mb-4 leading-relaxed">
+                  &quot;Bring the whole tithe into the storehouse...&quot; - Malachi 3:10
+                </p>
+
+                <button
+                  onClick={() => setShowTithePayment(!showTithePayment)}
+                  className="w-full bg-white text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <HandHeart size={20} />
+                  {showTithePayment ? 'Hide Payment Info' : 'Give Your Tithe'}
+                </button>
+
+                {/* Payment Methods */}
+                {showTithePayment && (
+                  <div className="mt-4 space-y-3">
+                    {paymentMethods.map((method) => {
+                      const Icon = method.icon;
+                      return (
+                        <div key={method.id} className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon size={16} className="text-white" />
+                            <span className="text-sm font-bold text-white">{method.title}</span>
+                          </div>
+                          {method.details.map((detail) => (
+                            <div key={detail.field} className="flex items-center justify-between bg-white/20 rounded px-2 py-1.5 mb-1">
+                              <div>
+                                <p className="text-xs text-blue-100">{detail.label}</p>
+                                <p className="font-mono text-xs font-bold text-white">{detail.value}</p>
+                              </div>
+                              <button
+                                onClick={() => copyToClipboard(detail.value, `tithe-${detail.field}`)}
+                                className="p-1 hover:bg-white/20 rounded"
+                              >
+                                {copiedField === `tithe-${detail.field}` ? (
+                                  <Check size={14} className="text-green-300" />
+                                ) : (
+                                  <Copy size={14} className="text-white" />
+                                )}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-            <h3 className="text-xl font-bold mb-2">Mission Advancement</h3>
-            <p className="text-red-100">Every contribution brings us closer to transforming lives through God's love.</p>
+
+            {/* Offerings Card */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-xl overflow-hidden">
+              <div className="p-6 text-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <Gift size={32} />
+                  <div>
+                    <h3 className="text-2xl font-black">Offerings</h3>
+                    <p className="text-purple-100 text-sm">Give cheerfully as the Lord leads</p>
+                  </div>
+                </div>
+
+                <p className="text-purple-50 text-sm mb-4 leading-relaxed">
+                  &quot;God loves a cheerful giver&quot; - 2 Corinthians 9:7
+                </p>
+
+                <button
+                  onClick={() => setShowOfferingPayment(!showOfferingPayment)}
+                  className="w-full bg-white text-purple-700 py-3 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Gift size={20} />
+                  {showOfferingPayment ? 'Hide Payment Info' : 'Give Your Offering'}
+                </button>
+
+                {/* Payment Methods */}
+                {showOfferingPayment && (
+                  <div className="mt-4 space-y-3">
+                    {paymentMethods.map((method) => {
+                      const Icon = method.icon;
+                      return (
+                        <div key={method.id} className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon size={16} className="text-white" />
+                            <span className="text-sm font-bold text-white">{method.title}</span>
+                          </div>
+                          {method.details.map((detail) => (
+                            <div key={detail.field} className="flex items-center justify-between bg-white/20 rounded px-2 py-1.5 mb-1">
+                              <div>
+                                <p className="text-xs text-purple-100">{detail.label}</p>
+                                <p className="font-mono text-xs font-bold text-white">
+                                  {detail.label === 'Account Number' ? 'OFFERING' : detail.value}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => copyToClipboard(
+                                  detail.label === 'Account Number' ? 'OFFERING' : detail.value, 
+                                  `offering-${detail.field}`
+                                )}
+                                className="p-1 hover:bg-white/20 rounded"
+                              >
+                                {copiedField === `offering-${detail.field}` ? (
+                                  <Check size={14} className="text-green-300" />
+                                ) : (
+                                  <Copy size={14} className="text-white" />
+                                )}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="text-center">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center">
+                <Heart className="text-[#8B1A1A]" size={24} />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-slate-900 dark:text-white">Ready to make a difference?</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Your generosity changes lives</p>
+              </div>
+            </div>
+            
+            <Link
+              href="/donate"
+              className="px-6 py-3 bg-gradient-to-r from-[#8B1A1A] to-red-700 text-white font-bold rounded-xl hover:shadow-lg transition-all whitespace-nowrap"
+            >
+              Explore All Ways to Give
+            </Link>
           </div>
         </div>
       </div>

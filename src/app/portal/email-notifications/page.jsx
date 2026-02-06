@@ -69,6 +69,7 @@ export default function EmailNotificationsPage() {
     } else if (activeTab === 'statistics') {
       fetchStatistics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, historyPage, inboxPage]);
 
   // Fetch functions

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Plus, Edit, Trash2, CheckCircle, AlertCircle, Search, X, Info, XCircle, Eye, EyeOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
 import { useAuth } from '@/context/AuthContext';
 import { blogService } from '@/services/api/blogService';
 import Card from '@/components/common/Card';
@@ -302,6 +302,7 @@ const ManageBlog = () => {
   // Lifecycle hooks
   useEffect(() => {
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -681,14 +682,17 @@ const ManageBlog = () => {
               />
               {uploading && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">Uploading featured image...</p>}
               {imagePreview && (
-                <div className="mt-4">
-                  <img
-                    src={imagePreview}
-                    alt="Featured preview"
-                    className="max-w-full h-48 object-cover rounded-lg border dark:border-slate-700"
-                  />
-                </div>
-              )}
+                    <div className="mt-4">
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={imagePreview}
+                          alt="Featured preview"
+                          fill
+                          className="object-cover rounded-lg border dark:border-slate-700"
+                        />
+                      </div>
+                    </div>
+                  )}
             </div>
 
             {/* Content Editor */}
@@ -753,14 +757,15 @@ const ManageBlog = () => {
                   }`}
                 >
                   {post.image && (
-                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-t-lg overflow-hidden">
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+                  <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-t-lg overflow-hidden relative">
+                    <Image
+                      src={post.image}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
 
                   <div className="p-5 flex flex-col flex-1">
                     <div className="flex items-center gap-2 mb-3">

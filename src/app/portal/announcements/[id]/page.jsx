@@ -94,10 +94,11 @@ export default function AnnouncementDetailPage() {
     });
   };
 
-  useEffect(() => {
+   useEffect(() => {
     if (params.id) {
       fetchAnnouncement();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   if (loading) {

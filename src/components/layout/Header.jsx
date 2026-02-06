@@ -48,8 +48,9 @@ const Header = () => {
 
   const navLinksAfterDropdown = [
     { path: '/volunteer', label: 'Volunteer' },
-    { path: '/portal', label: 'portal' },
+    { path: '/donate', label: 'Donations' },
     { path: '/contact', label: 'Contact' },
+    { path: '/portal', label: 'portal' },
     { path: '/feedback', label: 'Feedback' }
   ];
 

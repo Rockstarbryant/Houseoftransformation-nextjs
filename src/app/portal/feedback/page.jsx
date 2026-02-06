@@ -87,11 +87,13 @@ export default function FeedbackPage() {
     setError('You do not have permission to access feedback');
     setIsLoading(false);
   }
-  }, [user?.role?.permissions]); // Only refetch when permissions change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [user?.role?.permissions]); //
 
   useEffect(() => {
   applyFilters();
-  }, [feedback, filters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [feedback, filters]); // Intentional: applyFilters uses these dependencies
 
   // ============================================
 // FETCH RECYCLED FEEDBACK

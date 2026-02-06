@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -67,36 +68,8 @@ export default function EventsPage() {
   const [formErrors, setFormErrors] = useState({});
 
   // ============================================
-  // PERMISSION CHECK
+  // DATA FETCHING & FILTERING FUNCTIONS
   // ============================================
-  
-  if (!canManageEvents()) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Calendar className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Access Denied
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400">
-            You don't have permission to manage events
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // DATA FETCHING
-  // ============================================
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [events, searchQuery, statusFilter, sortOrder]);
 
   const fetchEvents = async () => {
     try {
@@ -125,6 +98,36 @@ export default function EventsPage() {
     filtered = sortEventsByDate(filtered, sortOrder);
     setFilteredEvents(filtered);
   };
+
+  useEffect(() => {
+    fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, searchQuery, statusFilter, sortOrder]);
+
+  // ============================================
+  // PERMISSION CHECK (AFTER ALL HOOKS)
+  // ============================================
+  
+  if (!canManageEvents()) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Calendar className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400">
+            You don&apos;t have permission to manage events
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================
   // CRUD HANDLERS
@@ -506,11 +509,12 @@ export default function EventsPage() {
                     className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     {event.image ? (
-                      <div className="h-48 bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                        <img
+                      <div className="h-48 bg-slate-200 dark:bg-slate-700 overflow-hidden relative">
+                        <Image
                           src={event.image}
                           alt={event.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       </div>
                     ) : (

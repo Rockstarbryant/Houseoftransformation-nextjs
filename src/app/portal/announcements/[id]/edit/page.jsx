@@ -126,12 +126,13 @@ export default function AnnouncementFormPage() {
     }));
   };
 
-  useEffect(() => {
+   useEffect(() => {
     fetchRoles();
     if (isEditMode && params.id) {
       fetchAnnouncement();
     }
-  }, [params.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id, isEditMode]);
 
   return (
     <div className="space-y-6">

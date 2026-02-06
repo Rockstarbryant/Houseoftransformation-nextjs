@@ -184,7 +184,8 @@ const ManageLiveStream = () => {
   if (selectedStream) {
     loadTranscript(selectedStream._id);
   }
-}, [selectedStream?._id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [selectedStream?._id]); // Intentional: loadTranscript is stable, only _id changes matter
 
   useEffect(() => {
     publicFetchArchives({ 

@@ -155,7 +155,7 @@ export default async function HomePage() {
               Make Your <span className="text-[#8B1A1A]">Impact</span>
             </h2>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto">
-              You weren't just meant to attend; you were meant to belong. Find your team and start your journey of impact.
+              You weren&apos;t just meant to attend; you were meant to belong. Find your team and start your journey of impact.
             </p>
           </div>
 
@@ -178,11 +178,7 @@ export default async function HomePage() {
       </section>
 
       {/* Donation Section */}
-      <div className="px-4 md:px-8 pb-12">
-        <div className="max-w-7xl mx-auto rounded-[3rem] overflow-hidden shadow-2xl dark:shadow-slate-900">
-          <DonationSection />
-        </div>
-      </div>
+      <DonationSection />
     </div>
   );
 }

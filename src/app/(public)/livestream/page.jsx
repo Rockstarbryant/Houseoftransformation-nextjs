@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Play, Calendar, Users, BookOpen, Share2, TrendingUp, ChevronDown, Monitor, Zap, LayoutGrid, List, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useLivestream } from '@/hooks/useLivestream';
 // page.jsx snippet
@@ -14,12 +15,15 @@ const LiveStreamPage = () => {
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
   const { floatingPiP, setFloatingPiP } = usePiP(); // Use the global hook
+  const [pipSize, setPipSize] = useState({ width: 400, height: 225 });
+  const [pipPosition, setPipPosition] = useState({ x: 20, y: 20 });
 
   
 
   // FIX: Load archives on component mount with default filters
   useEffect(() => {
     fetchArchives({ type: filterType, sortBy: sortBy, limit: 100 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Restore PiP from localStorage on mount and request wake lock
@@ -63,16 +67,17 @@ const LiveStreamPage = () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
   const streamTypes = [
     { value: '', label: 'All Livestreams' },
-    { value: 'sermon', label: 'ðŸŽ¤ Sermons' },
-    { value: 'praise_worship', label: 'ðŸŽµ Praise & Worship' },
-    { value: 'full_service', label: 'â›ª Full Service' },
-    { value: 'sunday_school', label: 'ðŸ"š Sunday School' },
-    { value: 'special_event', label: 'ðŸŽ‰ Special Events' }
+    { value: 'sermon', label: 'Sermons' },
+    { value: 'praise_worship', label: 'Praise & Worship' },
+    { value: 'full_service', label: 'Full Service' },
+    { value: 'sunday_school', label: 'Sunday School' },
+    { value: 'special_event', label: 'Special Events' }
   ];
 
   const handleFilterChange = (type) => {
@@ -267,7 +272,14 @@ const LiveStreamPage = () => {
                   <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[32px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl flex flex-col">
                     {/* Thumbnail */}
                     <div className="relative aspect-video bg-slate-900 overflow-hidden cursor-pointer" onClick={() => setSelectedStream(stream)}>
-                      {stream.thumbnail && <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />}
+                      {stream.thumbnail && (
+                        <Image 
+                          src={stream.thumbnail} 
+                          alt={stream.title} 
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                         <Play size={48} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -300,7 +312,7 @@ const LiveStreamPage = () => {
                       {stream.aiSummary?.summary && (
                         <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl mb-8 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
                           <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium line-clamp-2 italic leading-relaxed">
-                            "{stream.aiSummary.summary}"
+                            &ldquo;{stream.aiSummary.summary}&rdquo;
                           </p>
                         </div>
                       )}
@@ -330,7 +342,14 @@ const LiveStreamPage = () => {
                   <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[24px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl p-6 flex gap-8 cursor-pointer" onClick={() => setSelectedStream(stream)}>
                     {/* Thumbnail */}
                     <div className="relative w-40 h-24 bg-slate-900 rounded-2xl overflow-hidden flex-shrink-0">
-                      {stream.thumbnail && <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />}
+                      {stream.thumbnail && (
+                        <Image 
+                          src={stream.thumbnail} 
+                          alt={stream.title} 
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                         <Play size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>

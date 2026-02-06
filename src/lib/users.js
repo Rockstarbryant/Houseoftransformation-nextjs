@@ -4,10 +4,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 export async function getAllUsers() {
   try {
     const res = await fetch(`${API_URL}/users`, {
-      //next: { revalidate: 60 }, // refresh every 60 seconds
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    next: { revalidate: 60 },
+    headers: { 'Content-Type': 'application/json' },
+  });
 
     if (!res.ok) throw new Error('Failed to fetch users');
 

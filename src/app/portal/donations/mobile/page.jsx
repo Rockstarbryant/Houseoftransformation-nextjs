@@ -194,6 +194,7 @@ export default function MobileDonationsPage() {
     if (canAccessDonations()) {
       checkOverdueCampaigns();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================
@@ -422,7 +423,7 @@ export default function MobileDonationsPage() {
           <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
           <h2 className="text-xl font-bold text-red-900 dark:text-red-200 mb-2">Access Denied</h2>
           <p className="text-sm text-red-700 dark:text-red-300">
-            You don't have permission to access donations
+            You don&apos;t have permission to access donations
           </p>
         </div>
       </div>

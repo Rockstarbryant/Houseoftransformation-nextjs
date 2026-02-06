@@ -1,98 +1,113 @@
 "use client"
 
 import React, { useState } from 'react';
-import { User, Mail, Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
-import Input from '../common/Input';
+import { Send, CheckCircle2, Heart, MessageCircle, User, Mail } from 'lucide-react';
 
 const ContactForm = () => {
-  const [formData, setFormData] = useState({ name: '', email: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [joined, setJoined] = useState(false);
+  const [status, setStatus] = useState('idle'); // idle, submitting, success
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    // Simulate HQ Onboarding
+    setStatus('submitting');
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setSubmitting(false);
-    setJoined(true);
+    setStatus('success');
   };
 
-  if (joined) {
+  if (status === 'success') {
     return (
-      <div className="bg-slate-900 rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-900/20">
-          <Sparkles className="text-white" size={32} />
+      <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-slate-900 rounded-3xl border border-stone-100 shadow-xl">
+        <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-6">
+          <CheckCircle2 size={32} />
         </div>
-        <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Welcome to HQ</h3>
-        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-8">Onboarding Sequence Initiated</p>
-        <p className="text-white/70 text-sm leading-relaxed mb-8">Check your digital mail. We've sent your first steps to transformation.</p>
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Received</h3>
+        <p className="text-slate-500 mb-8 max-w-xs mx-auto">
+          Thank you for reaching out. A member of our team will be in touch with you shortly.
+        </p>
         <button 
-          onClick={() => setJoined(false)}
-          className="text-white/40 hover:text-white text-[10px] font-black uppercase underline tracking-widest transition-colors"
+          onClick={() => setStatus('idle')}
+          className="text-red-600 font-semibold hover:text-red-700 underline underline-offset-4"
         >
-          Reset Transmission
+          Send another message
         </button>
       </div>
     );
   }
 
   return (
-    <div className="relative bg-white border-2 border-slate-900 rounded-[40px] p-8 md:p-12 shadow-2xl shadow-slate-200">
-      {/* DECORATIVE BADGE */}
-      <div className="absolute -top-4 -right-4 bg-red-600 text-white p-4 rounded-2xl rotate-12 shadow-lg">
-        <Zap size={24} fill="white" />
-      </div>
-
-      <div className="mb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-[2px] w-8 bg-red-600" />
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">New Member Entry</span>
-        </div>
-        <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-4">
-          Start Your <br /> <span className="text-red-600 italic">Journey</span>
-        </h2>
-        <p className="text-slate-500 font-bold text-xs uppercase tracking-tight">
-          Join the community and receive weekly <br /> transformation blueprints.
+    <div className="bg-white dark:bg-slate-900 p-8 md:p-10 rounded-[32px] shadow-xl shadow-slate-200/50 border border-white">
+      <div className="mb-8">
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-400">Send a Message</h3>
+        <p className="text-slate-500 dark:text-slate-200 mt-2">
+          Have a question or need prayer? Fill out the form below.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-3">
-          <Input 
-            name="name" 
-            placeholder="Full Name" 
-            icon={User} 
-            value={formData.name} 
-            onChange={(e) => setFormData({...formData, name: e.target.value})} 
-            required 
-          />
-          <Input 
-            name="email" 
-            type="email" 
-            placeholder="Digital Mail (Email)" 
-            icon={Mail} 
-            value={formData.email} 
-            onChange={(e) => setFormData({...formData, email: e.target.value})} 
-            required 
-          />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid md:grid-cols-2 gap-5">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Name</label>
+            <div className="relative">
+              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-200" />
+              <input 
+                required
+                type="text" 
+                placeholder="Your full name"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-600 border-none rounded-xl focus:ring-2 focus:ring-red-600/20 focus:bg-white transition-all outline-none text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Email</label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-200" />
+              <input 
+                required
+                type="email" 
+                placeholder="you@example.com"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-600 border-none rounded-xl focus:ring-2 focus:ring-red-600/20 focus:bg-white transition-all outline-none text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Topic</label>
+          <div className="relative">
+            <Heart size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-200" />
+            <select className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-600 border-none rounded-xl focus:ring-2 focus:ring-red-600/20 focus:bg-white transition-all outline-none text-slate-800 appearance-none cursor-pointer">
+              <option>General Inquiry</option>
+              <option>Direction</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Message</label>
+          <div className="relative">
+            <MessageCircle size={18} className="absolute left-4 top-5 text-slate-400 dark:text-slate-200" />
+            <textarea 
+              required
+              rows={4}
+              placeholder="How can we help you today?"
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-600 border-none rounded-xl focus:ring-2 focus:ring-red-600/20 focus:bg-white transition-all outline-none text-slate-800 resize-none placeholder:text-slate-400"
+            />
+          </div>
         </div>
 
         <button 
-          type="submit" 
-          disabled={submitting}
-          className="w-full bg-slate-900 hover:bg-red-600 text-white rounded-2xl py-6 font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 disabled:bg-slate-300 shadow-xl shadow-slate-200"
+          type="submit"
+          disabled={status === 'submitting'}
+          className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-700/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
         >
-          {submitting ? 'Connecting...' : 'Join the Movement'}
-          <ArrowRight size={16} className={submitting ? 'hidden' : 'block'} />
+          {status === 'submitting' ? (
+            'Sending...'
+          ) : (
+            <>
+              Send Message <Send size={18} />
+            </>
+          )}
         </button>
-
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <ShieldCheck size={14} className="text-emerald-500" />
-          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-            Privacy Protected // Secure Entry
-          </p>
-        </div>
       </form>
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Play, X, Sparkles, MoveRight, Calendar } from 'lucide-react';
 import Button from '../common/Button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const HeroSection = () => {
   const [isNewHereOpen, setIsNewHereOpen] = useState(false); 
@@ -114,32 +115,36 @@ const welcomeSteps = [
           <div className="relative lg:h-[600px] flex items-center justify-center lg:justify-end">
             {/* Main Center Frame */}
             <div className="relative w-full max-w-[450px] aspect-[4/5] rounded-[3rem] overflow-hidden border-4 border-white/10 shadow-2xl z-20 group">
-              <img
+              <Image
                 src={churchImages[0].url}
                 alt={churchImages[0].alt}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                loading="eager"
+                fill
+                className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                priority   // ← replaces loading="eager" – good for LCP hero image
+                sizes="(max-width: 768px) 100vw, 450px" // optional but improves performance
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
             </div>
 
             {/* Top Floating Frame - LAZY LOAD */}
             <div className="absolute -top-10 -right-4 md:right-10 w-48 md:w-64 aspect-video rounded-3xl overflow-hidden border-4 border-slate-900 shadow-2xl z-30 hidden sm:block animate-bounce-slow">
-              <img
+              <Image
                 src={churchImages[1].url}
                 alt={churchImages[1].alt}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                className="object-cover"
+                sizes="256px" // roughly matches rendered size
               />
             </div>
 
             {/* Bottom Floating Frame - LAZY LOAD */}
-            <div className="absolute -bottom-10 -left-4 md:-left-10 w-48 md:w-72 aspect-video rounded-3xl overflow-hidden border-4 border-slate-900 shadow-2xl z-30 hidden lg:block">
-              <img
+           <div className="absolute -bottom-10 -left-4 md:-left-10 w-48 md:w-72 aspect-video rounded-3xl overflow-hidden border-4 border-slate-900 shadow-2xl z-30 hidden lg:block">
+              <Image
                 src={churchImages[2].url}
                 alt={churchImages[2].alt}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                className="object-cover"
+                sizes="288px"
               />
             </div>
           </div>

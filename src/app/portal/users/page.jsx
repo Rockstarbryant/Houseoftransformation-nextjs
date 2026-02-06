@@ -52,29 +52,7 @@ export default function UsersPage() {
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // PERMISSION CHECK
-  if (!canManageUsers()) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h2>
-          <p className="text-slate-600 dark:text-slate-400">You don't have permission to manage users</p>
-        </div>
-      </div>
-    );
-  }
-
-  // DEBOUNCE SEARCH
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(filters.search), 500);
-    return () => clearTimeout(timer);
-  }, [filters.search]);
-
-  // FETCH DATA
-  useEffect(() => { fetchUsers(); }, [currentPage, itemsPerPage, debouncedSearch, filters.role, filters.status]);
-  useEffect(() => { fetchRoles(); fetchStats(); }, []);
-
+  // FETCH FUNCTIONS
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -97,18 +75,48 @@ export default function UsersPage() {
       const response = await getAllRoles();
       if (response.success) setRoles(response.roles || []);
     } catch (err) {
-      console.error('Fetch roles error:', err);
+      console.error('Failed to fetch roles:', err);
     }
   };
 
   const fetchStats = async () => {
     try {
       const response = await getUserStats();
-      if (response.success) setStats(response.stats || { total: 0, active: 0, inactive: 0, banned: 0, byRole: {} });
+      if (response.success) setStats(response.stats);
     } catch (err) {
-      console.error('Fetch stats error:', err);
+      console.error('Failed to fetch stats:', err);
     }
   };
+
+  // DEBOUNCE SEARCH
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(filters.search), 500);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
+  // FETCH DATA
+  useEffect(() => { 
+    fetchUsers(); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, debouncedSearch, filters.role, filters.status]);
+  
+  useEffect(() => { 
+    fetchRoles(); 
+    fetchStats(); 
+  }, []);
+
+  // PERMISSION CHECK (AFTER ALL HOOKS)
+  if (!canManageUsers()) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h2>
+          <p className="text-slate-600 dark:text-slate-400">You don&apos;t have permission to manage users</p>
+        </div>
+      </div>
+    );
+  }
 
   // HANDLERS
   const handleUpdateUser = async (e) => {
@@ -397,7 +405,7 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-700">
             <h3 className="text-xl font-bold text-red-600 mb-4">Ban User</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Permanently ban <strong>{selectedUser.name}</strong>? They won't be able to re-register with the same email or IP.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Permanently ban <strong>{selectedUser.name}</strong>? They won&apos;t be able to re-register with the same email or IP.</p>
             <form onSubmit={handleBanUser} className="space-y-4">
               <div><label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Ban Reason *</label><textarea value={banReason} onChange={(e) => setBanReason(e.target.value)} required minLength={5} rows={3} placeholder="Minimum 5 characters..." className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-red-500 outline-none dark:bg-slate-700 dark:text-white resize-none" /></div>
               <div className="flex gap-3">
@@ -414,7 +422,7 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-700">
             <h3 className="text-xl font-bold text-red-600 mb-4">Delete User</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Delete <strong>{selectedUser.name}</strong> from both MongoDB and Supabase? This can be reversed if needed.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Are you sure you want to delete <strong>{selectedUser.name}</strong> permanently? This action cannot be reversed.</p>
             <div className="flex gap-3">
               <button onClick={handleDeleteUser} disabled={actionLoading} className="flex-1 px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition disabled:opacity-50">{actionLoading ? 'Deleting...' : 'Delete User'}</button>
               <button onClick={() => { setShowDeleteModal(false); setSelectedUser(null); }} className="flex-1 px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancel</button>
@@ -431,7 +439,7 @@ export default function UsersPage() {
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Register a user manually (for elderly or children who cannot register themselves)</p>
             {generatedPassword ? (
               <div className="space-y-4">
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"><p className="text-sm text-green-700 dark:text-green-300 mb-2">User registered successfully!</p><div className="bg-white dark:bg-slate-700 p-3 rounded-lg"><p className="text-xs text-slate-600 dark:text-slate-400 mb-2">Temporary Password:</p><div className="flex items-center gap-2"><input type={showPassword ? 'text' : 'password'} value={generatedPassword} readOnly className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-600 rounded border-0 font-mono text-sm" /><button onClick={() => setShowPassword(!showPassword)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button><button onClick={() => {navigator.clipboard.writeText(generatedPassword); setSuccess('Password copied!'); setTimeout(() => setSuccess(null), 2000);}} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"><Copy size={18} /></button></div></div><p className="text-xs text-slate-600 dark:text-slate-400 mt-2">⚠️ Save this password! It won't be shown again.</p></div>
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"><p className="text-sm text-green-700 dark:text-green-300 mb-2">User registered successfully!</p><div className="bg-white dark:bg-slate-700 p-3 rounded-lg"><p className="text-xs text-slate-600 dark:text-slate-400 mb-2">Temporary Password:</p><div className="flex items-center gap-2"><input type={showPassword ? 'text' : 'password'} value={generatedPassword} readOnly className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-600 rounded border-0 font-mono text-sm" /><button onClick={() => setShowPassword(!showPassword)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button><button onClick={() => {navigator.clipboard.writeText(generatedPassword); setSuccess('Password copied!'); setTimeout(() => setSuccess(null), 2000);}} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"><Copy size={18} /></button></div></div><p className="text-xs text-slate-600 dark:text-slate-400 mt-2">⚠️ Save this password! It won&apos;t be shown again.</p></div>
                 <button onClick={() => { setShowManualRegisterModal(false); setManualRegData({ name: '', email: '', phone: '', location: '', gender: '', roleId: '' }); setGeneratedPassword(''); setShowPassword(false); }} className="w-full px-6 py-3 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition">Close</button>
               </div>
             ) : (

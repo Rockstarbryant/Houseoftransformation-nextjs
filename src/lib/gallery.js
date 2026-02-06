@@ -4,9 +4,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 export async function getAllPhotos() {
   try {
     const res = await fetch(`${API_URL}/gallery`, {
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    next: { revalidate: 60 }, // revalidate every 60 seconds
+    headers: { 'Content-Type': 'application/json' },
+  });
 
     if (!res.ok) throw new Error('Failed to fetch photos');
 

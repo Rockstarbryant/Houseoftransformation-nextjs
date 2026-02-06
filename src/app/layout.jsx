@@ -19,10 +19,6 @@ export const metadata = {
   description: 'Transforming lives through the anointed gospel of Jesus Christ. Join our community in Busia for worship, spiritual growth, and fellowship.',
   keywords: 'church in Busia, worship in Busia, HOT church Kenya, spiritual growth, Christian community Busia, M-Pesa church offerings',
 
-  icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
-  },
   
   // PWA and Web App settings
   manifest: '/manifest.json',
