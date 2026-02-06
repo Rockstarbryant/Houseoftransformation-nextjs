@@ -153,8 +153,8 @@ export default function DonationSection() {
           <div className="lg:col-span-2">
             {!isLoading && campaigns.length > 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+
                 <div className="relative">
-                  
                   {/* Campaign Slide */}
                   <div className="p-6 sm:p-8">
                     <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
@@ -175,7 +175,18 @@ export default function DonationSection() {
                       {campaigns[currentSlide]?.title}
                     </h3>
 
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
+                    {/* Campaign Image */}
+                    {campaigns[currentSlide]?.imageUrl && (
+                      <div className="h-48 sm:h-64 overflow-hidden">
+                        <img
+                          src={campaigns[currentSlide].imageUrl}
+                          alt={campaigns[currentSlide].title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-4 mb-4 line-clamp-2">
                       {campaigns[currentSlide]?.description}
                     </p>
 

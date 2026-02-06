@@ -160,7 +160,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {serviceAreasData.slice(0, 6).map((area) => (
+            {serviceAreasData.slice(0, 3).map((area) => (
               <div key={area.name} className="hover:-translate-y-2 transition-transform duration-500">
                 <ServiceAreaCard {...area} />
               </div>

@@ -50,6 +50,7 @@ const MobileMenu = ({
   ];
   const navLinksAfter = [
     { path: '/volunteer', label: 'Volunteer' },
+    { path: '/donate', label: 'Donations' },
     { path: '/portal', label: 'Portal' },
     { path: '/contact', label: 'Contact' },
     { path: '/feedback', label: 'Feedback' }

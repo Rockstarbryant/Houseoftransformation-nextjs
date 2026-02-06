@@ -414,17 +414,6 @@ export default function CampaignDetailsPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Campaign Image */}
-            {campaign.imageUrl && (
-              <div className="rounded-2xl overflow-hidden shadow-xl">
-                <img 
-                  src={campaign.imageUrl} 
-                  alt={campaign.title}
-                  className="w-full h-64 sm:h-96 object-cover"
-                />
-              </div>
-            )}
-
             {/* Campaign Header */}
             <div>
               <div className="flex items-center gap-3 mb-4 flex-wrap">
@@ -454,6 +443,17 @@ export default function CampaignDetailsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Campaign Image */}
+            {campaign.imageUrl && (
+              <div className="rounded-2xl overflow-hidden shadow-xl">
+                <img 
+                  src={campaign.imageUrl} 
+                  alt={campaign.title}
+                  className="w-full h-64 sm:h-96 object-cover"
+                />
+              </div>
+            )}
 
             {/* Impact Statement */}
             {campaign.impactStatement && (
@@ -525,6 +525,47 @@ export default function CampaignDetailsPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 space-y-6">
+
+              {/* Campaign Details */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-4">
+                  Campaign Details
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">Type:</span>
+                    <span className="font-semibold text-slate-900 dark:text-white capitalize">
+                      {campaign.campaignType}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">Status:</span>
+                    <span className={`font-semibold ${
+                      campaign.status === 'active' ? 'text-green-600' : 'text-slate-600'
+                    }`}>
+                      {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">Start Date:</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {formatDateShort(campaign.startDate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">End Date:</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {formatDateShort(campaign.endDate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">Pledges Allowed:</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {campaign.allowPledges ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
+              </div>
               
               {/* Progress Card */}
               <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6">
@@ -569,47 +610,6 @@ export default function CampaignDetailsPage() {
                 <p className="text-xs text-center text-slate-500 dark:text-slate-400">
                   Quick M-Pesa payment via STK Push
                 </p>
-              </div>
-
-              {/* Campaign Details */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6">
-                <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                  Campaign Details
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Type:</span>
-                    <span className="font-semibold text-slate-900 dark:text-white capitalize">
-                      {campaign.campaignType}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Status:</span>
-                    <span className={`font-semibold ${
-                      campaign.status === 'active' ? 'text-green-600' : 'text-slate-600'
-                    }`}>
-                      {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Start Date:</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {formatDateShort(campaign.startDate)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">End Date:</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {formatDateShort(campaign.endDate)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Pledges Allowed:</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {campaign.allowPledges ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Payment Methods Card */}

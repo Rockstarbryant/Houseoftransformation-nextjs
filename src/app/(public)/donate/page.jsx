@@ -769,16 +769,6 @@ export default function DonatePage() {
                 
                 return (
                   <div key={campaign._id} className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all">
-                    {campaign.imageUrl && (
-                      <div className="h-40 sm:h-48 overflow-hidden">
-                        <img 
-                          src={campaign.imageUrl} 
-                          alt={campaign.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    
                     <div className="p-4 sm:p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-xl sm:text-2xl">{getCampaignTypeIcon(campaign.campaignType)}</span>
@@ -791,7 +781,17 @@ export default function DonatePage() {
                         {campaign.title}
                       </h3>
 
-                      <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3">
+                      {campaign.imageUrl && (
+                      <div className="h-40 sm:h-48 overflow-hidden">
+                        <img 
+                          src={campaign.imageUrl} 
+                          alt={campaign.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                      <p className="text-slate-600 dark:text-slate-400 text-sm mt-4 mb-4 line-clamp-3">
                         {campaign.description}
                       </p>
 
