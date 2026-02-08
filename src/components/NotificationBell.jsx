@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { tokenService } from '@/services/tokenService';
+import tokenService from '@/lib/tokenService';
 
 /**
  * Real-time Notification Bell with SSE + safeguards
@@ -57,8 +57,11 @@ export default function NotificationBell() {
       eventSourceRef.current = null;
     }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const url = `${baseURL}/api/announcements/stream?token=${encodeURIComponent(token)}`;
+    // ✅ FIXED: Correct API URL construction
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const url = `${baseURL}/announcements/stream?token=${encodeURIComponent(token)}`;
+
+    console.log('[NotificationBell] SSE URL:', url);
 
     const es = new EventSource(url);
 
@@ -87,7 +90,7 @@ export default function NotificationBell() {
           case 'new_announcement':
             setUnreadCount((c) => c + 1);
             // Optional browser notification
-            if (Notification.permission === 'granted') {
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
               new Notification('New Announcement', {
                 body: data.announcement?.title || 'Check announcements',
               });
@@ -114,8 +117,6 @@ export default function NotificationBell() {
       es.close();
 
       // ✅ Check if this is an auth error (401)
-      // EventSource doesn't expose status codes directly, but we can infer
-      // If connection fails immediately, it's likely auth
       if (reconnectAttempts.current === 0) {
         console.warn('[NotificationBell] Initial connection failed - likely auth issue');
         setAuthError(true);
@@ -146,8 +147,9 @@ export default function NotificationBell() {
         return;
       }
 
-      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${baseURL}/api/announcements/count/unread`, {
+      // ✅ FIXED: Correct API URL construction
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${baseURL}/announcements/count/unread`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -192,7 +194,7 @@ export default function NotificationBell() {
     fetchUnreadCount();
 
     // Optional: request browser notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
