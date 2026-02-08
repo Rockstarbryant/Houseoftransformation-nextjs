@@ -22,7 +22,7 @@ export default async function SermonsPage() {
           <div className="absolute top-[-5%] left-[10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-red-100/40 blur-[80px] md:blur-[120px] rounded-full animate-pulse" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10 text-center md:text-left">
+        <div className="max-w-full mx-auto px-4 md:px-6 relative z-10 text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 shadow-sm mx-auto md:mx-0">

@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="pt-20">
+    <div className="w-full">
       <AboutSection />
     </div>
   );

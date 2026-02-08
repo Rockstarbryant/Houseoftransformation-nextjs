@@ -41,19 +41,19 @@ const SermonCardText = ({ sermon }) => {
   return (
     <div id={`sermon-${sermon._id}`} className="w-full">
       <Card 
+        padding="none"
+        shadow="none"
+        border={false}
         className="
           flex flex-col 
           bg-white dark:bg-slate-900 
-          rounded-xl md:rounded-[2.5rem] 
-          border border-slate-100 
-          shadow-sm hover:shadow-xl 
+          rounded-xl md:rounded-[2.5rem]          
           transition-all duration-500 
-          overflow-hidden 
-          mx-0.5 md:mx-0
+          overflow-hidden          
         "
       >
         {/* Header */}
-        <div className="px-4 sm:px-5 md:px-12 pt-6 md:pt-8 pb-4 flex items-center justify-between">
+        <div className="px-0 sm:px-5 md:px-12 pt-6 md:pt-8 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="size-9 md:size-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-[10px] md:text-xs font-black shadow-md">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
@@ -74,14 +74,14 @@ const SermonCardText = ({ sermon }) => {
         </div>
 
         {/* Title */}
-        <div className="px-4 sm:px-5 md:px-12 pb-5 md:pb-6">
+        <div className="px-0 sm:px-5 md:px-12 pb-5 md:pb-6">
           <h3 className="text-xl md:text-4xl font-black text-slate-900 dark:text-slate-400 tracking-tighter leading-tight text-center underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
 
-        {/* Main Content - maximized width on mobile */}
-        <div className=" px-1.5 xs:px-2 sm:px-3 md:px-10 lg:px-14 flex-grow mb-6 md:mb-8 relative">
+        {/* Main Content - Edge to edge on mobile */}
+        <div className="px-0 sm:px-3 md:px-10 lg:px-14 flex-grow mb-6 md:mb-8 relative">
           {/* Decorative Quote watermark */}
           <Quote 
             className="absolute top-1 right-3 sm:right-6 md:right-10 text-slate-50 opacity-10 pointer-events-none" 
@@ -137,19 +137,19 @@ const SermonCardText = ({ sermon }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between mt-auto">
+        <div className="px-0 sm:px-5 md:px-10 py-5 md:py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-200">
+            <div className="p-2.5 flex items-center gap-1 text-slate-400 dark:text-slate-200">
               <Eye size={18} />
               <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-200">{sermon.views || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-200">
+            <div className="flex items-center gap-1 text-slate-400 dark:text-slate-200">
               <MessageCircle size={18} />
               <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-200">{sermon.comments || 0}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <button
               onClick={(e) => { e.stopPropagation(); handleLike(); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${

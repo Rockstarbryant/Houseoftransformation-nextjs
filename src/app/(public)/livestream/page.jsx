@@ -444,6 +444,13 @@ const LiveStreamPage = () => {
                 <div className="w-12 h-12 bg-red-600 dark:bg-red-700 text-white rounded-2xl flex items-center justify-center">
                   <Monitor size={20} />
                 </div>
+                <button
+                      onClick={() => openFloatingPiP(selectedStream)}
+                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 md:opacity-0 md:group-hover:opacity-100 opacity-100"
+                      title="Picture in Picture"
+                    >
+                      <Maximize2 size={20} />
+                    </button>
                 <button onClick={() => setSelectedStream(null)} className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all">
                   <X size={24} />
                 </button>

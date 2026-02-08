@@ -77,10 +77,15 @@ const SermonCard = ({ sermon }) => {
 
   return (
     <div id={`sermon-${sermon._id}`} className="w-full">
-      <Card className="flex flex-col bg-white dark:bg-slate-900 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden mx-0.5 md:mx-0">
+      <Card 
+        padding="none"
+        shadow="none"
+        border={false}
+        className="flex flex-col bg-white dark:bg-slate-900 rounded-xl md:rounded-[2.5rem] overflow-hidden mx-0"
+      >
         
         {/* Header */}
-        <div className="px-4 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
+        <div className="px-0 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
@@ -101,7 +106,7 @@ const SermonCard = ({ sermon }) => {
         </div>
 
         {/* Title */}
-        <div className="px-4 md:px-10 py-4">
+        <div className="px-0 md:px-10 py-4">
           <h3 className="text-xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
@@ -121,6 +126,7 @@ const SermonCard = ({ sermon }) => {
                     src={hasThumbnail ? sermon.thumbnail : 'https://via.placeholder.com/600x340?text=Video+Sermon'}
                     alt={sermon.title}
                     fill
+                    unoptimized
                     className="object-cover opacity-80 group-hover/btn:opacity-100 transition-all duration-700"
                     sizes="(max-width: 768px) 100vw, 50vw"
                     onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/600x340?text=Image+Error'; }}
@@ -162,6 +168,7 @@ const SermonCard = ({ sermon }) => {
                   src={sermon.thumbnail} 
                   alt={sermon.title} 
                   fill 
+                  unoptimized
                   className="object-cover"
                   onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/600x340?text=Image+Error'; }}
                 />
@@ -170,11 +177,8 @@ const SermonCard = ({ sermon }) => {
           </div>
         )}
 
-        {/* 
-          MAIN TEXT CONTENT – now much closer to the edges on mobile 
-          px-2 → px-3 → px-4 progression (very tight on small screens)
-        */}
-        <div className="px-2 xs:px-2.5 sm:px-3.5 md:px-10 lg:px-12 flex-grow mb-6">
+        {/* Main Text Content - Edge to edge on mobile */}
+        <div className="px-0 sm:px-3.5 md:px-10 lg:px-12 flex-grow mb-6">
           <div className="relative">
             <div
               className={`prose prose-slate max-w-none w-full transition-all duration-500 ease-in-out font-serif text-[17px] sm:text-lg md:text-xl text-slate-700 dark:text-slate-300 leading-[1.68] md:leading-relaxed
@@ -190,7 +194,7 @@ const SermonCard = ({ sermon }) => {
           {contentHtml.length > 180 && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="mt-3 flex items-center gap-2 bg-slate-50 hover:bg-[#8B1A1A] hover:text-white text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline"
+              className="mt-3 flex items-center gap-2 bg-slate-50 hover:bg-[#8B1A1A] hover:text-white text-[#8B1A1A] font-black uppercase text-[11px] tracking-widest hover:underline px-4 py-2 rounded-full transition-all"
               type="button"
             >
               {expanded ? <><ChevronUp size={16} /> Show Less</> : <><ChevronDown size={16} /> Read Full Message</>}
@@ -199,14 +203,14 @@ const SermonCard = ({ sermon }) => {
         </div>
 
         {contentHtml.includes('<img') && (
-          <div className="mx-3 md:mx-10 mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[10px] text-amber-700 font-medium flex items-center gap-2">
+          <div className="mx-0 md:mx-10 mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[10px] text-amber-700 font-medium flex items-center gap-2">
             <div className="bg-amber-200 size-4 rounded-full flex items-center justify-center font-bold text-[8px]">!</div>
             If images don't show, try opening in incognito mode.
           </div>
         )}
 
         {/* Footer */}
-        <div className="px-4 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <div className="px-0 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-300 group/icon">
               <Eye size={18} className="group-hover/icon:text-slate-600 dark:text-slate-300 transition-colors" />

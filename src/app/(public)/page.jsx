@@ -19,7 +19,7 @@ import { getFeaturedSermon, detectSermonType } from '@/lib/sermons';
 // Server Component - runs on server, fetches data
 //export const dynamic = 'force-dynamic';
 
-// /app/(public)/page.jsx
+
 
 export const metadata = {
   title: 'House of Transformation | Best Church in Busia, Kenya',
@@ -121,7 +121,7 @@ export default async function HomePage() {
       </section>
 
       {/* Upcoming Events */}
-        <section className="pt-36 pb-16 md:py-32 bg-slate-50 dark:bg-slate-800 relative transition-colors overflow-hidden">
+        <section className="pt-36 pb-16 md:py-32 bg-slate-50 dark:bg-slate-900 relative transition-colors overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
             <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-10 md:mb-16">
               <div className="text-center md:text-left">

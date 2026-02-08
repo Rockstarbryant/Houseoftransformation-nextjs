@@ -3,7 +3,8 @@
 //export const revalidate = 360; // Revalidate every 60 seconds instead of force-dynamic
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePiP } from '@/context/PiPContext';
 import { Play, Calendar, Users, Share2, TrendingUp, ChevronDown, Monitor, X, Sparkles, Zap, LayoutGrid, List } from 'lucide-react';
 
 //export const dynamic = 'force-dynamic';
@@ -14,6 +15,8 @@ export default function LivestreamClient({ activeStream, initialArchives }) {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
+  const { floatingPiP, setFloatingPiP } = usePiP();
+  
 
   const streamTypes = [
     { value: '', label: 'All Livestreams' },
@@ -39,6 +42,17 @@ export default function LivestreamClient({ activeStream, initialArchives }) {
     if (stream.youtubeUrl?.includes('youtube')) return stream.youtubeUrl;
     if (stream.facebookUrl) return stream.facebookUrl;
     return null;
+  };
+
+   const enablePiP = (videoId, title) => {
+    const pipData = {
+      youtubeVideoId: videoId,
+      title: title,
+      timestamp: Date.now()
+    };
+    
+    setFloatingPiP(pipData);
+    localStorage.setItem('persistentPiP', JSON.stringify(pipData));
   };
 
   const handleShare = (stream) => {

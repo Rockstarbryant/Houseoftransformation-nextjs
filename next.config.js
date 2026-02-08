@@ -30,14 +30,14 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    qualities: [75, 85], // ✅ Added to support quality={85} in components
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // ❌ REMOVED - No longer supported in Next.js 16
+  // eslint: {
+  //   ignoreDuringBuilds: true,
+  // },
   rewrites: async () => {
     return {
       beforeFiles: [
@@ -47,6 +47,10 @@ const nextConfig = {
         },
       ],
     };
+  },
+  // ✅ ADD THIS if you want to silence the workspace root warning
+  turbopack: {
+    root: process.cwd(),
   },
 };
 
