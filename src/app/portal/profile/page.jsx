@@ -177,30 +177,35 @@ export default function ProfilePage() {
   // DELETE ACCOUNT
   // ============================================
   const handleDeleteAccount = async (e) => {
-    e.preventDefault();
-    
-    if (!deletePassword) {
-      setError('Password is required to delete account');
-      return;
+  e.preventDefault();
+  
+  // ✨ NEW: Check if user is OAuth user
+  const isOAuthUser = user?.authProvider && user.authProvider !== 'email';
+  
+  // Only require password for email/password users
+  if (!isOAuthUser && !deletePassword) {
+    setError('Password is required to delete account');
+    return;
+  }
+
+  try {
+    setDeleting(true);
+    setError(null);
+
+    // ✨ NEW: Only pass password if user is NOT OAuth user
+    const response = await deleteSelfAccount(isOAuthUser ? undefined : deletePassword);
+
+    if (response.success) {
+      alert('Your account has been permanently deleted. You will now be logged out.');
+      await logout();
     }
-
-    try {
-      setDeleting(true);
-      setError(null);
-
-      const response = await deleteSelfAccount(deletePassword);
-
-      if (response.success) {
-        alert('Your account has been permanently deleted. You will now be logged out.');
-        await logout();
-      }
-    } catch (err) {
-      console.error('[Profile] Delete account error:', err);
-      setError(err.response?.data?.message || 'Failed to delete account');
-    } finally {
-      setDeleting(false);
-    }
-  };
+  } catch (err) {
+    console.error('[Profile] Delete account error:', err);
+    setError(err.response?.data?.message || 'Failed to delete account');
+  } finally {
+    setDeleting(false);
+  }
+};
 
   // ============================================
   // LOADING STATE
@@ -523,29 +528,41 @@ export default function ProfilePage() {
         </div>
 
         {/* Delete Account Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-red-600 mb-4">
-                Delete Account
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
-                This action cannot be undone. Your account and all associated data will be permanently deleted.
-              </p>
-              <form onSubmit={handleDeleteAccount}>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Enter your password to confirm
-                  </label>
-                  <input
-                    type="password"
-                    value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
-                    placeholder="Your password"
-                  />
-                </div>
+          {showDeleteModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full">
+                <h3 className="text-xl font-bold text-red-600 mb-4">
+                  Delete Account
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
+                  This action cannot be undone. Your account and all associated data will be permanently deleted.
+                </p>
+                <form onSubmit={handleDeleteAccount}>
+                  {/* ✨ NEW: Check if user is OAuth user */}
+                  {user?.authProvider && user.authProvider !== 'email' ? (
+                    // OAuth users - show message, no password field
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm text-blue-900 dark:text-blue-300">
+                        You signed in with <strong className="capitalize">{user.authProvider}</strong>.
+                        Click "Yes, Delete My Account" to confirm deletion.
+                      </p>
+                    </div>
+                  ) : (
+                    // Email/password users - show password field
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Enter your password to confirm
+                      </label>
+                      <input
+                        type="password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                        placeholder="Your password"
+                      />
+                    </div>
+                  )}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="submit"

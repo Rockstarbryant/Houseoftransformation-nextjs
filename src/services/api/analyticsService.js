@@ -1,9 +1,9 @@
-// src/services/api/analyticsService.js
+// src/services/api/analyticsService.js - UPDATED FOR NEW DASHBOARD
 import api from '@/lib/api';
 
 /**
  * Analytics Service
- * Handles all analytics-related API calls
+ * Handles all analytics-related API calls for the new dashboard
  */
 
 // ============================================
@@ -37,7 +37,7 @@ export const getUserAnalytics = async () => {
 };
 
 /**
- * Get content analytics (sermons, blogs, gallery)
+ * Get content analytics (sermons, blogs, gallery, events)
  */
 export const getContentAnalytics = async () => {
   try {
@@ -50,7 +50,7 @@ export const getContentAnalytics = async () => {
 };
 
 /**
- * Get engagement analytics (feedback, volunteers, events)
+ * Get engagement analytics (feedback, volunteers, livestreams)
  */
 export const getEngagementAnalytics = async () => {
   try {
@@ -63,29 +63,40 @@ export const getEngagementAnalytics = async () => {
 };
 
 /**
- * Get recent activity timeline
- * @param {number} limit - Number of activities to fetch (default: 20)
+ * Get financial analytics (campaigns, pledges, payments)
  */
-export const getRecentActivity = async (limit = 20) => {
+export const getFinancialAnalytics = async () => {
   try {
-    const response = await api.get(`/analytics/activity?limit=${limit}`);
+    const response = await api.get('/analytics/financial');
     return response.data;
   } catch (error) {
-    console.error('[AnalyticsService] Get activity error:', error);
+    console.error('[AnalyticsService] Get financial analytics error:', error);
     throw error;
   }
 };
 
 /**
- * Get growth trends over time
- * @param {string} period - Time period ('7days', '30days', '6months', '1year')
+ * Get communication analytics (emails, announcements)
  */
-export const getGrowthTrends = async (period = '6months') => {
+export const getCommunicationAnalytics = async () => {
   try {
-    const response = await api.get(`/analytics/trends?period=${period}`);
+    const response = await api.get('/analytics/communication');
     return response.data;
   } catch (error) {
-    console.error('[AnalyticsService] Get trends error:', error);
+    console.error('[AnalyticsService] Get communication analytics error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get system analytics (audit logs, banned users, recent activity)
+ */
+export const getSystemAnalytics = async () => {
+  try {
+    const response = await api.get('/analytics/system');
+    return response.data;
+  } catch (error) {
+    console.error('[AnalyticsService] Get system analytics error:', error);
     throw error;
   }
 };
@@ -98,6 +109,7 @@ export const getGrowthTrends = async (period = '6months') => {
  * Format large numbers with K, M suffixes
  */
 export const formatNumber = (num) => {
+  if (!num) return '0';
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M';
   }
@@ -134,37 +146,6 @@ export const formatChartDate = (dateObj) => {
 };
 
 /**
- * Prepare data for line charts
- */
-export const prepareLineChartData = (data, labelKey = 'date', valueKey = 'count') => {
-  return data.map(item => ({
-    label: typeof item._id === 'object' ? formatChartDate(item._id) : item._id,
-    value: item[valueKey] || item.count || 0
-  }));
-};
-
-/**
- * Prepare data for pie charts
- */
-export const preparePieChartData = (data, labelKey = '_id', valueKey = 'count') => {
-  return data.map(item => ({
-    name: item[labelKey] || item._id || 'Unknown',
-    value: item[valueKey] || item.count || 0
-  }));
-};
-
-/**
- * Prepare data for bar charts
- */
-export const prepareBarChartData = (data) => {
-  return data.map(item => ({
-    category: item._id || 'Unknown',
-    count: item.count || 0,
-    percentage: 0 // Will be calculated later
-  }));
-};
-
-/**
  * Calculate color for trend indicator
  */
 export const getTrendColor = (value) => {
@@ -180,104 +161,4 @@ export const getTrendIcon = (value) => {
   if (value > 0) return '↑';
   if (value < 0) return '↓';
   return '→';
-};
-
-/**
- * Export analytics data as CSV
- */
-export const exportToCSV = (data, filename = 'analytics-export.csv') => {
-  if (!data || data.length === 0) return;
-
-  const headers = Object.keys(data[0]);
-  const csvContent = [
-    headers.join(','),
-    ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
-  ].join('\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-/**
- * Get color palette for charts
- */
-export const getChartColors = () => {
-  return [
-    '#8B1A1A', // Primary red
-    '#DC2626', // Red 600
-    '#EF4444', // Red 500
-    '#F87171', // Red 400
-    '#FCA5A5', // Red 300
-    '#3B82F6', // Blue 500
-    '#8B5CF6', // Purple 500
-    '#10B981', // Green 500
-    '#F59E0B', // Amber 500
-    '#6366F1'  // Indigo 500
-  ];
-};
-
-/**
- * Format activity action for display
- */
-export const formatActivityAction = (action) => {
-  return action
-    .replace(/\./g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-/**
- * Get icon for activity type
- */
-export const getActivityIcon = (action) => {
-  const iconMap = {
-    'auth': '🔐',
-    'user': '👤',
-    'sermon': '📖',
-    'blog': '📝',
-    'event': '📅',
-    'gallery': '🖼️',
-    'livestream': '📡',
-    'volunteer': '🤝',
-    'feedback': '💬',
-    'system': '⚙️'
-  };
-
-  const type = action.split('.')[0];
-  return iconMap[type] || '📌';
-};
-
-/**
- * Calculate growth rate
- */
-export const calculateGrowthRate = (data) => {
-  if (!data || data.length < 2) return 0;
-  
-  const recent = data[data.length - 1]?.count || 0;
-  const previous = data[data.length - 2]?.count || 0;
-  
-  return calculatePercentageChange(recent, previous);
-};
-
-/**
- * Get time period label
- */
-export const getTimePeriodLabel = (period) => {
-  const labels = {
-    '7days': 'Last 7 Days',
-    '30days': 'Last 30 Days',
-    '6months': 'Last 6 Months',
-    '1year': 'Last Year'
-  };
-  return labels[period] || 'Custom Period';
 };

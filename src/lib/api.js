@@ -8,7 +8,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true
+  withCredentials: true,
+  timeout: 10000 // ✅ Add timeout to prevent infinite hanging
 });
 
 let isRefreshing = false;
@@ -26,111 +27,140 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Add token to all requests
+// ✅ REQUEST INTERCEPTOR - Add token to headers
 api.interceptors.request.use(
   (config) => {
     const token = tokenService.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('[API] 📤 Request with token:', config.url);
+    } else {
+      console.log('[API] 📤 Request WITHOUT token:', config.url);
     }
     return config;
   },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
   (error) => {
-    // If we get 503 (maintenance mode), redirect to maintenance page
-    if (error.response?.status === 503) {
-      console.log('[API] 503 Maintenance error detected - redirecting to maintenance page');
-      
-      // Check if we're in browser
-      if (typeof window !== 'undefined') {
-        // Small delay to ensure smooth transition
-        setTimeout(() => {
-          window.location.href = '/maintenance';
-        }, 100);
-      }
-    }
-
+    console.error('[API] ❌ Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Handle responses and token refresh
+// ✅ RESPONSE INTERCEPTOR - Handle errors and refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[API] ✅ Response success:', response.config.url);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle rate limiting
-    if (error.response?.status === 429) {
-      console.warn('[API] Rate limited');
+    console.log('[API] ❌ Response error:', {
+      url: originalRequest?.url,
+      status: error.response?.status,
+      message: error.message
+    });
+
+    // ✅ Handle maintenance mode
+    if (error.response?.status === 503) {
+      console.log('[API] 🚧 Maintenance mode - redirecting');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/maintenance';
+      }
       return Promise.reject(error);
     }
 
-    // Handle 401 - token invalid or expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // ✅ Handle rate limiting
+    if (error.response?.status === 429) {
+      console.warn('[API] ⚠️ Rate limited');
+      return Promise.reject(error);
+    }
+
+    // ✅ Handle 401 - Token invalid or expired
+    if (error.response?.status === 401) {
+      console.log('[API] 🔐 401 Unauthorized detected');
+
+      // Don't retry if this IS the refresh endpoint
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        console.log('[API] ❌ Refresh token invalid - logging out');
+        tokenService.clearAll();
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
+      // Don't retry if already tried
+      if (originalRequest._retry) {
+        console.log('[API] ❌ Already retried - logging out');
+        tokenService.clearAll();
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
+      // If already refreshing, queue this request
       if (isRefreshing) {
-        // If already refreshing, queue this request
+        console.log('[API] ⏳ Queueing request while refreshing...');
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(token => {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
         });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      // Try to refresh token
       const refreshToken = tokenService.getRefreshToken();
 
-      if (refreshToken) {
-        try {
-          const res = await api.post('/auth/refresh', { refreshToken });
-
-          if (res.data.token) {
-            tokenService.setToken(res.data.token);
-            if (res.data.refreshToken) {
-              tokenService.setRefreshToken(res.data.refreshToken);
-            }
-            originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
-            processQueue(null, res.data.token);
-            return api(originalRequest);
-          } else {
-            throw new Error('No token in refresh response');
-          }
-        } catch (err) {
-          processQueue(err, null);
-          // Token refresh failed - clear auth and redirect to login
-          tokenService.removeToken();
-          tokenService.removeRefreshToken();
-
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-          return Promise.reject(err);
-        }
-      } else {
-        // No refresh token available
-        tokenService.removeToken();
-        if (typeof window !== 'undefined') {
+      if (!refreshToken) {
+        console.log('[API] ❌ No refresh token - logging out');
+        isRefreshing = false;
+        tokenService.clearAll();
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }
         return Promise.reject(error);
       }
-    }
 
-    // Handle other 401 errors
-    if (error.response?.status === 401) {
-      console.warn('[API] Unauthorized - redirecting to login');
-      tokenService.removeToken();
-      tokenService.removeRefreshToken();
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      // Try to refresh
+      console.log('[API] 🔄 Attempting token refresh...');
+      try {
+        const res = await axios.post(`${API_URL}/auth/refresh`, { 
+          refreshToken 
+        }, {
+          withCredentials: true,
+          timeout: 5000
+        });
+
+        if (res.data.token) {
+          console.log('[API] ✅ Token refresh successful');
+          tokenService.setToken(res.data.token);
+          if (res.data.refreshToken) {
+            tokenService.setRefreshToken(res.data.refreshToken);
+          }
+          
+          originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
+          processQueue(null, res.data.token);
+          
+          return api(originalRequest);
+        } else {
+          throw new Error('No token in refresh response');
+        }
+      } catch (refreshError) {
+        console.error('[API] ❌ Token refresh failed:', refreshError.message);
+        processQueue(refreshError, null);
+        tokenService.clearAll();
+        
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        
+        return Promise.reject(refreshError);
       }
     }
 

@@ -153,13 +153,17 @@ export const manualRegisterUser = async (userData) => {
 
 /**
  * User self-deletion (delete own account)
- * @param {string} password - User's password for verification
+ * @param {string} password - User's password for verification (optional for OAuth users)
  */
 export const deleteSelfAccount = async (password) => {
   try {
+    // Build request body - only include password if provided
+    const requestData = password ? { password } : {};
+    
     const response = await api.delete('/users/me/delete-account', {
-      data: { password }
+      data: requestData
     });
+    
     return response.data;
   } catch (error) {
     console.error('[UserService] Self delete error:', error);

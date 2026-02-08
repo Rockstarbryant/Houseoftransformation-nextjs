@@ -18,19 +18,19 @@ const nextConfig = {
         hostname: 'img.youtube.com',
         pathname: '/**',
       },
-      // ✅ ADD THIS - via.placeholder.com
       {
         protocol: 'https',
         hostname: 'via.placeholder.com',
         pathname: '/**',
       },
-      // ✅ ADD THIS - images.unsplash.com (if you use it)
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
+    qualities: [75, 85], // ✅ Added to support quality={85} in components
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
@@ -46,7 +46,7 @@ const nextConfig = {
           destination: 'https://hotadmin.vercel.app/:path*',
         },
       ],
-    }
+    };
   },
 };
 

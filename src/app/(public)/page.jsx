@@ -1,7 +1,7 @@
 // /app/(public)/page.jsx - Server Component
 import Link from 'next/link';
+import Script from 'next/script';
 import { ArrowRight, Pin, Calendar, Heart } from 'lucide-react';
-
 import HeroSection from '@/components/home/HeroSection';
 import QuickInfoBar from '@/components/home/QuickInfoBar';
 import AboutSection from '@/components/about/AboutSection';
@@ -38,10 +38,11 @@ export default async function HomePage() {
   const sermonType = detectSermonType(featuredSermon);
 
   return (
-    <div className="home-page ...">
-      {/* Add Schema.org JSON-LD */}
-      <script
+    <>
+      <Script
+        id="church-schema"
         type="application/ld+json"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -62,7 +63,9 @@ export default async function HomePage() {
           })
         }}
       />
-     <HeroSection />
+      
+      <div className="home-page ...">
+        <HeroSection />
       <LiveStreamSection />
       <QuickInfoBar />
 
@@ -180,5 +183,6 @@ export default async function HomePage() {
       {/* Donation Section */}
       <DonationSection />
     </div>
+    </>
   );
 }
