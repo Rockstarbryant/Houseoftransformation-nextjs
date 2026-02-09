@@ -35,9 +35,9 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   },
    //❌ REMOVED - No longer supported in Next.js 16
-   eslint: {
-     ignoreDuringBuilds: true,
-   },
+  // eslint: {
+   //  ignoreDuringBuilds: true,
+  // },
   rewrites: async () => {
     return {
       beforeFiles: [
