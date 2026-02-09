@@ -6,6 +6,7 @@ import { ChevronRight, Edit, Trash2, Calendar, Newspaper, User } from 'lucide-re
 import Card from '../common/Card';
 import { formatDate, truncateText } from '@/utils/helpers';
 import { useAuth } from '@/context/AuthContext';
+import NextImage from 'next/image';
 
 const BlogCard = ({ post, onDelete, onEdit }) => {
   const router = useRouter();
@@ -49,7 +50,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
         {/* Image Container */}
         <div className="relative h-52 overflow-hidden">
           {post.image ? (  
-            <Image
+            <NextImage
               src={post.image}  
               alt={post.title}
               fill

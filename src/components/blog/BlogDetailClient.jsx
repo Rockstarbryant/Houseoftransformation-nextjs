@@ -6,6 +6,7 @@ import { ArrowLeft, Edit, Trash2, AlertCircle, Share2, Heart, Calendar, User, Qu
 import { useAuth } from '@/context/AuthContext';
 import { blogService } from '@/services/api/blogService';
 import { formatDate } from '@/utils/helpers';
+import NextImage from 'next/image';
 
 export default function BlogDetailClient({ post }) {
   const router = useRouter();
@@ -131,7 +132,7 @@ export default function BlogDetailClient({ post }) {
         {/* Featured Image */}
         <div className="relative aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden bg-slate-100 mb-16 shadow-2xl">
           {post.image ? (
-          <Image
+          <NextImage
             src={post.image}
             alt={post.title}
             fill
