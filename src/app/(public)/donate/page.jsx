@@ -634,146 +634,117 @@ export default function DonatePage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
       
       {/* Hero Section */}
-        {/* Hero Section - Inspiring Giving */}
-        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-white overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }}></div>
-          </div>
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#8B1A1A]/20 via-transparent to-transparent"></div>
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+  {/* Background Image - Clearly Visible */}
+  <div 
+    className="absolute inset-0 z-0"
+    style={{
+      backgroundImage: "url('https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1920&h=1080&fit=crop')",
+      backgroundSize: "cover",
+      backgroundPosition: "center"
+    }}
+  >
+    {/* Subtle Overlay - Light to keep image visible */}
+    <div className="absolute inset-0 bg-gradient-to-r from-slate-900/70 via-slate-900/50 to-transparent"></div>
+  </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Left Content */}
-              <div className="space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
-                  <Sparkles className="text-yellow-400" size={18} />
-                  <span className="text-sm font-semibold text-white">Biblical Giving</span>
-                </div>
+  {/* Content Container */}
+  <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+    <div className="max-w-3xl">
+      {/* Small Badge */}
+      <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/95 rounded-full mb-6 shadow-lg">
+        <Heart className="text-[#8B1A1A]" size={18} />
+        <span className="text-slate-900 font-bold text-sm">Kingdom Impact</span>
+      </div>
 
-                <div>
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 leading-tight">
-                    Give to Be
-                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-400 to-pink-400">
-                      Blessed
-                    </span>
-                  </h1>
-                  <p className="text-xl sm:text-2xl text-slate-300 leading-relaxed">
-                    &quot;Test me in this,&quot; says the Lord Almighty, &quot;and see if I will not throw open the floodgates of heaven and pour out so much blessing.&quot;
-                  </p>
-                  <p className="text-red-300 font-semibold mt-3 text-lg">
-                    - Malachi 3:10
-                  </p>
-                </div>
+      {/* Main Heading */}
+      <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl">
+        Your Generosity
+        <br />
+        <span className="text-yellow-400">Changes Everything</span>
+      </h1>
 
-                <p className="text-lg text-slate-300 leading-relaxed">
-                  Giving is not just about sacrifice. It is God&apos;s way of ritually introducing us into the flow of sowing and reaping. Participate in the harvest that God has for us by sowing your gift today.
-                </p>
+      {/* Description */}
+      <p className="text-xl sm:text-2xl text-white mb-8 leading-relaxed drop-shadow-lg">
+        Join us in making a lasting impact through faithful giving. Every contribution fuels ministry, transforms lives, and advances God&apos;s kingdom.
+      </p>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link 
-                    href="#campaigns"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#8B1A1A] to-red-700 text-white font-bold rounded-xl hover:from-[#A01F1F] hover:to-red-800 transition-all shadow-xl shadow-red-900/50 group"
-                  >
-                    <Heart className="group-hover:scale-110 transition-transform" size={20} />
-                    Give Now
-                    <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
-                  </Link>
-                  <Link 
-                    href="#why-give"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20"
-                  >
-                    Learn More
-                  </Link>
-                </div>
+      {/* Scripture */}
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 mb-10 shadow-2xl border-l-4 border-[#8B1A1A]">
+        <p className="text-lg text-slate-700 italic mb-2">
+          &quot;Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver.&quot;
+        </p>
+        <p className="text-[#8B1A1A] font-bold">2 Corinthians 9:7</p>
+      </div>
 
-                {/* Trust Indicators */}
-                <div className="flex flex-wrap gap-6 pt-4">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="text-green-400" size={20} />
-                    <span className="text-sm text-slate-300">Secure Giving</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="text-blue-400" size={20} />
-                    <span className="text-sm text-slate-300">Tax Deductible</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="text-purple-400" size={20} />
-                    <span className="text-sm text-slate-300">Direct Impact</span>
-                  </div>
-                </div>
-              </div>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-12">
+        <Link 
+          href="#campaigns"
+          className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-[#8B1A1A] text-white font-bold text-lg rounded-xl hover:bg-[#A01F1F] transition-all shadow-2xl hover:shadow-red-900/50 hover:scale-105 transform duration-300"
+        >
+          <Gift size={24} />
+          Give Now
+          <ArrowRight size={24} />
+        </Link>
+        
+        <Link 
+          href="#why-give"
+          className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-white text-slate-900 font-bold text-lg rounded-xl hover:bg-slate-100 transition-all shadow-xl hover:scale-105 transform duration-300"
+        >
+          <Sparkles size={24} />
+          See Impact Stories
+        </Link>
+      </div>
 
-              {/* Right Content - Feature Cards */}
-              <div className="grid gap-6">
-                {/* Card 1 */}
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
-                      <Gift size={24} className="text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-yellow-400 transition-colors">
-                        A Gift Opens the Way
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        God knows the power of a gift. Every gift given from your own will opens the door to understanding how God works through our generosity to prosper our wellbeing.
-                      </p>
-                      <p className="text-yellow-400/80 text-xs mt-3 italic">
-                        - Proverbs 18:16
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      {/* Quick Stats */}
+      
+    </div>
+  </div>
 
-                {/* Card 2 */}
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
-                      <TrendingUp size={24} className="text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-green-400 transition-colors">
-                        Give and Receive
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        &quot;Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap.&quot;
-                      </p>
-                      <p className="text-green-400/80 text-xs mt-3 italic">
-                        - Luke 6:38
-                      </p>
-                    </div>
-                  </div>
-                </div>
+  {/* Right Side Feature Cards - Floating */}
+  <div className="hidden lg:block absolute right-8 top-1/2 transform -translate-y-1/2 z-10 space-y-4 w-80">
+    {/* Card 1 */}
+    <div className="bg-white rounded-2xl p-6 shadow-2xl hover:shadow-red-900/30 transition-all hover:scale-105 transform duration-300">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+          <TrendingUp size={24} className="text-white" />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-900 mb-2">Multiply Impact</h3>
+          <p className="text-sm text-slate-600">Your seed grows into harvest</p>
+        </div>
+      </div>
+    </div>
 
-                {/* Card 3 */}
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg">
-                      <Heart size={24} className="text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
-                        God Loves a Cheerful Giver
-                      </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        Those who understand the connection between spiritual growth and generosity—they get it. God delights in those who give joyfully, not reluctantly.
-                      </p>
-                      <p className="text-blue-400/80 text-xs mt-3 italic">
-                        - 2 Corinthians 9:7
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+    {/* Card 2 */}
+    <div className="bg-white rounded-2xl p-6 shadow-2xl hover:shadow-red-900/30 transition-all hover:scale-105 transform duration-300">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+          <Users size={24} className="text-white" />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-900 mb-2">Build Community</h3>
+          <p className="text-sm text-slate-600">Together we go further</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Card 3 */}
+    <div className="bg-white rounded-2xl p-6 shadow-2xl hover:shadow-red-900/30 transition-all hover:scale-105 transform duration-300">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+          <Sparkles size={24} className="text-white" />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-900 mb-2">Eternal Rewards</h3>
+          <p className="text-sm text-slate-600">Store treasures in heaven</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* Tithe & Offerings Section */}
         {/* Tithe & Offerings Section */}
@@ -1069,186 +1040,202 @@ export default function DonatePage() {
       </section>
 
           {/* Inspirational Giving Messages Section */}
-          <section className="py-16 sm:py-24 bg-slate-50 dark:bg-slate-950">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {/* Section Header */}
-              <div className="text-center mb-16">
-                <span className="text-[#8B1A1A] font-bold tracking-wider uppercase text-sm">
-                  The Heart of Giving
-                </span>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-3 mb-6">
-                  What God Does Through Your Gift
-                </h2>
-                <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                  Discover how your generosity becomes a powerful force for Kingdom transformation
-                </p>
-              </div>
+          {/* Inspirational Giving Messages Section */}
+<section className="py-16 sm:py-24 bg-slate-50 dark:bg-slate-950">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Section Header */}
+    <div className="text-center mb-16">
+      <span className="text-[#8B1A1A] font-bold tracking-wider uppercase text-sm">
+        The Heart of Giving
+      </span>
+      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-3 mb-6">
+        What God Does Through Your Gift
+      </h2>
+      <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
+        Discover how your generosity becomes a powerful force for Kingdom transformation
+      </p>
+    </div>
 
-              {/* Message Cards Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-16">
-                {/* Card 1 - Become Like Christ */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div 
-                      className="w-full h-32 rounded-xl mb-6 shadow-lg group-hover:scale-105 transition-transform overflow-hidden relative"
-                      style={{
-                        backgroundImage: "url('https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&h=400&fit=crop')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center"
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/80 to-pink-600/80 flex items-center justify-center">
-                        <Sparkles className="text-white" size={40} />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Become Like Christ
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      &quot;It is more blessed to give than to receive.&quot; When we give, we trust Jesus&apos; promise and participate in His nature of generosity.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                        Acts 20:35
-                      </p>
-                    </div>
-                  </div>
-                </div>
+    {/* Message Cards Grid */}
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-16">
+      {/* Card 1 - Become Like Christ */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/95 via-purple-800/85 to-purple-600/60 group-hover:from-purple-900/98 group-hover:via-purple-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Become Like Christ
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            &quot;It is more blessed to give than to receive.&quot; When we give, we trust Jesus&apos; promise and participate in His nature of generosity.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-purple-200">
+              Acts 20:35
+            </p>
+          </div>
+        </div>
+      </div>
 
-                {/* Card 2 - Store Treasure */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <DollarSign className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Store Eternal Treasure
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      Be rich in good works, generous and ready to share, storing up treasure as a good foundation for the future—taking hold of that which is truly life.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                        1 Timothy 6:17-19
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      {/* Card 2 - Store Eternal Treasure */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-orange-900/95 via-orange-800/85 to-yellow-600/60 group-hover:from-orange-900/98 group-hover:via-orange-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Store Eternal Treasure
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            Be rich in good works, generous and ready to share, storing up treasure as a good foundation for the future—taking hold of that which is truly life.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-orange-200">
+              1 Timothy 6:17-19
+            </p>
+          </div>
+        </div>
+      </div>
 
-                {/* Card 3 - Multiply Impact */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <TrendingUp className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Enlarge Your Harvest
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      God supplies seed to the sower and bread for food. He will also increase your store of seed and enlarge the harvest of your righteousness.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                        2 Corinthians 9:10
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      {/* Card 3 - Enlarge Your Harvest */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-green-900/95 via-emerald-800/85 to-green-600/60 group-hover:from-green-900/98 group-hover:via-emerald-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Enlarge Your Harvest
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            God supplies seed to the sower and bread for food. He will also increase your store of seed and enlarge the harvest of your righteousness.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-green-200">
+              2 Corinthians 9:10
+            </p>
+          </div>
+        </div>
+      </div>
 
-                {/* Card 4 - Prevent Idolatry */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <ShieldCheck className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Guard Your Heart
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      The righteous give without sparing. Giving keeps our hearts from craving more all day long, protecting us from the idolatry of material possessions.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                        Proverbs 21:26
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      {/* Card 4 - Guard Your Heart */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/95 via-indigo-800/85 to-blue-600/60 group-hover:from-blue-900/98 group-hover:via-indigo-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Guard Your Heart
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            The righteous give without sparing. Giving keeps our hearts from craving more all day long, protecting us from the idolatry of material possessions.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-blue-200">
+              Proverbs 21:26
+            </p>
+          </div>
+        </div>
+      </div>
 
-                {/* Card 5 - Create Margin */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <Target className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Create Margin to Breathe
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      If the willingness is there, the gift is acceptable according to what you have. Create margin in your life for God to work and for you to thrive.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-teal-600 dark:text-teal-400">
-                        2 Corinthians 8:12
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      {/* Card 5 - Create Margin to Breathe */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-teal-900/95 via-cyan-800/85 to-teal-600/60 group-hover:from-teal-900/98 group-hover:via-cyan-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Create Margin to Breathe
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            If the willingness is there, the gift is acceptable according to what you have. Create margin in your life for God to work and for you to thrive.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-teal-200">
+              2 Corinthians 8:12
+            </p>
+          </div>
+        </div>
+      </div>
 
-                {/* Card 6 - Worship Through Giving */}
-                <div className="group relative bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-[#8B1A1A] dark:hover:border-[#8B1A1A]">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-red-400/20 to-rose-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8B1A1A] to-red-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <Heart className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                      Worship God Through Sacrifice
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                      Do not neglect to do good and to share what you have, for such sacrifices are pleasing to God. Giving is an act of worship.
-                    </p>
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-[#8B1A1A]">
-                        Hebrews 13:16
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* Card 6 - Worship Through Sacrifice */}
+      <div 
+        className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-96"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=600&h=800&fit=crop')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-red-900/95 via-rose-800/85 to-red-600/60 group-hover:from-red-900/98 group-hover:via-rose-800/90 transition-all duration-300"></div>
+        <div className="relative h-full p-8 flex flex-col justify-end text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Worship God Through Sacrifice
+          </h3>
+          <p className="text-white/90 mb-6 leading-relaxed">
+            Do not neglect to do good and to share what you have, for such sacrifices are pleasing to God. Giving is an act of worship.
+          </p>
+          <div className="pt-4 border-t border-white/30">
+            <p className="text-sm font-semibold text-red-200">
+              Hebrews 13:16
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-              {/* Featured Quote Section */}
-              <div className="relative max-w-4xl mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#8B1A1A] to-red-700 rounded-3xl opacity-5"></div>
-                <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 rounded-3xl p-8 sm:p-12 text-white shadow-2xl border border-slate-700">
-                  <div className="text-6xl text-yellow-400 opacity-20 mb-4">&quot;</div>
-                  <blockquote className="text-2xl sm:text-3xl font-bold mb-6 leading-relaxed">
-                    You will be enriched in every way so that you can be generous on every occasion
-                  </blockquote>
-                  <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                    Every dollar that passes through our hands is a transfer of power. How we use that power shapes us, for better or worse. God turns us into more generous, thankful, joyful people by blessing us with resources so we can give back to the kingdom.
-                  </p>
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <p className="text-yellow-400 font-bold text-lg">
-                      2 Corinthians 9:11
-                    </p>
-                    <Link 
-                      href="#campaigns"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-colors"
-                    >
-                      Give Now
-                      <ArrowRight size={18} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+    {/* Featured Quote Section */}
+    <div className="relative max-w-4xl mx-auto">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#8B1A1A] to-red-700 rounded-3xl opacity-5"></div>
+      <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 rounded-3xl p-8 sm:p-12 text-white shadow-2xl border border-slate-700">
+        <div className="text-6xl text-yellow-400 opacity-20 mb-4">&quot;</div>
+        <blockquote className="text-2xl sm:text-3xl font-bold mb-6 leading-relaxed">
+          You will be enriched in every way so that you can be generous on every occasion
+        </blockquote>
+        <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+          Every dollar that passes through our hands is a transfer of power. How we use that power shapes us, for better or worse. God turns us into more generous, thankful, joyful people by blessing us with resources so we can give back to the kingdom.
+        </p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <p className="text-yellow-400 font-bold text-lg">
+            2 Corinthians 9:11
+          </p>
+          <Link 
+            href="#campaigns"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            Give Now
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* CTA Section */}
       <section className="py-12 sm:py-16 bg-gradient-to-r from-[#8B1A1A] to-red-900 text-white">

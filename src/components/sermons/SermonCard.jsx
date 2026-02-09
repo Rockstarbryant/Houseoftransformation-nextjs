@@ -85,7 +85,7 @@ const SermonCard = ({ sermon }) => {
       >
         
         {/* Header */}
-        <div className="px-0 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
+        <div className="px-2 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
               {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
