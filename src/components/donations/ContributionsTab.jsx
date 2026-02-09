@@ -1,13 +1,14 @@
+// src/components/donations/ContributionsTab.jsx - REDESIGNED
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, getStatusBadge } from '@/utils/donationHelpers';
-import { Eye, CheckCircle, Download, Filter, Search, DollarSign, X, Printer, Pencil, Trash2, AlertTriangle, AlertCircle, Info, TrendingUp } from 'lucide-react';
+import { Eye, CheckCircle, Download, Filter, Search, DollarSign, X, Printer, Pencil, Trash2, AlertTriangle, AlertCircle, Info, TrendingUp, Users, Wallet } from 'lucide-react';
 import ContributionDetailsModal from './ContributionDetailsModal';
 
-// ✅ Gemini's Beautiful Confirmation Dialog
+// Confirmation Dialog
 function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'warning', confirmText = 'Confirm', isLoading = false }) {
   if (!isOpen) return null;
 
@@ -19,7 +20,7 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-slate-900/60 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
         <div className={`p-8 flex flex-col items-center text-center ${typeStyles[type]} border-b`}>
           <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm mb-4">
             {type === 'danger' ? <Trash2 size={32} /> : type === 'warning' ? <AlertTriangle size={32} /> : <Info size={32} />}
@@ -51,7 +52,7 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
   );
 }
 
-// ✅ Gemini's Beautiful Alert Component
+// Alert Component
 function Alert({ message, type = 'success', onClose }) {
   if (!message) return null;
   
@@ -72,9 +73,7 @@ function Alert({ message, type = 'success', onClose }) {
 export default function ContributionsTab() {
   const queryClient = useQueryClient();
   
-  // ============================================
-  // STATE (ALL PRESERVED)
-  // ============================================
+  // State
   const [selectedContributions, setSelectedContributions] = useState(new Set());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedContribution, setSelectedContribution] = useState(null);
@@ -89,14 +88,11 @@ export default function ContributionsTab() {
     searchTerm: ''
   });
 
-  // ============================================
-  // FETCH DATA WITH TANSTACK QUERY (ALL PRESERVED)
-  // ============================================
+  // Fetch data
   const { data: allContributions = [], isLoading } = useQuery({
     queryKey: ['contributions'],
     queryFn: async () => {
       const response = await donationApi.contributions.getAll({ limit: 1000 });
-      console.log('[CONTRIBUTIONS] Fetched data:', response);
       if (response.success) {
         return response.contributions || [];
       }
@@ -120,9 +116,7 @@ export default function ContributionsTab() {
     placeholderData: [],
   });
 
-  // ============================================
-  // CLIENT-SIDE FILTERING (ALL PRESERVED)
-  // ============================================
+  // Filtering
   const filteredContributions = useMemo(() => {
     let filtered = [...allContributions];
 
@@ -151,9 +145,7 @@ export default function ContributionsTab() {
     return filtered;
   }, [allContributions, filters]);
 
-  // ============================================
-  // STATISTICS (ALL PRESERVED)
-  // ============================================
+  // Statistics
   const stats = useMemo(() => {
     const verified = filteredContributions.filter(c => c.status === 'verified');
     
@@ -170,99 +162,52 @@ export default function ContributionsTab() {
 
     const byCampaign = {};
     verified.forEach(c => {
-      const title = c.campaign_title || 'General Offering';
-      if (!byCampaign[title]) {
-        byCampaign[title] = 0;
-      }
-      byCampaign[title] += Number(c.amount || 0);
+      const campaign = c.campaign_title || 'General Offering';
+      byCampaign[campaign] = (byCampaign[campaign] || 0) + Number(c.amount || 0);
     });
 
     return {
-      total: verified.reduce((sum, c) => sum + Number(c.amount || 0), 0),
-      count: {
-        verified: allContributions.filter(c => c.status === 'verified').length,
-        pending: allContributions.filter(c => c.status === 'pending').length,
-        failed: allContributions.filter(c => c.status === 'failed').length
-      },
+      total: filteredContributions.length,
+      verified: verified.length,
+      pending: filteredContributions.filter(c => c.status === 'pending').length,
+      totalAmount: verified.reduce((sum, c) => sum + Number(c.amount || 0), 0),
       byMethod,
       byCampaign
     };
-  }, [allContributions, filteredContributions]);
+  }, [filteredContributions]);
 
-  // ============================================
-  // MUTATIONS (ALL PRESERVED)
-  // ============================================
+  // Mutations
   const verifyMutation = useMutation({
     mutationFn: (contributionId) => donationApi.contributions.verify(contributionId),
-    onMutate: async (contributionId) => {
-      await queryClient.cancelQueries({ queryKey: ['contributions'] });
-      const previousContributions = queryClient.getQueryData(['contributions']);
-      
-      queryClient.setQueryData(['contributions'], (old) =>
-        old.map(c => c.id === contributionId ? { ...c, status: 'verified' } : c)
-      );
-      
-      return { previousContributions };
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contributions'] });
+      setAlertMessage({ message: '✅ Contribution verified successfully!', type: 'success' });
     },
-    onSuccess: (response, contributionId) => {
-      console.log('[CONTRIBUTIONS] Verify response:', response);
-      
-      if (response.success && response.contribution) {
-        queryClient.setQueryData(['contributions'], (old) =>
-          old.map(c => c.id === contributionId ? response.contribution : c)
-        );
-        
-        showAlert('Contribution verified successfully', 'success');
-        console.log('[CONTRIBUTIONS] ✅ Local state updated');
-      } else {
-        showAlert(response.message || 'Failed to verify contribution', 'error');
-      }
-    },
-    onError: (error, contributionId, context) => {
-      queryClient.setQueryData(['contributions'], context.previousContributions);
-      console.error('[CONTRIBUTIONS] Verify error:', error);
-      showAlert(error.response?.data?.message || 'Failed to verify contribution', 'error');
-    },
+    onError: (error) => {
+      setAlertMessage({ message: `❌ ${error.message}`, type: 'error' });
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (contributionId) => donationApi.contributions.delete(contributionId),
-    onMutate: async (contributionId) => {
-      await queryClient.cancelQueries({ queryKey: ['contributions'] });
-      const previousContributions = queryClient.getQueryData(['contributions']);
-      
-      queryClient.setQueryData(['contributions'], (old) =>
-        old.filter(c => c.id !== contributionId)
-      );
-      
-      return { previousContributions };
-    },
     onSuccess: () => {
-      showAlert('Contribution deleted successfully', 'success');
       queryClient.invalidateQueries({ queryKey: ['contributions'] });
+      setAlertMessage({ message: '✅ Contribution deleted successfully!', type: 'success' });
     },
-    onError: (error, contributionId, context) => {
-      queryClient.setQueryData(['contributions'], context.previousContributions);
-      showAlert(error.response?.data?.message || 'Failed to delete contribution', 'error');
-    },
+    onError: (error) => {
+      setAlertMessage({ message: `❌ ${error.message}`, type: 'error' });
+    }
   });
 
-  // ============================================
-  // HANDLERS (ALL PRESERVED)
-  // ============================================
-  const showAlert = (message, type = 'success') => {
-    setAlertMessage({ message, type });
-    setTimeout(() => setAlertMessage({ message: null, type: 'success' }), 5000);
-  };
-
+  // Handlers
   const handleVerify = (contributionId) => {
     setConfirmDialog({
       isOpen: true,
       action: 'verify',
       contributionId,
-      title: 'Verify Contribution',
-      message: 'Verify this contribution? This will mark it as confirmed.',
-      type: 'warning'
+      title: 'Verify Contribution?',
+      message: 'This will mark the contribution as verified and update the campaign totals.',
+      type: 'info'
     });
   };
 
@@ -271,220 +216,154 @@ export default function ContributionsTab() {
       isOpen: true,
       action: 'delete',
       contributionId,
-      title: 'Delete Contribution',
-      message: 'Are you sure you want to delete this contribution? This cannot be undone.',
+      title: 'Delete Contribution?',
+      message: 'Are you sure you want to delete this contribution? This action cannot be undone.',
       type: 'danger'
     });
   };
 
   const handleConfirmAction = () => {
-    const { action, contributionId } = confirmDialog;
-    
-    switch (action) {
-      case 'verify':
-        verifyMutation.mutate(contributionId);
-        break;
-      case 'delete':
-        deleteMutation.mutate(contributionId);
-        break;
+    if (confirmDialog.action === 'verify') {
+      verifyMutation.mutate(confirmDialog.contributionId);
+    } else if (confirmDialog.action === 'delete') {
+      deleteMutation.mutate(confirmDialog.contributionId);
     }
-    
     setConfirmDialog({ isOpen: false, action: null, contributionId: null });
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedContributions(new Set(filteredContributions.map(c => c.id)));
-    } else {
+  const handleSelectAll = () => {
+    if (selectedContributions.size === filteredContributions.length) {
       setSelectedContributions(new Set());
-    }
-  };
-
-  const handleSelectRow = (id) => {
-    const newSelected = new Set(selectedContributions);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
     } else {
-      newSelected.add(id);
+      setSelectedContributions(new Set(filteredContributions.map(c => c.id)));
     }
-    setSelectedContributions(newSelected);
   };
 
-  const handlePrint = () => {
-    const dataToPrint = selectedContributions.size > 0
-      ? filteredContributions.filter(c => selectedContributions.has(c.id))
-      : filteredContributions;
-
-    if (dataToPrint.length === 0) {
-      showAlert('No data to print', 'error');
-      return;
-    }
-
-    const printWindow = window.open('', '', 'height=600,width=800');
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Contributions Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { text-align: center; color: #1e293b; }
-            .meta { text-align: center; color: #64748b; margin-bottom: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 14px; }
-            th { background-color: #f1f5f9; font-weight: 600; color: #334155; }
-            tr:nth-child(even) { background-color: #f8fafc; }
-            .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: right; }
-          </style>
-        </head>
-        <body>
-          <h1>Contributions Report</h1>
-          <div class="meta">
-            Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}<br>
-            Total Records: ${dataToPrint.length}
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Contributor</th>
-                <th>Campaign</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>M-Pesa Ref</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${dataToPrint.map(c => `
-                <tr>
-                  <td>${c.is_anonymous ? 'Anonymous' : c.contributor_name}</td>
-                  <td>${c.campaign_title || 'General'}</td>
-                  <td><strong>KES ${Number(c.amount || 0).toLocaleString()}</strong></td>
-                  <td>${(c.payment_method || 'cash').toUpperCase()}</td>
-                  <td>${c.mpesa_ref || 'N/A'}</td>
-                  <td>${c.status.toUpperCase()}</td>
-                  <td>${new Date(c.created_at).toLocaleDateString()}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <div class="total">
-            Total Amount: KES ${dataToPrint.reduce((sum, c) => sum + Number(c.amount || 0), 0).toLocaleString()}
-          </div>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  const handleExport = () => {
-    const dataToPrint = selectedContributions.size > 0
-      ? filteredContributions.filter(c => selectedContributions.has(c.id))
-      : filteredContributions;
-
-    if (dataToPrint.length === 0) {
-      showAlert('No data to export', 'error');
-      return;
-    }
-
-    const headers = ['Contributor', 'Campaign', 'Amount', 'Method', 'M-Pesa Ref', 'Status', 'Date'];
-    const csvRows = dataToPrint.map(c => [
-      c.is_anonymous ? 'Anonymous' : c.contributor_name,
-      c.campaign_title || 'General',
-      c.amount,
-      c.payment_method || 'cash',
-      c.mpesa_ref || '',
-      c.status,
-      new Date(c.created_at).toLocaleDateString()
-    ]);
-
+  const handleExportCSV = () => {
     const csv = [
-      headers.join(','),
-      ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
+      ['Contributor', 'Email', 'Phone', 'Campaign', 'Amount', 'Method', 'Status', 'Date'],
+      ...filteredContributions.map(c => [
+        c.is_anonymous ? 'Anonymous' : c.contributor_name,
+        c.contributor_email || '',
+        c.contributor_phone || '',
+        c.campaign_title || 'General Offering',
+        c.amount,
+        c.payment_method || 'cash',
+        c.status,
+        formatDate(c.created_at)
+      ])
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `contributions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `contributions-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    window.URL.revokeObjectURL(url);
   };
 
-  // ============================================
-  // RENDER (Gemini Styling + All Features)
-  // ============================================
+  const resetFilters = () => {
+    setFilters({
+      status: '',
+      paymentMethod: '',
+      campaignId: '',
+      searchTerm: ''
+    });
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {alertMessage.message && (
-        <Alert 
-          message={alertMessage.message} 
-          type={alertMessage.type} 
-          onClose={() => setAlertMessage({ message: null, type: 'success' })}
-        />
-      )}
-
-      {/* Statistics Cards - Gemini's Neumorphic Style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Verified', value: formatCurrency(stats.total), icon: DollarSign, color: 'emerald' },
-          { label: 'Verified Count', value: stats.count.verified, icon: CheckCircle, color: 'green' },
-          { label: 'Pending', value: stats.count.pending, icon: AlertCircle, color: 'amber' },
-          { label: 'Failed', value: stats.count.failed, icon: AlertTriangle, color: 'rose' }
-        ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-[1.5rem] border border-slate-100 dark:border-slate-700 shadow-sm group hover:border-[#8B1A1A]/30 transition-all">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600`}>
-              <stat.icon size={24} />
+    <div className="space-y-6">
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Contributions */}
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-blue-900/50 rounded-xl">
+              <Users size={24} className="text-blue-600 dark:text-blue-400" />
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{stat.value}</p>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{stats.total} Total</span>
           </div>
-        ))}
-      </div>
-
-      {/* Filters Section - Gemini's Premium Style */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <Filter size={20} className="text-slate-600 dark:text-slate-400" />
-          </div>
-          <h3 className="text-lg font-black text-slate-900 dark:text-white">Filter Contributions</h3>
+          <h3 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-1">Verified</h3>
+          <p className="text-2xl font-black text-blue-900 dark:text-blue-100">{stats.verified}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Amount */}
+        <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-emerald-900/50 rounded-xl">
+              <DollarSign size={24} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
+          <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-1">Total Amount</h3>
+          <p className="text-2xl font-black text-emerald-900 dark:text-emerald-100">{formatCurrency(stats.totalAmount)}</p>
+        </div>
+
+        {/* Pending */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-amber-900/50 rounded-xl">
+              <AlertCircle size={24} className="text-amber-600 dark:text-amber-400" />
+            </div>
+          </div>
+          <h3 className="text-sm font-bold text-amber-700 dark:text-amber-300 mb-1">Pending</h3>
+          <p className="text-2xl font-black text-amber-900 dark:text-amber-100">{stats.pending}</p>
+        </div>
+
+        {/* M-Pesa Amount */}
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-purple-900/50 rounded-xl">
+              <Wallet size={24} className="text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+          <h3 className="text-sm font-bold text-purple-700 dark:text-purple-300 mb-1">M-Pesa</h3>
+          <p className="text-2xl font-black text-purple-900 dark:text-purple-100">{formatCurrency(stats.byMethod.mpesa)}</p>
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+        <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Search by name, email..."
               value={filters.searchTerm}
-              onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-[#8B1A1A] transition-all font-medium text-slate-900 dark:text-white placeholder:text-slate-400"
+              onChange={(e) => setFilters({...filters, searchTerm: e.target.value})}
+              placeholder="Search by name, email, phone, or campaign..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none text-slate-900 dark:text-white transition-all"
             />
           </div>
 
-          {/* Status Filter */}
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Filters */}
+        <div className="flex flex-wrap gap-2">
           <select
             value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-[#8B1A1A] transition-all font-medium text-slate-900 dark:text-white"
+            onChange={(e) => setFilters({...filters, status: e.target.value})}
+            className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none cursor-pointer"
           >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
+            <option value="">All Status</option>
             <option value="verified">Verified</option>
-            <option value="failed">Failed</option>
+            <option value="pending">Pending</option>
           </select>
 
-          {/* Method Filter */}
           <select
             value={filters.paymentMethod}
-            onChange={(e) => setFilters(prev => ({ ...prev, paymentMethod: e.target.value }))}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-[#8B1A1A] transition-all font-medium text-slate-900 dark:text-white"
+            onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
+            className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none cursor-pointer"
           >
             <option value="">All Methods</option>
             <option value="mpesa">M-Pesa</option>
@@ -492,131 +371,115 @@ export default function ContributionsTab() {
             <option value="bank_transfer">Bank Transfer</option>
           </select>
 
-          {/* Campaign Filter */}
           <select
             value={filters.campaignId}
-            onChange={(e) => setFilters(prev => ({ ...prev, campaignId: e.target.value }))}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-[#8B1A1A] transition-all font-medium text-slate-900 dark:text-white"
+            onChange={(e) => setFilters({...filters, campaignId: e.target.value})}
+            className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none cursor-pointer"
           >
             <option value="">All Campaigns</option>
-            {campaigns.map(campaign => (
-              <option key={campaign._id} value={campaign._id}>
-                {campaign.title}
-              </option>
+            {campaigns.map(c => (
+              <option key={c.supabaseId} value={c.supabaseId}>{c.title}</option>
             ))}
           </select>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-600 text-white rounded-xl font-bold hover:bg-slate-700 transition-all active:scale-95 shadow-lg"
-          >
-            <Printer size={18} />
-            Print {selectedContributions.size > 0 && `(${selectedContributions.size})`}
-          </button>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all active:scale-95 shadow-lg"
-          >
-            <Download size={18} />
-            Export CSV {selectedContributions.size > 0 && `(${selectedContributions.size})`}
-          </button>
-          {selectedContributions.size > 0 && (
+          {(filters.status || filters.paymentMethod || filters.campaignId || filters.searchTerm) && (
             <button
-              onClick={() => setSelectedContributions(new Set())}
-              className="flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all active:scale-95 shadow-lg"
+              onClick={resetFilters}
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold flex items-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
             >
-              <X size={18} />
-              Clear Selection
+              <X size={16} />
+              Clear
             </button>
           )}
         </div>
       </div>
 
-      {/* Contributions Table - Gemini's Premium Table Style */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th className="px-8 py-5">
-                  <input
-                    type="checkbox"
-                    checked={selectedContributions.size === filteredContributions.length && filteredContributions.length > 0}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 text-[#8B1A1A] focus:ring-[#8B1A1A]"
-                  />
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Contributor</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Campaign</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Amount</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Method</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">M-Pesa Ref</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Status</span>
-                </th>
-                <th className="px-8 py-5 text-left">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Date</span>
-                </th>
-                <th className="px-8 py-5 text-right">
-                  <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {isLoading ? (
-                <tr>
-                  <td colSpan="9" className="px-8 py-16 text-center">
-                    <div className="flex flex-col items-center justify-center gap-4">
-                      <div className="w-12 h-12 border-4 border-slate-200 border-t-[#8B1A1A] rounded-full animate-spin"></div>
-                      <p className="text-slate-500 font-bold animate-pulse">Loading contributions...</p>
-                    </div>
-                  </td>
+      {/* Payment Method Breakdown */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4">Payment Method Breakdown</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(stats.byMethod).map(([method, amount]) => (
+            <div key={method} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase">{method === 'bank_transfer' ? 'Bank Transfer' : method}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(amount)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Contributions Table */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+          </div>
+        ) : filteredContributions.length === 0 ? (
+          <div className="text-center py-12">
+            <DollarSign size={56} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+            <p className="text-xl font-bold text-slate-900 dark:text-white mb-2">No contributions found</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Try adjusting your filters</p>
+            {(filters.status || filters.paymentMethod || filters.campaignId || filters.searchTerm) && (
+              <button
+                onClick={resetFilters}
+                className="px-6 py-3 bg-[#8B1A1A] text-white rounded-xl hover:bg-[#6d1414] transition-all font-bold shadow-lg shadow-rose-500/20"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-900">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedContributions.size === filteredContributions.length && filteredContributions.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded w-4 h-4 text-[#8B1A1A] focus:ring-[#8B1A1A]"
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Contributor</th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Campaign</th>
+                  <th className="px-6 py-4 text-right font-black text-slate-700 dark:text-slate-300">Amount</th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Method</th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Ref</th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Status</th>
+                  <th className="px-6 py-4 text-left font-black text-slate-700 dark:text-slate-300">Date</th>
+                  <th className="px-6 py-4 text-center font-black text-slate-700 dark:text-slate-300">Actions</th>
                 </tr>
-              ) : filteredContributions.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="px-8 py-16 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <Info size={48} className="text-slate-300" />
-                      <p className="text-slate-500 font-bold text-lg">No contributions found</p>
-                      <p className="text-slate-400 text-sm">Try adjusting your filters</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredContributions.map(contrib => {
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {filteredContributions.map(contrib => {
                   const statusBadge = getStatusBadge(contrib.status);
                   
                   return (
-                    <tr key={contrib.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-8 py-6">
+                    <tr key={contrib.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+                      <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedContributions.has(contrib.id)}
-                          onChange={() => handleSelectRow(contrib.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-[#8B1A1A] focus:ring-[#8B1A1A]"
+                          onChange={(e) => {
+                            const newSet = new Set(selectedContributions);
+                            if (e.target.checked) {
+                              newSet.add(contrib.id);
+                            } else {
+                              newSet.delete(contrib.id);
+                            }
+                            setSelectedContributions(newSet);
+                          }}
+                          className="rounded w-4 h-4 text-[#8B1A1A] focus:ring-[#8B1A1A]"
                         />
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-4">
                         <div>
-                          <p className="font-bold text-slate-900 dark:text-white group-hover:text-[#8B1A1A] transition-colors">
+                          <p className="font-bold text-slate-900 dark:text-white">
                             {contrib.is_anonymous ? 'Anonymous' : contrib.contributor_name}
                           </p>
                           {!contrib.is_anonymous && (
                             <>
-                              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{contrib.contributor_email}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{contrib.contributor_email}</p>
                               <p className="text-xs text-slate-500 dark:text-slate-500">{contrib.contributor_phone}</p>
                             </>
                           )}
@@ -627,32 +490,32 @@ export default function ContributionsTab() {
                           )}
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <td className="px-6 py-4">
+                        <span className="font-bold text-blue-600 dark:text-blue-400">
                           {contrib.campaign_title || 'General Offering'}
-                        </p>
-                      </td>
-                      <td className="px-8 py-6 font-black text-slate-900 dark:text-white text-base">
-                        {formatCurrency(contrib.amount)}
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                          {(contrib.payment_method || 'cash').toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white">
+                        {formatCurrency(contrib.amount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-black uppercase bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                          {(contrib.payment_method || 'cash').replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         {contrib.mpesa_ref ? (
-                          <code className="text-xs bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200 px-3 py-1 rounded-lg font-bold">
+                          <code className="text-xs bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-lg font-bold">
                             {contrib.mpesa_ref}
                           </code>
                         ) : (
                           <span className="text-xs text-slate-400">N/A</span>
                         )}
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-4">
                         <div>
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge.bg} ${statusBadge.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${contrib.status === 'verified' ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`} />
+                          <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black uppercase ${statusBadge.bg} ${statusBadge.text}`}>
+                            <span className={`w-2 h-2 rounded-full ${contrib.status === 'verified' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                             {statusBadge.label}
                           </span>
                           {contrib.verified_by_name && contrib.status === 'verified' && (
@@ -662,15 +525,15 @@ export default function ContributionsTab() {
                           )}
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300">
                         {formatDate(contrib.created_at)}
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-1">
                           {contrib.status === 'pending' && (
                             <button
                               onClick={() => handleVerify(contrib.id)}
-                              className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all"
+                              className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 rounded-xl transition-all"
                               title="Verify Contribution"
                             >
                               <CheckCircle size={18} />
@@ -681,7 +544,7 @@ export default function ContributionsTab() {
                               setSelectedContribution(contrib);
                               setShowDetailsModal(true);
                             }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-xl transition-all"
                             title="View Details"
                           >
                             <Eye size={18} />
@@ -694,7 +557,7 @@ export default function ContributionsTab() {
                                    setSelectedContribution(contrib);
                                    setShowEditModal(true);
                                  }}
-                                 className="p-2 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all"
+                                 className="p-2 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-950/50 rounded-xl transition-all"
                                  title="Edit Contribution"
                                >
                                  <Pencil size={18} />
@@ -702,7 +565,7 @@ export default function ContributionsTab() {
                                
                                <button
                                  onClick={() => handleDelete(contrib.id)}
-                                 className="p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                                 className="p-2 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-xl transition-all"
                                  title="Delete Contribution"
                                >
                                  <Trash2 size={18} />
@@ -713,42 +576,42 @@ export default function ContributionsTab() {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Top Campaigns Section - Gemini's Premium Style */}
+      {/* Top Campaigns Section */}
       {Object.keys(stats.byCampaign).length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-xl">
-              <TrendingUp size={20} className="text-amber-600" />
+            <div className="p-2.5 bg-amber-100 dark:bg-amber-950/50 rounded-xl">
+              <TrendingUp size={22} className="text-amber-600 dark:text-amber-400" />
             </div>
-            <h4 className="text-lg font-black text-slate-900 dark:text-white">Top Campaigns by Contributions</h4>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">Top Campaigns by Contributions</h3>
           </div>
           <div className="space-y-3">
             {Object.entries(stats.byCampaign)
               .sort((a, b) => b[1] - a[1])
               .slice(0, 5)
               .map(([campaign, amount], index) => (
-                <div key={campaign} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 group hover:border-[#8B1A1A]/30 transition-all">
+                <div key={campaign} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-[#8B1A1A]/30 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-900 dark:text-white font-black">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/50 dark:to-orange-950/30 shadow-sm flex items-center justify-center text-amber-900 dark:text-amber-100 font-black">
                       {index + 1}
                     </div>
                     <span className="font-bold text-slate-700 dark:text-slate-300">{campaign}</span>
                   </div>
-                  <span className="text-lg font-black text-slate-900 dark:text-white">{formatCurrency(amount)}</span>
+                  <span className="text-xl font-black text-slate-900 dark:text-white">{formatCurrency(amount)}</span>
                 </div>
               ))}
           </div>
         </div>
       )}
 
-      {/* Contribution Details Modal */}
+      {/* Modals */}
       {showDetailsModal && selectedContribution && (
         <ContributionDetailsModal
           contribution={selectedContribution}
@@ -772,6 +635,15 @@ export default function ContributionsTab() {
           (confirmDialog.action === 'delete' && deleteMutation.isPending)
         }
       />
+
+      {/* Alert */}
+      {alertMessage.message && (
+        <Alert 
+          message={alertMessage.message} 
+          type={alertMessage.type} 
+          onClose={() => setAlertMessage({ message: null, type: 'success' })} 
+        />
+      )}
     </div>
   );
 }

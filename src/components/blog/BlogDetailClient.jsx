@@ -131,16 +131,20 @@ export default function BlogDetailClient({ post }) {
         {/* Featured Image */}
         <div className="relative aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden bg-slate-100 mb-16 shadow-2xl">
           {post.image ? (
-            <img 
-              src={post.image} 
-              alt={post.title} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-200 text-9xl font-black">
-              📰
-            </div>
-          )}
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            unoptimized
+            sizes="(max-width: 1024px) 100vw, 896px"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-200 text-9xl font-black">
+            📰
+          </div>
+        )}
         </div>
 
         {/* Article Body - 100% PRESERVED */}

@@ -236,7 +236,8 @@ export default function ContributionForm({ onClose, onSuccess, preselectedCampai
   if (paymentStep === 'form') {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full my-8 shadow-2xl">
+        <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl max-h-[90vh]">
+        <div className="bg-white dark:bg-slate-900">
           {/* HEADER */}
           <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -311,7 +312,7 @@ export default function ContributionForm({ onClose, onSuccess, preselectedCampai
                       type="text"
                       value={formData.contributorName}
                       onChange={(e) => handleInputChange('contributorName', e.target.value)}
-                      placeholder="John Doe"
+                      placeholder="Namyekera weesibori"
                       required={!formData.isAnonymous}
                       disabled={loading || isSubmitting}
                       className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-600 outline-none"
@@ -330,7 +331,7 @@ export default function ContributionForm({ onClose, onSuccess, preselectedCampai
                       type="email"
                       value={formData.contributorEmail}
                       onChange={(e) => handleInputChange('contributorEmail', e.target.value)}
-                      placeholder="john@example.com"
+                      placeholder="nakhulo@example.com"
                       required={!formData.isAnonymous}
                       disabled={loading || isSubmitting}
                       className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-600 outline-none"
@@ -450,6 +451,7 @@ export default function ContributionForm({ onClose, onSuccess, preselectedCampai
             </div>
           </form>
         </div>
+      </div>
       </div>
     );
   }

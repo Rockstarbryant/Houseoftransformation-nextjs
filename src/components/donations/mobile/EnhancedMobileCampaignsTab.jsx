@@ -640,12 +640,12 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                     className="px-4 sm:px-3 cursor-pointer relative"
                     onClick={() => setExpandedCard(isExpanded ? null : campaign._id)}
                   >
-                    <div className="flex items-start gap-3 mb-3">
+                    <div className="flex items-start gap-3 mt-2 mb-3">
                       <div className={`p-2 rounded-xl flex-shrink-0 ${campaign.isFeatured ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
-                        {campaign.isFeatured ? <Star size={20} /> : <Target size={20} />}
+                        {campaign.isFeatured ? <Star size={15} /> : <Target size={20} />}
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 mt-2 min-w-0">
                         <h3 className="font-bold text-slate-900 dark:text-white mb-1 leading-tight truncate">
                           {campaign.title}
                         </h3>
@@ -679,7 +679,7 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
+                    <div className="flex items-center gap-2 mb-4 text-xs text-slate-500 truncate">
                       <Calendar size={12} className="flex-shrink-0" />
                       <span className="truncate">{formatDateShort(campaign.startDate)} - {formatDateShort(campaign.endDate)}</span>
                     </div>

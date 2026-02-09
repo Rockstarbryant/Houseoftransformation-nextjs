@@ -1,5 +1,4 @@
 // components/donations/ContributionRecordModal.jsx
-// ✅ MODERN REDESIGN - Fully responsive with FIXED anonymous checkbox + ALL logic preserved
 
 'use client';
 
@@ -9,10 +8,13 @@ import api from '@/lib/api';
 import { formatCurrency } from '@/utils/donationHelpers';
 import { 
   X, DollarSign, CheckCircle, AlertCircle, Search, UserCheck, 
-  User, Mail, Phone, Wallet, CreditCard, FileText, UserX
+  User, Mail, Phone, Wallet, CreditCard, FileText, UserX, ChevronRight, Loader2
 } from 'lucide-react';
 
 export default function ContributionRecordModal({ campaign, onClose, onSuccess }) {
+  // ---------------------------------------------------------
+  // 1. STATE & LOGIC (Preserved Exactly)
+  // ---------------------------------------------------------
   const [formData, setFormData] = useState({
     contributorName: '',
     contributorEmail: '',
@@ -77,7 +79,6 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     });
   };
 
-  // ✅ VALIDATION - ALL ORIGINAL LOGIC PRESERVED
   const validateForm = () => {
     if (!formData.amount || formData.amount <= 0) {
       setError('Amount must be greater than 0');
@@ -158,109 +159,87 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
     }
   };
 
+  // ---------------------------------------------------------
+  // 2. MODERN UI
+  // ---------------------------------------------------------
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-800 animate-in zoom-in-95 duration-200">
         
-        {/* HERO HEADER - Gradient */}
-        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-6 md:p-8 overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-24 translate-x-24"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16"></div>
-          
-          <div className="relative z-10">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="absolute top-0 right-0 p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-50"
-            >
-              <X size={24} />
-            </button>
-
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
-                <DollarSign size={28} />
-              </div>
-              <div>
-                <h3 className="text-2xl md:text-3xl font-black">Record Contribution</h3>
-                <p className="text-white/80 text-sm md:text-base mt-1">
-                  Campaign: <strong>{campaign.title}</strong>
-                </p>
-              </div>
-            </div>
+        {/* HEADER */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-xl z-10">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Record Contribution</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+              For Campaign: <span className="font-medium text-blue-600 dark:text-blue-400">{campaign.title}</span>
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* ERROR */}
-        {error && (
-          <div className="mx-4 md:mx-6 mt-4 md:mt-6 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-center gap-3 shadow-lg">
-            <div className="p-2 bg-red-200 dark:bg-red-800 rounded-xl">
-              <AlertCircle className="text-red-700 dark:text-red-200" size={20} />
+        {/* SCROLLABLE FORM BODY */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start gap-3">
+              <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
             </div>
-            <p className="text-red-900 dark:text-red-100 text-sm font-bold flex-1">{error}</p>
-          </div>
-        )}
+          )}
 
-        {/* SCROLLABLE FORM */}
-        <div className="max-h-[calc(90vh-200px)] overflow-y-auto">
-          <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
+          <form id="contribution-form" onSubmit={handleSubmit} className="space-y-6">
             
-            {/* ✅ FIXED: Anonymous Toggle - Now Fully Clickable */}
+            {/* ANONYMOUS TOGGLE CARD */}
             <div 
               onClick={() => {
                 if (!isSubmitting) {
                   const newAnonymousState = !formData.isAnonymous;
                   setFormData({ ...formData, isAnonymous: newAnonymousState });
-                  if (newAnonymousState) {
-                    handleClearUser();
-                  }
+                  if (newAnonymousState) handleClearUser();
                 }
               }}
-              className="cursor-pointer"
+              className={`
+                group relative flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                ${formData.isAnonymous 
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10' 
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'}
+              `}
             >
-              <div className={`p-4 md:p-6 rounded-2xl border-2 transition-all ${
-                formData.isAnonymous
-                  ? 'bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-300 dark:border-purple-700'
-                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-              }`}>
-                <div className="flex items-center gap-3">
-                  {/* Custom Toggle Switch */}
-                  <div className={`relative w-14 h-8 rounded-full transition-colors ${
-                    formData.isAnonymous ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                  }`}>
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all ${
-                      formData.isAnonymous ? 'right-1' : 'left-1'
-                    }`}></div>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <UserX size={20} className={formData.isAnonymous ? 'text-purple-600' : 'text-slate-400'} />
-                      <span className={`font-bold ${
-                        formData.isAnonymous 
-                          ? 'text-purple-900 dark:text-purple-200' 
-                          : 'text-slate-700 dark:text-slate-300'
-                      }`}>
-                        {formData.isAnonymous ? '✅ Anonymous Contribution' : 'Record Contributor Details'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                      {formData.isAnonymous ? 'Contributor identity will be hidden' : 'Click to make anonymous'}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-md ${formData.isAnonymous ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
+                  <UserX size={20} />
                 </div>
+                <div>
+                  <p className={`font-semibold ${formData.isAnonymous ? 'text-purple-900 dark:text-purple-300' : 'text-gray-900 dark:text-white'}`}>
+                    Anonymous Contribution
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Hide contributor details from public records
+                  </p>
+                </div>
+              </div>
+              <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.isAnonymous ? 'bg-purple-500' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${formData.isAnonymous ? 'right-1' : 'left-1'}`} />
               </div>
             </div>
 
-            {/* User Search - Only if NOT anonymous */}
-            {!formData.isAnonymous && users.length > 0 && (
-              <div className="animate-in slide-in-from-top duration-300">
-                <div className="bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800 rounded-2xl p-4 md:p-6">
-                  <label className="block text-sm font-bold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
-                    <Search size={16} />
-                    Quick Select Registered User (Optional)
+            {/* USER SEARCH (Conditional) */}
+            {!formData.isAnonymous && (
+              <div className="space-y-4">
+                {/* Search Input */}
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Find Registered User (Optional)
                   </label>
-                  
                   <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                       type="text"
                       value={searchTerm}
@@ -269,312 +248,236 @@ export default function ContributionRecordModal({ campaign, onClose, onSuccess }
                         setShowUserDropdown(e.target.value.length > 0);
                       }}
                       onFocus={() => searchTerm && setShowUserDropdown(true)}
-                      placeholder="Search by name, email, or phone..."
-                      className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950/50 text-slate-900 dark:text-white placeholder-blue-400 dark:placeholder-blue-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Search name, email or phone..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-900 transition-all outline-none text-sm"
                       disabled={isSubmitting || selectedUser !== null}
                     />
-                    
-                    {showUserDropdown && filteredUsers.length > 0 && !selectedUser && (
-                      <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                        {filteredUsers.slice(0, 10).map(user => (
-                          <button
-                            key={user._id}
-                            type="button"
-                            onClick={() => handleSelectUser(user)}
-                            className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-950/30 border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors"
-                          >
-                            <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
-                            {user.phone && <p className="text-xs text-slate-500">{user.phone}</p>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                  
-                  {selectedUser && (
-                    <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 border-2 border-green-200 dark:border-green-800 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="text-green-600" size={18} />
-                        <div>
-                          <p className="text-sm font-bold text-green-900 dark:text-green-200">{selectedUser.name}</p>
-                          <p className="text-xs text-green-700 dark:text-green-300">{selectedUser.email}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleClearUser}
-                        className="px-3 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 rounded-lg font-bold transition-colors"
-                      >
-                        Clear
-                      </button>
+
+                  {/* Dropdown Results */}
+                  {showUserDropdown && filteredUsers.length > 0 && !selectedUser && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-56 overflow-y-auto">
+                      {filteredUsers.slice(0, 5).map(user => (
+                        <button
+                          key={user._id}
+                          type="button"
+                          onClick={() => handleSelectUser(user)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center justify-between group"
+                        >
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white text-sm">{user.name}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          </div>
+                          <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-500" />
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
+
+                {/* Selected User Badge */}
+                {selectedUser && (
+                  <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-100 dark:bg-blue-800 p-1.5 rounded-full">
+                        <UserCheck size={16} className="text-blue-600 dark:text-blue-300" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedUser.name}</p>
+                        <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearUser}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 px-3 py-1.5 rounded-md transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Manual Entry Fields - Only if NOT anonymous and NO user selected */}
+            {/* MANUAL ENTRY FIELDS */}
             {!formData.isAnonymous && !selectedUser && (
-              <div className="space-y-4 animate-in slide-in-from-top duration-300">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                    <User size={16} className="text-blue-600" />
-                    Contributor Name *
-                  </label>
-                  <input 
-                    type="text"
-                    value={formData.contributorName}
-                    onChange={(e) => {
-                      setFormData({ ...formData, contributorName: e.target.value });
-                      setError(null);
-                    }}
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    required
-                    disabled={isSubmitting}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Contributor Name *</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input 
+                      type="text"
+                      value={formData.contributorName}
+                      onChange={(e) => { setFormData({ ...formData, contributorName: e.target.value }); setError(null); }}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="e.g. Maxwell wepukhulu"
+                      required
+                    />
+                  </div>
                 </div>
 
-                {/* Email & Phone */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                      <Mail size={16} className="text-purple-600" />
-                      Email <span className="text-slate-400 font-normal">(Optional)</span>
-                    </label>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email (Optional)</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input 
                       type="email"
                       value={formData.contributorEmail}
-                      onChange={(e) => {
-                        setFormData({ ...formData, contributorEmail: e.target.value });
-                        setError(null);
-                      }}
-                      placeholder="john@example.com"
-                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-                      disabled={isSubmitting}
+                      onChange={(e) => { setFormData({ ...formData, contributorEmail: e.target.value }); setError(null); }}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="aminata@example.com"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                      <Phone size={16} className="text-green-600" />
-                      Phone <span className="text-slate-400 font-normal">(Optional)</span>
-                    </label>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Phone (Optional)</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input 
                       type="text"
                       value={formData.contributorPhone}
-                      onChange={(e) => {
-                        setFormData({ ...formData, contributorPhone: e.target.value });
-                        setError(null);
-                      }}
+                      onChange={(e) => { setFormData({ ...formData, contributorPhone: e.target.value }); setError(null); }}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="0712345678"
-                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Read-only when user selected */}
-            {!formData.isAnonymous && selectedUser && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Email</label>
-                  <input 
-                    type="email"
-                    value={formData.contributorEmail}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400 cursor-not-allowed"
-                  />
-                </div>
+            <div className="border-t border-gray-100 dark:border-gray-800 my-4"></div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Phone</label>
+            {/* AMOUNT & PAYMENT METHOD */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Amount */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Amount (KES) *</label>
+                <div className="relative group">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 bg-gray-100 dark:bg-gray-800 rounded-md">
+                    <DollarSign className="text-gray-600 dark:text-gray-300" size={16} />
+                  </div>
                   <input 
-                    type="text"
-                    value={formData.contributorPhone}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400 cursor-not-allowed"
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => { setFormData({ ...formData, amount: e.target.value }); setError(null); }}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-2xl font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="0.00"
+                    min="1"
+                    step="0.01"
+                    required
                   />
                 </div>
               </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment Method *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'cash', label: 'Cash', icon: '💵' },
+                    { value: 'bank_transfer', label: 'Bank', icon: '🏦' },
+                    { value: 'mpesa', label: 'M-Pesa', icon: '📱' }
+                  ].map((method) => (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, paymentMethod: method.value, mpesaRef: method.value !== 'mpesa' ? '' : formData.mpesaRef });
+                        setError(null);
+                      }}
+                      className={`
+                        flex flex-col items-center justify-center py-2.5 px-2 rounded-lg border transition-all duration-200
+                        ${formData.paymentMethod === method.value
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-500'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 hover:border-gray-300 hover:bg-gray-50'}
+                      `}
+                    >
+                      <span className="text-lg mb-1">{method.icon}</span>
+                      <span className="text-[10px] font-bold uppercase">{method.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* MPESA REFERENCE (Conditional) */}
+            {formData.paymentMethod === 'mpesa' && (
+              <div className="animate-in slide-in-from-top-2 duration-300 p-4 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl">
+                <label className="block text-xs font-bold text-green-800 dark:text-green-400 mb-2 flex items-center gap-2">
+                  <Wallet size={14} /> M-Pesa Reference Number *
+                </label>
+                <input 
+                  type="text"
+                  value={formData.mpesaRef}
+                  onChange={(e) => { setFormData({ ...formData, mpesaRef: e.target.value.toUpperCase() }); setError(null); }}
+                  placeholder="e.g. QBR3X4Y5Z6"
+                  maxLength="15"
+                  className="w-full px-4 py-2.5 rounded-lg border border-green-300 dark:border-green-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none font-mono font-bold uppercase tracking-wider"
+                  required
+                />
+              </div>
             )}
 
-            {/* Amount */}
+            {/* NOTES */}
             <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                <DollarSign size={16} className="text-emerald-600" />
-                Amount (KES) *
-              </label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Additional Notes (Optional)</label>
               <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                <input 
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => {
-                    setFormData({ ...formData, amount: e.target.value });
-                    setError(null);
-                  }}
-                  placeholder="Enter amount"
-                  min="1"
-                  step="0.01"
-                  className="w-full pl-12 pr-4 py-3 md:py-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-bold text-lg"
-                  required
-                  disabled={isSubmitting}
+                <FileText className="absolute left-3 top-3 text-gray-400" size={16} />
+                <textarea 
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows="2"
+                  placeholder="Add context about this donation..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm"
                 />
               </div>
             </div>
-
-            {/* Payment Method */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                <CreditCard size={16} className="text-blue-600" />
-                Payment Method *
-              </label>
-              <div className="grid grid-cols-3 gap-2 md:gap-3">
-                {[
-                  { value: 'cash', label: 'Cash', icon: '💵' },
-                  { value: 'bank_transfer', label: 'Bank', icon: '🏦' },
-                  { value: 'mpesa', label: 'M-Pesa', icon: '📱' }
-                ].map((method) => (
-                  <button
-                    key={method.value}
-                    type="button"
-                    onClick={() => {
-                      setFormData({ ...formData, paymentMethod: method.value, mpesaRef: method.value !== 'mpesa' ? '' : formData.mpesaRef });
-                      setError(null);
-                    }}
-                    className={`p-3 md:p-4 rounded-xl border-2 transition-all text-center ${
-                      formData.paymentMethod === method.value
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                    }`}
-                    disabled={isSubmitting}
-                  >
-                    <div className="text-2xl mb-1">{method.icon}</div>
-                    <div className={`text-xs font-bold ${
-                      formData.paymentMethod === method.value
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-slate-600 dark:text-slate-400'
-                    }`}>
-                      {method.label}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* M-Pesa Reference */}
-            {formData.paymentMethod === 'mpesa' && (
-              <div className="animate-in slide-in-from-top duration-300">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-200 dark:border-green-800 rounded-2xl p-4 md:p-6">
-                  <label className="block text-sm font-bold text-green-900 dark:text-green-200 mb-3 flex items-center gap-2">
-                    <Wallet size={16} />
-                    M-Pesa Reference Number *
-                  </label>
-                  <input 
-                    type="text"
-                    value={formData.mpesaRef}
-                    onChange={(e) => {
-                      setFormData({ ...formData, mpesaRef: e.target.value.toUpperCase() });
-                      setError(null);
-                    }}
-                    placeholder="e.g., QBR3X4Y5Z6"
-                    maxLength="15"
-                    className="w-full px-4 py-3 md:py-4 rounded-xl border-2 border-green-300 dark:border-green-700 bg-white dark:bg-green-950/50 text-slate-900 dark:text-white placeholder-green-400 dark:placeholder-green-600 focus:ring-2 focus:ring-green-500 outline-none uppercase font-mono font-bold"
-                    required
-                    disabled={isSubmitting}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                <FileText size={16} className="text-amber-600" />
-                Notes (Optional)
-              </label>
-              <textarea 
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows="3"
-                placeholder="Any additional details..."
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none resize-none"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            {/* Summary */}
-            {formData.amount > 0 && (
-              <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 md:p-6 shadow-lg">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-emerald-200 dark:bg-emerald-800 rounded-xl">
-                    <CheckCircle className="text-emerald-700 dark:text-emerald-200" size={20} />
-                  </div>
-                  <h4 className="font-black text-emerald-900 dark:text-emerald-100 text-lg">Summary</h4>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold">Campaign:</span>
-                    <span className="font-bold text-emerald-900 dark:text-emerald-100">{campaign.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold">Contributor:</span>
-                    <span className="font-bold text-emerald-900 dark:text-emerald-100">
-                      {formData.isAnonymous ? 'Anonymous' : (formData.contributorName || 'N/A')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-emerald-200 dark:border-emerald-800">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold">Amount:</span>
-                    <span className="text-2xl font-black text-emerald-900 dark:text-emerald-100">
-                      {formatCurrency(formData.amount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold">Method:</span>
-                    <span className="font-bold text-emerald-900 dark:text-emerald-100">
-                      {formData.paymentMethod.replace('_', ' ').toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </form>
         </div>
 
-        {/* FOOTER - Sticky */}
-        <div className="sticky bottom-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button 
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 md:py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50 order-2 sm:order-1"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 md:py-4 rounded-xl font-black shadow-2xl shadow-blue-900/30 hover:shadow-blue-900/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 order-1 sm:order-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Recording...
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={20} />
-                  Record Contribution
-                </>
-              )}
-            </button>
+        {/* FOOTER - SUMMARY & ACTIONS */}
+        <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-b-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            {/* Mini Summary */}
+            <div className="hidden sm:block">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Total Contribution</p>
+              <p className="text-xl font-black text-gray-900 dark:text-white">
+                {formData.amount > 0 ? formatCurrency(formData.amount) : 'KES 0.00'}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button 
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                form="contribution-form"
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-200 dark:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} />
+                    <span>Confirm Record</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

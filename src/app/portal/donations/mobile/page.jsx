@@ -407,7 +407,7 @@ export default function MobileDonationsPage() {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
-  };
+  }; 
 
   // ============================================
   // PERMISSION GATE
@@ -462,12 +462,13 @@ export default function MobileDonationsPage() {
   const border = isDarkMode ? 'border-slate-800' : 'border-slate-200';
   const textPrimary = isDarkMode ? 'text-white' : 'text-slate-900';
   const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-600';
+  
 
   // ============================================
   // RENDER
   // ============================================
   return (
-    <div className={`min-h-screen w-full ${bgPrimary} pb-24`}>
+    <div className={`min-h-screen w-full  ${bgPrimary} pb-24`}>
       {/* HEADER */}
       <div className="w-full bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
         <div className="w-full px-6 py-4">
@@ -611,7 +612,7 @@ export default function MobileDonationsPage() {
 
           {/* ANALYTICS TAB */}
           {activeTab === 'analytics' && canViewDonationReports() && (
-            <div className="-mx-4">
+            <div className="-mx-0">
               {isFetchingAnalytics && !analyticsData ? (
                 <div className="flex justify-center items-center py-20">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FDB022]"></div>
@@ -629,7 +630,7 @@ export default function MobileDonationsPage() {
           {/* MY PLEDGES TAB */}
           {activeTab === 'my-pledges' && canViewPledges() && (
             <div className="space-y-6">
-              <div className={`${cardBg} -mx-4 rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
                 <div className="p-6 border-b dark:border-slate-700">
                   <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
                     <Heart size={24} className="text-[#FDB022]" />
@@ -666,7 +667,7 @@ export default function MobileDonationsPage() {
           {/* ALL PLEDGES TAB (Admin) */}
           {activeTab === 'all-pledges' && canViewAllPledges() && (
             <div className="space-y-6">
-              <div className={`${cardBg} -mx-4 rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
                 <div className="p-6 border-b dark:border-slate-700 bg-yellow-50 dark:bg-yellow-900/20">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
@@ -696,7 +697,7 @@ export default function MobileDonationsPage() {
           {/* ✅ NEW: CONTRIBUTIONS TAB */}
           {activeTab === 'contributions' && canViewAllPayments() && (
             <div className="space-y-6">
-              <div className="bg-white dark:bg-slate-800 -mx-4 rounded-3xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-slate-800 overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="p-6 border-b dark:border-slate-700">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <CreditCard size={24} className="text-[#FDB022]" />
@@ -720,7 +721,7 @@ export default function MobileDonationsPage() {
                 <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
               )}
               
-              <div className={`${cardBg} -mx-1 rounded-3xl overflow-hidden shadow-sm border ${border}`}>
+              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
                 <MobileCampaignsTab onCampaignCreated={handleCampaignCreated} />
               </div>
             </div>

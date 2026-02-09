@@ -55,26 +55,7 @@ export default function PortalLayoutClient({ children }) {
     );
   }
 
-  // Show loading while checking auth
-  /*
-  if (isLoading) {
-    return (
-      <Loader 
-        fullScreen 
-        text="Loading your portal..." 
-      />
-    );
-  }
-
-  // Show loading if no user yet
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-slate-600">Verifying credentials...</p>
-      </div>
-    );
-  }  */
-
+ 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden">
       {/* Sidebar - Toggleable on all devices */}
@@ -103,7 +84,7 @@ export default function PortalLayoutClient({ children }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 md:p-8">
+          <div className="p-0 md:p-0">
             {children}
           </div>
         </main>

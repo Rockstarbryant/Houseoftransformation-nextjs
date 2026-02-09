@@ -1,5 +1,6 @@
+// src/components/donations/EnhancedUserPledgeView.jsx - REDESIGNED
 import { useState, useMemo, useEffect } from 'react';
-import { Heart, Search, Download, Printer, Calendar, DollarSign, TrendingUp, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Heart, Search, Download, Printer, Calendar, DollarSign, TrendingUp, AlertTriangle, Clock, CheckCircle, Filter } from 'lucide-react';
 import { donationApi } from '@/services/api/donationService';
 import { joinCampaignsWithPledges } from '@/utils/donationHelpers';
 
@@ -18,25 +19,18 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   
-  // ✅ FIX: Fetch campaigns and enrich pledges
   const [campaigns, setCampaigns] = useState([]);
   const [enrichedPledges, setEnrichedPledges] = useState([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
 
-  // ✅ Fetch campaigns when component mounts
+  // Fetch campaigns
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
         setIsLoadingCampaigns(true);
-        console.log('[USER-PLEDGE-VIEW] Fetching campaigns...');
-        
         const response = await donationApi.campaigns.getAll();
-        
         if (response.success && response.campaigns) {
-          console.log('[USER-PLEDGE-VIEW] Campaigns loaded:', response.campaigns);
           setCampaigns(response.campaigns);
-        } else {
-          console.error('[USER-PLEDGE-VIEW] Failed to load campaigns:', response);
         }
       } catch (error) {
         console.error('[USER-PLEDGE-VIEW] Error fetching campaigns:', error);
@@ -44,43 +38,33 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
         setIsLoadingCampaigns(false);
       }
     };
-
     fetchCampaigns();
   }, []);
 
-  // ✅ Join campaigns with pledges whenever either changes
+  // Join campaigns with pledges
   useEffect(() => {
     if (campaigns.length > 0 && pledges.length > 0) {
-      console.log('[USER-PLEDGE-VIEW] Joining campaigns with pledges...');
-      console.log('[USER-PLEDGE-VIEW] Pledges:', pledges);
-      console.log('[USER-PLEDGE-VIEW] Campaigns:', campaigns);
-      
       const enriched = joinCampaignsWithPledges(pledges, campaigns);
-      
-      console.log('[USER-PLEDGE-VIEW] Enriched pledges:', enriched);
       setEnrichedPledges(enriched);
     } else if (pledges.length === 0) {
       setEnrichedPledges([]);
     } else {
-      // Campaigns not loaded yet, but show pledges with fallback
       setEnrichedPledges(pledges);
     }
   }, [pledges, campaigns]);
 
-  // Check if overdue
   const isOverdue = (pledge) => {
     if (pledge.status === 'completed' || pledge.status === 'cancelled') return false;
     return pledge.due_date && new Date(pledge.due_date) < new Date();
   };
 
-  // Calculate days until due
   const daysUntilDue = (dueDate) => {
     if (!dueDate) return null;
     const days = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
     return days;
   };
 
-  // ✅ Filter and sort using enriched pledges
+  // Filter and sort
   const processedPledges = useMemo(() => {
     let result = enrichedPledges.filter(p => {
       const searchMatch = !searchTerm || 
@@ -94,7 +78,6 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
       return searchMatch && statusMatch;
     });
 
-    // Sort
     result.sort((a, b) => {
       if (sortBy === 'date') {
         return new Date(b.created_at) - new Date(a.created_at);
@@ -111,7 +94,7 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     return result;
   }, [enrichedPledges, searchTerm, statusFilter, sortBy]);
 
-  // ✅ Calculate stats using enriched pledges
+  // Calculate stats
   const stats = useMemo(() => {
     const active = enrichedPledges.filter(p => p.status === 'pending' || p.status === 'partial');
     const overdue = enrichedPledges.filter(isOverdue);
@@ -127,7 +110,6 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     };
   }, [enrichedPledges]);
 
-  // Export CSV
   const handleExportCSV = () => {
     const csv = [
       ['Campaign', 'Pledged', 'Paid', 'Balance', 'Status', 'Date', 'Due Date'],
@@ -150,7 +132,6 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     a.click();
   };
 
-  // Print
   const handlePrint = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     const printContent = `
@@ -197,7 +178,7 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                 <td>${formatCurrency(stats.totalPledged)}</td>
                 <td>${formatCurrency(stats.totalPaid)}</td>
                 <td>${formatCurrency(stats.totalRemaining)}</td>
-                <td colspan="2">${stats.total} pledges</td>
+                <td colspan="2"></td>
               </tr>
             </tbody>
           </table>
@@ -209,64 +190,85 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
     printWindow.print();
   };
 
-  // ✅ Show loading state while fetching campaigns
-  if (isLoadingCampaigns && pledges.length > 0) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]" />
-        <p className="ml-4 text-slate-600">Loading campaign details...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-1">Total Pledges</p>
-          <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+      {/* Summary Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Pledged Card */}
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-blue-900/50 rounded-xl">
+              <Heart size={24} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{stats.total} Total</span>
+          </div>
+          <h3 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-1">Total Pledged</h3>
+          <p className="text-2xl font-black text-blue-900 dark:text-blue-100">{formatCurrency(stats.totalPledged)}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-1">Total Pledged</p>
-          <p className="text-2xl font-bold text-[#8B1A1A]">{formatCurrency(stats.totalPledged)}</p>
+        {/* Total Paid Card */}
+        <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-emerald-900/50 rounded-xl">
+              <CheckCircle size={24} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              {Math.round((stats.totalPaid / stats.totalPledged) * 100) || 0}%
+            </span>
+          </div>
+          <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-1">Amount Paid</h3>
+          <p className="text-2xl font-black text-emerald-900 dark:text-emerald-100">{formatCurrency(stats.totalPaid)}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-1">Total Paid</p>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalPaid)}</p>
+        {/* Remaining Balance Card */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-amber-900/50 rounded-xl">
+              <DollarSign size={24} className="text-amber-600 dark:text-amber-400" />
+            </div>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{stats.active} Active</span>
+          </div>
+          <h3 className="text-sm font-bold text-amber-700 dark:text-amber-300 mb-1">Remaining</h3>
+          <p className="text-2xl font-black text-amber-900 dark:text-amber-100">{formatCurrency(stats.totalRemaining)}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-1">Balance Remaining</p>
-          <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats.totalRemaining)}</p>
-          {stats.overdue > 0 && (
-            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-              <AlertTriangle size={14} /> {stats.overdue} overdue
-            </p>
-          )}
+        {/* Status Overview Card */}
+        <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 rounded-2xl p-6 border border-rose-200 dark:border-rose-800">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 bg-white dark:bg-rose-900/50 rounded-xl">
+              <TrendingUp size={24} className="text-rose-600 dark:text-rose-400" />
+            </div>
+            {stats.overdue > 0 && (
+              <span className="text-xs font-bold text-rose-600 dark:text-rose-400">{stats.overdue} Overdue</span>
+            )}
+          </div>
+          <h3 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-1">Completed</h3>
+          <p className="text-2xl font-black text-rose-900 dark:text-rose-100">{stats.completed}</p>
         </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      {/* Filters & Actions Bar */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
         <div className="flex flex-wrap gap-3 items-center justify-between">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative flex-1 min-w-[250px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search campaigns..."
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none text-slate-900 dark:text-white transition-all"
             />
           </div>
 
-          {/* Filters */}
-          <div className="flex gap-2">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-[#8B1A1A] outline-none">
+          {/* Filters & Actions */}
+          <div className="flex flex-wrap gap-2">
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)} 
+              className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none transition-all cursor-pointer"
+            >
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="completed">Completed</option>
@@ -274,18 +276,30 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
               <option value="cancelled">Cancelled</option>
             </select>
 
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-[#8B1A1A] outline-none">
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)} 
+              className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none transition-all cursor-pointer"
+            >
               <option value="date">Sort by Date</option>
               <option value="amount">Sort by Amount</option>
               <option value="progress">Sort by Progress</option>
             </select>
 
-            <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center gap-2">
-              <Download size={18} /> CSV
+            <button 
+              onClick={handleExportCSV} 
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">CSV</span>
             </button>
 
-            <button onClick={handlePrint} className="px-4 py-2 bg-[#8B1A1A] text-white font-semibold rounded-lg hover:bg-red-900 flex items-center gap-2">
-              <Printer size={18} /> Print
+            <button 
+              onClick={handlePrint} 
+              className="px-4 py-2.5 bg-[#8B1A1A] hover:bg-[#6d1414] text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20"
+            >
+              <Printer size={18} />
+              <span className="hidden sm:inline">Print</span>
             </button>
           </div>
         </div>
@@ -293,12 +307,12 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
 
       {/* Pledges List */}
       {processedPledges.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <Heart size={48} className="mx-auto mb-4 text-slate-300" />
-          <p className="text-lg font-semibold text-slate-900 mb-2">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+          <Heart size={56} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+          <p className="text-xl font-bold text-slate-900 dark:text-white mb-2">
             {searchTerm || statusFilter !== 'all' ? 'No pledges match your filters' : 'No pledges yet'}
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             {searchTerm || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Start supporting campaigns by creating your first pledge'}
           </p>
         </div>
@@ -310,22 +324,21 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
             const daysLeft = daysUntilDue(pledge.due_date);
 
             return (
-              <div key={pledge.id} className="bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-shadow overflow-hidden">
+              <div key={pledge.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all overflow-hidden">
                 <div className="p-6">
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-5">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-slate-900 mb-1">
-                        {/* ✅ FIX: Now shows actual campaign title */}
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">
                         {pledge.campaign_title || 'General Offering'}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={14} />
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar size={15} />
                           {formatDate(pledge.created_at)}
                         </span>
                         {pledge.installment_plan && pledge.installment_plan !== 'lump-sum' && (
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold capitalize">
+                          <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold capitalize">
                             {pledge.installment_plan.replace('-', ' ')}
                           </span>
                         )}
@@ -333,71 +346,73 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                     </div>
 
                     {/* Status Badge */}
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      pledge.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      pledge.status === 'partial' ? 'bg-blue-100 text-blue-800' :
-                      pledge.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                    <span className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase ${
+                      pledge.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300' :
+                      pledge.status === 'partial' ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300' :
+                      pledge.status === 'cancelled' ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300' :
+                      'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300'
                     }`}>
-                      {pledge.status.toUpperCase()}
+                      {pledge.status}
                     </span>
                   </div>
 
-                  {/* Amount Info */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">Pledged</p>
-                      <p className="text-lg font-bold text-slate-900">{formatCurrency(pledge.pledged_amount)}</p>
+                  {/* Amount Info Cards */}
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Pledged</p>
+                      <p className="text-lg font-black text-slate-900 dark:text-white">{formatCurrency(pledge.pledged_amount)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">Paid</p>
-                      <p className="text-lg font-bold text-green-600">{formatCurrency(pledge.paid_amount)}</p>
+                    <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-4 border border-emerald-100 dark:border-emerald-900">
+                      <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">Paid</p>
+                      <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{formatCurrency(pledge.paid_amount)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">Balance</p>
-                      <p className="text-lg font-bold text-red-600">{formatCurrency(pledge.remaining_amount)}</p>
+                    <div className="bg-rose-50 dark:bg-rose-950/20 rounded-xl p-4 border border-rose-100 dark:border-rose-900">
+                      <p className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">Balance</p>
+                      <p className="text-lg font-black text-rose-700 dark:text-rose-300">{formatCurrency(pledge.remaining_amount)}</p>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-4">
+                  <div className="mb-5">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-600">Progress</span>
-                      <span className="text-sm font-bold text-slate-900">{Math.round(progress)}%</span>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Progress</span>
+                      <span className="text-sm font-black text-slate-900 dark:text-white">{Math.round(progress)}%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          progress === 100 ? 'bg-green-500' : progress > 50 ? 'bg-blue-500' : 'bg-orange-500'
+                          progress === 100 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' : 
+                          progress > 50 ? 'bg-gradient-to-r from-blue-500 to-blue-600' : 
+                          'bg-gradient-to-r from-amber-500 to-orange-500'
                         }`}
                         style={{ width: `${Math.min(progress, 100)}%` }}
                       />
                     </div>
                   </div>
 
-                  {/* Warning/Info Messages */}
+                  {/* Alerts */}
                   {overdue && pledge.status !== 'completed' && pledge.status !== 'cancelled' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-                      <AlertTriangle className="text-red-600 flex-shrink-0" size={18} />
-                      <p className="text-sm text-red-800">
+                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 mb-4 flex items-center gap-3">
+                      <AlertTriangle className="text-rose-600 dark:text-rose-400 flex-shrink-0" size={20} />
+                      <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
                         Payment overdue by {Math.abs(daysLeft)} day(s)
                       </p>
                     </div>
                   )}
 
                   {!overdue && daysLeft !== null && daysLeft <= 7 && pledge.status !== 'completed' && pledge.status !== 'cancelled' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-                      <Clock className="text-amber-600 flex-shrink-0" size={18} />
-                      <p className="text-sm text-amber-800">
+                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4 flex items-center gap-3">
+                      <Clock className="text-amber-600 dark:text-amber-400 flex-shrink-0" size={20} />
+                      <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
                         Payment due in {daysLeft} day(s)
                       </p>
                     </div>
                   )}
 
                   {pledge.status === 'completed' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-                      <CheckCircle className="text-green-600 flex-shrink-0" size={18} />
-                      <p className="text-sm text-green-800 font-semibold">Pledge Completed</p>
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 mb-4 flex items-center gap-3">
+                      <CheckCircle className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" size={20} />
+                      <p className="text-sm font-black text-emerald-800 dark:text-emerald-200">Pledge Completed! 🎉</p>
                     </div>
                   )}
 
@@ -405,7 +420,7 @@ export default function EnhancedUserPledgeView({ pledges = [], onPayPledge }) {
                   {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onPayPledge && (
                     <button
                       onClick={() => onPayPledge(pledge)}
-                      className="w-full bg-[#8B1A1A] text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-[#8B1A1A] to-rose-700 hover:from-[#6d1414] hover:to-rose-800 text-white py-3.5 px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/30"
                     >
                       <DollarSign size={20} />
                       Make Payment

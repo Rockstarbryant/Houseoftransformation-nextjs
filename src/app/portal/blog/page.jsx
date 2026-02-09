@@ -405,12 +405,12 @@ const ManageBlog = () => {
       setLoading(true);
 
       const payload = {
-        title: formData.title,
-        content: formData.content,
-        description: formData.description,
-        category: formData.category,
-        image: formData.imageUrl
-      };
+      title: formData.title,
+      content: formData.content,
+      description: formData.description,
+      category: formData.category,
+      image: formData.image  // ✅ CORRECT - matches model
+    };
 
       if (editingId) {
         await blogService.updateBlog(editingId, payload);
@@ -682,17 +682,19 @@ const ManageBlog = () => {
               />
               {uploading && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">Uploading featured image...</p>}
               {imagePreview && (
-                    <div className="mt-4">
-                      <div className="relative w-full h-48">
-                        <Image
-                          src={imagePreview}
-                          alt="Featured preview"
-                          fill
-                          className="object-cover rounded-lg border dark:border-slate-700"
-                        />
-                      </div>
-                    </div>
-                  )}
+              <div className="mt-4">
+                <div className="relative w-full h-48">
+                  <Image
+                    src={imagePreview}
+                    alt="Featured preview"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 768px) 100vw, 672px"
+                    className="object-cover rounded-lg border dark:border-slate-700"
+                  />
+                </div>
+              </div>
+            )}
             </div>
 
             {/* Content Editor */}
@@ -762,6 +764,8 @@ const ManageBlog = () => {
                       src={post.image}
                       alt={post.title}
                       fill
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover"
                     />
                   </div>

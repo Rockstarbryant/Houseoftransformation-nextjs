@@ -47,11 +47,10 @@ const Header = () => {
   ];
 
   const navLinksAfterDropdown = [
-    { path: '/volunteer', label: 'Volunteer' },
+    { path: '/feedback', label: 'Feedback' },
     { path: '/donate', label: 'Donations' },
-    { path: '/contact', label: 'Contact' },
-    { path: '/portal', label: 'portal' },
-    { path: '/feedback', label: 'Feedback' }
+    { path: '/volunteer', label: 'Volunteer' },   
+    { path: '/portal', label: 'portal' }   
   ];
 
   const isActivePath = (path) => pathname === path;

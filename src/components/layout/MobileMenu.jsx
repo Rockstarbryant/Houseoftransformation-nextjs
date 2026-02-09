@@ -49,11 +49,11 @@ const MobileMenu = ({
     { path: '/blog', label: 'Blogs' }
   ];
   const navLinksAfter = [
-    { path: '/volunteer', label: 'Volunteer' },
+    { path: '/feedback', label: 'Feedback' },
     { path: '/donate', label: 'Donations' },
+    { path: '/volunteer', label: 'Volunteer' }, 
     { path: '/portal', label: 'Portal' },
-    { path: '/contact', label: 'Contact' },
-    { path: '/feedback', label: 'Feedback' }
+    { path: '/contact', label: 'Contact' }    
   ];
 
   if (!isOpen) return null;

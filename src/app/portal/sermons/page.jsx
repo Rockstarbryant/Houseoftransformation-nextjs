@@ -783,13 +783,12 @@ const printSermons = (sermonsArray) => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Date *</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Date *</label>                        
                         <input
                           type="date"
-                          value={formData.date}
-                          onChange={e => setFormData({...formData, date: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
+                          value={formData.date ? new Date(formData.date).toISOString().split('T')[0] : ''}
+                          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white"
                         />
                       </div>
 

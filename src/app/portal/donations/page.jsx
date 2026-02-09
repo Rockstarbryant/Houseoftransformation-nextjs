@@ -1,4 +1,4 @@
-// src/app/portal/donations/page.jsx - COMPLETE WITH GEMINI STYLING
+// src/app/portal/donations/page.jsx - REDESIGNED MODERN DASHBOARD
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,8 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDate, joinCampaignsWithPledges } from '@/utils/donationHelpers';
+import api from '@/lib/api';
 
-// ✅ ALL Components (Nothing Missing)
+// Components
 import EnhancedAdminPledgeTable from '@/components/donations/EnhancedAdminPledgeTable';
 import EnhancedUserPledgeView from '@/components/donations/EnhancedUserPledgeView';
 import DonationsAnalyticsDashboard from '@/components/donations/DonationsAnalyticsDashboard';
@@ -23,15 +24,15 @@ import MpesaModal from '@/components/donations/MpesaModal';
 import ManualPaymentModal from '@/components/donations/ManualPaymentModal';
 import PledgeHistoryModal from '@/components/donations/PledgeHistoryModal';
 import EditPledgeModal from '@/components/donations/EditPledgeModal';
-//import DonationsMobileNav from '@/components/donations/DonationsMobileNav';
 
 import {
   ArrowLeft, Heart, Plus, RefreshCw, CheckCircle, AlertCircle,
-  DollarSign, Target, Users, TrendingUp, X, Activity, ChevronRight, Menu
+  DollarSign, Target, Users, TrendingUp, X, Activity, ChevronRight,
+  Search, Bell, Calendar, Download, Filter, BarChart3, Wallet
 } from 'lucide-react';
 import Link from 'next/link';
 
-// ✅ Gemini's Beautiful Alert Component
+// Alert Component
 function Alert({ message, type = 'success', onClose }) {
   if (!message) return null;
   const styles = {
@@ -58,9 +59,9 @@ export default function DonationsPage() {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [alertMessage, setAlertMessage] = useState({ message: null, type: 'success' });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // ✅ ALL Modal States (Nothing Missing)
+  // Modal States
   const [isPledgeModalOpen, setIsPledgeModalOpen] = useState(false);
   const [isContributionModalOpen, setIsContributionModalOpen] = useState(false);
   const [selectedPledgeForPayment, setSelectedPledgeForPayment] = useState(null);
@@ -70,16 +71,17 @@ export default function DonationsPage() {
 
   const canAccessDonations = () => canViewCampaigns() || canViewPledges() || canViewAllPledges() || canViewAllPayments() || canViewDonationReports();
 
-  // ✅ RESTORED: Mobile redirect
+  // Mobile redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) router.push('/portal/donations/mobile');
   }, [router]);
 
-  // ✅ RESTORED: Check overdue campaigns
+  // Check overdue campaigns
   useEffect(() => {
     const checkOverdueCampaigns = async () => {
       try {
-        await donationApi.post('/campaigns/check-overdue');
+        await api.post('/campaigns/check-overdue');
+        console.log('[CAMPAIGNS] Overdue check completed');
       } catch (err) {
         console.error('[CAMPAIGNS] Failed to check overdue:', err);
       }
@@ -87,7 +89,7 @@ export default function DonationsPage() {
     checkOverdueCampaigns();
   }, []);
 
-  // ✅ Data Fetching with FULL TanStack Query config (staleTime, placeholderData restored)
+  // Data Fetching
   const { data: campaigns = [], isFetching: isFetchingCampaigns } = useQuery({
     queryKey: ['campaigns', { status: 'active' }],
     queryFn: async () => {
@@ -141,7 +143,6 @@ export default function DonationsPage() {
     refetchOnWindowFocus: true,
   });
 
-  // ✅ RESTORED: Analytics query (lazy loaded)
   const { data: analyticsData, isFetching: isFetchingAnalytics } = useQuery({
     queryKey: ['analytics'],
     queryFn: async () => {
@@ -153,38 +154,69 @@ export default function DonationsPage() {
     },
     enabled: activeTab === 'analytics' && canViewDonationReports(),
     staleTime: 60000,
-    placeholderData: null,
   });
 
-  // Stats calculation with array safety
-  const stats = useMemo(() => {
-    const safePayments = Array.isArray(payments) ? payments : [];
-    const safePledges = Array.isArray(myPledges) && myPledges.length > 0 ? myPledges : (Array.isArray(allPledges) ? allPledges : []);
+  // Handlers
+  const handlePledgeCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: '✅ Pledge created successfully!', type: 'success' });
+    setIsPledgeModalOpen(false);
+  };
 
-    const totalRaised = safePayments
-      .filter(p => p.status === 'success')
-      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const handleContributionCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: '✅ Contribution recorded!', type: 'success' });
+    setIsContributionModalOpen(false);
+  };
 
-    const pendingPayments = safePayments
-      .filter(p => p.status === 'pending')
-      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const handlePaymentComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: '✅ Payment processed successfully!', type: 'success' });
+    setSelectedPledgeForPayment(null);
+  };
 
-    const activePledgesCount = safePledges.filter(p => p.status === 'pending' || p.status === 'partial').length;
-    const completedPledgesCount = safePledges.filter(p => p.status === 'completed').length;
+  const handleManualPaymentRecorded = () => {
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: '✅ Manual payment recorded!', type: 'success' });
+    setSelectedPledgeForManual(null);
+  };
 
-    return { totalRaised, pendingPayments, activePledges: activePledgesCount, completedPledges: completedPledgesCount };
-  }, [payments, myPledges, allPledges]);
+  const handlePledgeUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+    setAlertMessage({ message: '✅ Pledge updated successfully!', type: 'success' });
+    setSelectedPledgeForEdit(null);
+  };
 
-  // ✅ Check if initial loading (no cached data)
-  const isInitialLoading = 
-    (isFetchingCampaigns && campaigns.length === 0) ||
-    (canViewPledges() && isFetchingMyPledges && myPledges.length === 0) ||
-    (canViewAllPledges() && isFetchingAllPledges && allPledges.length === 0);
+  const handleEditPledge = (pledge) => {
+    setSelectedPledgeForEdit(pledge);
+  };
 
-  // ✅ ALL Handlers (Nothing Missing)
-  const showAlert = (message, type = 'success') => {
-    setAlertMessage({ message, type });
-    setTimeout(() => setAlertMessage({ message: null, type: 'success' }), 5000);
+  const handleCancelPledge = async (pledgeId) => {
+    if (!window.confirm('Are you sure you want to cancel this pledge?')) return;
+    try {
+      const response = await donationApi.pledges.updatePledge(pledgeId, { status: 'cancelled' });
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['myPledges'] });
+        queryClient.invalidateQueries({ queryKey: ['allPledges'] });
+        setAlertMessage({ message: '✅ Pledge cancelled', type: 'success' });
+      }
+    } catch (error) {
+      setAlertMessage({ message: '❌ Failed to cancel pledge', type: 'error' });
+    }
+  };
+
+  const handleCampaignCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: '✅ Campaign created successfully!', type: 'success' });
   };
 
   const handleRefresh = () => {
@@ -193,224 +225,264 @@ export default function DonationsPage() {
     queryClient.invalidateQueries({ queryKey: ['allPledges'] });
     queryClient.invalidateQueries({ queryKey: ['payments'] });
     queryClient.invalidateQueries({ queryKey: ['analytics'] });
-    showAlert('Syncing complete', 'success');
+    setAlertMessage({ message: '✅ Data refreshed!', type: 'success' });
   };
 
-  const handlePledgeCreated = () => { 
-    setIsPledgeModalOpen(false); 
-    showAlert('Pledge created successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
-    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
-  };
-  
-  const handleContributionCreated = () => { 
-    setIsContributionModalOpen(false); 
-    showAlert('Contribution recorded successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['payments'] });
-    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-  };
-  
-  const handlePaymentComplete = () => { 
-    setSelectedPledgeForPayment(null); 
-    showAlert('Payment initiated successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
-    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
-    queryClient.invalidateQueries({ queryKey: ['payments'] });
-  };
+  // Calculate quick stats
+  const totalRaised = campaigns.reduce((sum, c) => sum + (c.currentAmount || 0), 0);
+  const activeCampaignsCount = campaigns.filter(c => c.status === 'active').length;
+  const myPledgesTotal = myPledges.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const myPledgesPaid = myPledges.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
 
-  const handleManualPaymentRecorded = () => {
-    setSelectedPledgeForManual(null);
-    showAlert('Payment recorded successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
-    queryClient.invalidateQueries({ queryKey: ['payments'] });
-  };
-  
-  const handleCampaignCreated = () => {
-    showAlert('Campaign created successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-  };
-  
-  const handlePledgeUpdated = () => { 
-    setSelectedPledgeForEdit(null); 
-    showAlert('Pledge updated successfully!', 'success');
-    queryClient.invalidateQueries({ queryKey: ['allPledges'] });
-    queryClient.invalidateQueries({ queryKey: ['myPledges'] });
-  };
-  
-  const handleCancelPledge = async (pledge) => {
-    if (!window.confirm(`Cancel pledge for ${pledge.member_name}?`)) return;
-    try {
-      const res = await donationApi.pledges.cancel(pledge.id);
-      if (res.success) {
-        showAlert('Pledge cancelled successfully', 'success');
-        queryClient.invalidateQueries({ queryKey: ['allPledges'] });
-        queryClient.invalidateQueries({ queryKey: ['myPledges'] });
-      } else {
-        showAlert(res.message || 'Failed to cancel pledge', 'error');
-      }
-    } catch (err) {
-      showAlert(err.response?.data?.message || 'Failed to cancel pledge', 'error');
-    }
-  };
+  // Navigation tabs configuration
+  const navigationTabs = [
+    { id: 'overview', label: 'Dashboard', icon: BarChart3, show: true },
+    { id: 'analytics', label: 'Analytics', icon: Activity, show: canViewDonationReports() },
+    { id: 'my-pledges', label: 'My Pledges', icon: Heart, show: canViewPledges() },
+    { id: 'all-pledges', label: 'All Pledges', icon: Users, show: canViewAllPledges() },
+    { id: 'contributions', label: 'Contributions', icon: DollarSign, show: true },
+    { id: 'payments', label: 'Payments', icon: Wallet, show: canViewAllPayments() },
+    { id: 'campaigns', label: 'Campaigns', icon: Target, show: canViewCampaigns() },
+    { id: 'audit', label: 'Audit Log', icon: Calendar, show: canViewDonationReports() },
+  ].filter(tab => tab.show);
 
-  const handleEditPledge = (pledge) => {
-    setSelectedPledgeForEdit(pledge);
-  };
-
-  // Close mobile menu when tab changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [activeTab]);
-
-  // ✅ RESTORED: Permission gate screen
-  if (!canAccessDonations() && !isInitialLoading) {
+  if (!canAccessDonations()) {
     return (
-      <div className="space-y-6">
-        <Link href="/portal" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700">
-          <ArrowLeft size={20} />
-          Back to Dashboard
-        </Link>
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
-          <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
-          <h2 className="text-2xl font-bold text-red-900 dark:text-red-200 mb-2">Access Denied</h2>
-          <p className="text-red-700 dark:text-red-300">
-            You do not have permission to access the donations page
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700">
+          <AlertCircle size={64} className="mx-auto mb-4 text-rose-500" />
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Access Denied</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">You don't have permission to view donations</p>
+          <Link href="/portal" className="inline-flex items-center gap-2 px-6 py-3 bg-[#8B1A1A] text-white rounded-xl font-bold hover:bg-[#6d1414] transition-colors">
+            <ArrowLeft size={18} />
+            Back to Portal
+          </Link>
         </div>
-      </div>
-    );
-  }
-
-  // ✅ RESTORED: Initial loading state
-  if (isInitialLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
       </div>
     );
   }
 
   return (
-    <div className="w-full mx-auto md:p-8 space-y-8 animate-in fade-in duration-700">
-      {/* 1. HEADER: PREMIUM GLASS CARD (Gemini's Beautiful Style) */}
-      <div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-6 md:p-6 mx-4 md:mx-0 text-white shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-4">
-            <Link href="/portal" className="group flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
-            </Link>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight">Financial Portal</h1>
-              <p className="text-slate-400 mt-2 font-medium">Manage church contributions, pledges, and live campaigns.</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Top Navigation Bar - Inspired by Screenshot 1 */}
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40">
+        <div className="max-w-[1600px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-6 mb-4">
+            {/* Left: Title & Search */}
+            <div className="flex items-center gap-6 flex-1">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Donations</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Manage campaigns, pledges & contributions</p>
+              </div>
+              
+              {/* Search Bar */}
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-900 rounded-xl flex-1 max-w-md">
+                <Search size={18} className="text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search campaigns, pledges..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder-slate-400 w-full"
+                />
+                <kbd className="hidden xl:inline-block px-2 py-1 text-xs font-bold text-slate-500 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">⌘K</kbd>
+              </div>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                title="Refresh data"
+              >
+                <RefreshCw size={18} className="text-slate-600 dark:text-slate-400" />
+              </button>
+
+              <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors relative">
+                <Bell size={18} className="text-slate-600 dark:text-slate-400" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+              </button>
+
+              {canViewPledges() && (
+                <button
+                  onClick={() => setIsPledgeModalOpen(true)}
+                  className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30"
+                >
+                  <Plus size={18} />
+                  <span>Make Pledge</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsContributionModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#8B1A1A] to-rose-700 hover:from-[#6d1414] hover:to-rose-800 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-500/30"
+              >
+                <Heart size={18} />
+                <span className="hidden md:inline">Quick Give</span>
+              </button>
             </div>
           </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <button onClick={handleRefresh} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl transition-all border border-slate-700">
-              <RefreshCw size={20} className={isFetchingCampaigns ? 'animate-spin' : ''} />
-            </button>
-            {canViewPledges() && (
-              <button onClick={() => setIsPledgeModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-[#8B1A1A] hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95">
-                <Plus size={20} /> New Pledge
-              </button>
-            )}
-            {canViewCampaigns() && (
-              <button onClick={() => setIsContributionModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95">
-                <Activity size={20} /> Contribute
-              </button>
-            )}
+
+          {/* Horizontal Tab Navigation */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            {navigationTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#8B1A1A] text-white shadow-lg shadow-rose-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
-        {/* Background Decor */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full -mr-20 -mt-20" />
       </div>
 
-      {/* 2. STATS GRID: NEUMORPHIC STYLE (Gemini's Beautiful Style) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-0">
-        {[
-          { label: 'Total Raised', value: formatCurrency(stats.totalRaised), icon: DollarSign, color: 'emerald' },
-          { label: 'Pending Funds', value: formatCurrency(stats.pendingPayments), icon: TrendingUp, color: 'amber' },
-          { label: 'Active Pledges', value: stats.activePledges, icon: Target, color: 'blue' },
-          { label: 'Supporters', value: stats.completedPledges, icon: Users, color: 'purple' }
-        ].map((item, i) => (
-          <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-[1.5rem] border border-slate-100 dark:border-slate-700 shadow-sm group hover:border-[#8B1A1A]/30 transition-all">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-${item.color}-50 dark:bg-${item.color}-900/20 text-${item.color}-600`}>
-              <item.icon size={24} />
-            </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">{item.label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{item.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ✅ RESTORED: Mobile Navigation Cards */}
-      
-
-      {/* 3. TABS: MINIMALIST PILL NAV (Gemini Style + ALL Missing Tabs Restored) */}
-      <div className="hidden md:flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-x-auto no-scrollbar">
-        {[
-          { id: 'overview', label: 'Overview', show: true },
-          { id: 'analytics', label: 'Analytics & Reports', show: canViewDonationReports() },
-          { id: 'my-pledges', label: `My Pledges (${myPledges.length})`, show: canViewPledges() },
-          { id: 'all-pledges', label: `Admin: All Pledges (${allPledges.length})`, show: canViewAllPledges() },
-          { id: 'contributions', label: 'Contributions', show: canViewAllPayments() },
-          { id: 'audit', label: 'Audit Log', show: canViewDonationReports() },
-          { id: 'payments', label: `Payments (${payments.length})`, show: canViewAllPayments() },
-          { id: 'campaigns', label: `Campaigns (${campaigns.length})`, show: canViewCampaigns() }
-        ].map(tab => (
-          tab.show && (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
-                activeTab === tab.id 
-                ? 'bg-white dark:bg-slate-800 text-[#8B1A1A] shadow-md' 
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          )
-        ))}
-      </div>
-
-      {/* 4. CONTENT AREA (Gemini Style + ALL Missing Tabs Restored) */}
-      <div className="min-h-[400px]">
+      {/* Main Content Area */}
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
+        {/* Overview Tab - Dashboard */}
         {activeTab === 'overview' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 px-4 md:px-0">
-            <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 p-8">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Live Campaigns</h3>
-                <Link href="#" onClick={() => setActiveTab('campaigns')} className="text-[#8B1A1A] text-sm font-bold flex items-center gap-1 hover:underline">
-                  View All <ChevronRight size={16} />
-                </Link>
+          <div className="space-y-6">
+            {/* KPI Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Raised */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="p-3 bg-white dark:bg-emerald-900/50 rounded-xl">
+                    <DollarSign size={24} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">+12.5%</span>
+                </div>
+                <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-1">Total Raised</h3>
+                <p className="text-2xl font-black text-emerald-900 dark:text-emerald-100">{formatCurrency(totalRaised)}</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {campaigns.slice(0, 4).map(c => {
-                  const progress = Math.min(Math.round((c.currentAmount / c.goalAmount) * 100), 100);
-                  return (
-                    <div key={c._id} className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 group hover:shadow-lg transition-all">
-                      <div className="flex justify-between items-start mb-4">
-                        <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-[#8B1A1A] transition-colors">{c.title}</h4>
-                        <span className="text-[10px] font-black px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg uppercase">Live</span>
-                      </div>
-                      <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-3">
-                        <div className="h-full bg-[#8B1A1A] rounded-full" style={{ width: `${progress}%` }} />
-                      </div>
-                      <div className="flex justify-between text-xs font-bold text-slate-500">
-                        <span>{formatCurrency(c.currentAmount)}</span>
-                        <span>{progress}% of {formatCurrency(c.goalAmount)}</span>
-                      </div>
+
+              {/* Active Campaigns */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="p-3 bg-white dark:bg-blue-900/50 rounded-xl">
+                    <Target size={24} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400">Live</span>
+                </div>
+                <h3 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-1">Active Campaigns</h3>
+                <p className="text-2xl font-black text-blue-900 dark:text-blue-100">{activeCampaignsCount}</p>
+              </div>
+
+              {/* My Total Pledges */}
+              {canViewPledges() && (
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-3 bg-white dark:bg-purple-900/50 rounded-xl">
+                      <Heart size={24} className="text-purple-600 dark:text-purple-400" />
                     </div>
-                  );
-                })}
+                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400">{myPledges.length} Active</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-purple-700 dark:text-purple-300 mb-1">My Pledges</h3>
+                  <p className="text-2xl font-black text-purple-900 dark:text-purple-100">{formatCurrency(myPledgesTotal)}</p>
+                </div>
+              )}
+
+              {/* Paid Amount */}
+              {canViewPledges() && (
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-3 bg-white dark:bg-amber-900/50 rounded-xl">
+                      <Wallet size={24} className="text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{Math.round((myPledgesPaid/myPledgesTotal)*100) || 0}%</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-amber-700 dark:text-amber-300 mb-1">Amount Paid</h3>
+                  <p className="text-2xl font-black text-amber-900 dark:text-amber-100">{formatCurrency(myPledgesPaid)}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Live Campaigns */}
+              <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">Live Campaigns</h3>
+                  <button
+                    onClick={() => setActiveTab('campaigns')}
+                    className="text-[#8B1A1A] text-sm font-bold flex items-center gap-1 hover:underline"
+                  >
+                    View All <ChevronRight size={16} />
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  {campaigns.slice(0, 4).map(c => {
+                    const progress = Math.min(Math.round((c.currentAmount / c.goalAmount) * 100), 100);
+                    return (
+                      <div key={c._id} className="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-bold text-slate-900 dark:text-white">{c.title}</h4>
+                          <span className="text-[10px] font-black px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-lg uppercase">Live</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+                          <div className="h-full bg-gradient-to-r from-[#8B1A1A] to-rose-600 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                          <span>{formatCurrency(c.currentAmount)}</span>
+                          <span>{progress}% of {formatCurrency(c.goalAmount)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column - Quick Actions */}
+              <div className="space-y-4">
+                {/* Recent Activity Card */}
+                <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-rose-200 dark:border-rose-800">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2.5 bg-white dark:bg-rose-900/50 rounded-lg">
+                      <Activity size={20} className="text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-sm">
+                      <p className="font-bold text-slate-900 dark:text-white">Latest Payment</p>
+                      <p className="text-slate-600 dark:text-slate-400">{payments[0] ? formatDate(payments[0].created_at) : 'No payments yet'}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-bold text-slate-900 dark:text-white">Total Transactions</p>
+                      <p className="text-slate-600 dark:text-slate-400">{payments.length} payments</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2.5 bg-white dark:bg-blue-900/50 rounded-lg">
+                      <TrendingUp size={20} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white">Monthly Growth</h3>
+                  </div>
+                  <p className="text-3xl font-black text-blue-900 dark:text-blue-100 mb-2">+24.3%</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Compared to last month</p>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ✅ RESTORED: Analytics Tab */}
+        {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="overflow-hidden">
             {isFetchingAnalytics && !analyticsData ? (
@@ -420,7 +492,7 @@ export default function DonationsPage() {
             ) : analyticsData ? (
               <DonationsAnalyticsDashboard data={analyticsData} />
             ) : (
-              <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-8 text-center">
+              <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-8 text-center">
                 <p className="text-yellow-800 dark:text-yellow-200">No analytics data available</p>
               </div>
             )}
@@ -432,7 +504,7 @@ export default function DonationsPage() {
         
         {/* All Pledges Tab (Admin) */}
         {activeTab === 'all-pledges' && canViewAllPledges() && (
-          <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
             <EnhancedAdminPledgeTable 
               pledges={allPledges} 
               onRecordPayment={setSelectedPledgeForManual} 
@@ -446,26 +518,26 @@ export default function DonationsPage() {
         {/* Contributions Tab */}
         {activeTab === 'contributions' && <ContributionsTab />}
 
-        {/* ✅ RESTORED: Audit Log Tab */}
+        {/* Audit Log Tab */}
         {activeTab === 'audit' && canViewDonationReports() && (
           <TransactionAuditLogTab />
         )}
 
-        {/* ✅ RESTORED: Payments Tab with Full Table */}
+        {/* Payments Tab */}
         {activeTab === 'payments' && canViewAllPayments() && (
           <div className="overflow-hidden">
             {payments.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <DollarSign size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
                   No payments yet
                 </p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-100 dark:bg-slate-900">
+                    <thead className="bg-slate-50 dark:bg-slate-900">
                       <tr className="border-b border-slate-200 dark:border-slate-700">
                         <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Phone</th>
                         <th className="px-6 py-4 font-bold text-slate-600 dark:text-slate-400">Amount</th>
@@ -476,7 +548,7 @@ export default function DonationsPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                       {Array.isArray(payments) && payments.map(payment => (
-                        <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                           <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                             {payment.mpesa_phone_number || 'Manual'}
                           </td>
@@ -487,7 +559,7 @@ export default function DonationsPage() {
                             {payment.payment_method}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                               payment.status === 'success'
                                 ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-200'
                                 : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200'
@@ -508,7 +580,7 @@ export default function DonationsPage() {
           </div>
         )}
 
-        {/* ✅ RESTORED: Campaigns Tab with AdminCampaignManager */}
+        {/* Campaigns Tab */}
         {activeTab === 'campaigns' && canViewCampaigns() && (
           <div className="space-y-6">
             {canCreateCampaign() && (
@@ -519,12 +591,12 @@ export default function DonationsPage() {
         )}
       </div>
 
-      {/* Alert Portal (Gemini's Beautiful Style) */}
+      {/* Alert Portal */}
       {alertMessage.message && (
         <Alert message={alertMessage.message} type={alertMessage.type} onClose={() => setAlertMessage({ message: null })} />
       )}
 
-      {/* ✅ ALL Modals (Nothing Missing) */}
+      {/* Modals */}
       {isPledgeModalOpen && <PledgeForm onClose={() => setIsPledgeModalOpen(false)} onSuccess={handlePledgeCreated} />}
       {isContributionModalOpen && <ContributionForm onClose={() => setIsContributionModalOpen(false)} onSuccess={handleContributionCreated} />}
       {selectedPledgeForPayment && <MpesaModal pledge={selectedPledgeForPayment} onClose={() => setSelectedPledgeForPayment(null)} onSuccess={handlePaymentComplete} />}

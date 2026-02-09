@@ -48,11 +48,14 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
         
         {/* Image Container */}
         <div className="relative h-52 overflow-hidden">
-          {post.coverImage ? (
-            <img 
-              src={post.coverImage} 
-              alt={post.title} 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+          {post.image ? (  
+            <Image
+              src={post.image}  
+              alt={post.title}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
             <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">

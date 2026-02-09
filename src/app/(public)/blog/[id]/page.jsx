@@ -5,7 +5,9 @@ import { getBlogById } from '@/lib/blog';
 
 export async function generateMetadata({ params }) {
   try {
-    const post = await getBlogById(params.id);
+    // ✅ FIX: AWAIT params in Next.js 15+
+    const resolvedParams = await params;
+    const post = await getBlogById(resolvedParams.id);
     
     if (!post) {
       return {
@@ -26,8 +28,11 @@ export async function generateMetadata({ params }) {
 
 export default async function BlogDetailPage({ params }) {
   try {
+    // ✅ FIX: AWAIT params in Next.js 15+
+    const resolvedParams = await params;
+    
     // Fetch blog post on server
-    const post = await getBlogById(params.id);
+    const post = await getBlogById(resolvedParams.id);
 
     // If post doesn't exist, show 404
     if (!post) {

@@ -68,7 +68,7 @@ const Footer = () => {
               <div className="w-12 h-1 bg-[#8B1A1A]" />
             </div>
             <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs uppercase tracking-wider">
-              Transforming lives through God's love and the message of Jesus Christ in {CHURCH_INFO.location}.
+              Touching and transforming lives through the anointed gospel of Jesus Christ in {CHURCH_INFO.location}.
             </p>
             <div className="flex gap-2">
               {[
@@ -100,6 +100,7 @@ const Footer = () => {
                 <li><Link href="/events" className="hover:text-white transition-colors">Events</Link></li>
                 <li><Link href="/volunteer" className="hover:text-white transition-colors">Volunteer</Link></li>
                 <li><Link href="/donate" className="hover:text-white transition-colors">Giving</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div>
@@ -156,7 +157,7 @@ const Footer = () => {
       <div className="border-t border-slate-900 py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            &copy; {currentYear} {CHURCH_INFO.name}. BUILDING A LEGACY OF FAITH.
+            &copy; {currentYear} {CHURCH_INFO.name}. ALL RIGHTS RESERVED.
           </p>
           <div className="flex items-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
