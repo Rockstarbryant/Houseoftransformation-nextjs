@@ -107,8 +107,8 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
   };
 
   return (
-    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
-      <div className="bg-[#8B1A1A] p-8 md:p-12 text-white relative">
+    <div className="bg-white dark:bg-slate-800 rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border border-slate-100">
+      <div className="bg-[#8B1A1A] dark:bg-red-800 p-8 md:p-12 text-white relative">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-white/70 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6 transition-all"
@@ -132,7 +132,7 @@ const SermonFeedbackForm = ({ isAnonymous, user, onSuccess, onBack }) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
+      <form onSubmit={handleSubmit} className="p-4 md:p-12 space-y-10 bg-[#FCFDFD]">
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">

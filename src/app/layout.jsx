@@ -7,6 +7,7 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import { PiPProvider } from '@/context/PiPContext';
 import GlobalPiP from '@/components/GlobalPiP';
 import QueryProvider from '@/components/providers/QueryProvider';
+import GoogleAnalytics from '@/components/common/GoogleAnalytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -55,6 +56,11 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
+        {/* Google Analytics */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
+        
         <QueryProvider>
           <ThemeProvider>
             <PiPProvider>
