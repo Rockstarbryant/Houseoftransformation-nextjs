@@ -25,7 +25,7 @@ const churchImages = [
     alt: 'Sunday worship service at House of Transformation Main Campus Busia'
   },
   {
-    url: 'https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg',
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770702881/church-gallery/py4vev0znmvnc6zgo3w5.jpg',
     alt: 'Members of the House of Transformation community gathering in Busia County'
   },
   {
@@ -59,9 +59,9 @@ const AboutSection = ({ preview = false }) => {
                 House of Transformation Ministries is a vibrant community in Busia County where the Gospel is preached with power and lives are genuinely changed.
               </p>
             </div>
-            <div className="lg:w-1/2 relative min-h-[300px] md:min-h-[400px] bg-slate-200">
+            <div className="lg:w-1/2 relative min-h-[450px] md:min-h-[550px] bg-slate-200">
               <Image
-                src={churchImages[0].url}
+                src={churchImages[1].url}
                 alt="H.O.T Worship"
                 fill
                 unoptimized
@@ -90,7 +90,7 @@ const AboutSection = ({ preview = false }) => {
       <section className="pt-20 pb-8 md:pt-20 md:pb-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
           {/* Hero Text Card */}
-          <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-6 sm:p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center min-h-[280px] md:min-h-[350px]">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-6 mt-6 sm:p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center min-h-[280px] md:min-h-[350px]">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-4 md:mb-6">
               <span className="sr-only">About House of Transformation Busia</span>
               THE <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
@@ -101,7 +101,7 @@ const AboutSection = ({ preview = false }) => {
           </div>
 
           {/* Stats Card */}
-          <div className="lg:col-span-4 bg-[#8B1A1A] rounded-2xl md:rounded-[3rem] p-6 sm:p-8 md:p-10 flex flex-col justify-between text-white shadow-xl min-h-[180px] md:min-h-[200px]">
+          <div className="lg:col-span-4 bg-[#8B1A1A] rounded-2xl md:rounded-[3rem] p-6 mt-6 sm:p-8 md:p-10 flex flex-col justify-between text-white shadow-xl min-h-[180px] md:min-h-[200px]">
             <Zap size={32} className="text-white/50" />
             <div>
               <p className="text-3xl sm:text-4xl font-black mb-2">36+</p>

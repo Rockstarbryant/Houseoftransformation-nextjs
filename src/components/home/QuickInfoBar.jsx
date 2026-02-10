@@ -18,7 +18,7 @@ const QuickInfoBar = () => {
   return (
     <section className="py-0 bg-white dark:bg-slate-900 dark:text-white transition-colors overflow-hidden">
       <div className="max-w-[1600px] mx-auto md:px-6">
-        <div className="flex flex-col lg:flex-row bg-slate-900 dark:bg-slate-800 md:rounded-[4rem] overflow-hidden min-h-[800px] shadow-2xl">
+        <div className="flex flex-col lg:flex-row bg-slate-900 dark:bg-slate-900 md:rounded-[2rem] overflow-hidden min-h-[800px] shadow-2xl">
           
           {/* LEFT PANEL: High-Impact Visual - LAZY LOAD */}
           <div className="lg:w-5/12 relative min-h-[400px] group">
