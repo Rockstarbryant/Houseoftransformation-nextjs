@@ -1,18 +1,17 @@
-// public/sw.js - Service Worker with AUTOMATIC versioning based on file hash
+// public/sw.js - Fixed Service Worker (no POST caching errors)
 
-// 🔥 AUTOMATIC VERSION - This gets a new hash every time the file changes
-// When you deploy, Vercel/Netlify serves this with a unique URL parameter
-const CACHE_VERSION = `v-${self.location.search.slice(1) || Date.now()}`;
+// Auto-versioning using timestamp
+const CACHE_VERSION = `v-${Date.now()}`;
 const CACHE_NAME = `hot-streaming-${CACHE_VERSION}`;
 
-// Only cache static assets that don't change often
+// Only cache static assets
 const urlsToCache = [
   '/',
   '/manifest.json',
   '/icon.jpg',
 ];
 
-// Assets to NEVER cache (prevents chunk mismatch errors)
+// Assets to NEVER cache
 const NEVER_CACHE = [
   '/_next/static/chunks/',
   '/_next/static/css/',
@@ -22,13 +21,25 @@ const NEVER_CACHE = [
   'gtag',
 ];
 
-const shouldCache = (url) => {
+// Helper: Should we cache this request?
+const shouldCache = (request) => {
+  const url = request.url;
+  
+  // ✅ CRITICAL FIX: Only cache GET requests
+  if (request.method !== 'GET') {
+    return false;
+  }
+  
+  // Never cache if URL matches our blacklist
   if (NEVER_CACHE.some(pattern => url.includes(pattern))) {
     return false;
   }
+  
+  // Only cache same-origin requests
   return url.startsWith(self.location.origin);
 };
 
+// Install event
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker installing...', CACHE_NAME);
   event.waitUntil(
@@ -39,6 +50,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Activate event
 self.addEventListener('activate', (event) => {
   console.log('✅ Service Worker activated', CACHE_NAME);
   event.waitUntil(
@@ -55,26 +67,42 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Fetch event - Network first, cache fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   
+  // Skip cross-origin requests
   if (!request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // ✅ CRITICAL FIX: Don't try to cache non-GET requests
+  if (request.method !== 'GET') {
+    // Just pass through POST, PUT, DELETE, etc.
+    event.respondWith(fetch(request));
     return;
   }
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response && response.status === 200 && shouldCache(request.url)) {
+        // Only cache successful GET responses for cacheable URLs
+        if (response && response.status === 200 && shouldCache(request)) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
+            // ✅ Double-check before caching
+            if (request.method === 'GET') {
+              cache.put(request, responseToCache).catch((err) => {
+                console.warn('⚠️ Cache put error:', err);
+              });
+            }
           });
         }
         return response;
       })
       .catch(() => {
-        if (shouldCache(request.url)) {
+        // If network fails, try cache (only for GET requests)
+        if (shouldCache(request)) {
           return caches.match(request);
         }
         return new Response('Network error', { 
@@ -85,6 +113,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Message handler
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -102,6 +131,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Sync event
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-pip-state') {
     event.waitUntil(
@@ -117,6 +147,7 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// Push notification
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   
@@ -132,11 +163,13 @@ self.addEventListener('push', (event) => {
   }
 });
 
+// Notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow('/livestream'));
 });
 
+// IndexedDB helpers for PiP state
 async function savePiPStateToIndexedDB(state) {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('HOTPiPDatabase', 1);
