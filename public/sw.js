@@ -1,103 +1,109 @@
-// Public/sw.js - Enhanced Service Worker for persistent floating PiP
+// public/sw.js - Service Worker with AUTOMATIC versioning based on file hash
 
-const CACHE_NAME = 'hot-streaming-v2';
+// 🔥 AUTOMATIC VERSION - This gets a new hash every time the file changes
+// When you deploy, Vercel/Netlify serves this with a unique URL parameter
+const CACHE_VERSION = `v-${self.location.search.slice(1) || Date.now()}`;
+const CACHE_NAME = `hot-streaming-${CACHE_VERSION}`;
+
+// Only cache static assets that don't change often
 const urlsToCache = [
   '/',
-  '/livestream',
   '/manifest.json',
+  '/icon.jpg',
 ];
 
-// Install event
+// Assets to NEVER cache (prevents chunk mismatch errors)
+const NEVER_CACHE = [
+  '/_next/static/chunks/',
+  '/_next/static/css/',
+  '/api/',
+  'chrome-extension://',
+  'analytics',
+  'gtag',
+];
+
+const shouldCache = (url) => {
+  if (NEVER_CACHE.some(pattern => url.includes(pattern))) {
+    return false;
+  }
+  return url.startsWith(self.location.origin);
+};
+
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker installing...');
+  console.log('🔧 Service Worker installing...', CACHE_NAME);
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch((err) => {
-        console.log('⚠️ Cache addAll error:', err);
-        // Don't fail if we can't cache everything
-      });
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+      .catch((err) => console.warn('⚠️ Cache addAll error:', err))
   );
   self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker activated');
+  console.log('✅ Service Worker activated', CACHE_NAME);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName.startsWith('hot-streaming-') && cacheName !== CACHE_NAME) {
             console.log('🗑️ Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  // This empty handler is enough to satisfy the "Installable" requirement
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event - network first, then cache
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const { request } = event;
+  
+  if (!request.url.startsWith(self.location.origin)) {
     return;
   }
 
   event.respondWith(
-    fetch(event.request)
+    fetch(request)
       .then((response) => {
-        // Cache successful responses
-        if (response && response.status === 200) {
+        if (response && response.status === 200 && shouldCache(request.url)) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
+            cache.put(request, responseToCache);
           });
         }
         return response;
       })
       .catch(() => {
-        // Return cached version if fetch fails
-        return caches.match(event.request).then((response) => {
-          return response || new Response('Network error', { status: 503 });
+        if (shouldCache(request.url)) {
+          return caches.match(request);
+        }
+        return new Response('Network error', { 
+          status: 503,
+          statusText: 'Service Unavailable' 
         });
       })
   );
 });
 
-// Listen for messages from the app
 self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
   if (event.data && event.data.type === 'SAVE_PIP_STATE') {
     const state = event.data.payload;
-    console.log('💾 Service Worker received PiP state:', state);
-    
-    // Store in IndexedDB for true persistence
     savePiPStateToIndexedDB(state);
   }
   
   if (event.data && event.data.type === 'GET_PIP_STATE') {
-    // Respond with saved PiP state
     getPiPStateFromIndexedDB().then((state) => {
       event.ports[0].postMessage({ type: 'PIP_STATE', payload: state });
     });
   }
 });
 
-// Periodic sync to maintain PiP state
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-pip-state') {
-    console.log('🔄 Syncing PiP state...');
     event.waitUntil(
       self.clients.matchAll().then((clients) => {
         clients.forEach((client) => {
@@ -111,17 +117,14 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Handle push notifications (for future use with PiP reminders)
 self.addEventListener('push', (event) => {
-  console.log('📬 Push notification received');
   const data = event.data ? event.data.json() : {};
   
   if (data.type === 'pip-reminder') {
     event.waitUntil(
       self.registration.showNotification('Video Still Playing', {
         body: 'Your livestream video is still playing in the background',
-        icon: '/icon-192.png',
-        badge: '/badge-72.png',
+        icon: '/icon.jpg',
         tag: 'pip-active',
         requireInteraction: false,
       })
@@ -129,16 +132,11 @@ self.addEventListener('push', (event) => {
   }
 });
 
-// Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
-  event.waitUntil(
-    clients.openWindow('/livestream')
-  );
+  event.waitUntil(clients.openWindow('/livestream'));
 });
 
-// IndexedDB helper functions for PiP state persistence
 async function savePiPStateToIndexedDB(state) {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('HOTPiPDatabase', 1);
@@ -159,24 +157,17 @@ async function savePiPStateToIndexedDB(state) {
       
       store.put({ id: 'current', ...state, timestamp: Date.now() });
       
-      transaction.oncomplete = () => {
-        console.log('✅ PiP state saved to IndexedDB');
-        resolve();
-      };
-      
+      transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     };
   });
 }
 
 async function getPiPStateFromIndexedDB() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const request = indexedDB.open('HOTPiPDatabase', 1);
     
-    request.onerror = () => {
-      console.log('⚠️ IndexedDB error');
-      resolve(null);
-    };
+    request.onerror = () => resolve(null);
     
     request.onsuccess = (event) => {
       const db = event.target.result;
@@ -190,13 +181,8 @@ async function getPiPStateFromIndexedDB() {
       const store = transaction.objectStore('pipState');
       const getRequest = store.get('current');
       
-      getRequest.onsuccess = () => {
-        resolve(getRequest.result || null);
-      };
-      
-      getRequest.onerror = () => {
-        resolve(null);
-      };
+      getRequest.onsuccess = () => resolve(getRequest.result || null);
+      getRequest.onerror = () => resolve(null);
     };
   });
 }

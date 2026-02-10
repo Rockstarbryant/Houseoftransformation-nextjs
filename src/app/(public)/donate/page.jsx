@@ -489,12 +489,9 @@ export default function DonatePage() {
         />
 
         <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white mb-6 animate-in slide-in-from-bottom-4 fade-in duration-700">
-            <Heart size={14} className="text-red-400 fill-red-400" />
-            <span className="text-xs font-bold uppercase tracking-widest">Kingdom Impact</span>
-          </div>
           
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 mt-6 leading-tight tracking-tight drop-shadow-lg animate-in slide-in-from-bottom-6 fade-in duration-700 delay-100">
+          
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-4 leading-tight tracking-tight drop-shadow-lg animate-in slide-in-from-bottom-6 fade-in duration-700 delay-100">
             Your Generosity <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-300">Changes Lives</span>
           </h1>

@@ -87,7 +87,7 @@ module.exports = {
         'fade-subtext': 'fade-slide-right 1s ease-out 0.8s forwards',
 
         // The infinite loop (runs forever)
-        'shimmer-infinite': 'shimmer 3s linear infinite',
+        'shimmer-infinite': 'shimmer 5s linear infinite',
         // Animation for "H.O.T" (5 chars)
         // Types for 0.6s, then hides the border cursor immediately so the next line can start
         'type-line-1': 'typing 0.6s steps(5, end) forwards, shut-caret 0s step-end 0.6s forwards',

@@ -29,7 +29,7 @@ const welcomeSteps = [
 
   const churchImages = [
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg',
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770707414/church-gallery/hcxeyqfjka3uzh6jero1.jpg',
       alt: 'Praise and worship service at House of Transformation Church Busia'
     },
     {
@@ -50,12 +50,12 @@ const welcomeSteps = [
     <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-slate-950">
       {/* Background Image - CRITICAL: loads immediately */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80 scale-105"
+        className="absolute inset-0 bg-cover bg-center opacity-10 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
         role="img"
         aria-label="House of Transformation Church building and worship atmosphere"
       />
-      <div className="absolute inset-0 bg-white/5" />
+      <div className="absolute inset-0 bg-transparent" />
       
       {/* Animated accent glow */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full pointer-events-none" />
@@ -65,7 +65,7 @@ const welcomeSteps = [
           
           {/* ========== LEFT: EDITORIAL CONTENT ========== */}
           <div className="text-white">
-            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
+            <div className="inline-flex items-center gap-3 px-4 py-2 bg-red rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
               <Sparkles size={14} className="text-[#8B1A1A]" />
               <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
             </div>
@@ -76,8 +76,8 @@ const welcomeSteps = [
               {/* Line 1: H.O.T */}
               <div className="overflow-hidden pb-2 -mb-2 md:-mb-4">
                 <span className="block animate-reveal-1 origin-bottom">
-                  <span className="bg-gradient-to-r from-red-900 via-blue-700 to-slate-400 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
-                    BUSIA H.O.T
+                  <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-300 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
+                    BUSIA (H.O.T)
                   </span>
                 </span>
               </div>
@@ -85,8 +85,8 @@ const welcomeSteps = [
               {/* Line 2: Transforming. - FIXED: removed overflow-hidden completely */}
               <div className="pb-2 -mb-2 md:-mb-3">
                 <span className="block animate-reveal-2 origin-bottom">
-                  <span className="bg-gradient-to-r from-blue-500 via-red-300 to-slate-500 bg-[length:150%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
-                    TRANSFORMING.
+                  <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-400 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
+                    TRANSFORMING
                   </span>
                 </span>
               </div>
@@ -94,7 +94,7 @@ const welcomeSteps = [
               {/* Line 3: Lives. */}
               <div className="overflow-hidden pb-4">
                 <span className="block animate-reveal-3 origin-bottom">
-                  <span className="bg-gradient-to-r from-slate-200 via-red-600 to-blue-500 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
+                  <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-400 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
                     LIVES.
                   </span>
                 </span>
