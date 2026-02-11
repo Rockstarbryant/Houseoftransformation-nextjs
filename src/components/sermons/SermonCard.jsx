@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp, Bookmark } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
 import Card from '../common/Card';
@@ -12,16 +12,156 @@ const SermonCard = ({ sermon }) => {
   const [likes, setLikes] = useState(sermon.likes || 0);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [views, setViews] = useState(sermon.views || 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isBookmarking, setIsBookmarking] = useState(false);
 
+  // Load liked/bookmarked state on mount
+  useEffect(() => {
+    const loadInteractionState = async () => {
+      try {
+        // Check if user has liked this sermon
+        const likedSermons = JSON.parse(localStorage.getItem('likedSermons') || '{}');
+        setLiked(!!likedSermons[sermon._id]);
+
+        // Check if user has bookmarked this sermon
+        const bookmarkedSermons = JSON.parse(localStorage.getItem('bookmarkedSermons') || '{}');
+        setBookmarked(!!bookmarkedSermons[sermon._id]);
+      } catch (error) {
+        console.error('Error loading interaction state:', error);
+      }
+    };
+
+    loadInteractionState();
+  }, [sermon._id]);
+
+  // Optimistic like handler
   const handleLike = async () => {
+    if (isLiking) return; // Prevent double-clicks
+
+    // Optimistic update
+    const wasLiked = liked;
+    const newLiked = !liked;
+    const newLikes = wasLiked ? likes - 1 : likes + 1;
+
+    setLiked(newLiked);
+    setLikes(newLikes);
+    setIsLiking(true);
+
+    // Update localStorage immediately
     try {
-      await sermonService.toggleLike(sermon._id);
-      setLiked((prev) => !prev);
-      setLikes((prev) => (liked ? prev - 1 : prev + 1));
+      const likedSermons = JSON.parse(localStorage.getItem('likedSermons') || '{}');
+      if (newLiked) {
+        likedSermons[sermon._id] = true;
+      } else {
+        delete likedSermons[sermon._id];
+      }
+      localStorage.setItem('likedSermons', JSON.stringify(likedSermons));
+    } catch (error) {
+      console.error('Error updating localStorage:', error);
+    }
+
+    // Send to backend
+    try {
+      const response = await sermonService.toggleLike(sermon._id);
+      // Update with actual values from server
+      if (response.likes !== undefined) {
+        setLikes(response.likes);
+      }
+      if (response.liked !== undefined) {
+        setLiked(response.liked);
+        // Sync with server response
+        const likedSermons = JSON.parse(localStorage.getItem('likedSermons') || '{}');
+        if (response.liked) {
+          likedSermons[sermon._id] = true;
+        } else {
+          delete likedSermons[sermon._id];
+        }
+        localStorage.setItem('likedSermons', JSON.stringify(likedSermons));
+      }
     } catch (error) {
       console.error('Error liking sermon:', error);
+      // Revert on error
+      setLiked(wasLiked);
+      setLikes(likes);
+      // Revert localStorage
+      const likedSermons = JSON.parse(localStorage.getItem('likedSermons') || '{}');
+      if (wasLiked) {
+        likedSermons[sermon._id] = true;
+      } else {
+        delete likedSermons[sermon._id];
+      }
+      localStorage.setItem('likedSermons', JSON.stringify(likedSermons));
+    } finally {
+      setIsLiking(false);
     }
   };
+
+  // Optimistic bookmark handler
+  const handleBookmark = async () => {
+    if (isBookmarking) return; // Prevent double-clicks
+
+    // Optimistic update
+    const wasBookmarked = bookmarked;
+    const newBookmarked = !bookmarked;
+
+    setBookmarked(newBookmarked);
+    setIsBookmarking(true);
+
+    // Update localStorage immediately
+    try {
+      const bookmarkedSermons = JSON.parse(localStorage.getItem('bookmarkedSermons') || '{}');
+      if (newBookmarked) {
+        bookmarkedSermons[sermon._id] = {
+          bookmarked: true,
+          timestamp: Date.now()
+        };
+      } else {
+        delete bookmarkedSermons[sermon._id];
+      }
+      localStorage.setItem('bookmarkedSermons', JSON.stringify(bookmarkedSermons));
+    } catch (error) {
+      console.error('Error updating localStorage:', error);
+    }
+
+    // Send to backend
+    try {
+      const response = await sermonService.toggleBookmark(sermon._id);
+      // Sync with server response
+      if (response.bookmarked !== undefined) {
+        setBookmarked(response.bookmarked);
+        const bookmarkedSermons = JSON.parse(localStorage.getItem('bookmarkedSermons') || '{}');
+        if (response.bookmarked) {
+          bookmarkedSermons[sermon._id] = {
+            bookmarked: true,
+            timestamp: Date.now()
+          };
+        } else {
+          delete bookmarkedSermons[sermon._id];
+        }
+        localStorage.setItem('bookmarkedSermons', JSON.stringify(bookmarkedSermons));
+      }
+    } catch (error) {
+      console.error('Error bookmarking sermon:', error);
+      // Revert on error
+      setBookmarked(wasBookmarked);
+      // Revert localStorage
+      const bookmarkedSermons = JSON.parse(localStorage.getItem('bookmarkedSermons') || '{}');
+      if (wasBookmarked) {
+        bookmarkedSermons[sermon._id] = {
+          bookmarked: true,
+          timestamp: Date.now()
+        };
+      } else {
+        delete bookmarkedSermons[sermon._id];
+      }
+      localStorage.setItem('bookmarkedSermons', JSON.stringify(bookmarkedSermons));
+    } finally {
+      setIsBookmarking(false);
+    }
+  };
+
 
   const handleShare = useCallback(() => {
     if (!sermon?._id) return;
@@ -38,6 +178,7 @@ const SermonCard = ({ sermon }) => {
       });
     }
   }, [sermon]);
+
 
   const getVideoEmbedUrl = useCallback((url) => {
     if (!url) return '';
@@ -99,7 +240,7 @@ const SermonCard = ({ sermon }) => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
             <Calendar size={12} className="text-red-500" />
             {formatDate(sermon.date, 'short')}
           </div>
@@ -107,7 +248,7 @@ const SermonCard = ({ sermon }) => {
 
         {/* Title */}
         <div className="px-0 md:px-10 py-4">
-          <h3 className="text-xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
+          <h3 className="text-xl md:text-4xl font-black text-red-900 dark:text-red-700 tracking-tighter leading-tight text-center md:text-left underline decoration-[#8B1A1A]/10 underline-offset-8">
             {sermon.title}
           </h3>
         </div>
@@ -210,34 +351,58 @@ const SermonCard = ({ sermon }) => {
         )}
 
         {/* Footer */}
-        <div className="px-0 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        {/* Footer */}
+        <div className="px-2 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-300 group/icon">
               <Eye size={18} className="group-hover/icon:text-slate-600 dark:text-slate-300 transition-colors" />
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{sermon.views || 0}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400 group/icon">
-              <MessageCircle size={18} className="group-hover/icon:text-slate-600 dark:text-slate-500 transition-colors" />
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{sermon.comments || 0}</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{views}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={(e) => { e.stopPropagation(); handleLike(); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                liked ? 'bg-red-50 text-red-600 shadow-sm' : 'text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50/50'
-              }`}
+              disabled={isLiking}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                liked 
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600 scale-100' 
+                  : 'text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/20'
+              } ${isLiking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
+              title={liked ? 'Unlike' : 'Like'}
             >
-              <Heart size={20} fill={liked ? 'currentColor' : 'none'} className={liked ? 'scale-110' : ''} />
+              <Heart 
+                size={20} 
+                fill={liked ? 'currentColor' : 'none'} 
+                className={`transition-transform ${liked ? 'scale-110' : ''}`} 
+              />
               <span className="text-xs font-black">{likes}</span>
             </button>
 
             <button
-              onClick={(e) => { e.stopPropagation(); handleShare(); }}
-              className="p-2.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-900 dark:text-white hover:shadow-md dark:shadow-slate-900 transition-all"
+              onClick={(e) => { e.stopPropagation(); handleBookmark(); }}
+              disabled={isBookmarking}
+              className={`p-2.5 rounded-full transition-all duration-200 ${
+                bookmarked 
+                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:bg-amber-600' 
+                  : 'text-slate-400 dark:text-slate-300 hover:text-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-900/20'
+              } ${isBookmarking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
+              title={bookmarked ? 'Remove bookmark' : 'Bookmark sermon'}
+            >
+              <Bookmark 
+                size={20} 
+                fill={bookmarked ? 'currentColor' : 'none'} 
+                className={`transition-transform ${bookmarked ? 'scale-110' : ''}`}
+              />
+            </button>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="p-2.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 hover:shadow-md transition-all hover:scale-105 active:scale-95"
+              type="button"
+              title="Share sermon"
             >
               <Share2 size={20} />
             </button>

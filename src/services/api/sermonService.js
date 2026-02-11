@@ -146,6 +146,16 @@ export const sermonService = {
     return response.data;
   },
 
+  async trackView(id, deviceId) {
+    const response = await api.post(`/sermons/${id}/view`, { deviceId });
+    return response.data;
+  },
+
+  async toggleBookmark(id) {
+    const response = await api.post(`/sermons/${id}/bookmark`);
+    return response.data;
+  },
+
   async getFeaturedSermons(limit = 3) {
     const response = await api.get(`${API_ENDPOINTS.SERMONS.LIST}?featured=true&limit=${limit}`);
     return response.data;

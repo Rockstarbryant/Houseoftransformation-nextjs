@@ -16,12 +16,15 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
+  metadataBase: new URL("https://houseoftransformation-nextjs.vercel.app"),
   title: {
     template: '%s | House of Transformation Church',
     default: 'House of Transformation Church | Busia, Kenya', 
   },
   description: 'Transforming lives through the anointed gospel of Jesus Christ. Join our community in Busia for worship, spiritual growth, and fellowship.',
   keywords: 'church in Busia, worship in Busia, HOT church Kenya, spiritual growth, Christian community Busia, M-Pesa church offerings',
+
+  applicationName: "House of Transformation Busia",
   
   manifest: '/manifest.json',
   appleWebApp: {
