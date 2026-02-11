@@ -53,6 +53,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="HOT Church" />
         <meta name="theme-color" content="#8B1A1A" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+        
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>

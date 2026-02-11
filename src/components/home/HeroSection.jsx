@@ -27,21 +27,26 @@ const welcomeSteps = [
   }
 ];
 
+  // 🎯 Optimized with Cloudinary transformations in URLs
   const churchImages = [
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770707414/church-gallery/hcxeyqfjka3uzh6jero1.jpg',
+      // Background image - lower quality since it's blurred
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_60,w_1920,c_limit/v1770707414/church-gallery/hcxeyqfjka3uzh6jero1.jpg',
       alt: 'Praise and worship service at House of Transformation Church Busia'
     },
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770703875/church-gallery/castwqxhl9wzg97y6mz0.jpg',
+      // Floating frame - medium quality
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_70,w_800,c_limit/v1770703875/church-gallery/castwqxhl9wzg97y6mz0.jpg',
       alt: 'The vibrant Christian community gathering in Busia County'
     },
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770703781/church-gallery/bhj152bvdgxhtlpjj6en.jpg',
+      // Floating frame - medium quality
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_70,w_800,c_limit/v1770703781/church-gallery/bhj152bvdgxhtlpjj6en.jpg',
       alt: 'Church fellowship and ministry at H.O.T Busia'
     },
     {
-      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770702213/church-gallery/pln6fcqe7jhcfsvugtzw.jpg',
+      // 🔥 LCP IMAGE - highest priority, high quality
+      url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_85,w_900,c_limit/v1770702213/church-gallery/pln6fcqe7jhcfsvugtzw.jpg',
       alt: 'Bishop Aloys Rutivi'
     }
   ];
@@ -142,15 +147,16 @@ const welcomeSteps = [
 
           {/* ========== RIGHT: CINEMATIC COLLAGE ========== */}
           <div className="relative lg:h-[650px] flex items-center justify-center lg:justify-end">
-            {/* Main Center Frame */}
+            {/* 🔥 Main Center Frame - LCP IMAGE */}
             <div className="relative w-full max-w-[450px] aspect-[4/5] rounded-[1rem] overflow-hidden border-4 border-white/10 shadow-2xl z-20 group">
               <Image
                 src={churchImages[3].url}
                 alt={churchImages[3].alt}
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                priority   // ← replaces loading="eager" – good for LCP hero image
-                sizes="(max-width: 768px) 100vw, 450px" // optional but improves performance
+                priority
+                fetchPriority="high"
+                sizes="(max-width: 768px) 100vw, 450px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
             </div>

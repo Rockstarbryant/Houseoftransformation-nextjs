@@ -155,15 +155,16 @@ const Footer = () => {
 
       {/* 3. FINAL BAR */}
       <div className="border-t border-slate-900 py-10 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            &copy; {currentYear} {CHURCH_INFO.name}. ALL RIGHTS RESERVED.
+            &copy; {currentYear} {CHURCH_INFO.name}. 
           </p>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
           <div className="flex items-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <span className="flex items-center gap-2 text-white">
-              Built with <Heart size={12} className="text-[#8B1A1A] fill-[#8B1A1A]" /> for God's glory
+            <span className="flex items-center gap-1 text-white">
+              Built by <Link href="https://x.com/rockstarbryant" className="hover:text-white text-red-500 underline transition-colors">Bryant</Link>
             </span>
           </div>
         </div>
