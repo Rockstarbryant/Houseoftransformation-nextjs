@@ -251,6 +251,14 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
         permission: null
       });
 
+      // Everyone can access their Bookmarks
+      sections.push({
+        name: 'My Saved Sermons',
+        href: '/portal/bookmarks',
+        icon: 'Bookmark',
+        permission: null
+      });
+
       // Only show Announcements in sidebar for users with manage permission
       // All users can access via dashboard
       if (canManageAnnouncements()) {

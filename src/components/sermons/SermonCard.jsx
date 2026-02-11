@@ -270,7 +270,14 @@ const SermonCard = ({ sermon }) => {
                     unoptimized
                     className="object-cover opacity-80 group-hover/btn:opacity-100 transition-all duration-700"
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/600x340?text=Image+Error'; }}
+                    onError={(e) => { 
+  e.currentTarget.style.display = 'none';
+  e.currentTarget.parentElement.innerHTML = `
+    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700">
+      <span class="text-slate-400 dark:text-slate-500 text-sm font-medium">No Image</span>
+    </div>
+  `;
+}}
                   />
                   <div className="absolute inset-0 bg-black/20 group-hover/btn:bg-black/40 transition-all" />
                   <div className="relative z-10 w-16 h-16 md:w-20 md:h-20 bg-white/95 backdrop-blur rounded-full flex items-center justify-center shadow-2xl group-hover/btn:scale-110 transition-transform">
@@ -362,13 +369,13 @@ const SermonCard = ({ sermon }) => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={(e) => { e.stopPropagation(); handleLike(); }}
-              disabled={isLiking}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
-                liked 
-                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600 scale-100' 
-                  : 'text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/20'
-              } ${isLiking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
+            onClick={(e) => { e.stopPropagation(); handleLike(); }}
+            disabled={isLiking}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+              liked 
+                ? 'text-red-500' 
+                : 'text-slate-400 dark:text-slate-300 hover:text-red-500'
+            } ${isLiking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
               title={liked ? 'Unlike' : 'Like'}
             >
@@ -385,8 +392,8 @@ const SermonCard = ({ sermon }) => {
               disabled={isBookmarking}
               className={`p-2.5 rounded-full transition-all duration-200 ${
                 bookmarked 
-                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:bg-amber-600' 
-                  : 'text-slate-400 dark:text-slate-300 hover:text-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-900/20'
+                  ? 'text-amber-500' 
+                  : 'text-slate-400 dark:text-slate-300 hover:text-amber-500'
               } ${isBookmarking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
               title={bookmarked ? 'Remove bookmark' : 'Bookmark sermon'}

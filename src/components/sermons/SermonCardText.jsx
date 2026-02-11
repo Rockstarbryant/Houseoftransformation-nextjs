@@ -289,13 +289,13 @@ const SermonCardText = ({ sermon }) => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={(e) => { e.stopPropagation(); handleLike(); }}
-              disabled={isLiking}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
-                liked 
-                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600 scale-100' 
-                  : 'text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/20'
-              } ${isLiking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
+            onClick={(e) => { e.stopPropagation(); handleLike(); }}
+            disabled={isLiking}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+              liked 
+                ? 'text-red-500' 
+                : 'text-slate-400 dark:text-slate-300 hover:text-red-500'
+            } ${isLiking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
               title={liked ? 'Unlike' : 'Like'}
             >
@@ -312,8 +312,8 @@ const SermonCardText = ({ sermon }) => {
               disabled={isBookmarking}
               className={`p-2.5 rounded-full transition-all duration-200 ${
                 bookmarked 
-                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:bg-amber-600' 
-                  : 'text-slate-400 dark:text-slate-300 hover:text-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-900/20'
+                  ? 'text-amber-500' 
+                  : 'text-slate-400 dark:text-slate-300 hover:text-amber-500'
               } ${isBookmarking ? 'opacity-70 cursor-wait' : 'hover:scale-105 active:scale-95'}`}
               type="button"
               title={bookmarked ? 'Remove bookmark' : 'Bookmark sermon'}

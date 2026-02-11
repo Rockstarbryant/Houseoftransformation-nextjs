@@ -148,20 +148,7 @@ export default function SermonsClient({ initialSermons }) {
           </div>
         )}
         
-        {/* Print button for single sermon */}
-        {!isSelectionMode && (
-          <button
-            onClick={() => handlePrintSingle(sermon)}
-            className="absolute top-4 right-4 z-10 p-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-lg shadow-md hover:bg-[#8B1A1A] hover:text-white transition-all opacity-0 group-hover:opacity-100"
-            title="Print this sermon"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-          </button>
-        )}
+        
         
         <div className="relative z-10 p-4 md:p-12">
           {detectSermonType(sermon) === 'text' ? (

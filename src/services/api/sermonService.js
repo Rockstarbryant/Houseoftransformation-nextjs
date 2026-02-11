@@ -156,6 +156,16 @@ export const sermonService = {
     return response.data;
   },
 
+  async getUserBookmarks(page = 1, limit = 12) {
+    const response = await api.get(`/sermons/bookmarks/my-bookmarks?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
+  async getUserLikes(page = 1, limit = 12) {
+    const response = await api.get(`/sermons/likes/my-likes?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
   async getFeaturedSermons(limit = 3) {
     const response = await api.get(`${API_ENDPOINTS.SERMONS.LIST}?featured=true&limit=${limit}`);
     return response.data;
