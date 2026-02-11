@@ -16,7 +16,7 @@ const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitmen
     .replace(/[^a-z0-9-]/g, '')
     .replace(/-+/g, '-');
 
-  const fallbackImage = '/images/placeholder-service-area.jpg';
+  const fallbackImage = 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770703781/church-gallery/bhj152bvdgxhtlpjj6en.jpg';
   
   // Check if description is long enough to need "read more"
   const isLongDescription = description.length > 120;

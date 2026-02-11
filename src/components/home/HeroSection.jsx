@@ -50,7 +50,7 @@ const welcomeSteps = [
     <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-slate-950">
       {/* Background Image - CRITICAL: loads immediately */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-10 scale-105"
+        className="absolute inset-0 bg-cover bg-center opacity-35 scale-105"
         style={{ backgroundImage: `url('${churchImages[0].url}')` }}
         role="img"
         aria-label="House of Transformation Church building and worship atmosphere"
@@ -74,7 +74,7 @@ const welcomeSteps = [
               <span className="sr-only">House of Transformation Busia</span>
 
               {/* Line 1: H.O.T */}
-              <div className="overflow-hidden pb-2 -mb-2 md:-mb-4">
+              <div className="overflow-hidden pb-2 -mb-2 md:mb-2">
                 <span className="block animate-reveal-1 origin-bottom">
                   <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-300 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
                     BUSIA (H.O.T)
