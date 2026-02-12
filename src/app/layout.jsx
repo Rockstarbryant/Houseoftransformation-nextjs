@@ -1,19 +1,26 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import Providers from '@/components/providers/Providers';
+import dynamic from 'next/dynamic';
 import { ThemeProvider } from '@/context/ThemeContext';
-import FloatingThemeToggle from '@/components/common/FloatingThemeToggle';
-import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import { PiPProvider } from '@/context/PiPContext';
-import GlobalPiP from '@/components/GlobalPiP';
 import QueryProvider from '@/components/providers/QueryProvider';
 import GoogleAnalytics from '@/components/common/GoogleAnalytics';
-import UpdateNotification from '@/components/common/UpdateNotification';
-import SplashScreen from '@/components/common/SplashScreen';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import Providers from '@/components/providers/Providers';
 
-const inter = Inter({ subsets: ['latin'] });
+// 🚀 LAZY LOAD: Non-critical UI components
+const FloatingThemeToggle = dynamic(() => import('@/components/common/FloatingThemeToggle'), { ssr: false });
+const ServiceWorkerRegister = dynamic(() => import('@/components/ServiceWorkerRegister'), { ssr: false });
+const UpdateNotification = dynamic(() => import('@/components/common/UpdateNotification'), { ssr: false });
+const GlobalPiP = dynamic(() => import('@/components/GlobalPiP'), { ssr: false });
+const Analytics = dynamic(() => import('@vercel/analytics/react').then(mod => mod.Analytics), { ssr: false });
+const SpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights), { ssr: false });
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap', // ⚡ Prevents font blocking render
+  preload: true,
+  variable: '--font-inter'
+});
 
 export const metadata = {
   metadataBase: new URL("https://houseoftransformation-nextjs.vercel.app"),
@@ -23,16 +30,13 @@ export const metadata = {
   },
   description: 'Transforming lives through the anointed gospel of Jesus Christ. Join our community in Busia for worship, spiritual growth, and fellowship.',
   keywords: 'church in Busia, worship in Busia, HOT church Kenya, spiritual growth, Christian community Busia, M-Pesa church offerings',
-
   applicationName: "Busia House of Transformation",
-  
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Busia HOT Church',
   },
-  
   robots: {
     index: true,
     follow: true,
@@ -46,21 +50,31 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: '#8B1A1A'
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* ⚡ CRITICAL: Preconnect to external domains */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="HOT Church" />
-        <meta name="theme-color" content="#8B1A1A" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
-        
-        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
-        {/* Google Analytics */}
+        {/* ⚡ Google Analytics - deferred loading */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_ID} />
         )}
@@ -69,11 +83,11 @@ export default function RootLayout({ children }) {
           <ThemeProvider>
             <PiPProvider>
               <Providers>
-                {/* Splash Screen - Client Component (no hydration errors) */}
-                <SplashScreen />
-                
+                {/* ❌ SPLASH SCREEN REMOVED - was blocking FCP */}
                 {children}
               </Providers>
+              
+              {/* 🚀 LAZY LOAD: Non-critical UI components */}
               <GlobalPiP />
               <FloatingThemeToggle />
               <ServiceWorkerRegister />
@@ -82,18 +96,10 @@ export default function RootLayout({ children }) {
           </ThemeProvider>
         </QueryProvider>
 
-        {/* Vercel Analytics */}
+        {/* 🚀 LAZY LOAD: Analytics */}
         <Analytics />
         <SpeedInsights />
       </body>
     </html>
   );
 }
-
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  viewportFit: 'cover'
-};

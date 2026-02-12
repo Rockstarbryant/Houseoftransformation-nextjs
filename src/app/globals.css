@@ -248,6 +248,12 @@ img {
   }
 }
 
+.bullet-list {
+    list-style-type: disc;   /* circle, squareeeee, none etc */
+      padding-left: 20px;
+  }
+
+
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
