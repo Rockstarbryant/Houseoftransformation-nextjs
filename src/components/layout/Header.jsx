@@ -92,10 +92,10 @@ const Header = () => {
               />
               <div className="flex flex-col">
                 <h1 className="font-black text-sm md:text-base tracking-tighter uppercase leading-none text-white">
-                  {CHURCH_INFO.name}
+                  {CHURCH_INFO.name} 
                 </h1>
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/80">
-                  {CHURCH_INFO.location}
+                  Busia Campus
                 </p>
               </div>
             </Link>

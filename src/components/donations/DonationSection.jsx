@@ -94,7 +94,7 @@ export default function DonationSection() {
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-950/30',
       details: [
-        { label: 'Paybill Number', value: '247247', field: 'paybill' },
+        { label: 'Paybill Number', value: '4119027', field: 'paybill' },
         { label: 'Account Number', value: 'TITHE', field: 'account' }
       ]
     },
@@ -105,7 +105,7 @@ export default function DonationSection() {
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-950/30',
       details: [
-        { label: 'Till Number', value: '5678901', field: 'till' }
+        { label: 'Till Number', value: 'Not supported yet', field: 'till' }
       ]
     },
     {
@@ -115,8 +115,8 @@ export default function DonationSection() {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 dark:bg-blue-950/30',
       details: [
-        { label: 'Bank', value: 'Kenya Commercial Bank', field: 'bank' },
-        { label: 'Account', value: '1234567890', field: 'bankaccount' }
+        { label: 'Bank', value: 'N/A', field: 'bank name' },
+        { label: 'Account', value: 'N/A', field: 'bankaccount' }
       ]
     }
   ];

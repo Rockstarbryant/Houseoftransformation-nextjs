@@ -1,11 +1,11 @@
 {
   "name": "House of Transformation Church - Busia",
-  "short_name": "HOT Church",
+  "short_name": "Busia HOT Church",
   "description": "Transforming lives through the gospel of Jesus Christ. Access sermons, events, donations, live streams, and connect with our community.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#8B1A1A",
   "icons": [

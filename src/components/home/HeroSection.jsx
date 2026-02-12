@@ -72,7 +72,7 @@ const welcomeSteps = [
           <div className="text-white">
             <div className="inline-flex items-center gap-3 px-4 py-2 bg-red rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
               <Sparkles size={14} className="text-[#8B1A1A]" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation church</span>
             </div>
 
             <h1 className="text-4xl md:text-7xl lg:text-7xl font-black mb-8 tracking-tighter select-none">
@@ -262,7 +262,7 @@ const welcomeSteps = [
 
                 {/* Footer Actions */}
                 <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-                  <Link href="/about" className="flex-1">
+                  <Link href="/new-here" className="flex-1">
                     <button className="w-full py-3 px-6 rounded-xl bg-[#8B1A1A] hover:bg-[#701515] text-white font-bold shadow-lg shadow-red-900/20 transition-all active:scale-95">
                       I'm New Here
                     </button>

@@ -22,11 +22,11 @@ import { getFeaturedSermon, detectSermonType } from '@/lib/sermons';
 
 
 export const metadata = {
-  title: 'House of Transformation | Best Church in Busia, Kenya',
+  title: 'Busia House of Transformation | Best Church in Busia, Kenya | House of Transformation in Busia, Kenya',
   description: 'Join House of Transformation (H.O.T) in Busia County. Experience powerful apostolic teachings, divine worship, and a community dedicated to spiritual growth and impact.',
-  keywords: ['Church in Busia', 'House of Transformation Busia', 'Christian Ministry Kenya', 'Apostolic teachings Busia', 'Praise and Worship Busia', 'The Breeze Hotel Church Busia'],
+  keywords: ['Church in Busia', 'House of Transformation Busia', 'Busia House of Transformation', 'Christian Ministry Kenya', 'Apostolic teachings Busia', 'Praise and Worship Busia', 'The Breeze Hotel Church Busia'],
   openGraph: {
-    title: 'House of Transformation Busia - Transforming Lives',
+    title: 'Busia House of Transformation - Transforming Lives',
     description: 'Touching and transforming lives through the anointed gospel of Jesus Christ.',
     images: ['https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg'],
   },
@@ -47,19 +47,19 @@ export default async function HomePage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Church",
-            "name": "House of Transformation",
-            "alternateName": "H.O.T Ministry",
-            "url": "https://busiahouseoftransformation.netlify.app",
+            "name": "Busia House of Transformation",
+            "alternateName": "H.O.T Ministry Busia",
+            "url": "https://houseoftransformation-nextjs.vercel.app",
             "logo": "https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Main Street",
-              "addressLocality": "Busia Town",
+              "streetAddress": "Main Street Next to Breeze Hotel",
+              "addressLocality": "Busia - Kisumu RD",
               "addressRegion": "Busia County",
               "addressCountry": "KE"
             },
-            "openingHours": "Su 09:00-12:00",
-            "description": "Transforming lives through the gospel of Jesus Christ in Busia, Kenya."
+            "openingHours": "Sun 09:00-12:00",
+            "description": "Transforming lives through the annointed gospel of Jesus Christ in Busia, Kenya."
           })
         }}
       />

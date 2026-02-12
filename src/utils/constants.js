@@ -2,8 +2,8 @@ export const CHURCH_INFO = {
   name: 'House of Transformation',
   location: 'Busia County, Kenya',
   address: 'Main Street, Busia Town, Busia County, Kenya',
-  phone: '+254 700 000 000',
-  email: 'info@houseoftransformation.or.ke',
+  phone: '+254 726 793 503',
+  email: 'masigajohnstone@yahoo.com',
   coordinates: {
     lat: 0.46012,
     lng: 34.11225

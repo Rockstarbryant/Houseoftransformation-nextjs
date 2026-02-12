@@ -18,19 +18,19 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
   metadataBase: new URL("https://houseoftransformation-nextjs.vercel.app"),
   title: {
-    template: '%s | House of Transformation Church',
+    template: '%s | Busia House of Transformation Church',
     default: 'House of Transformation Church | Busia, Kenya', 
   },
   description: 'Transforming lives through the anointed gospel of Jesus Christ. Join our community in Busia for worship, spiritual growth, and fellowship.',
   keywords: 'church in Busia, worship in Busia, HOT church Kenya, spiritual growth, Christian community Busia, M-Pesa church offerings',
 
-  applicationName: "House of Transformation Busia",
+  applicationName: "Busia House of Transformation",
   
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'HOT Church',
+    title: 'Busia HOT Church',
   },
   
   robots: {
