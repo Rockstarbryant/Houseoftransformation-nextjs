@@ -33,6 +33,7 @@ const nextConfig = {
     // 🔧 Image optimization settings - fixes console quality warnings
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    qualities: [60, 75, 80, 85, 90], // ⚡ Configure allowed quality values
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -76,11 +77,40 @@ const nextConfig = {
           cacheGroups: {
             default: false,
             vendors: false,
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20
+           // vendor: {
+           //   name: 'vendor',
+            //  chunks: 'all',
+             // test: /node_modules/,
+           //   priority: 20
+          //  },
+             // ⚡ React framework bundle
+            framework: {
+              name: 'framework',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 40,
+              enforce: true,
+            },
+            
+            // ⚡ Separate heavy libraries
+            framer: {
+              name: 'framer',
+              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+              priority: 35,
+              enforce: true,
+            },
+            
+            // ⚡ Other vendor libraries
+            lib: {
+              test: /[\\/]node_modules[\\/]/,
+              name(module) {
+                const packageName = module.context.match(
+                  /[\\/]node_modules[\\/](.*?)([\\/]|$)/
+                )?.[1];
+                return `lib-${packageName?.replace('@', '')}`;
+              },
+              priority: 30,
+              minChunks: 1,
+              reuseExistingChunk: true,
             },
             common: {
               name: 'common',
@@ -123,7 +153,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
+            value: 'public, max-age=0, must-revalidate', //'no-cache, no-store, must-revalidate',
           },
         ],
       },
