@@ -128,8 +128,8 @@ const HeroSection = () => {
                 alt={lcpImage.alt}
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                priority
                 fetchPriority="high"
+                priority={true}
                 quality={85}
                 sizes="(max-width: 768px) 100vw, 450px"
               />
