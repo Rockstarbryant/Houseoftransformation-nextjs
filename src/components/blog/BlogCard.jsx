@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ChevronRight, Edit, Trash2, Calendar, Newspaper, User } from 'lucide-react';
 import Card from '../common/Card';
 import { formatDate, truncateText } from '@/utils/helpers';
@@ -9,41 +9,38 @@ import { useAuth } from '@/context/AuthContext';
 import NextImage from 'next/image';
 
 const BlogCard = ({ post, onDelete, onEdit }) => {
-  const router = useRouter();
   const { canEditBlog, canDeleteBlog } = useAuth();
 
-  // Unified navigation handler
-  const handleNavigate = (e) => {
-    // If the user clicked an action button (edit/delete), don't navigate
-    if (e.target.closest('.action-button')) return;
-    router.push(`/blog/${post._id}`);
-  };
-
   const handleDelete = (e) => {
-    e.stopPropagation(); // Critical: prevents card click from firing
+    e.preventDefault();
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this blog post?')) {
       onDelete(post._id);
     }
   };
 
   const handleEdit = (e) => {
-    e.stopPropagation(); // Critical: prevents card click from firing
+    e.preventDefault();
+    e.stopPropagation();
     onEdit(post);
   };
 
   const categoryColors = {
-    testimonies: 'bg-purple-50 text-purple-700 border-purple-100',
-    events: 'bg-blue-50 text-blue-700 border-blue-100',
-    teaching: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    news: 'bg-amber-50 text-amber-700 border-amber-100'
+    testimonies: 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:text-purple-300',
+    events: 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300',
+    teaching: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300',
+    news: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-300'
   };
 
-  const colorStyle = categoryColors[post.category?.toLowerCase()] || 'bg-slate-50 text-slate-700 border-slate-100';
+  const colorStyle = categoryColors[post.category?.toLowerCase()] || 'bg-slate-50 text-slate-700 border-slate-100 dark:bg-slate-800 dark:text-slate-300';
+
+  // ✅ FIX: Use slug if available, fallback to ID
+  const blogUrl = post.slug ? `/blog/${post.slug}` : `/blog/${post._id}`;
 
   return (
-    <div 
-      onClick={handleNavigate}
-      className="group cursor-pointer h-full transition-all duration-300"
+    <Link 
+      href={blogUrl}
+      className="group cursor-pointer h-full block transition-all duration-300"
     >
       <Card className="h-full flex flex-col overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white dark:bg-slate-900 group-hover:ring-2 group-hover:ring-[#8B1A1A]/20">
         
@@ -60,7 +57,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
             />
           ) : (
             <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Newspaper size={48} className="text-slate-300" />
+              <Newspaper size={48} className="text-slate-300 dark:text-slate-600" />
             </div>
           )}
           <div className="absolute top-4 left-4">
@@ -89,7 +86,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
         {/* Footer Section */}
         <div className="px-6 pb-6 pt-2 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50 mt-auto">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
               <User size={14} />
             </div>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -102,7 +99,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
             {canEditBlog(post.author?._id) && (
               <button
                 onClick={handleEdit}
-                className="action-button p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg hover:bg-blue-50"
+                className="action-button p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
                 type="button"
               >
                 <Edit size={16} />
@@ -111,7 +108,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
             {canDeleteBlog(post.author?._id) && (
               <button
                 onClick={handleDelete}
-                className="action-button p-2 text-slate-400 hover:text-red-600 transition-all rounded-lg hover:bg-red-50"
+                className="action-button p-2 text-slate-400 hover:text-red-600 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
                 type="button"
               >
                 <Trash2 size={16} />
@@ -124,7 +121,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
           </div>
         </div>
       </Card>
-    </div>
+    </Link>
   );
 };
 

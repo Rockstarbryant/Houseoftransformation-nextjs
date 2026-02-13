@@ -5,14 +5,23 @@ import BlogCard from './BlogCard';
 import Loader from '../common/Loader';
 import { blogService } from '@/services/api/blogService';
 
-const BlogList = ({ limit, category, onBlogDelete, onBlogEdit }) => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+// ✅ FIXED: Now accepts and uses initialBlogs from server
+const BlogList = ({ limit, category, onBlogDelete, onBlogEdit, initialBlogs = [] }) => {
+  const [posts, setPosts] = useState(initialBlogs);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ✅ FIX: Only refetch when category changes (not on initial mount if we have initialBlogs)
   useEffect(() => {
+    // If we have initialBlogs and no category filter, use them
+    if (initialBlogs.length > 0 && !category) {
+      setPosts(initialBlogs);
+      return;
+    }
+    
+    // Otherwise, fetch from API
     fetchPosts();
-  }, [limit, category]);
+  }, [category]); // Removed limit dependency to avoid unnecessary refetches
 
   const fetchPosts = async () => {
     try {
@@ -56,7 +65,13 @@ const BlogList = ({ limit, category, onBlogDelete, onBlogEdit }) => {
   
   if (error) return <div className="text-center text-red-500">{error}</div>;
   
-  if (posts.length === 0) return <div className="text-center text-gray-500">No blog posts found</div>;
+  if (posts.length === 0) return (
+    <div className="text-center py-20">
+      <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-sm">
+        No blog posts found
+      </p>
+    </div>
+  );
 
   return (
     <div className="grid md:grid-cols-3 gap-8">

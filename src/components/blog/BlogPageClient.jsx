@@ -1,5 +1,7 @@
 'use client';
 
+// /components/blog/BlogPageClient.jsx
+// ✅ This is the CLIENT component - handles all interactions
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import BlogList from '@/components/blog/BlogList';

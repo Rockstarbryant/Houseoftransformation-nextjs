@@ -390,7 +390,7 @@ const fetchData = async () => {
 
   if (!canAccessAnyFeedback() && !isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4">
         <Link href="/portal" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700">
           <ArrowLeft size={20} />
           Back to Dashboard
@@ -427,56 +427,54 @@ const fetchData = async () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        
-        <div className="flex items-center gap-3 mb-2">
-          <MessageSquare size={40} className="text-[#8B1A1A]" />
+      <div className="bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div className="flex items-center p-4 gap-6 mb-2">
           <h1 className="text-4xl font-black text-slate-900 dark:text-white">
             Feedback Management
           </h1>
         </div>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-slate-600 p-4 dark:text-slate-400">
           Review, respond to, and manage community feedback
         </p>
       </div>
 
       {/* Messages */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-green-500 dark:bg-green-700 rounded-lg p-4 flex items-center gap-3">
           <CheckCircle className="text-green-600" size={20} />
-          <p className="text-green-800 dark:text-green-200 font-semibold">{success}</p>
+          <p className="text-white dark:text-green-200 font-semibold">{success}</p>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-red-500 dark:bg-red-700 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="text-red-600" size={20} />
-          <p className="text-red-800 dark:text-red-200 font-semibold">{error}</p>
+          <p className="text-white dark:text-red-200 font-semibold">{error}</p>
         </div>
       )}
 
       {/* Stats */}
       {!isLoading && stats && canViewStats() && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Total Feedback</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">{stats.total}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{stats.thisWeek} this week</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 p-0 gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
+            <p className="text-sm text-slate-700 dark:text-slate-200 mb-2">Total Feedback</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.total}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-200 mt-2">{stats.thisWeek} this week</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Pending</p>
-            <p className="text-3xl font-black text-yellow-600">{stats.pending}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
+            <p className="text-sm text-slate-700 dark:text-slate-200 mb-2">Pending</p>
+            <p className="text-2xl font-black text-yellow-600">{stats.pending}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Urgent Prayers</p>
-            <p className="text-3xl font-black text-red-600">{stats.urgentPrayers || 0}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
+            <p className="text-sm text-slate-700 dark:text-slate-200 mb-2">Urgent Prayers</p>
+            <p className="text-2xl font-black text-red-600">{stats.urgentPrayers || 0}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Anonymous</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4">
+            <p className="text-sm text-slate-700 dark:text-slate-200 mb-2">Anonymous</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">
               {stats.total > 0 ? Math.round((stats.anonymous / stats.total) * 100) : 0}%
             </p>
           </div>
@@ -486,9 +484,9 @@ const fetchData = async () => {
       {/* Filters */}
       {/* Filters */}
       {!isLoading && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Filter size={20} className="text-slate-600 dark:text-slate-400" />
+            <Filter size={20} className="text-slate-700 dark:text-slate-200" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Filters</h3>
         </div>
 
@@ -496,7 +494,7 @@ const fetchData = async () => {
           <select
             value={filters.category}
             onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+            className="px-4 py-3 bg-red-900 dark:bg-red-900 border rounded-lg text-slate-100 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
           >
             <option value="all">All Categories</option>
             <option value="sermon">Sermon Feedback</option>
@@ -510,7 +508,7 @@ const fetchData = async () => {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+            className="px-4 py-3 bg-red-900 dark:bg-red-900 border rounded-lg text-slate-100 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -523,7 +521,7 @@ const fetchData = async () => {
           <select
             value={filters.anonymous}
             onChange={(e) => setFilters({ ...filters, anonymous: e.target.value })}
-            className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+            className="px-4 py-3 bg-red-900 dark:bg-red-900 border rounded-lg text-slate-100 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
           >
             <option value="all">All Types</option>
             <option value="false">With Contact</option>
@@ -562,7 +560,7 @@ const fetchData = async () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredFeedback.map((item) => (
               <div
                 key={item._id}

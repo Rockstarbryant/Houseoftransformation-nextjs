@@ -331,14 +331,7 @@ export default function RolesPage() {
     return acc;
   }, {});
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
-/*
-  if (loading) {
-    return <Loader fullScreen text="Loading roles..." />;
-  }
-*/
+  
   // ============================================
   // MAIN RENDER
   // ============================================
@@ -346,43 +339,44 @@ export default function RolesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center p-4 justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white">
             Roles & Permissions
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-slate-600 dark:text-slate-400 mt-4">
             Manage user roles and their permissions
           </p>
         </div>
-        
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition-colors"
-        >
-          <Plus size={20} />
-          Create Role
-        </button>
       </div>
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-green-500 dark:bg-green-500 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
           <CheckCircle className="text-green-600" size={20} />
-          <p className="text-green-800 dark:text-green-200 font-semibold">{success}</p>
+          <p className="text-white dark:text-white font-semibold">{success}</p>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-red-500 dark:bg-red-500 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="text-red-600" size={20} />
-          <p className="text-red-800 dark:text-red-200 font-semibold">{error}</p>
+          <p className="text-white dark:text-white font-semibold">{error}</p>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white dark:bg-slate-900">
+        <div className="grid grid-cols-1 md:grid-cols-2 p-4 gap-4">
+
+           <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-4 px-4 py-3 bg-[#8B1A1A] text-white font-bold rounded-lg hover:bg-red-900 transition-colors"
+        >
+          <Plus size={20} />
+          Create New Role
+        </button>
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -391,7 +385,7 @@ export default function RolesPage() {
               placeholder="Search roles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-red-900 dark:bg-red-900 rounded-lg text-white dark:text-white placeholder-slate-100 focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
             />
           </div>
 
@@ -401,7 +395,7 @@ export default function RolesPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none appearance-none cursor-pointer"
+              className="w-full pl-10 pr-4 py-3 bg-red-900 dark:bg-red-900 rounded-lg text-white dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none appearance-none cursor-pointer"
             >
               <option value="all">All Roles</option>
               <option value="system">System Roles</option>
@@ -412,47 +406,46 @@ export default function RolesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+      <div className="grid grid-cols-3 md:grid-cols-3 p-4 gap-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Total Roles
-            </h3>
-            <Shield className="text-blue-600" size={24} />
+            </h3>       
           </div>
-          <p className="text-3xl font-black text-blue-900 dark:text-blue-100">
+          <p className="text-xl font-black text-blue-900 dark:text-blue-100">
             {roles.length}
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 rounded-xl p-6 border border-green-200 dark:border-green-800">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-green-900 dark:text-green-200 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               System Roles
             </h3>
-            <Lock className="text-green-600" size={24} />
+            
           </div>
-          <p className="text-3xl font-black text-green-900 dark:text-green-100">
+          <p className="text-xl font-black text-green-900 dark:text-green-100">
             {roles.filter(r => r.isSystemRole).length}
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Custom Roles
             </h3>
-            <Unlock className="text-purple-600" size={24} />
+            
           </div>
-          <p className="text-3xl font-black text-purple-900 dark:text-purple-100">
+          <p className="text-xl font-black text-purple-900 dark:text-purple-100">
             {roles.filter(r => !r.isSystemRole).length}
           </p>
         </div>
       </div>
 
       {/* Roles List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-center text-slate-900 dark:text-white">
           Roles ({filteredRoles.length})
         </h2>
 
@@ -476,32 +469,32 @@ export default function RolesPage() {
               return (
                 <div
                   key={role._id}
-                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                  className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
                 >
                   {/* Role Header */}
-                  <div className="p-6">
+                  <div className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-2 mb-4">
                           <h3 className="text-xl font-bold text-slate-900 dark:text-white capitalize">
                             {role.name}
                           </h3>
                           
                           {role.isSystemRole && (
-                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-full flex items-center gap-1">
+                            <span className="px-3 py-1 bg-blue-400 dark:bg-blue-700 text-slate-800 dark:text-slate-100 text-xs font-bold rounded-full flex items-center gap-1">
                               <Lock size={12} />
                               System
                             </span>
                           )}
                         </div>
 
-                        <p className="text-slate-600 dark:text-slate-400 mb-4">
+                        <p className="text-slate-600 dark:text-slate-300 mb-2">
                           {role.description || 'No description'}
                         </p>
 
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-2">
-                            <Shield size={16} className="text-slate-400" />
+                            
                             <span className="text-slate-600 dark:text-slate-400">
                               {role.permissions?.length || 0} permissions
                             </span>
@@ -509,10 +502,10 @@ export default function RolesPage() {
 
                           <button
                             onClick={() => openUsersModal(role)}
-                            className="flex items-center gap-2 text-[#8B1A1A] hover:text-red-700 font-semibold"
+                            className="flex items-center gap-6 text-blue-800 dark:text-blue-300 hover:text-red-700 font-semibold"
                           >
                             <Users size={16} />
-                            View Users
+                            View Members
                           </button>
                         </div>
                       </div>
@@ -521,7 +514,7 @@ export default function RolesPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleRoleExpanded(role._id)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-1 bg-white dark:bg-blue-700 rounded-lg transition-colors"
                           title={isExpanded ? "Collapse" : "Expand"}
                         >
                           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -529,7 +522,7 @@ export default function RolesPage() {
 
                         <button
                           onClick={() => openEditModal(role)}
-                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 dark:text-blue-300 rounded-lg transition-colors"
                           title="Edit Role"
                         >
                           <Edit size={20} />
@@ -538,7 +531,7 @@ export default function RolesPage() {
                         {isDeletable && (
                           <button
                             onClick={() => openDeleteModal(role)}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 rounded-lg transition-colors"
+                            className="p-1 text-red-800 dark:text-red-400 rounded-lg transition-colors"
                             title="Delete Role"
                           >
                             <Trash2 size={20} />
@@ -582,10 +575,6 @@ export default function RolesPage() {
           </div>
         )}
       </div>
-
-      {/* Continued in Part 3 for Modals... */}
-     
-
 
       {/* CREATE ROLE MODAL */}
       {showCreateModal && (
@@ -922,9 +911,6 @@ export default function RolesPage() {
         </div>
       )}
 
-      {/* Continued in Part 4 for Delete & Users Modals... */}
-    
-
       {/* DELETE ROLE MODAL */}
       {showDeleteModal && selectedRole && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -939,7 +925,7 @@ export default function RolesPage() {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                     Delete Role
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-700 dark:text-slate-200">
                     This action cannot be undone
                   </p>
                 </div>
@@ -969,8 +955,8 @@ export default function RolesPage() {
                     <span className="font-bold capitalize">&quot;{selectedRole.name}&quot;</span>?
                   </p>
 
-                  <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <p className="text-sm text-red-800 dark:text-red-200">
+                  <div className="bg-red-800 dark:bg-red-900 rounded-lg p-4">
+                    <p className="text-sm text-slate-100 dark:text-red-100">
                       <strong>Warning:</strong> This role cannot be deleted if any users are currently assigned to it.
                       Make sure to reassign those users first.
                     </p>
@@ -1021,17 +1007,14 @@ export default function RolesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <Users className="text-white" size={20} />
-                  </div>
+                <div className="flex items-center gap-2">             
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white capitalize">
-                      Users with {selectedRole.name} Role
+                      Members with {selectedRole.name} Role
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-200">
                       {roleUsers.length} user{roleUsers.length !== 1 ? 's' : ''} found
                     </p>
                   </div>
@@ -1042,7 +1025,7 @@ export default function RolesPage() {
                     setSelectedRole(null);
                     setRoleUsers([]);
                   }}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-2 text-slate-500 dark:text-slate-100 rounded-lg transition-colors"
                 >
                   <XCircle size={24} />
                 </button>
@@ -1054,7 +1037,7 @@ export default function RolesPage() {
               {actionLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-[#8B1A1A] rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="w-12 h-12 rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-600 dark:text-slate-400">Loading users...</p>
                   </div>
                 </div>
