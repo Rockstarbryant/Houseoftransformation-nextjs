@@ -122,6 +122,53 @@ export default function EnhancedAdminPledgeCards({
   });
 
   // ============================================
+// ✅ MUTATIONS
+// ============================================
+
+const cancelMutation = useMutation({
+  mutationFn: (pledgeId) => donationApi.pledges.cancel(pledgeId),
+  onSuccess: (response) => {
+    if (response.success) {
+      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+    } else {
+      alert(response.message || 'Failed to cancel pledge');
+    }
+  },
+  onError: (error) => {
+    alert('Error cancelling pledge: ' + error.message);
+  },
+});
+
+const uncancelMutation = useMutation({
+  mutationFn: (pledgeId) => donationApi.pledges.uncancel(pledgeId),
+  onSuccess: (response) => {
+    if (response.success) {
+      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+    } else {
+      alert(response.message || 'Failed to restore pledge');
+    }
+  },
+  onError: (error) => {
+    const errorMessage = error.response?.data?.message || error.message || 'Error restoring pledge';
+    alert(errorMessage);
+  },
+});
+
+const deleteMutation = useMutation({
+  mutationFn: (pledgeId) => donationApi.pledges.delete(pledgeId),
+  onSuccess: (response) => {
+    if (response.success) {
+      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+    } else {
+      alert(response.message || 'Failed to delete pledge');
+    }
+  },
+  onError: (error) => {
+    alert('Error deleting pledge: ' + error.message);
+  },
+});
+
+  // ============================================
   // ✅ FILTER AND SORT LOGIC (From PC)
   // ============================================
 
@@ -209,6 +256,33 @@ export default function EnhancedAdminPledgeCards({
   // ============================================
   // ✅ HANDLERS
   // ============================================
+
+  // ============================================
+// ✅ PLEDGE ACTION HANDLERS
+// ============================================
+
+const handleCancelPledge = (pledge) => {
+  if (confirm(`Cancel pledge by ${pledge.member_name}?\n\nThis action can be reversed later.`)) {
+    cancelMutation.mutate(pledge.id);
+  }
+};
+
+const handleUncancelPledge = (pledge) => {
+  if (confirm(`Restore the pledge by ${pledge.member_name}?\n\nThe pledge status will be updated based on payment progress.`)) {
+    uncancelMutation.mutate(pledge.id);
+  }
+};
+
+const handleDeletePledge = (pledge) => {
+  if (pledge.status !== 'cancelled') {
+    alert('Only cancelled pledges can be deleted. Please cancel this pledge first.');
+    return;
+  }
+  
+  if (confirm(`⚠️ PERMANENTLY DELETE pledge by ${pledge.member_name}?\n\nThis action CANNOT be undone and will remove all pledge records.`)) {
+    deleteMutation.mutate(pledge.id);
+  }
+};
 
   const handleSort = (key) => {
     setSortConfig({
@@ -711,8 +785,14 @@ const handleLongPressEnd = () => {
                 <div 
                   key={pledge.id}
                   className={`w-full border-b border-slate-200 dark:border-slate-700 ${
-                    index === 0 ? 'border-t' : ''
-                  } ${isSelected ? 'bg-blue-50 dark:bg-blue-950/30 border-l-4 border-l-blue-500' : 'bg-white dark:bg-slate-800'} transition-colors`}
+                      index === 0 ? 'border-t' : ''
+                    } ${
+                      isSelected 
+                        ? 'bg-blue-50 dark:bg-blue-950/30 border-l-4 border-l-blue-500' 
+                        : pledge.status === 'cancelled'
+                        ? 'bg-red-50 dark:bg-red-950/20'
+                        : 'bg-white dark:bg-slate-800'
+                    } transition-colors`}
                 >
                   {/* Card Header - Always Visible */}
                   <div 
@@ -830,57 +910,143 @@ const handleLongPressEnd = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="grid grid-cols-2 gap-2 pt-2">
-                        {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onRecordPayment && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRecordPayment(pledge);
-                            }}
-                            className="py-2.5 bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2"
-                          >
-                            <DollarSign size={14} />
-                            Record Payment
-                          </button>
-                        )}
+                      {/* Action Buttons */}
+                      <div className="space-y-2 pt-2">
+                        {/* Show different buttons based on pledge status */}
+                        {pledge.status === 'cancelled' ? (
+                          <>
+                            {/* Cancelled Pledge Actions */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Uncancel Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUncancelPledge(pledge);
+                                }}
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
+                                className="py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                              >
+                                {uncancelMutation.isPending ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                  <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                      <path d="M21 3v5h-5"/>
+                                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                      <path d="M8 16H3v5"/>
+                                    </svg>
+                                    Restore
+                                  </>
+                                )}
+                              </button>
 
-                        {onViewHistory && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onViewHistory(pledge);
-                            }}
-                            className="py-2.5 bg-purple-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2"
-                          >
-                            <History size={14} />
-                            History
-                          </button>
-                        )}
+                              {/* Delete Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeletePledge(pledge);
+                                }}
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
+                                className="py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                              >
+                                {deleteMutation.isPending ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                  <>
+                                    <Trash2 size={14} />
+                                    Delete Forever
+                                  </>
+                                )}
+                              </button>
+                            </div>
 
-                        {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onEditPledge && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditPledge(pledge);
-                            }}
-                            className="py-2.5 bg-green-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2"
-                          >
-                            <Edit size={14} />
-                            Edit
-                          </button>
-                        )}
+                            {/* View History - Full width for cancelled pledges */}
+                            {onViewHistory && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onViewHistory(pledge);
+                                }}
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
+                                className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                              >
+                                <History size={14} />
+                                View History
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {/* Active/Pending/Partial Pledge Actions */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Record Payment - Only for non-completed */}
+                              {pledge.status !== 'completed' && onRecordPayment && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRecordPayment(pledge);
+                                  }}
+                                  disabled={cancelMutation.isPending}
+                                  className="py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                                >
+                                  <DollarSign size={14} />
+                                  Payment
+                                </button>
+                              )}
 
-                        {pledge.status !== 'completed' && pledge.status !== 'cancelled' && onCancelPledge && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCancelPledge(pledge);
-                            }}
-                            className="py-2.5 bg-red-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2"
-                          >
-                            <Trash2 size={14} />
-                            Cancel
-                          </button>
+                              {/* Edit - Only for non-completed */}
+                              {pledge.status !== 'completed' && onEditPledge && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditPledge(pledge);
+                                  }}
+                                  disabled={cancelMutation.isPending}
+                                  className="py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                                >
+                                  <Edit size={14} />
+                                  Edit
+                                </button>
+                              )}
+
+                              {/* View History */}
+                              {onViewHistory && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewHistory(pledge);
+                                  }}
+                                  disabled={cancelMutation.isPending}
+                                  className="py-2.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                                >
+                                  <History size={14} />
+                                  History
+                                </button>
+                              )}
+
+                              {/* Cancel - Only for non-completed */}
+                              {pledge.status !== 'completed' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelPledge(pledge);
+                                  }}
+                                  disabled={cancelMutation.isPending}
+                                  className="py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                                >
+                                  {cancelMutation.isPending ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  ) : (
+                                    <>
+                                      <X size={14} />
+                                      Cancel
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>

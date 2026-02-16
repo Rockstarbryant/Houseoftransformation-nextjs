@@ -34,7 +34,7 @@ import TransactionAuditLogTab from '@/components/donations/TransactionAuditLogTa
 import {
   ArrowLeft, Heart, Plus, RefreshCw, CheckCircle, AlertCircle,
   DollarSign, Target, Users, TrendingUp, Home, BarChart3,
-  CreditCard, Sun, Moon, X, AlertTriangle, Info, Menu
+  CreditCard, X, AlertTriangle, Info, Menu
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -145,7 +145,7 @@ export default function MobileDonationsPage() {
   // STATE MANAGEMENT
   // ============================================
   const [activeTab, setActiveTab] = useState('overview');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  
   
   // ✅ NEW: Alert state (replacing success/error states)
   const [alertMessage, setAlertMessage] = useState({ message: null, type: 'success' });
@@ -403,12 +403,6 @@ export default function MobileDonationsPage() {
     setSelectedPledgeForEdit(pledge);
   };
 
-  // Dark mode toggle
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  }; 
-
   // ============================================
   // PERMISSION GATE
   // ============================================
@@ -455,20 +449,13 @@ export default function MobileDonationsPage() {
     { id: 'contributions', label: 'Contributions', icon: DollarSign, show: canViewAllPayments() },
     { id: 'campaigns', label: 'Campaigns', icon: Target, show: canViewCampaigns() },
   ].filter(item => item.show);
-
-  // Theme classes
-  const bgPrimary = isDarkMode ? 'bg-slate-950' : 'bg-slate-50';
-  const cardBg = isDarkMode ? 'bg-slate-900' : 'bg-white';
-  const border = isDarkMode ? 'border-slate-800' : 'border-slate-200';
-  const textPrimary = isDarkMode ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-600';
   
 
   // ============================================
   // RENDER
   // ============================================
   return (
-    <div className={`min-h-screen w-full  ${bgPrimary} pb-24`}>
+    <div className={`min-h-screen w-full  bg-slate-50 dark:bg-slate-950 pb-24`}>
       {/* HEADER */}
       <div className="w-full bg-gradient-to-r from-[#8B1A1A] to-[#6B1515] text-white shadow-lg">
         <div className="w-full px-6 py-4">
@@ -484,12 +471,6 @@ export default function MobileDonationsPage() {
                 disabled={isFetchingCampaigns}
               >
                 <RefreshCw size={18} className={isFetchingCampaigns ? 'animate-spin' : ''} />
-              </button>
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-              >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
             </div>
           </div>
@@ -533,8 +514,8 @@ export default function MobileDonationsPage() {
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="space-y-4">
-              <div className={`${cardBg} rounded-none sm:rounded-2xl sm:mx-3 md:rounded-3xl md:mx-4 shadow-sm border ${border}`}>
-                <h3 className={`text-lg font-bold ${textPrimary} mb-4 flex items-center gap-2`}>
+              <div className={`bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl sm:mx-3 md:rounded-3xl md:mx-4 shadow-sm border border-slate-200 dark:border-slate-800`}>
+                <h3 className={`text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2`}>
                   <Target size={20} className="text-[#FDB022]" />
                   Live Campaigns
                 </h3>
@@ -542,7 +523,7 @@ export default function MobileDonationsPage() {
                 {campaigns.length === 0 ? (
                   <div className="text-center py-8">
                     <Target size={40} className="mx-auto mb-3 text-slate-300" />
-                    <p className={`text-sm ${textSecondary}`}>No active campaigns</p>
+                    <p className={`text-sm text-slate-600 dark:text-slate-400`}>No active campaigns</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -552,9 +533,9 @@ export default function MobileDonationsPage() {
                         : 0;
                       
                       return (
-                        <div key={campaign._id} className={`p-4 rounded-2xl border ${border} hover:shadow-md transition-shadow`}>
+                        <div key={campaign._id} className={`p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow`}>
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className={`font-bold ${textPrimary} flex-1`}>{campaign.title}</h4>
+                            <h4 className={`font-bold text-slate-900 dark:text-white flex-1`}>{campaign.title}</h4>
                             <span className="text-[10px] font-black px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg uppercase">Live</span>
                           </div>
                           <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
@@ -564,7 +545,7 @@ export default function MobileDonationsPage() {
                             />
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className={textSecondary}>
+                            <span className="text-slate-600 dark:text-slate-400">
                               {formatCurrency(campaign.currentAmount)}
                             </span>
                             <span className="font-semibold text-[#FDB022]">
@@ -588,22 +569,22 @@ export default function MobileDonationsPage() {
               </div>
 
               {/* Quick Stats */}
-              <div className={`${cardBg} rounded-2xl p-4 shadow-sm border ${border}`}>
-                <h4 className={`font-bold ${textPrimary} mb-3 text-sm`}>Quick Summary</h4>
+              <div className={`bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800`}>
+                <h4 className={`font-bold text-slate-900 dark:text-white mb-3 text-sm`}>Quick Summary</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className={textSecondary}>My Pledges:</span>
-                    <span className={`font-bold ${textPrimary}`}>{myPledges.length}</span>
+                    <span className="text-slate-600 dark:text-slate-400">My Pledges:</span>
+                    <span className={`font-bold text-slate-900 dark:text-white`}>{myPledges.length}</span>
                   </div>
                   {canViewAllPledges() && (
                     <div className="flex justify-between">
-                      <span className={textSecondary}>All Pledges:</span>
-                      <span className={`font-bold ${textPrimary}`}>{allPledges.length}</span>
+                      <span className="text-slate-600 dark:text-slate-400">All Pledges:</span>
+                      <span className={`font-bold text-slate-900 dark:text-white`}>{allPledges.length}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className={textSecondary}>Active Campaigns:</span>
-                    <span className={`font-bold ${textPrimary}`}>{campaigns.length}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Active Campaigns:</span>
+                    <span className={`font-bold text-slate-900 dark:text-white`}>{campaigns.length}</span>
                   </div>
                 </div>
               </div>
@@ -630,20 +611,20 @@ export default function MobileDonationsPage() {
           {/* MY PLEDGES TAB */}
           {activeTab === 'my-pledges' && canViewPledges() && (
             <div className="space-y-6">
-              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
+              <div className={`bg-white dark:bg-slate-900 overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800`}>
                 <div className="p-6 border-b dark:border-slate-700">
-                  <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
+                  <h3 className={`text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2`}>
                     <Heart size={24} className="text-[#FDB022]" />
                     My Pledges
                   </h3>
-                  <p className={`text-sm ${textSecondary} mt-1`}>Track your commitments</p>
+                  <p className={`text-sm text-slate-600 dark:text-slate-400 mt-1`}>Track your commitments</p>
                 </div>
                 
                 {myPledges.length === 0 ? (
                   <div className="p-12 text-center">
                     <Heart size={48} className="mx-auto mb-4 text-slate-300" />
                     <p className="text-lg font-semibold mb-2">No pledges yet</p>
-                    <p className={`text-sm ${textSecondary} mb-4`}>Start supporting our campaigns</p>
+                    <p className={`text-sm text-slate-600 dark:text-slate-400 mb-4`}>Start supporting our campaigns</p>
                     <button
                       onClick={() => setIsPledgeModalOpen(true)}
                       className="px-6 py-3 bg-[#FDB022] text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all"
@@ -667,10 +648,10 @@ export default function MobileDonationsPage() {
           {/* ALL PLEDGES TAB (Admin) */}
           {activeTab === 'all-pledges' && canViewAllPledges() && (
             <div className="space-y-6">
-              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
+              <div className={`bg-white dark:bg-slate-900 overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800`}>
                 <div className="p-6 border-b dark:border-slate-700 bg-yellow-50 dark:bg-yellow-900/20">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
+                    <h3 className={`text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2`}>
                       <Users size={24} className="text-[#FDB022]" />
                       All Member Pledges
                     </h3>
@@ -678,7 +659,7 @@ export default function MobileDonationsPage() {
                       Admin
                     </span>
                   </div>
-                  <p className={`text-sm ${textSecondary}`}>Comprehensive view of all pledges</p>
+                  <p className={`text-sm text-slate-600 dark:text-slate-400`}>Comprehensive view of all pledges</p>
                 </div>
                 
                 <div className="p-4">
@@ -721,7 +702,7 @@ export default function MobileDonationsPage() {
                 <AdminCampaignManager onCampaignCreated={handleCampaignCreated} />
               )}
               
-              <div className={`${cardBg} overflow-hidden shadow-sm border ${border}`}>
+              <div className={`bg-white dark:bg-slate-900 overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800`}>
                 <MobileCampaignsTab onCampaignCreated={handleCampaignCreated} />
               </div>
             </div>
@@ -730,7 +711,7 @@ export default function MobileDonationsPage() {
       </div>
 
       {/* BOTTOM NAVIGATION */}
-      <div className={`fixed bottom-0 left-0 right-0 ${cardBg} border-t ${border} safe-area-bottom z-50 backdrop-blur-md`}>
+      <div className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 safe-area-bottom z-50 backdrop-blur-md`}>
         <div className="flex items-center justify-between md:justify-around px-4 py-3 w-full max-w-screen-sm mx-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -743,7 +724,7 @@ export default function MobileDonationsPage() {
                 className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all min-w-0 ${
                   isActive
                     ? 'text-[#FDB022]'
-                    : `${textSecondary} hover:${textPrimary}`
+                    : `text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-white`
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />

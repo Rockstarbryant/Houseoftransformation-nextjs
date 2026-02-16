@@ -303,7 +303,28 @@ export const pledgeService = {
       console.error('[PLEDGE-SERVICE] Cancel error:', error);
       throw error;
     }
+  },
+
+  // Inside pledgeService object
+delete: async (pledgeId) => {
+  try {
+    const response = await api.delete(`/pledges/${pledgeId}`);
+    return response?.data || { success: false };
+  } catch (error) {
+    console.error('[PLEDGE-SERVICE] Delete error:', error);
+    throw error;
   }
+},
+
+uncancel: async (pledgeId) => {
+  try {
+    const response = await api.patch(`/pledges/${pledgeId}/uncancel`, {});
+    return response?.data || { success: false };
+  } catch (error) {
+    console.error('[PLEDGE-SERVICE] Uncancel error:', error);
+    throw error;
+  }
+}
 };
 
 // ============================================

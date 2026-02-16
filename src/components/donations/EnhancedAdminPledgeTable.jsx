@@ -3,7 +3,11 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown, Printer, History, Filter, X as CloseIcon, AlertTriangle, Info, Search, DollarSign } from 'lucide-react';
+import { 
+  Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown, 
+  Printer, History, Filter, X as CloseIcon, AlertTriangle, Info, 
+  Search, DollarSign, X  // ✅ ADD X here
+} from 'lucide-react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDateShort, getStatusBadge } from '@/utils/donationHelpers';
 import EditPledgeModal from './EditPledgeModal';
@@ -182,6 +186,44 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     },
   });
 
+  const deleteMutation = useMutation({
+  mutationFn: (pledgeId) => donationApi.pledges.delete(pledgeId),
+  onSuccess: (response, pledgeId) => {
+    if (response.success) {
+      queryClient.setQueryData(['pledges', campaignId, refreshTrigger], (old) =>
+        old.filter(p => p.id !== pledgeId)
+      );
+      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+      setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+    } else {
+      alert(response.message || 'Failed to delete pledge');
+    }
+  },
+  onError: (error) => {
+    alert('Error deleting pledge: ' + error.message);
+  },
+});
+
+const uncancelMutation = useMutation({
+  mutationFn: (pledgeId) => donationApi.pledges.uncancel(pledgeId),
+  onSuccess: (response) => {
+    if (response.success) {
+      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+      setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+    } else {
+      // Show the actual error message from the server
+      alert(response.message || 'Failed to restore pledge');
+      setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+    }
+  },
+  onError: (error) => {
+    // Parse error response
+    const errorMessage = error.response?.data?.message || error.message || 'Error restoring pledge';
+    alert(errorMessage);
+    setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+  },
+});
+
   // Helper functions
   const getUserName = (userId) => {
     if (!userId) return 'N/A';
@@ -309,12 +351,42 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
     });
   };
 
+  const handleDeletePledge = (pledge) => {
+  if (pledge.status !== 'cancelled') {
+    alert('Only cancelled pledges can be deleted. Please cancel this pledge first.');
+    return;
+  }
+  
+  setConfirmDialog({
+    isOpen: true,
+    action: 'delete',
+    pledgeId: pledge.id,
+    title: 'Delete Pledge Permanently?',
+    message: `Are you sure you want to permanently delete the pledge by ${pledge.member_name}?\n\nThis action cannot be undone and will remove all pledge records.`,
+    type: 'danger'
+  });
+};
+
+const handleUncancelPledge = (pledge) => {
+  setConfirmDialog({
+    isOpen: true,
+    action: 'uncancel',
+    pledgeId: pledge.id,
+    title: 'Restore Cancelled Pledge?',
+    message: `Restore the pledge by ${pledge.member_name}? The pledge status will be updated based on payment progress.`,
+    type: 'info'
+  });
+};
+
   const handleConfirmAction = () => {
-    if (confirmDialog.action === 'cancel' && confirmDialog.pledgeId) {
-      cancelMutation.mutate(confirmDialog.pledgeId);
-    }
-    setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
-  };
+  if (confirmDialog.action === 'cancel' && confirmDialog.pledgeId) {
+    cancelMutation.mutate(confirmDialog.pledgeId);
+  } else if (confirmDialog.action === 'delete' && confirmDialog.pledgeId) {
+    deleteMutation.mutate(confirmDialog.pledgeId);
+  } else if (confirmDialog.action === 'uncancel' && confirmDialog.pledgeId) {
+    uncancelMutation.mutate(confirmDialog.pledgeId);
+  }
+};
 
   // Reset filters
   const resetFilters = () => {
@@ -676,32 +748,64 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => setEditingPledge(pledge)}
-                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
+                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Edit pledge"
+                            disabled={pledge.status === 'cancelled' || uncancelMutation.isPending || deleteMutation.isPending}
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => setRecordingPaymentFor(pledge)}
-                            className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 rounded-lg transition-colors text-emerald-600 dark:text-emerald-400"
+                            className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 rounded-lg transition-colors text-emerald-600 dark:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Record payment"
+                            disabled={pledge.status === 'cancelled' || pledge.status === 'completed' || uncancelMutation.isPending || deleteMutation.isPending}
                           >
-                            <Eye size={16} />
+                            <DollarSign size={16} />
                           </button>
                           <button
                             onClick={() => setViewingHistoryFor(pledge)}
-                            className="p-2 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-lg transition-colors text-purple-600 dark:text-purple-400"
+                            className="p-2 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-lg transition-colors text-purple-600 dark:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="View history"
+                            disabled={uncancelMutation.isPending || deleteMutation.isPending}
                           >
                             <History size={16} />
                           </button>
-                          <button
-                            onClick={() => handleCancelPledge(pledge.id)}
-                            className="p-2 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition-colors text-rose-600 dark:text-rose-400"
-                            title="Cancel pledge"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          
+                          {/* Show Uncancel button for cancelled pledges */}
+                          {pledge.status === 'cancelled' ? (
+                            <>
+                              <button
+                                onClick={() => handleUncancelPledge(pledge)}
+                                className="p-2 hover:bg-amber-100 dark:hover:bg-amber-950/50 rounded-lg transition-colors text-amber-600 dark:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Restore pledge"
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                  <path d="M21 3v5h-5"/>
+                                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                  <path d="M8 16H3v5"/>
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeletePledge(pledge)}
+                                className="p-2 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition-colors text-rose-600 dark:text-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Delete pledge permanently"
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleCancelPledge(pledge.id)}
+                              className="p-2 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition-colors text-rose-600 dark:text-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Cancel pledge"
+                              disabled={cancelMutation.isPending || uncancelMutation.isPending || deleteMutation.isPending}
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -752,7 +856,7 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
         title={confirmDialog.title}
         message={confirmDialog.message}
         type={confirmDialog.type}
-        isLoading={cancelMutation.isPending}
+        isLoading={cancelMutation.isPending || deleteMutation.isPending || uncancelMutation.isPending}  // ✅ UPDATE THIS
       />
     </div>
   );

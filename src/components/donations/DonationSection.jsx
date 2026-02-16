@@ -137,7 +137,7 @@ export default function DonationSection() {
 
   return (
     <section className="relative py-16 bg-white dark:bg-slate-950 overflow-hidden">
-      {/* Decorative Elements - solid colors */}
+      {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-red-50 dark:bg-red-950/20 rounded-full blur-3xl opacity-40 -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-50 dark:bg-red-950/20 rounded-full blur-3xl opacity-40 -z-10"></div>
 
@@ -145,9 +145,9 @@ export default function DonationSection() {
         
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-950/30 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-900 dark:bg-red-900 rounded-full mb-6">
             <Sparkles size={16} className="text-[#8B1A1A]" />
-            <span className="text-sm font-bold text-[#8B1A1A] dark:text-red-400">Give Generously</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">Give Generously</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
@@ -198,49 +198,39 @@ export default function DonationSection() {
                       </div>
                     )}
 
-                    {/* Progress Bar */}
-                    {campaigns[currentSlide]?.goalAmount > 0 && (
-                      <div className="mb-6">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">
-                            {formatCurrency(campaigns[currentSlide]?.raisedAmount || 0)} raised
-                          </span>
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Goal: {formatCurrency(campaigns[currentSlide]?.goalAmount)}
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="bg-[#8B1A1A] h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${getProgressPercent(
-                                campaigns[currentSlide]?.raisedAmount,
-                                campaigns[currentSlide]?.goalAmount
-                              )}%`
-                            }}
-                          />
-                        </div>
-                        <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          {getProgressPercent(
-                            campaigns[currentSlide]?.raisedAmount,
-                            campaigns[currentSlide]?.goalAmount
-                          )}% funded
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Description */}
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 line-clamp-3">
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-4 mb-4 line-clamp-2">
                       {campaigns[currentSlide]?.description}
                     </p>
 
-                    {/* CTA Button */}
+                    
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Raised</span>
+                        <span className="font-bold text-green-600">{formatCurrency(campaigns[currentSlide]?.currentAmount || 0)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Goal</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(campaigns[currentSlide]?.goalAmount || 0)}</span>
+                      </div>
+                      
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all"
+                          style={{ width: `${Math.min(getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0), 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-center text-sm font-bold text-slate-900 dark:text-white">
+                        {getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0)}% Complete
+                      </p>
+                    </div>
+
                     <Link
-                      href={`/donate?campaign=${campaigns[currentSlide]?._id}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#8B1A1A] hover:bg-red-800 text-white font-bold rounded-xl transition-colors"
+                      href={`/campaigns/${campaigns[currentSlide]?._id}`}
+                      className="w-full bg-[#8B1A1A] text-white py-3 sm:py-4 rounded-xl font-bold hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
                     >
-                      Support This Campaign
-                      <ArrowRight size={18} />
+                      <Heart size={20} />
+                      Support Campaign
                     </Link>
                   </div>
 
@@ -249,15 +239,16 @@ export default function DonationSection() {
                     <>
                       <button
                         onClick={prevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 rounded-full flex items-center justify-center shadow-lg transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
                       >
-                        <ChevronLeft size={20} className="text-slate-900 dark:text-white" />
+                        <ChevronLeft size={24} className="text-slate-900 dark:text-white" />
                       </button>
+                      
                       <button
                         onClick={nextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 rounded-full flex items-center justify-center shadow-lg transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
                       >
-                        <ChevronRight size={20} className="text-slate-900 dark:text-white" />
+                        <ChevronRight size={24} className="text-slate-900 dark:text-white" />
                       </button>
                     </>
                   )}
@@ -300,7 +291,7 @@ export default function DonationSection() {
           {/* Right: Tithe & Offerings */}
           <div className="space-y-6">
             
-            {/* Tithe Card - solid red background */}
+            {/* Tithe Card */}
             <div className="bg-[#8B1A1A] rounded-2xl shadow-xl overflow-hidden">
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-3">
@@ -360,7 +351,7 @@ export default function DonationSection() {
               </div>
             </div>
 
-            {/* Offerings Card - darker red background */}
+            {/* Offerings Card */}
             <div className="bg-[#6B1515] rounded-2xl shadow-xl overflow-hidden">
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-3">
@@ -442,7 +433,7 @@ export default function DonationSection() {
             
             <Link
               href="/donate"
-              className="px-6 py-3 bg-[#8B1A1A] hover:bg-red-800 text-white font-bold rounded-xl hover:shadow-lg transition-all whitespace-nowrap"
+              className="px-6 py-3 bg-gradient-to-r from-[#8B1A1A] to-red-700 text-white font-bold rounded-xl hover:shadow-lg transition-all whitespace-nowrap"
             >
               Explore All Ways to Give
             </Link>

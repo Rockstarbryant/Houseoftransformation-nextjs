@@ -28,7 +28,7 @@ export const metadata = {
   openGraph: {
     title: 'Busia House of Transformation - Transforming Lives',
     description: 'Touching and transforming lives through the anointed gospel of Jesus Christ.',
-    images: ['https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg'],
+    images: ['https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770439599/ctfacksgew3zgzu5shsh.jpg'],
   },
 };
 

@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
@@ -465,16 +465,28 @@ export default function EnhancedMobileCampaignsTab({ onCampaignCreated }) {
   const [alertMessage, setAlertMessage] = useState(null);
 
   // TANSTACK QUERY (2 QUERIES)
-  const { data: campaigns = [], isLoading, isFetching } = useQuery({
-    queryKey: ['campaigns', { status: activeTab }],
-    queryFn: async () => {
-      const statusParam = activeTab === 'all' ? '' : activeTab;
-      const response = await donationApi.campaigns.getAll({ status: statusParam });
-      return response.success ? (response.campaigns || []) : [];
-    },
-    staleTime: 30000,
-    refetchOnWindowFocus: true,
+  const { data: allCampaigns, isLoading, isFetching } = useQuery({
+  queryKey: ['campaigns'],
+  queryFn: async () => {
+    const response = await donationApi.campaigns.getAll();
+    return response;
+  },
+  staleTime: 30000,
+});
+
+// Filter campaigns based on activeTab
+const campaigns = React.useMemo(() => {
+  if (!allCampaigns?.campaigns) return [];
+  
+  if (activeTab === 'all') return allCampaigns.campaigns;
+  
+  return allCampaigns.campaigns.filter(c => {
+    const campaignStatus = (c.status || '').toLowerCase().trim();
+    const filterStatus = activeTab.toLowerCase().trim();
+    
+    return campaignStatus === filterStatus;
   });
+}, [allCampaigns, activeTab]);
 
   const { data: campaignAnalytics = {} } = useQuery({
     queryKey: ['campaignAnalytics', campaigns?.map(c => c._id)],

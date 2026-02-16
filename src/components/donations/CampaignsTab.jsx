@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/usePermissions';
 import { donationApi } from '@/services/api/donationService';
@@ -450,16 +450,28 @@ export default function CampaignsTab({ onCampaignCreated }) {
   
 
   // TanStack Query (Identical Logic)
-const { data: campaigns = [], isLoading, isFetching } = useQuery({
-  queryKey: ['campaigns', { status: activeTab }],
+const { data: allCampaigns, isLoading, isFetching } = useQuery({
+  queryKey: ['campaigns'],
   queryFn: async () => {
-    // Logic: If 'all', we might pass undefined or a specific 'all' flag depending on your API
-    const statusParam = activeTab === 'all' ? '' : activeTab;
-    const response = await donationApi.campaigns.getAll({ status: statusParam });
-    return response.success ? (response.campaigns || []) : [];
+    const response = await donationApi.campaigns.getAll();
+    return response;
   },
   staleTime: 30000,
 });
+
+// Filter campaigns based on activeTab
+const campaigns = React.useMemo(() => {
+  if (!allCampaigns?.campaigns) return [];
+  
+  if (activeTab === 'all') return allCampaigns.campaigns;
+  
+  return allCampaigns.campaigns.filter(c => {
+    const campaignStatus = (c.status || '').toLowerCase().trim();
+    const filterStatus = activeTab.toLowerCase().trim();
+    
+    return campaignStatus === filterStatus;
+  });
+}, [allCampaigns, activeTab]);
 
 // 1. Fetch the analytics data
 // ✅ FIXED: Fetch analytics for all campaigns individually
@@ -640,13 +652,13 @@ const completeMutation = useMutation({
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          activeTab === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                          {statusInfo.label || campaign.status}
-                        </span>
-                      </td>
+  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+    activeTab === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+  }`}>
+    <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+    {statusInfo.label || campaign.status}
+  </span>
+</td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                           <Calendar size={14} />

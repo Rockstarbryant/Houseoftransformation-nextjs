@@ -241,7 +241,7 @@ export default function BlogDetailClient({ post }) {
         )}
 
         {/* Footer Call to Action - 100% PRESERVED */}
-        <div className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-slate-900 dark:bg-white text-center relative overflow-hidden group">
+        <div className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-slate-900 dark:bg-red text-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-[#8B1A1A] to-transparent opacity-10 group-hover:opacity-20 transition-opacity" />
           <div className="relative z-10">
             <h3 className="text-2xl md:text-4xl font-black text-white mb-4 tracking-tighter leading-tight">

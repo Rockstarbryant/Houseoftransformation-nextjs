@@ -457,7 +457,7 @@ export default function CampaignDetailsPage() {
 
             {/* Impact Statement */}
             {campaign.impactStatement && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6">
+              <div className="bg-red-650 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6">
                 <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
                   💡 Impact
                 </h3>

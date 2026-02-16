@@ -79,22 +79,11 @@ const HeroSection = () => {
               </p>
             </div>
 
-            <div className="flex flex-row gap-3 w-full">
-              <Link href="/livestream" className="flex-2">
-                <Button 
-                  variant="primary" 
-                  className="w-full bg-[#8B1A1A] hover:bg-[#6B1515] text-white px-4 py-4 rounded-full flex items-center justify-center gap-2 shadow-xl transition-all hover:scale-105 active:scale-95"
-                >
-                  <div className="relative flex items-center justify-center">
-                    <Play size={20} fill="currentColor" />
-                    <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-20"></span>
-                  </div>
-                  <span className="font-bold text-xs sm:text-sm uppercase tracking-widest">Watch Live</span>
-                </Button>
-              </Link>
+            <div className="flex flex-row gap-0 w-full max-w-sm">
+              
 
               <Button 
-                variant="secondary" 
+                variant="primary" 
                 className="flex-1 border-white/20 text-white hover:bg-white/10 px-4 py-4 rounded-full text-xs sm:text-sm"
                 onClick={() => setIsNewHereOpen(true)}
               >

@@ -117,7 +117,7 @@ export default function NewHerePage() {
                 <Users className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3">Come As You Are</h3>
+                <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3">Dress Code</h3>
                 <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
                   Jeans? Suits? Traditional wear? You will see it all. We care about your heart, not your wardrobe.
                 </p>
