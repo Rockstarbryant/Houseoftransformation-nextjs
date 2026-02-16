@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Heart, MessageCircle, Share2, Eye, Play, Calendar, X, ChevronDown, ChevronUp, Bookmark } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
+import { getDeviceId, hasViewedSermon, markSermonAsViewed } from '@/utils/deviceId';
 import Card from '../common/Card';
 
 const SermonCard = ({ sermon }) => {
@@ -16,6 +17,43 @@ const SermonCard = ({ sermon }) => {
   const [views, setViews] = useState(sermon.views || 0);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
+
+  // ✅ Track view on component mount
+  useEffect(() => {
+    const trackSermonView = async () => {
+      // Only track if not already viewed by this device
+      if (!hasViewedSermon(sermon._id)) {
+        try {
+          const deviceId = getDeviceId();
+          console.log(`📊 Tracking view for sermon ${sermon._id} from device ${deviceId}`);
+          
+          const response = await sermonService.trackView(sermon._id, deviceId);
+          
+          if (response.success && response.views !== undefined) {
+            setViews(response.views);
+            
+            // Mark as viewed locally only if server accepted it
+            if (!response.alreadyViewed) {
+              markSermonAsViewed(sermon._id);
+              console.log(`✅ View tracked successfully. Total views: ${response.views}`);
+            } else {
+              console.log(`ℹ️ View already tracked for this device`);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error tracking view:', error);
+          // Don't mark as viewed if the request failed
+        }
+      } else {
+        console.log(`ℹ️ Sermon ${sermon._id} already viewed by this device`);
+      }
+    };
+
+    // Track view after a small delay to ensure it's a real view
+    const viewTimer = setTimeout(trackSermonView, 1000);
+
+    return () => clearTimeout(viewTimer);
+  }, [sermon._id]);
 
   // Load liked/bookmarked state on mount
   useEffect(() => {
@@ -187,52 +225,34 @@ const SermonCard = ({ sermon }) => {
       if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
       else if (url.includes('youtube.com/watch')) videoId = new URL(url).searchParams.get('v');
       else if (url.includes('youtube.com/embed/')) videoId = url.split('embed/')[1]?.split('?')[0];
-      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+      return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : '';
     }
     if (url.includes('vimeo.com')) {
-      const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
-      return videoId ? `https://player.vimeo.com/video/${videoId}` : '';
+      const vimeoId = url.split('vimeo.com/')[1]?.split('?')[0];
+      return vimeoId ? `https://player.vimeo.com/video/${vimeoId}?autoplay=1` : '';
     }
-    if (url.includes('tiktok.com')) return url;
     return '';
   }, []);
 
-  const contentHtml = sermon.descriptionHtml || sermon.description || '';
-  const isVideo = sermon.type === 'video' && sermon.videoUrl;
-  const hasThumbnail = Boolean(sermon.thumbnail);
-  const videoEmbedUrl = isVideo ? getVideoEmbedUrl(sermon.videoUrl) : null;
-  const isFacebookVideo = isVideo && (sermon.videoUrl?.includes('facebook.com') || sermon.videoUrl?.includes('fb.watch'));
-
-  useEffect(() => {
-    if (sermon._id) {
-      console.log(`🎤 SermonCard [${sermon.title}]:`, {
-        type: sermon.type,
-        hasVideoUrl: !!sermon.videoUrl,
-        isVideo,
-        hasThumbnail,
-        hasImages: contentHtml.includes('<img'),
-        contentLength: contentHtml.length,
-      });
-    }
-  }, [sermon._id, sermon.title, sermon.type, sermon.videoUrl, isVideo, contentHtml, hasThumbnail]);
+  const isVideo = sermon.type === 'video';
+  const hasThumbnail = sermon.thumbnail;
+  const videoEmbedUrl = isVideo ? getVideoEmbedUrl(sermon.videoUrl) : '';
+  const isFacebookVideo = isVideo && sermon.videoUrl?.includes('facebook.com');
+  const contentHtml = sermon.descriptionHtml || sermon.description || '<p>No content available.</p>';
 
   return (
-    <div id={`sermon-${sermon._id}`} className="w-full">
-      <Card 
-        padding="none"
-        shadow="none"
-        border={false}
-        className="flex flex-col bg-white dark:bg-slate-900 rounded-xl md:rounded-[2.5rem] overflow-hidden mx-0"
-      >
-        
+    <div id={`sermon-${sermon._id}`} className="relative scroll-mt-24">
+      <Card className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col">
         {/* Header */}
-        <div className="px-2 md:px-10 pt-6 md:pt-10 pb-4 flex items-center justify-between border-b border-slate-50 md:border-none">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
-              {sermon.pastor?.charAt(0).toUpperCase() || 'P'}
+        <div className="px-4 md:px-10 pt-8 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#8B1A1A] to-red-700 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+              <span className="text-2xl md:text-3xl font-black text-white uppercase">
+                {(sermon.category || 'M')[0]}
+              </span>
             </div>
-            <div>
-              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] text-[#8B1A1A]">
+            <div className="flex flex-col">
+              <p className="text-xs md:text-sm text-[#8B1A1A] font-black uppercase tracking-widest mb-1">
                 {sermon.category || 'Ministry'}
               </p>
               <p className="text-sm md:text-base font-bold text-slate-900 dark:text-white leading-tight">
@@ -357,7 +377,6 @@ const SermonCard = ({ sermon }) => {
           </div>
         )}
 
-        {/* Footer */}
         {/* Footer */}
         <div className="px-2 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-5">

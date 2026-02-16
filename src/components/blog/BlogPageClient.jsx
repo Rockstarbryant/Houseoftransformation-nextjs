@@ -21,8 +21,10 @@ export default function BlogPageClient({ initialBlogs }) {
   };
 
   // Check if user can create blog
-  const canCreateBlog = hasPermission('manage:blog');
+  const canCreateBlog = hasPermission('manage:blog', 'getAllowedBlogCategories');
 
+  
+  
   return (
     <>
       {/* Create Button */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, Eye, Calendar, User, ChevronDown, ChevronUp, Quote, Bookmark } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { sermonService } from '@/services/api/sermonService';
+import { getDeviceId, hasViewedSermon, markSermonAsViewed } from '@/utils/deviceId';
 import Card from '../common/Card';
 
 const SermonCardText = ({ sermon }) => { 
@@ -14,6 +15,43 @@ const SermonCardText = ({ sermon }) => {
   const [views, setViews] = useState(sermon.views || 0);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
+
+  // ✅ Track view on component mount
+  useEffect(() => {
+    const trackSermonView = async () => {
+      // Only track if not already viewed by this device
+      if (!hasViewedSermon(sermon._id)) {
+        try {
+          const deviceId = getDeviceId();
+          console.log(`📊 Tracking view for sermon ${sermon._id} from device ${deviceId}`);
+          
+          const response = await sermonService.trackView(sermon._id, deviceId);
+          
+          if (response.success && response.views !== undefined) {
+            setViews(response.views);
+            
+            // Mark as viewed locally only if server accepted it
+            if (!response.alreadyViewed) {
+              markSermonAsViewed(sermon._id);
+              console.log(`✅ View tracked successfully. Total views: ${response.views}`);
+            } else {
+              console.log(`ℹ️ View already tracked for this device`);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error tracking view:', error);
+          // Don't mark as viewed if the request failed
+        }
+      } else {
+        console.log(`ℹ️ Sermon ${sermon._id} already viewed by this device`);
+      }
+    };
+
+    // Track view after a small delay to ensure it's a real view
+    const viewTimer = setTimeout(trackSermonView, 1000);
+
+    return () => clearTimeout(viewTimer);
+  }, [sermon._id]);
 
   // Load liked/bookmarked state on mount
   useEffect(() => {
@@ -160,8 +198,6 @@ const SermonCardText = ({ sermon }) => {
     }
   };
 
-  // ... rest of your existing code (handleShare, getVideoEmbedUrl, etc.)
-
   const handleShare = () => {
     const baseUrl = window.location.origin + window.location.pathname + window.location.search;
     const fragmentUrl = sermon._id ? `${baseUrl}#sermon-${sermon._id}` : baseUrl;
@@ -278,7 +314,6 @@ const SermonCardText = ({ sermon }) => {
         </div>
 
         {/* Footer */}
-        {/* Footer */}
         <div className="px-3 md:px-10 py-6 bg-slate-50/80 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-300 group/icon">
@@ -302,7 +337,7 @@ const SermonCardText = ({ sermon }) => {
               <Heart 
                 size={20} 
                 fill={liked ? 'currentColor' : 'none'} 
-                className={`transition-transform ${liked ? 'scale-70' : ''}`} 
+                className={`transition-transform ${liked ? 'scale-110' : ''}`} 
               />
               <span className="text-xs font-black">{likes}</span>
             </button>
@@ -321,7 +356,7 @@ const SermonCardText = ({ sermon }) => {
               <Bookmark 
                 size={20} 
                 fill={bookmarked ? 'currentColor' : 'none'} 
-                className={`transition-transform ${bookmarked ? 'scale-70' : ''}`}
+                className={`transition-transform ${bookmarked ? 'scale-110' : ''}`}
               />
             </button>
 

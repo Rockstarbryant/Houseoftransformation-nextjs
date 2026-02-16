@@ -45,37 +45,21 @@ const HeroSection = () => {
       {/* Animated accent glow */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#8B1A1A]/20 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-4 items-center">
           
           {/* LEFT: CONTENT */}
           <div className="text-white">
-            <div className="inline-flex items-center gap-3 px-4 py-2 bg-red rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red rounded-full border border-white/10 mb-16 animate-in fade-in slide-in-from-left-4 duration-700">
               <Sparkles size={14} className="text-[#8B1A1A]" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
+              <span className="text-[50px] md:text-xs font-black uppercase tracking-[0.3em] text-white/90">Welcome to House of Transformation</span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl lg:text-7xl font-black mb-8 tracking-tighter select-none">
-              <div className="overflow-hidden pb-2 -mb-2 md:mb-2">
+            <h1 className="text-4xl md:text-7xl lg:text-7xl font-black mb-6 -mt-4 tracking-tighter select-none">
+              <div className="overflow-hidden pb-2 mb-4 md:mb-2">
                 <span className="block animate-reveal-1 origin-bottom">
                   <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-300 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
-                    BUSIA (H.O.T)
-                  </span>
-                </span>
-              </div>
-
-              <div className="pb-2 -mb-2 md:-mb-3">
-                <span className="block animate-reveal-2 origin-bottom">
-                  <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-400 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
-                    TRANSFORMING
-                  </span>
-                </span>
-              </div>
-
-              <div className="overflow-hidden pb-4">
-                <span className="block animate-reveal-3 origin-bottom">
-                  <span className="bg-gradient-to-r from-red-900 via-red-700 to-red-400 bg-[length:200%_100%] bg-clip-text text-transparent animate-shimmer-infinite">
-                    LIVES.
+                    House of Transformation Busia Church.
                   </span>
                 </span>
               </div>

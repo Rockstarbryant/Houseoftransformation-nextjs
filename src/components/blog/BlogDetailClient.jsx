@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, Trash2, AlertCircle, Share2, Heart, Calendar, User, Quote } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, AlertCircle, Share2, Heart, Calendar, User, Quote, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { blogService } from '@/services/api/blogService';
+import { getDeviceId, hasViewedBlog, markBlogAsViewed } from '@/utils/deviceId';
 import { formatDate } from '@/utils/helpers';
 import NextImage from 'next/image';
 
@@ -14,6 +15,44 @@ export default function BlogDetailClient({ post }) {
 
   const [deleting, setDeleting] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [views, setViews] = useState(post.views || 0);
+
+  // ✅ Track view on component mount
+  useEffect(() => {
+    const trackBlogView = async () => {
+      // Only track if not already viewed by this device
+      if (!hasViewedBlog(post._id)) {
+        try {
+          const deviceId = getDeviceId();
+          console.log(`📊 Tracking view for blog ${post._id} from device ${deviceId}`);
+          
+          const response = await blogService.trackView(post._id, deviceId);
+          
+          if (response.success && response.views !== undefined) {
+            setViews(response.views);
+            
+            // Mark as viewed locally only if server accepted it
+            if (!response.alreadyViewed) {
+              markBlogAsViewed(post._id);
+              console.log(`✅ View tracked successfully. Total views: ${response.views}`);
+            } else {
+              console.log(`ℹ️ View already tracked for this device`);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error tracking view:', error);
+          // Don't mark as viewed if the request failed
+        }
+      } else {
+        console.log(`ℹ️ Blog ${post._id} already viewed by this device`);
+      }
+    };
+
+    // Track view after a small delay to ensure it's a real view
+    const viewTimer = setTimeout(trackBlogView, 1000);
+
+    return () => clearTimeout(viewTimer);
+  }, [post._id]);
 
   // --- ALL LOGIC PRESERVED 100% ---
   const handleDelete = async () => {
@@ -87,7 +126,7 @@ export default function BlogDetailClient({ post }) {
             {post.title}
           </h1>
 
-          {/* Author & Meta Row - 100% PRESERVED */}
+          {/* Author & Meta Row - WITH VIEW COUNT */}
           <div className="flex flex-wrap items-center justify-between gap-6 py-8 border-y border-slate-100 dark:border-slate-700 mb-16">
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-full bg-gradient-to-br from-slate-800 to-black dark:bg-slate-900 flex items-center justify-center text-white dark:text-white font-black">
@@ -104,10 +143,20 @@ export default function BlogDetailClient({ post }) {
             </div>
 
             <div className="flex items-center gap-6">
+              {/* ✅ VIEW COUNT DISPLAY */}
+              <div className="text-right hidden sm:block">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1">Views</p>
+                <div className="flex items-center gap-1.5">
+                  <Eye size={16} className="text-slate-400" />
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{views}</p>
+                </div>
+              </div>
+
               <div className="text-right hidden sm:block">
                 <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1">Published</p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">{formatDate(post.createdAt, 'long')}</p>
               </div>
+
               <div className="flex items-center gap-2">
                 <button 
                   onClick={handleLike} 

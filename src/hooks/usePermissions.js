@@ -96,7 +96,7 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
    * Blog Management
    */
   const canManageBlog = () => hasPermission('manage:blog');
-  const canCreateBlog = () => hasPermission('manage:blog');
+  const canCreateBlog = () => hasPermission('manage:blog', 'getAllowedBlogCategories');
   const canEditBlog = () => hasPermission('manage:blog');
   const canDeleteBlog = () => hasPermission('manage:blog');
 

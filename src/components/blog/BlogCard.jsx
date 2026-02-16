@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, Edit, Trash2, Calendar, Newspaper, User } from 'lucide-react';
+import { ChevronRight, Edit, Trash2, Calendar, Newspaper, User, Eye } from 'lucide-react';
 import Card from '../common/Card';
 import { formatDate, truncateText } from '@/utils/helpers';
 import { useAuth } from '@/context/AuthContext';
@@ -69,9 +69,16 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
 
         {/* Content Section */}
         <div className="p-6 flex-grow space-y-4">
-          <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">
-            <Calendar size={14} className="text-[#8B1A1A]" />
-            {formatDate(post.createdAt)}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">
+              <Calendar size={14} className="text-[#8B1A1A]" />
+              {formatDate(post.createdAt)}
+            </div>
+            {/* ✅ VIEW COUNT DISPLAY */}
+            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+              <Eye size={14} />
+              <span className="text-[10px] font-bold">{post.views || 0}</span>
+            </div>
           </div>
           
           <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tighter group-hover:text-[#8B1A1A] transition-colors">

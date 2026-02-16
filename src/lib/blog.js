@@ -1,5 +1,5 @@
 // /lib/blog.js
-// ✅ SEO ENHANCED VERSION with slug support and better error handling
+// ✅ SEO ENHANCED VERSION with slug support, view tracking, and better error handling
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function getAllBlogs() {
@@ -106,6 +106,48 @@ export async function getBlogBySlug(slug) {
     return null;
   } catch (error) {
     console.error('[getBlogBySlug] Error fetching blog by slug:', error);
+    return null;
+  }
+}
+
+/**
+ * ✅ VIEW TRACKING: Track unique view (server-side compatible)
+ * NOTE: Typically called from client-side components, but can be used server-side
+ * Backend route: POST /api/blog/:id/view
+ * 
+ * @param {string} blogId - The blog ID
+ * @param {string} deviceId - Unique device identifier
+ * @returns {Promise<Object|null>} Response with view count or null on error
+ */
+export async function trackBlogView(blogId, deviceId) {
+  try {
+    if (!blogId || !deviceId) {
+      console.error('[trackBlogView] Missing required parameters');
+      return null;
+    }
+
+    console.log('[trackBlogView] Tracking view for blog:', blogId);
+
+    const res = await fetch(`${API_URL}/blog/${blogId}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId }),
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      console.error('[trackBlogView] API returned error:', res.status, res.statusText);
+      return null;
+    }
+
+    const data = await res.json();
+    console.log('[trackBlogView] View tracked successfully:', {
+      views: data.views,
+      alreadyViewed: data.alreadyViewed
+    });
+    return data;
+  } catch (error) {
+    console.error('[trackBlogView] Error tracking view:', error);
     return null;
   }
 }

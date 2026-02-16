@@ -48,7 +48,7 @@ export default async function HomePage() {
             "@context": "https://schema.org",
             "@type": "Church",
             "name": "Busia House of Transformation",
-            "alternateName": "H.O.T Ministry Busia",
+            "alternateName": "House of Transformation Ministry Busia",
             "url": "https://houseoftransformation-nextjs.vercel.app",
             "logo": "https://res.cloudinary.com/dcu8uuzrs/image/upload/v1768913903/church-gallery/tql6mjtmman1gxlzl91e.jpg",
             "address": {
@@ -77,14 +77,14 @@ export default async function HomePage() {
         
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative">
           <div className="text-center mb-12 md:mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#8B1A1A]/5 dark:bg-[#8B1A1A]/20 rounded-full mb-6">
-              <Pin size={14} className="text-[#8B1A1A] fill-[#8B1A1A]" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-[#8B1A1A] dark:text-red-400">
-                {featuredSermon?.pinned ? 'Featured Wisdom' : 'The Most Recent Message'}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-900 dark:bg-red-900 rounded-full mb-6">
+              <Pin size={14} className="text-white fill-red" />
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">
+                {featuredSermon?.pinned ? 'Featured Sermon' : 'The Most Recent sermon'}
               </span>
             </div>
             <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-6">
-              Divine <span className="text-[#8B1A1A]">Teachings</span>
+              Sermon <span className="text-[#8B1A1A]">Teachings</span>
             </h2>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
               {featuredSermon?.pinned 
@@ -121,20 +121,20 @@ export default async function HomePage() {
       </section>
 
       {/* Upcoming Events */}
-        <section className="pt-36 pb-16 md:py-32 bg-slate-50 dark:bg-slate-900 relative transition-colors overflow-hidden">
+        <section className="py-20 md:py-32 bg-slate-50 dark:bg-slate-900 relative transition-colors overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
             <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-10 md:mb-16">
-              <div className="text-center md:text-left">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-100/50 dark:bg-orange-900/30 rounded-full mb-4">
-                  <Calendar size={14} className="text-orange-700 dark:text-orange-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700 dark:text-orange-400">Get Involved</span>
+              <div className="text-center md:text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-900 dark:bg-red-900 rounded-full mb-4">
+                  <Calendar size={14} className="text-white dark:text-red-400" />
+                  <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">Get Involved</span>
                 </div>
                 {/* Adjusted text size for mobile: text-3xl instead of 4xl */}
                 <h2 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">
                   Upcoming <span className="text-[#8B1A1A]">Events</span>
                 </h2>
               </div>
-              <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium md:max-w-xs text-center md:text-right leading-relaxed">
+              <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium md:max-w-xs text-center md:text-center leading-relaxed">
                 Join our vibrant community for special gatherings, workshops, and worship experiences.
               </p>
             </div>
@@ -150,9 +150,9 @@ export default async function HomePage() {
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16 md:mb-24">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-full mb-6">
-              <Heart size={14} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400">The Power of Service</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-900 dark:bg-red-900 rounded-full mb-6">
+              <Heart size={14} className="text-white dark:text-red-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">The Power of Service</span>
             </div>
             <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-8">
               Make Your <span className="text-[#8B1A1A]">Impact</span>

@@ -18,6 +18,7 @@ import {
   Gift,
   Church
 } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 export default function DonationSection() {
   const [campaigns, setCampaigns] = useState([]);
@@ -85,6 +86,19 @@ export default function DonationSection() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
+  // Get iconify icon based on campaign type
+  const getCampaignIcon = (campaignType) => {
+    const iconMap = {
+      building: 'mdi:bank',
+      mission: 'mdi:earth',
+      event: 'mdi:party-popper',
+      equipment: 'mdi:guitar-acoustic',
+      benevolence: 'mdi:heart',
+      offering: 'mdi:hands-pray'
+    };
+    return iconMap[campaignType] || 'mdi:gift';
+  };
+
   // Payment methods for tithe and offerings
   const paymentMethods = [
     {
@@ -122,10 +136,10 @@ export default function DonationSection() {
   ];
 
   return (
-    <section className="relative py-16 bg-gradient-to-br from-slate-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-red-100 dark:bg-red-900/10 rounded-full blur-3xl opacity-30 -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-100 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30 -z-10"></div>
+    <section className="relative py-16 bg-white dark:bg-slate-950 overflow-hidden">
+      {/* Decorative Elements - solid colors */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-red-50 dark:bg-red-950/20 rounded-full blur-3xl opacity-40 -z-10"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-50 dark:bg-red-950/20 rounded-full blur-3xl opacity-40 -z-10"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -158,14 +172,12 @@ export default function DonationSection() {
                   {/* Campaign Slide */}
                   <div className="p-6 sm:p-8">
                     <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
-                      <span className="text-3xl sm:text-4xl">
-                        {campaigns[currentSlide]?.campaignType === 'building' && '🏛️'}
-                        {campaigns[currentSlide]?.campaignType === 'mission' && '🌍'}
-                        {campaigns[currentSlide]?.campaignType === 'event' && '🎉'}
-                        {campaigns[currentSlide]?.campaignType === 'equipment' && '🎸'}
-                        {campaigns[currentSlide]?.campaignType === 'benevolence' && '❤️'}
-                        {campaigns[currentSlide]?.campaignType === 'offering' && '🙏'}
-                      </span>
+                      <Icon 
+                        icon={getCampaignIcon(campaigns[currentSlide]?.campaignType)} 
+                        className="text-[#8B1A1A]" 
+                        width="36" 
+                        height="36"
+                      />
                       <span className="px-3 py-1 bg-[#8B1A1A] text-white text-xs font-bold rounded-full uppercase">
                         Featured
                       </span>
@@ -186,45 +198,49 @@ export default function DonationSection() {
                       </div>
                     )}
 
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-4 mb-4 line-clamp-2">
-                      {campaigns[currentSlide]?.description}
-                    </p>
-
-                    {campaigns[currentSlide]?.impactStatement && (
-                      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                        <p className="text-blue-800 dark:text-blue-200 text-xs sm:text-sm font-semibold">
-                          💡 {campaigns[currentSlide]?.impactStatement}
+                    {/* Progress Bar */}
+                    {campaigns[currentSlide]?.goalAmount > 0 && (
+                      <div className="mb-6">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {formatCurrency(campaigns[currentSlide]?.raisedAmount || 0)} raised
+                          </span>
+                          <span className="text-slate-600 dark:text-slate-400">
+                            Goal: {formatCurrency(campaigns[currentSlide]?.goalAmount)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="bg-[#8B1A1A] h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${getProgressPercent(
+                                campaigns[currentSlide]?.raisedAmount,
+                                campaigns[currentSlide]?.goalAmount
+                              )}%`
+                            }}
+                          />
+                        </div>
+                        <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {getProgressPercent(
+                            campaigns[currentSlide]?.raisedAmount,
+                            campaigns[currentSlide]?.goalAmount
+                          )}% funded
                         </p>
                       </div>
                     )}
 
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Raised</span>
-                        <span className="font-bold text-green-600">{formatCurrency(campaigns[currentSlide]?.currentAmount || 0)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Goal</span>
-                        <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(campaigns[currentSlide]?.goalAmount || 0)}</span>
-                      </div>
-                      
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all"
-                          style={{ width: `${Math.min(getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0), 100)}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-center text-sm font-bold text-slate-900 dark:text-white">
-                        {getProgressPercent(campaigns[currentSlide]?.currentAmount || 0, campaigns[currentSlide]?.goalAmount || 0)}% Complete
-                      </p>
-                    </div>
+                    {/* Description */}
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 line-clamp-3">
+                      {campaigns[currentSlide]?.description}
+                    </p>
 
+                    {/* CTA Button */}
                     <Link
-                      href={`/campaigns/${campaigns[currentSlide]?._id}`}
-                      className="w-full bg-[#8B1A1A] text-white py-3 sm:py-4 rounded-xl font-bold hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
+                      href={`/donate?campaign=${campaigns[currentSlide]?._id}`}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#8B1A1A] hover:bg-red-800 text-white font-bold rounded-xl transition-colors"
                     >
-                      <Heart size={20} />
-                      Support Campaign
+                      Support This Campaign
+                      <ArrowRight size={18} />
                     </Link>
                   </div>
 
@@ -233,16 +249,15 @@ export default function DonationSection() {
                     <>
                       <button
                         onClick={prevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 rounded-full flex items-center justify-center shadow-lg transition-colors"
                       >
-                        <ChevronLeft size={24} className="text-slate-900 dark:text-white" />
+                        <ChevronLeft size={20} className="text-slate-900 dark:text-white" />
                       </button>
-                      
                       <button
                         onClick={nextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 rounded-full flex items-center justify-center shadow-lg transition-colors"
                       >
-                        <ChevronRight size={24} className="text-slate-900 dark:text-white" />
+                        <ChevronRight size={20} className="text-slate-900 dark:text-white" />
                       </button>
                     </>
                   )}
@@ -285,24 +300,24 @@ export default function DonationSection() {
           {/* Right: Tithe & Offerings */}
           <div className="space-y-6">
             
-            {/* Tithe Card */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl overflow-hidden">
+            {/* Tithe Card - solid red background */}
+            <div className="bg-[#8B1A1A] rounded-2xl shadow-xl overflow-hidden">
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-3">
-                  <Church size={32} />
+                  <Icon icon="mdi:church" width="32" height="32" />
                   <div>
                     <h3 className="text-2xl font-black">Tithe</h3>
-                    <p className="text-blue-100 text-sm">Honor God with your first fruits</p>
+                    <p className="text-red-100 text-sm">Honor God with your first fruits</p>
                   </div>
                 </div>
 
-                <p className="text-blue-50 text-sm mb-4 leading-relaxed">
+                <p className="text-red-50 text-sm mb-4 leading-relaxed">
                   &quot;Bring the whole tithe into the storehouse...&quot; - Malachi 3:10
                 </p>
 
                 <button
                   onClick={() => setShowTithePayment(!showTithePayment)}
-                  className="w-full bg-white text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-white text-[#8B1A1A] py-3 rounded-xl font-bold hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <HandHeart size={20} />
                   {showTithePayment ? 'Hide Payment Info' : 'Give Your Tithe'}
@@ -322,7 +337,7 @@ export default function DonationSection() {
                           {method.details.map((detail) => (
                             <div key={detail.field} className="flex items-center justify-between bg-white/20 rounded px-2 py-1.5 mb-1">
                               <div>
-                                <p className="text-xs text-blue-100">{detail.label}</p>
+                                <p className="text-xs text-red-100">{detail.label}</p>
                                 <p className="font-mono text-xs font-bold text-white">{detail.value}</p>
                               </div>
                               <button
@@ -345,24 +360,24 @@ export default function DonationSection() {
               </div>
             </div>
 
-            {/* Offerings Card */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-xl overflow-hidden">
+            {/* Offerings Card - darker red background */}
+            <div className="bg-[#6B1515] rounded-2xl shadow-xl overflow-hidden">
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-3">
-                  <Gift size={32} />
+                  <Icon icon="mdi:gift" width="32" height="32" />
                   <div>
                     <h3 className="text-2xl font-black">Offerings</h3>
-                    <p className="text-purple-100 text-sm">Give cheerfully as the Lord leads</p>
+                    <p className="text-red-100 text-sm">Give cheerfully as the Lord leads</p>
                   </div>
                 </div>
 
-                <p className="text-purple-50 text-sm mb-4 leading-relaxed">
+                <p className="text-red-50 text-sm mb-4 leading-relaxed">
                   &quot;God loves a cheerful giver&quot; - 2 Corinthians 9:7
                 </p>
 
                 <button
                   onClick={() => setShowOfferingPayment(!showOfferingPayment)}
-                  className="w-full bg-white text-purple-700 py-3 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-white text-[#6B1515] py-3 rounded-xl font-bold hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <Gift size={20} />
                   {showOfferingPayment ? 'Hide Payment Info' : 'Give Your Offering'}
@@ -382,7 +397,7 @@ export default function DonationSection() {
                           {method.details.map((detail) => (
                             <div key={detail.field} className="flex items-center justify-between bg-white/20 rounded px-2 py-1.5 mb-1">
                               <div>
-                                <p className="text-xs text-purple-100">{detail.label}</p>
+                                <p className="text-xs text-red-100">{detail.label}</p>
                                 <p className="font-mono text-xs font-bold text-white">
                                   {detail.label === 'Account Number' ? 'OFFERING' : detail.value}
                                 </p>
@@ -427,7 +442,7 @@ export default function DonationSection() {
             
             <Link
               href="/donate"
-              className="px-6 py-3 bg-gradient-to-r from-[#8B1A1A] to-red-700 text-white font-bold rounded-xl hover:shadow-lg transition-all whitespace-nowrap"
+              className="px-6 py-3 bg-[#8B1A1A] hover:bg-red-800 text-white font-bold rounded-xl hover:shadow-lg transition-all whitespace-nowrap"
             >
               Explore All Ways to Give
             </Link>
