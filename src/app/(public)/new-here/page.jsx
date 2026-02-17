@@ -149,10 +149,10 @@ export default function NewHerePage() {
             <div className="relative h-[500px] w-full bg-stone-200 dark:bg-stone-900">
                {/* Placeholder for Pastor's Image */}
                <Image
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1974&auto=format&fit=crop"
+                src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770703875/church-gallery/castwqxhl9wzg97y6mz0.jpg"
                 alt="Lead Pastor"
                 fill
-                className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                className="object-cover"
               />
             </div>
             <div className="lg:pl-10">
@@ -194,7 +194,7 @@ export default function NewHerePage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
                <Image
-                src="https://images.unsplash.com/photo-1502086223501-60190740b379?q=80&w=2056&auto=format&fit=crop"
+                src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1769746428/ybtdrbreho9lgde6fuhh.jpg"
                 alt="Kids Ministry"
                 fill
                 className="object-cover hover:scale-105 transition-transform duration-700"
@@ -207,7 +207,7 @@ export default function NewHerePage() {
             </div>
             <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
                <Image
-                src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=2069&auto=format&fit=crop"
+                src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1769033696/church-gallery/l3vhp0fitwby87dxlaon.jpg"
                 alt="Youth Ministry"
                 fill
                 className="object-cover hover:scale-105 transition-transform duration-700"

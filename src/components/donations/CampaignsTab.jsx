@@ -335,7 +335,7 @@ function CampaignAnalyticsModal({ campaign, analytics, onClose }) {
       bg: 'bg-emerald-50' 
     },
     { 
-      label: 'Direct Gifts', 
+      label: 'Direct Contributions', 
       value: data.totalDirectContributions, 
       icon: DollarSign, 
       color: 'text-blue-600', 

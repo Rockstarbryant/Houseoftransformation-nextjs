@@ -36,37 +36,30 @@ export const sermonService = {
    */
   async createSermon(sermonData) {
     try {
-      // Check if we have any files to upload
       const hasThumbnailFile = sermonData.thumbnail instanceof File;
       const hasImages = Array.isArray(sermonData.images) && 
                        sermonData.images.some(img => img instanceof File);
 
       if (hasThumbnailFile || hasImages) {
-        // Use FormData for file uploads
         const formData = new FormData();
         
-        // Add basic fields
-        formData.append('title', sermonData.title);
-        formData.append('pastor', sermonData.pastor);
-        formData.append('date', sermonData.date);
-        formData.append('category', sermonData.category);
-        formData.append('description', sermonData.description);
-        formData.append('type', sermonData.type);
+        // ✅ Only append known safe scalar fields
+        const safeFields = ['title', 'pastor', 'date', 'category', 'description', 'descriptionHtml', 'type', 'videoUrl'];
         
-        if (sermonData.videoUrl) {
-          formData.append('videoUrl', sermonData.videoUrl);
-        }
+        safeFields.forEach(field => {
+          if (sermonData[field] !== null && sermonData[field] !== undefined) {
+            formData.append(field, sermonData[field]);
+          }
+        });
 
-        // Add thumbnail file
         if (hasThumbnailFile) {
           formData.append('thumbnail', sermonData.thumbnail);
         }
 
-        // Add multiple images
         if (hasImages) {
-          sermonData.images.forEach((img, idx) => {
+          sermonData.images.forEach(img => {
             if (img instanceof File) {
-              formData.append(`images`, img);
+              formData.append('images', img);
             }
           });
         }
@@ -76,7 +69,6 @@ export const sermonService = {
         });
         return response.data;
       } else {
-        // No files, send as JSON
         const response = await api.post(API_ENDPOINTS.SERMONS.CREATE, sermonData);
         return response.data;
       }
@@ -85,7 +77,7 @@ export const sermonService = {
       throw error;
     }
   },
-
+  
   /**
    * Update sermon with optional file uploads
    */
@@ -95,20 +87,26 @@ export const sermonService = {
       const hasImages = Array.isArray(updates.images) && 
                        updates.images.some(img => img instanceof File);
 
+      // ✅ Fields that must never be sent in updates
+      const forbiddenFields = new Set([
+        'likedBy', 'bookmarkedBy', 'viewedBy', 'views', 'likes', 
+        'comments', '_id', '__v', 'createdAt', 'updatedAt', 'id'
+      ]);
+
       if (hasThumbnailFile || hasImages) {
-        // Use FormData for file uploads
         const formData = new FormData();
 
-        // Add all fields
         Object.keys(updates).forEach(key => {
+          // ✅ Skip forbidden fields
+          if (forbiddenFields.has(key)) return;
+          
           if (key === 'thumbnail') {
             if (updates[key] instanceof File) {
               formData.append('thumbnail', updates[key]);
-            } else if (typeof updates[key] === 'string') {
+            } else if (typeof updates[key] === 'string' && updates[key].startsWith('http')) {
               formData.append('thumbnail', updates[key]);
             }
           } else if (key === 'images') {
-            // Only append File objects for images, skip URL strings
             if (Array.isArray(updates[key])) {
               updates[key].forEach(img => {
                 if (img instanceof File) {
@@ -117,7 +115,10 @@ export const sermonService = {
               });
             }
           } else if (updates[key] !== null && updates[key] !== undefined) {
-            formData.append(key, updates[key]);
+            // ✅ Skip empty arrays serialized as strings
+            const val = updates[key];
+            if (Array.isArray(val) && val.length === 0) return;
+            formData.append(key, val);
           }
         });
 
@@ -126,8 +127,11 @@ export const sermonService = {
         });
         return response.data;
       } else {
-        // No files, send as JSON
-        const response = await api.put(API_ENDPOINTS.SERMONS.UPDATE(id), updates);
+        // ✅ Also sanitize JSON updates
+        const sanitized = Object.fromEntries(
+          Object.entries(updates).filter(([key]) => !forbiddenFields.has(key))
+        );
+        const response = await api.put(API_ENDPOINTS.SERMONS.UPDATE(id), sanitized);
         return response.data;
       }
     } catch (error) {
