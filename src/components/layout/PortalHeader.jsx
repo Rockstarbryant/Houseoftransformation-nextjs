@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, User, LogOut, Settings } from 'lucide-react';
+import { Menu, User, LogOut, Home, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -50,6 +50,7 @@ export default function PortalHeader({ onSidebarToggle, sidebarOpen }) {
 
       {/* Right: Notifications + User Menu */}
       <div className="flex items-center gap-4">
+
         {/* Real-time Notification Bell */}
         <NotificationBell />
 
@@ -104,6 +105,16 @@ export default function PortalHeader({ onSidebarToggle, sidebarOpen }) {
                   >
                     <Settings size={16} />
                     Settings
+                  </button>
+                </Link>
+
+                <Link href="/">
+                  <button
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left"
+                  >
+                    <Home size={16} />
+                    Home
                   </button>
                 </Link>
 

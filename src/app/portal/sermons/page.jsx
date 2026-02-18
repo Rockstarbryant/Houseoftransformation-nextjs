@@ -33,10 +33,10 @@ const Toast = ({ message, type, onClose }) => {
   };
 
   const styles = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-amber-50 border-amber-200 text-amber-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
+    success: 'bg-green-700 border-green-200 text-white',
+    error: 'bg-red-800 border-red-200 text-white',
+    warning: 'bg-amber-700 border-amber-200 text-white',
+    info: 'bg-blue-700 border-blue-200 text-white'
   };
 
   const iconColors = {
@@ -77,7 +77,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
           }
         }
         .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
+          animation: slideIn 0.8s ease-out;
         }
       `}</style>
       {toasts.map(toast => (

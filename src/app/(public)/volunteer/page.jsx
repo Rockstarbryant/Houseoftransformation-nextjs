@@ -51,14 +51,14 @@ const VolunteerPage = () => {
     <div className="bg-gray-50 dark:bg-slate-950 min-h-screen pb-24 font-sans antialiased transition-colors">
       
       {/* 1. HERO SECTION */}
-      <div className="relative bg-slate-900 h-[450px] md:h-[500px] w-full overflow-hidden">
+      <div className="relative bg-stone-900 h-[450px] md:h-[500px] w-full overflow-hidden">
         {/* Abstract Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20">
             <div className="absolute -top-[20%] -right-[10%] w-[500px] h-[500px] rounded-full bg-blue-600 blur-[100px]" />
             <div className="absolute bottom-[10%] left-[10%] w-[300px] h-[300px] rounded-full bg-purple-600 blur-[80px]" />
         </div>
         
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50/10 dark:to-slate-950/10" />
+        <div className="absolute inset-0 bg-stone-900" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center pb-20 pt-20">
           <div className="max-w-3xl">
@@ -80,7 +80,7 @@ const VolunteerPage = () => {
         <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             
             {/* Left: Introduction Card */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800">
+            <div className="lg:col-span-2 bg-stone-50 dark:bg-stone-950 rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
                         <Heart size={24} />
@@ -105,7 +105,7 @@ const VolunteerPage = () => {
             <div className="lg:col-span-1">
                 {user && existingApplication && !loading ? (
                     // LOGGED IN & APPLIED
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800 h-full flex flex-col">
+                    <div className="bg-stone-50 dark:bg-stone-950 rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800 h-full flex flex-col">
                         <div className="mb-4">
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Application Status</p>
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">{existingApplication.ministry}</h3>
@@ -193,7 +193,7 @@ const VolunteerPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {volunteerData.map((opp) => (
-              <div key={opp.id} className="group bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+              <div key={opp.id} className="group bg-stone-250 dark:bg-stone-950 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
                 {/* Card Header */}
                 <div className="p-6 pb-4">
                    <div className="flex justify-between items-start mb-4">
