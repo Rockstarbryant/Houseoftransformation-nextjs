@@ -200,13 +200,13 @@ export const contributionService = {
   initiateMpesa: async (campaignId, amount, phoneNumber) => {
     try {
       const idempotencyKey = generateIdempotencyKey();
-      
+      /*
       console.log('[CONTRIBUTION-SERVICE] Initiating M-Pesa contribution:', {
         campaignId,
         amount,
         phoneNumber,
         idempotencyKey
-      });
+      });  */
 
       const response = await api.post('/contributions/mpesa/initiate', {
         campaignId,
@@ -337,13 +337,13 @@ export const paymentService = {
     try {
       // Generate UUID for idempotency
       const idempotencyKey = generateIdempotencyKey();
-      
+      /*
       console.log('[PAYMENT-SERVICE] Initiating M-Pesa payment:', {
         pledgeId,
         amount,
         phoneNumber,
         idempotencyKey
-      });
+      }); */
 
       const response = await api.post('/payments/mpesa/initiate', {
         pledgeId,

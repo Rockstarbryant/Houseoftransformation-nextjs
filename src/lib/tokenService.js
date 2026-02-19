@@ -71,7 +71,7 @@ const tokenService = {
         localStorage.setItem(TOKEN_EXPIRY_KEY, (payload.exp * 1000).toString());
       }
 
-      console.log('[TOKEN-SERVICE] ✅ Access token stored');
+      // console.log('[TOKEN-SERVICE] ✅ Access token stored');
     } catch (e) {
       console.warn('[TOKEN-SERVICE] ⚠️ Could not decode token expiry:', e);
     }
@@ -89,7 +89,7 @@ const tokenService = {
     if (token) {
       const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
       if (expiry && Date.now() > parseInt(expiry)) {
-        console.log('[TOKEN-SERVICE] ⚠️ Token expired, removing');
+        // console.log('[TOKEN-SERVICE] ⚠️ Token expired, removing');
         tokenService.removeToken();
         return null;
       }
@@ -106,7 +106,7 @@ const tokenService = {
 
     try {
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-      console.log('[TOKEN-SERVICE] ✅ Refresh token stored');
+      // console.log('[TOKEN-SERVICE] ✅ Refresh token stored');
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error storing refresh token:', error);
     }
@@ -134,7 +134,7 @@ const tokenService = {
       const roleName = role?.name || role || 'user';
       localStorage.setItem(ROLE_KEY, roleName);
       setCookie(ROLE_KEY, roleName, 7);
-      console.log('[TOKEN-SERVICE] ✅ Role stored:', roleName);
+      // console.log('[TOKEN-SERVICE] ✅ Role stored:', roleName);
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error setting role:', error);
     }
@@ -165,7 +165,7 @@ const tokenService = {
     try {
       deleteCookie(ROLE_KEY);
       localStorage.removeItem(ROLE_KEY);
-      console.log('[TOKEN-SERVICE] ✅ Role removed');
+      // console.log('[TOKEN-SERVICE] ✅ Role removed');
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error removing role:', error);
     }
@@ -182,7 +182,7 @@ const tokenService = {
       localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(TOKEN_EXPIRY_KEY);
       deleteCookie(COOKIE_AUTH_TOKEN);
-      console.log('[TOKEN-SERVICE] ✅ Tokens removed');
+      // console.log('[TOKEN-SERVICE] ✅ Tokens removed');
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error removing tokens:', error);
     }
@@ -196,7 +196,7 @@ const tokenService = {
 
     try {
       localStorage.removeItem(REFRESH_TOKEN_KEY);
-      console.log('[TOKEN-SERVICE] ✅ Refresh token removed');
+      // console.log('[TOKEN-SERVICE] ✅ Refresh token removed');
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error removing refresh token:', error);
     }
@@ -208,14 +208,14 @@ const tokenService = {
   clearAll: () => {
     if (!isBrowser()) return;
     
-    console.log('[TOKEN-SERVICE] 🧹 Clearing all tokens and data...');
+    // console.log('[TOKEN-SERVICE] 🧹 Clearing all tokens and data...');
     
     try {
       tokenService.removeToken();
       tokenService.removeRefreshToken();
       tokenService.removeRole();
       
-      console.log('[TOKEN-SERVICE] ✅ All tokens cleared');
+      // console.log('[TOKEN-SERVICE] ✅ All tokens cleared');
     } catch (error) {
       console.error('[TOKEN-SERVICE] ❌ Error clearing all:', error);
     }

@@ -111,28 +111,22 @@ export default function NotificationBell() {
       }
     };
 
+    // REPLACE the onerror handler in connectToSSE():
     es.onerror = (err) => {
       console.error('[NotificationBell] SSE error:', err);
       setIsConnected(false);
       es.close();
 
-      // ✅ Check if this is an auth error (401)
-      if (reconnectAttempts.current === 0) {
-        console.warn('[NotificationBell] Initial connection failed - likely auth issue');
-        setAuthError(true);
-        return; // Don't retry if auth is bad
-      }
-
       reconnectAttempts.current += 1;
 
       if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
         console.warn('[NotificationBell] Permanently stopping reconnect attempts.');
+        setAuthError(true); // Only give up after max attempts
         return;
       }
 
       const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current - 1), 30000);
       console.log(`[NotificationBell] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`);
-
       reconnectTimeoutRef.current = setTimeout(connectToSSE, delay);
     };
 

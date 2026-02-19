@@ -9,7 +9,7 @@ const api = axios.create({
     'Content-Type': 'application/json'
   },
   withCredentials: true,
-  timeout: 10000 // ✅ Add timeout to prevent infinite hanging
+  timeout: 20000 // ✅ Add timeout to prevent infinite hanging
 });
 
 let isRefreshing = false;
@@ -33,9 +33,9 @@ api.interceptors.request.use(
     const token = tokenService.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('[API] 📤 Request with token:', config.url);
+      // console.log('[API] 📤 Request with token:', config.url);
     } else {
-      console.log('[API] 📤 Request WITHOUT token:', config.url);
+      // console.log('[API] 📤 Request WITHOUT token:', config.url);
     }
     return config;
   },
@@ -48,13 +48,13 @@ api.interceptors.request.use(
 // ✅ RESPONSE INTERCEPTOR - Handle errors and refresh
 api.interceptors.response.use(
   (response) => {
-    console.log('[API] ✅ Response success:', response.config.url);
+    // console.log('[API] ✅ Response success:', response.config.url);
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
-    console.log('[API] ❌ Response error:', {
+     console.log('[API] ❌ Response error:', {
       url: originalRequest?.url,
       status: error.response?.status,
       message: error.message
@@ -62,7 +62,7 @@ api.interceptors.response.use(
 
     // ✅ Handle maintenance mode
     if (error.response?.status === 503) {
-      console.log('[API] 🚧 Maintenance mode - redirecting');
+      // console.log('[API] 🚧 Maintenance mode - redirecting');
       if (typeof window !== 'undefined') {
         window.location.href = '/maintenance';
       }
@@ -77,11 +77,11 @@ api.interceptors.response.use(
 
     // ✅ Handle 401 - Token invalid or expired
     if (error.response?.status === 401) {
-      console.log('[API] 🔐 401 Unauthorized detected');
+      // // console.log('[API] 🔐 401 Unauthorized detected');
 
       // Don't retry if this IS the refresh endpoint
       if (originalRequest.url?.includes('/auth/refresh')) {
-        console.log('[API] ❌ Refresh token invalid - logging out');
+        // console.log('[API] ❌ Refresh token invalid - logging out');
         tokenService.clearAll();
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login';
@@ -91,7 +91,7 @@ api.interceptors.response.use(
 
       // Don't retry if already tried
       if (originalRequest._retry) {
-        console.log('[API] ❌ Already retried - logging out');
+        // console.log('[API] ❌ Already retried - logging out');
         tokenService.clearAll();
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login';
@@ -101,7 +101,7 @@ api.interceptors.response.use(
 
       // If already refreshing, queue this request
       if (isRefreshing) {
-        console.log('[API] ⏳ Queueing request while refreshing...');
+        // console.log('[API] ⏳ Queueing request while refreshing...');
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(token => {
@@ -118,7 +118,7 @@ api.interceptors.response.use(
       const refreshToken = tokenService.getRefreshToken();
 
       if (!refreshToken) {
-        console.log('[API] ❌ No refresh token - logging out');
+        // console.log('[API] ❌ No refresh token - logging out');
         isRefreshing = false;
         tokenService.clearAll();
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
@@ -128,7 +128,7 @@ api.interceptors.response.use(
       }
 
       // Try to refresh
-      console.log('[API] 🔄 Attempting token refresh...');
+      // console.log('[API] 🔄 Attempting token refresh...');
       try {
         const res = await axios.post(`${API_URL}/auth/refresh`, { 
           refreshToken 
@@ -138,7 +138,7 @@ api.interceptors.response.use(
         });
 
         if (res.data.token) {
-          console.log('[API] ✅ Token refresh successful');
+          // console.log('[API] ✅ Token refresh successful');
           tokenService.setToken(res.data.token);
           if (res.data.refreshToken) {
             tokenService.setRefreshToken(res.data.refreshToken);

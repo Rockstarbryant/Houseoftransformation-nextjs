@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       const timeUntilExpiry = expiryTime - now;
       
       if (timeUntilExpiry < 60 * 1000) { // 1 minute instead of 5
-        console.log('[AUTH-CONTEXT] ⚠️ Token expires in', Math.floor(timeUntilExpiry / 1000), 'seconds');
+        // console.log('[AUTH-CONTEXT] ⚠️ Token expires in', Math.floor(timeUntilExpiry / 1000), 'seconds');
         return false;
       }
       
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   // ===== HANDLE OAUTH SESSION =====
   const handleOAuthSession = async (session) => {
     try {
-      console.log('[AUTH-CONTEXT] Processing OAuth session');
+      // console.log('[AUTH-CONTEXT] Processing OAuth session');
 
       tokenService.setToken(session.access_token);
       tokenService.setRefreshToken(session.refresh_token);
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         
         setUser(userData);
         tokenService.setRole(userData.role);
-        console.log('[AUTH-CONTEXT] ✅ OAuth user synced:', userData.email);
+        // console.log('[AUTH-CONTEXT] ✅ OAuth user synced:', userData.email);
       }
     } catch (error) {
       console.error('[AUTH-CONTEXT] OAuth sync error:', error);
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // ✅ CRITICAL: Prevent double initialization in React StrictMode
     if (hasInitialized.current) {
-      console.log('[AUTH-CONTEXT] ⏭️ Already initialized, skipping...');
+      // console.log('[AUTH-CONTEXT] ⏭️ Already initialized, skipping...');
       return;
     }
 
@@ -93,19 +93,19 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       // ✅ Prevent multiple simultaneous checks
       if (isCheckingAuth.current) {
-        console.log('[AUTH-CONTEXT] ⏳ Auth check already in progress, skipping...');
+        // console.log('[AUTH-CONTEXT] ⏳ Auth check already in progress, skipping...');
         return;
       }
 
       try {
         isCheckingAuth.current = true;
-        console.log('[AUTH-CONTEXT] 🔍 Initializing authentication...');
+        // console.log('[AUTH-CONTEXT] 🔍 Initializing authentication...');
         
         // ✅ FIXED: Check token locally FIRST before any API calls
         const token = tokenService.getToken();
         
         if (!token) {
-          console.log('[AUTH-CONTEXT] ❌ No token found - user not authenticated');
+          // console.log('[AUTH-CONTEXT] ❌ No token found - user not authenticated');
           setUser(null);
           setIsLoading(false);
           return;
@@ -113,19 +113,19 @@ export const AuthProvider = ({ children }) => {
 
         // ✅ Validate token structure and expiry
         if (!isTokenValid(token)) {
-          console.log('[AUTH-CONTEXT] ⚠️ Token invalid or expired');
+          // console.log('[AUTH-CONTEXT] ⚠️ Token invalid or expired');
           
           // ✅ Try to refresh ONCE
           const refreshToken = tokenService.getRefreshToken();
           
           if (refreshToken) {
-            console.log('[AUTH-CONTEXT] 🔄 Attempting token refresh...');
+            // console.log('[AUTH-CONTEXT] 🔄 Attempting token refresh...');
             
             try {
               const refreshResponse = await api.post('/auth/refresh', { refreshToken });
               
               if (refreshResponse.data.token) {
-                console.log('[AUTH-CONTEXT] ✅ Token refreshed successfully');
+                // console.log('[AUTH-CONTEXT] ✅ Token refreshed successfully');
                 tokenService.setToken(refreshResponse.data.token);
                 
                 if (refreshResponse.data.refreshToken) {
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
               return;
             }
           } else {
-            console.log('[AUTH-CONTEXT] ❌ No refresh token available');
+            // console.log('[AUTH-CONTEXT] ❌ No refresh token available');
             tokenService.clearAll();
             setUser(null);
             setIsLoading(false);
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
           }
         } else {
           // ✅ Token is valid, fetch user data
-          console.log('[AUTH-CONTEXT] ✅ Token valid, fetching user data...');
+          // console.log('[AUTH-CONTEXT] ✅ Token valid, fetching user data...');
           await fetchUserData();
         }
         
@@ -172,7 +172,7 @@ export const AuthProvider = ({ children }) => {
     // ===== LISTEN FOR OAUTH AUTH STATE CHANGES =====
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[AUTH-CONTEXT] 🔔 Auth state changed:', event);
+        // console.log('[AUTH-CONTEXT] 🔔 Auth state changed:', event);
 
         if (event === 'SIGNED_IN' && session) {
           await handleOAuthSession(session);
@@ -193,12 +193,12 @@ export const AuthProvider = ({ children }) => {
   // ✅ NEW: Separate function to fetch user data
   const fetchUserData = async () => {
     try {
-      console.log('[AUTH-CONTEXT] 📡 Fetching user data from /auth/me...');
+      // console.log('[AUTH-CONTEXT] 📡 Fetching user data from /auth/me...');
       
       const response = await api.get('/auth/me');
       
       if (response.data.success && response.data.user) {
-        console.log('[AUTH-CONTEXT] ✅ User data received:', response.data.user.email);
+        // console.log('[AUTH-CONTEXT] ✅ User data received:', response.data.user.email);
         
         const userData = {
           ...response.data.user,
@@ -214,7 +214,7 @@ export const AuthProvider = ({ children }) => {
         tokenService.setRole(userData.role);
         return true;
       } else {
-        console.log('[AUTH-CONTEXT] ❌ Invalid user data response');
+        // console.log('[AUTH-CONTEXT] ❌ Invalid user data response');
         tokenService.clearAll();
         setUser(null);
         return false;
@@ -224,7 +224,7 @@ export const AuthProvider = ({ children }) => {
       
       // ✅ CRITICAL: Don't retry on 401 - token is definitely invalid
       if (error.response?.status === 401) {
-        console.log('[AUTH-CONTEXT] 🚫 401 Unauthorized - clearing tokens');
+        // console.log('[AUTH-CONTEXT] 🚫 401 Unauthorized - clearing tokens');
         tokenService.clearAll();
         setUser(null);
       }
@@ -240,24 +240,24 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      console.log('[AUTH-CONTEXT] 🔄 Manual auth check requested...');
+      // console.log('[AUTH-CONTEXT] 🔄 Manual auth check requested...');
       
       const token = tokenService.getToken();
 
       if (!token) {
-        console.log('[AUTH-CONTEXT] ❌ No token found');
+        // console.log('[AUTH-CONTEXT] ❌ No token found');
         setUser(null);
         return false;
       }
 
       // Check token validity
       if (!isTokenValid(token)) {
-        console.log('[AUTH-CONTEXT] ⚠️ Token invalid, attempting refresh...');
+        // console.log('[AUTH-CONTEXT] ⚠️ Token invalid, attempting refresh...');
         
         const refreshToken = tokenService.getRefreshToken();
         
         if (!refreshToken) {
-          console.log('[AUTH-CONTEXT] ❌ No refresh token');
+          // console.log('[AUTH-CONTEXT] ❌ No refresh token');
           tokenService.clearAll();
           setUser(null);
           return false;
@@ -300,12 +300,12 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     
     try {
-      console.log('[AUTH-CONTEXT] 🔐 Login attempt for:', email);
+      // console.log('[AUTH-CONTEXT] 🔐 Login attempt for:', email);
 
       const response = await api.post('/auth/login', { email, password });
 
       if (response.data.success && response.data.token) {
-        console.log('[AUTH-CONTEXT] ✅ Login successful');
+        // console.log('[AUTH-CONTEXT] ✅ Login successful');
 
         tokenService.setToken(response.data.token);
         if (response.data.refreshToken) {
@@ -324,7 +324,7 @@ export const AuthProvider = ({ children }) => {
 
         setUser(userData);
         tokenService.setRole(userData.role);
-        console.log('[AUTH-CONTEXT] ✅ User role set:', userData.role.name);
+        // console.log('[AUTH-CONTEXT] ✅ User role set:', userData.role.name);
         
         return { success: true, user: userData };
       }
@@ -371,7 +371,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { name, email, password } = userData;
 
-      console.log('[AUTH-CONTEXT] 📝 Signup attempt for:', email);
+      // console.log('[AUTH-CONTEXT] 📝 Signup attempt for:', email);
 
       const response = await api.post('/auth/signup', {
         name,
@@ -380,7 +380,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success && response.data.user) {
-        console.log('[AUTH-CONTEXT] ✅ Signup successful');
+        // console.log('[AUTH-CONTEXT] ✅ Signup successful');
         return { success: true, user: response.data.user };
       }
 
@@ -422,7 +422,7 @@ export const AuthProvider = ({ children }) => {
   // ===== SIGN IN WITH GOOGLE =====
   const signInWithGoogle = async () => {
     try {
-      console.log('[AUTH-CONTEXT] 🔵 Google sign-in initiated');
+      // console.log('[AUTH-CONTEXT] 🔵 Google sign-in initiated');
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -450,7 +450,7 @@ export const AuthProvider = ({ children }) => {
   // ===== LOGOUT =====
   const logout = async () => {
     try {
-      console.log('[AUTH-CONTEXT] 🚪 Logout initiated');
+      // console.log('[AUTH-CONTEXT] 🚪 Logout initiated');
 
       try {
         await api.post('/auth/logout');
@@ -464,7 +464,7 @@ export const AuthProvider = ({ children }) => {
       tokenService.clearAll();
       setUser(null);
       setError(null);
-      console.log('[AUTH-CONTEXT] ✅ User logged out');
+      // console.log('[AUTH-CONTEXT] ✅ User logged out');
       router.push('/login');
     }
   };
