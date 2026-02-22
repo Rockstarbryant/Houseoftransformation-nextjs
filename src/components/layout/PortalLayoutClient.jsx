@@ -84,7 +84,7 @@ export default function PortalLayoutClient({ children }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-0 md:p-0">
+          <div className="p-0 md:p-2">
             {children}
           </div>
         </main>

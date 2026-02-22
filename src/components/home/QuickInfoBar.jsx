@@ -18,13 +18,13 @@ const QuickInfoBar = () => {
   return (
     <section className="py-0 bg-white dark:bg-slate-900 dark:text-white transition-colors overflow-hidden">
       <div className="max-w-[1600px] mx-auto md:px-6">
-        <div className="flex flex-col lg:flex-row bg-slate-900 dark:bg-slate-900 md:rounded-[2rem] overflow-hidden min-h-[800px] shadow-2xl">
+        <div className="flex flex-col lg:flex-row bg-slate-100 dark:bg-slate-900 md:rounded-[1rem] overflow-hidden min-h-[800px]">
           
           {/* LEFT PANEL: High-Impact Visual - LAZY LOAD */}
           <div className="lg:w-5/12 relative min-h-[400px] group">
             <img 
               src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg" 
-              className="absolute inset-0 w-full h-full object-cover opacity-160 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
+              className="absolute inset-0 w-full h-full object-cover opacity-160" 
               alt="H.O.T Ministry"
               loading="lazy"
             />
@@ -34,7 +34,7 @@ const QuickInfoBar = () => {
               <h2 className="text-5xl font-black text-white leading-tight tracking-tighter">
                 YOUR JOURNEY <br /> <span className="text-[#8B1A1A]">STARTS HERE.</span>
               </h2>
-              <p className="text-slate-400 font-medium max-w-xs">
+              <p className="text-slate-200 font-medium max-w-xs">
                 Every resource you need to connect with the House of Transformation community.
               </p>
             </div>

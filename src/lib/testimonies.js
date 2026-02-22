@@ -3,7 +3,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function getTestimonyById(id) {
   try {
-    // ✅ Use /public/:id endpoint
     const res = await fetch(`${API_URL}/feedback/public/${id}`, {
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
@@ -34,7 +33,6 @@ export async function getPublicTestimonies(excludeId = null) {
     const data = await res.json();
     const testimonies = data.testimonies || [];
     
-    // Exclude current testimony and get random 3
     const filtered = testimonies.filter(t => t._id !== excludeId);
     return filtered.sort(() => Math.random() - 0.5).slice(0, 3);
   } catch (error) {

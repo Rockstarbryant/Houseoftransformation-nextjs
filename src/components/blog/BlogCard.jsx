@@ -42,7 +42,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
       href={blogUrl}
       className="group cursor-pointer h-full block transition-all duration-300"
     >
-      <Card className="h-full flex flex-col overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white dark:bg-slate-900 group-hover:ring-2 group-hover:ring-[#8B1A1A]/20">
+      <Card className="h-full flex flex-col group relative flex flex-col bg-white dark:bg-stone-950 border-2 border-slate-100 dark:border-slate-700 rounded-[10px] p-4 hover:border-slate-900 dark:hover:border-slate-50 transition-all hover:shadow-2xl hover:shadow-slate-200/50 h-full overflow-hidden">
         
         {/* Image Container */}
         <div className="relative h-52 overflow-hidden">
@@ -68,7 +68,7 @@ const BlogCard = ({ post, onDelete, onEdit }) => {
         </div>
 
         {/* Content Section */}
-        <div className="p-6 flex-grow space-y-4">
+        <div className="p-2 flex-grow space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">
               <Calendar size={14} className="text-[#8B1A1A]" />

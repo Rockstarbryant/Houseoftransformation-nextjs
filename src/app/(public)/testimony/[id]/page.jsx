@@ -4,7 +4,8 @@ import TestimonyDetailClient from '@/components/feedback/TestimonyDetailClient';
 import { getTestimonyById, getPublicTestimonies } from '@/lib/testimonies';
 
 export async function generateMetadata({ params }) {
-  const testimony = await getTestimonyById(params.id);
+  const { id } = await params;
+  const testimony = await getTestimonyById(id);
   
   if (!testimony) {
     return {
@@ -19,17 +20,18 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function TestimonyDetailPage({ params }) {
-  console.log('🔍 params.id:', params.id); // Log the ID
+  const { id } = await params;
+  console.log('🔍 params.id:', id);
   
-  const testimony = await getTestimonyById(params.id);
-  console.log('🔍 testimony result:', testimony); // Log what we got
+  const testimony = await getTestimonyById(id);
+  console.log('🔍 testimony result:', testimony);
   
   if (!testimony) {
     console.log('❌ Testimony not found, calling notFound()');
     notFound();
   }
 
-  const relatedTestimonies = await getPublicTestimonies(params.id);
+  const relatedTestimonies = await getPublicTestimonies(id);
 
   return (
     <TestimonyDetailClient 

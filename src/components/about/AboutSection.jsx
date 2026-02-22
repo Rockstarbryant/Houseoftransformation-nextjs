@@ -49,11 +49,12 @@ const AboutSection = ({ preview = false }) => {
             w-full
           ">
             <div className="lg:w-1/2 p-4 md:p-10 lg:p-16 space-y-6 md:space-y-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-[#8B1A1A] rounded-full text-[10px] font-black uppercase tracking-widest">
-                <ShieldCheck size={14} /> Our Identity
+              <div className="inline-flex items-center gap-2 px-4 py-1 bg-blue-900 dark:bg-red-900 rounded-full mb-4">
+                <ShieldCheck size={14} />
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">Our Identity</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
-                Welcome to <span className="text-[#8B1A1A]">H.O.T</span>
+                Welcome to H.O.T
               </h2>
               <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
                 House of Transformation Ministries is a vibrant community in Busia County where the Gospel is preached with power and lives are genuinely changed.

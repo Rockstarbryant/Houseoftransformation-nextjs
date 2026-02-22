@@ -14,13 +14,38 @@ const LiveStreamPage = () => {
   const [selectedStream, setSelectedStream] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [showCaptions, setShowCaptions] = useState(false);
-  const { floatingPiP, setFloatingPiP } = usePiP(); // Use the global hook
+  const { floatingPiP, setFloatingPiP } = usePiP();
   const [pipSize, setPipSize] = useState({ width: 400, height: 225 });
   const [pipPosition, setPipPosition] = useState({ x: 20, y: 20 });
 
-  
+  // ✅ FIX: Helper to extract YouTube video ID from various URL formats
+  const extractYouTubeId = (stream) => {
+    if (stream.youtubeVideoId) return stream.youtubeVideoId;
+    if (stream.youtubeUrl) {
+      const match = stream.youtubeUrl.match(
+        /(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      if (match) return match[1];
+    }
+    return null;
+  };
 
-  // FIX: Load archives on component mount with default filters
+  // ✅ FIX: Always derive thumbnail from YouTube video ID directly
+  // This ensures thumbnail is available immediately without waiting for any API data
+  const getThumbnail = (stream) => {
+    // First try the stored thumbnail
+    if (stream.thumbnail && stream.thumbnail.startsWith('http')) {
+      return stream.thumbnail;
+    }
+    // Derive from YouTube ID - this is always available and loads instantly
+    const videoId = extractYouTubeId(stream);
+    if (videoId) {
+      // hqdefault is always available; maxresdefault may 404 on some videos
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+    return null;
+  };
+
   useEffect(() => {
     fetchArchives({ type: filterType, sortBy: sortBy, limit: 100 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -44,14 +69,12 @@ const LiveStreamPage = () => {
         }
       }
 
-      // Request wake lock to keep screen on while video is playing
       if (navigator.wakeLock && savedPiP) {
         navigator.wakeLock.request('screen').catch((err) => {
           console.log(`Wake Lock error: ${err.name}, ${err.message}`);
         });
       }
 
-      // Handle visibility change to reacquire wake lock
       const handleVisibilityChange = async () => {
         if (typeof document !== 'undefined' && document.visibilityState === 'visible' && floatingPiP) {
           try {
@@ -113,9 +136,7 @@ const LiveStreamPage = () => {
   };
 
   const openFloatingPiP = async (stream) => {
-    setFloatingPiP(stream); // This now sends the data to the Layout level
-
-    // Request screen wake lock to prevent screen from sleeping
+    setFloatingPiP(stream);
     if (typeof navigator !== 'undefined' && navigator.wakeLock) {
       try {
         await navigator.wakeLock.request('screen');
@@ -135,11 +156,30 @@ const LiveStreamPage = () => {
     }
   };
 
-  const getClientCoords = (e) => {
-    if (e.touches) {
-      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  // ✅ Reusable thumbnail component that handles fallback gracefully
+  const StreamThumbnail = ({ stream, className = '' }) => {
+    const [imgError, setImgError] = useState(false);
+    const thumbnailUrl = getThumbnail(stream);
+
+    if (!thumbnailUrl || imgError) {
+      // Fallback: dark placeholder with play icon
+      return (
+        <div className={`absolute inset-0 bg-slate-800 flex items-center justify-center ${className}`}>
+          <Play size={40} className="text-slate-600" />
+        </div>
+      );
     }
-    return { x: e.clientX, y: e.clientY };
+
+    return (
+      // ✅ Use regular <img> to avoid Next.js domain whitelist issues with img.youtube.com
+      // If you prefer Next.js Image, add img.youtube.com to next.config.js images.domains
+      <img
+        src={thumbnailUrl}
+        alt={stream.title}
+        onError={() => setImgError(true)}
+        className={`absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${className}`}
+      />
+    );
   };
 
   return (
@@ -147,7 +187,6 @@ const LiveStreamPage = () => {
       {/* ACTIVE STREAM: CINEMATIC COMMAND CENTER */}
       {activeStream && (
         <div className="bg-slate-900 dark:bg-slate-950 text-white relative overflow-hidden">
-          {/* Background Decorative Element */}
           <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/10 skew-x-12 translate-x-32" />
           
           <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
@@ -270,16 +309,9 @@ const LiveStreamPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {archives?.map((stream) => (
                   <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[32px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl flex flex-col">
-                    {/* Thumbnail */}
+                    {/* ✅ FIXED: Thumbnail now loads immediately using StreamThumbnail component */}
                     <div className="relative aspect-video bg-slate-900 overflow-hidden cursor-pointer" onClick={() => setSelectedStream(stream)}>
-                      {stream.thumbnail && (
-                        <Image 
-                          src={stream.thumbnail} 
-                          alt={stream.title} 
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                        />
-                      )}
+                      <StreamThumbnail stream={stream} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                         <Play size={48} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -294,7 +326,6 @@ const LiveStreamPage = () => {
                         {stream.title}
                       </h3>
 
-                      {/* Metadata Nodes */}
                       <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-50 dark:border-slate-700">
                         {stream.preacherNames?.length > 0 && (
                           <div className="flex items-center gap-2">
@@ -308,7 +339,6 @@ const LiveStreamPage = () => {
                         </div>
                       </div>
 
-                      {/* AI Snippet */}
                       {stream.aiSummary?.summary && (
                         <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl mb-8 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
                           <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium line-clamp-2 italic leading-relaxed">
@@ -317,7 +347,6 @@ const LiveStreamPage = () => {
                         </div>
                       )}
 
-                      {/* Actions Container */}
                       <div className="mt-auto flex gap-3">
                         <button
                           onClick={() => setSelectedStream(stream)}
@@ -340,22 +369,14 @@ const LiveStreamPage = () => {
               <div className="space-y-6">
                 {archives?.map((stream) => (
                   <div key={stream._id} className="group bg-white dark:bg-slate-800 rounded-[24px] overflow-hidden border-2 border-slate-100 dark:border-slate-700 hover:border-red-600 dark:hover:border-red-600 transition-all hover:shadow-xl p-6 flex gap-8 cursor-pointer" onClick={() => setSelectedStream(stream)}>
-                    {/* Thumbnail */}
+                    {/* ✅ FIXED: Thumbnail in list view also loads immediately */}
                     <div className="relative w-40 h-24 bg-slate-900 rounded-2xl overflow-hidden flex-shrink-0">
-                      {stream.thumbnail && (
-                        <Image 
-                          src={stream.thumbnail} 
-                          alt={stream.title} 
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                        />
-                      )}
+                      <StreamThumbnail stream={stream} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                         <Play size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-3 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors line-clamp-2">
@@ -380,10 +401,9 @@ const LiveStreamPage = () => {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3 flex-col-reverse">
                       <button
-                        onClick={() => handleShare(stream)}
+                        onClick={(e) => { e.stopPropagation(); handleShare(stream); }}
                         className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
                       >
                         <Share2 size={16} />
@@ -441,17 +461,25 @@ const LiveStreamPage = () => {
             {/* Right: Metadata & AI Intelligence */}
             <div className="w-full md:w-[400px] border-l-2 border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-y-auto p-10">
               <div className="flex justify-between items-center mb-10">
+                {/* TV / Monitor icon on the left */}
                 <div className="w-12 h-12 bg-red-600 dark:bg-red-700 text-white rounded-2xl flex items-center justify-center">
                   <Monitor size={20} />
                 </div>
+
+                {/* ✅ PiP button centered between the two icons */}
                 <button
-                      onClick={() => openFloatingPiP(selectedStream)}
-                      className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95 md:opacity-0 md:group-hover:opacity-100 opacity-100"
-                      title="Picture in Picture"
-                    >
-                      <Maximize2 size={20} />
-                    </button>
-                <button onClick={() => setSelectedStream(null)} className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all">
+                  onClick={() => openFloatingPiP(selectedStream)}
+                  className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl transition-all shadow-lg active:scale-95"
+                  title="Picture in Picture"
+                >
+                  <Maximize2 size={20} />
+                </button>
+
+                {/* Close button on the right */}
+                <button
+                  onClick={() => setSelectedStream(null)}
+                  className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white dark:hover:text-white transition-all"
+                >
                   <X size={24} />
                 </button>
               </div>
@@ -477,7 +505,7 @@ const LiveStreamPage = () => {
                     <ul className="space-y-4">
                       {selectedStream.aiSummary.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex gap-3 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                          <span className="text-red-600">â€¢</span> {point}
+                          <span className="text-red-600">•</span> {point}
                         </li>
                       ))}
                     </ul>
@@ -506,7 +534,7 @@ const LiveStreamPage = () => {
                 )}
 
                 <div className="text-sm text-slate-500 dark:text-slate-400 border-t dark:border-slate-700 pt-4">
-                  <p>{new Date(selectedStream.startTime).toLocaleString()} â€¢ {selectedStream.viewCount || 0} views</p>
+                  <p>{new Date(selectedStream.startTime).toLocaleString()} • {selectedStream.viewCount || 0} views</p>
                 </div>
               </div>
             </div>

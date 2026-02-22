@@ -1,11 +1,7 @@
-// ===== SuggestionForm.jsx - FIXED =====
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader, Lightbulb, Info, Send, CheckCircle2 } from 'lucide-react';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import Input from '../common/Input';
 import { feedbackService } from '@/services/api/feedbackService';
 
 export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
@@ -15,7 +11,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     benefit: '', priority: 'Medium', willingToHelp: false, allowFollowUp: false
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors]             = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -70,7 +66,7 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
         }
       };
       if (!isAnonymous) {
-        submissionData.name = formData.name;
+        submissionData.name  = formData.name;
         submissionData.email = formData.email;
         submissionData.phone = formData.phone;
       }
@@ -88,109 +84,140 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
     'Community Outreach', 'Technology/Website', 'Other'
   ];
 
+  /* ── Shared class strings ── */
+  const inputCls =
+    'w-full px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/20 transition-all';
+  const textareaCls =
+    'w-full px-6 py-4 rounded-[6px] border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/20 transition-all resize-none';
+  const labelCls =
+    'block text-[11px] font-black text-slate-900 dark:text-slate-100 uppercase tracking-widest ml-1 mb-2';
+  const sectionLabelCls =
+    'text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-400';
+  const dividerCls = 'h-px w-8 bg-slate-200 dark:bg-slate-600';
+  const errorCls   = 'text-[#8B1A1A] dark:text-red-400 text-[9px] font-bold uppercase mt-1';
+
   return (
-    <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500 border border-slate-100">
-      <div className="bg-[#1A1A1A] p-8 md:p-12 text-white relative overflow-hidden">
-        <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12">
-            <Lightbulb size={240} />
+    <div className="bg-white dark:bg-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-500 border border-slate-200 dark:border-slate-700">
+
+      {/* ── Header ── */}
+      <div className="bg-slate-900 dark:bg-slate-950 p-8 md:p-12 text-white relative overflow-hidden">
+        <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12 pointer-events-none">
+          <Lightbulb size={240} />
         </div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-white/50 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6 transition-all"
+          className="flex items-center gap-2 text-white/50 text-[10px] font-black uppercase tracking-[0.2em] mb-6"
         >
           <ArrowLeft size={16} /> Back to Categories
         </button>
         <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight">
-          Ideas & <br/>Innovation.
+          Ideas &amp; <br />Innovation.
         </h2>
-        <p className="text-[#8B1A1A] text-[10px] font-black uppercase tracking-[0.2em] mt-4">
+        <p className="text-[#8B1A1A] dark:text-red-400 text-[10px] font-black uppercase tracking-[0.2em] mt-4">
           Help us build the future of our ministry
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10 bg-[#FCFDFD]">
+      {/* ── Form body ── */}
+      <form onSubmit={handleSubmit} className="p-6 md:p-12 space-y-10 bg-white dark:bg-slate-800">
+
+        {/* CONTRIBUTOR */}
         {!isAnonymous && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-[#8B1A1A]"></span>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Contributor</h3>
+              <span className={dividerCls} />
+              <h3 className={sectionLabelCls}>Contributor</h3>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <Input label="Name" name="name" value={formData.name} onChange={handleChange} placeholder="Optional" disabled={isSubmitting} className="bg-white" />
-              <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+254..." disabled={isSubmitting} className="bg-white" />
+              <div>
+                <label className={labelCls}>Name</label>
+                <input name="name" value={formData.name} onChange={handleChange}
+                  placeholder="Optional" disabled={isSubmitting} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Phone</label>
+                <input name="phone" value={formData.phone} onChange={handleChange}
+                  placeholder="+254..." disabled={isSubmitting} className={inputCls} />
+              </div>
             </div>
-            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} placeholder="Required for follow-up" disabled={isSubmitting} className="bg-white" />
+            <div>
+              <label className={labelCls}>Email Address</label>
+              <input name="email" type="email" value={formData.email} onChange={handleChange}
+                placeholder="Required for follow-up" disabled={isSubmitting} className={inputCls} />
+              {errors.email && <p className={errorCls}>{errors.email}</p>}
+            </div>
           </div>
         )}
 
+        {/* THE SUGGESTION */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[#8B1A1A]"></span>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">The Suggestion</h3>
+            <span className={dividerCls} />
+            <h3 className={sectionLabelCls}>The Suggestion</h3>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Suggestion Category *</label>
-            <select
-              name="suggestionType"
-              value={formData.suggestionType}
-              onChange={handleChange}
+          <div>
+            <label className={labelCls}>Suggestion Category <span className="text-[#8B1A1A] dark:text-red-400">*</span></label>
+            <select name="suggestionType" value={formData.suggestionType} onChange={handleChange}
               disabled={isSubmitting}
-              className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 appearance-none"
+              className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/20 appearance-none transition-all"
             >
               <option value="">Choose a Category</option>
               {suggestionTypes.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            {errors.suggestionType && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.suggestionType}</p>}
+            {errors.suggestionType && <p className={errorCls}>{errors.suggestionType}</p>}
           </div>
 
-          <Input label="Brief Title" name="suggestionTitle" value={formData.suggestionTitle} onChange={handleChange} error={errors.suggestionTitle} placeholder="e.g., Youth Mentorship Program" disabled={isSubmitting} className="bg-white" />
+          <div>
+            <label className={labelCls}>Brief Title <span className="text-[#8B1A1A] dark:text-red-400">*</span></label>
+            <input name="suggestionTitle" value={formData.suggestionTitle} onChange={handleChange}
+              placeholder="e.g., Youth Mentorship Program" disabled={isSubmitting} className={inputCls} />
+            {errors.suggestionTitle && <p className={errorCls}>{errors.suggestionTitle}</p>}
+          </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Detailed Description *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              disabled={isSubmitting}
-              placeholder="What is your idea? How does it work?"
-              className="w-full px-6 py-4 rounded-[24px] border border-slate-100 bg-white text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all resize-none"
-            />
-            {errors.description && <p className="text-[#8B1A1A] text-[9px] font-bold uppercase mt-1">{errors.description}</p>}
+          <div>
+            <label className={labelCls}>Detailed Description <span className="text-[#8B1A1A] dark:text-red-400">*</span></label>
+            <textarea name="description" value={formData.description} onChange={handleChange}
+              rows="4" disabled={isSubmitting} placeholder="What is your idea? How does it work?"
+              className={textareaCls} />
+            {errors.description && <p className={errorCls}>{errors.description}</p>}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Importance</label>
-              <textarea name="importance" value={formData.importance} onChange={handleChange} rows="2" disabled={isSubmitting} placeholder="Why should we do this?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
+            <div>
+              <label className={labelCls}>Importance</label>
+              <textarea name="importance" value={formData.importance} onChange={handleChange}
+                rows="2" disabled={isSubmitting} placeholder="Why should we do this?"
+                className={textareaCls} />
             </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Impact</label>
-              <textarea name="benefit" value={formData.benefit} onChange={handleChange} rows="2" disabled={isSubmitting} placeholder="How will it benefit us?" className="w-full px-6 py-4 rounded-[20px] border border-slate-100 bg-white text-sm font-bold outline-none resize-none" />
+            <div>
+              <label className={labelCls}>Impact</label>
+              <textarea name="benefit" value={formData.benefit} onChange={handleChange}
+                rows="2" disabled={isSubmitting} placeholder="How will it benefit us?"
+                className={textareaCls} />
             </div>
           </div>
         </div>
 
+        {/* EXECUTION */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[#8B1A1A]"></span>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Execution</h3>
+            <span className={dividerCls} />
+            <h3 className={sectionLabelCls}>Execution</h3>
           </div>
 
-          <div className="space-y-4">
-            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest ml-1">Priority Level</label>
-            <div className="flex gap-2">
+          <div>
+            <label className={labelCls}>Priority Level</label>
+            <div className="flex gap-2 mt-2">
               {['Low', 'Medium', 'High'].map(p => (
                 <button
-                  key={p}
-                  type="button"
+                  key={p} type="button"
                   onClick={() => setFormData(prev => ({ ...prev, priority: p }))}
                   disabled={isSubmitting}
-                  className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
-                    formData.priority === p 
-                    ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-105' 
-                    : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                  className={`flex-1 py-4 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                    formData.priority === p
+                      ? 'bg-slate-900 dark:bg-slate-950 border-slate-900 dark:border-slate-950 text-white'
+                      : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-400'
                   } disabled:opacity-50`}
                 >
                   {p}
@@ -200,20 +227,25 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           </div>
 
           {!isAnonymous && (
-            <div className="grid gap-3 pt-4">
+            <div className="grid gap-3">
               {[
-                { id: 'willingToHelp', label: "I'm willing to help implement this", icon: <CheckCircle2 size={16}/> },
-                { id: 'allowFollowUp', label: "I'd like feedback on this idea", icon: <Info size={16}/> }
+                { id: 'willingToHelp', label: "I'm willing to help implement this", icon: <CheckCircle2 size={16} /> },
+                { id: 'allowFollowUp', label: "I'd like feedback on this idea",     icon: <Info size={16} /> }
               ].map(item => (
-                <label key={item.id} className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-slate-100 hover:border-slate-200 cursor-pointer group transition-all">
-                  <div className="relative">
-                    <input type="checkbox" name={item.id} checked={formData[item.id]} onChange={handleChange} disabled={isSubmitting} className="sr-only peer" />
-                    <div className="w-10 h-5 bg-slate-100 rounded-full peer peer-checked:bg-[#8B1A1A] transition-all"></div>
-                    <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:left-6"></div>
+                <label key={item.id}
+                  className="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 cursor-pointer"
+                >
+                  <div className="relative shrink-0">
+                    <input type="checkbox" name={item.id} checked={formData[item.id]}
+                      onChange={handleChange} disabled={isSubmitting} className="sr-only peer" />
+                    <div className="w-10 h-5 bg-slate-200 dark:bg-slate-600 rounded-full peer-checked:bg-[#8B1A1A] transition-colors" />
+                    <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all peer-checked:translate-x-5" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 group-hover:text-[#8B1A1A] transition-colors">{item.icon}</span>
-                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{item.label}</span>
+                    <span className="text-slate-400 dark:text-slate-500">{item.icon}</span>
+                    <span className="text-[10px] font-black text-slate-600 dark:text-slate-200 uppercase tracking-widest">
+                      {item.label}
+                    </span>
                   </div>
                 </label>
               ))}
@@ -221,21 +253,26 @@ export const SuggestionForm = ({ isAnonymous, user, onSuccess, onBack }) => {
           )}
         </div>
 
-        <div className="pt-8 space-y-6">
+        {/* FOOTER */}
+        <div className="pt-6 space-y-6 border-t border-slate-200 dark:border-slate-600">
           {errors.submit && (
-            <div className="p-4 bg-red-50 text-[#8B1A1A] text-[10px] font-black uppercase rounded-2xl flex items-center gap-2">
+            <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-2xl flex items-center gap-2 text-[#8B1A1A] dark:text-red-400 text-[10px] font-black uppercase">
               <Info size={14} /> {errors.submit}
             </div>
           )}
-
           <div className="flex flex-col md:flex-row gap-3">
-            <button type="button" onClick={onBack} disabled={isSubmitting} className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-50">Cancel</button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-[#8B1A1A] transition-all shadow-xl disabled:opacity-50"
+            <button type="button" onClick={onBack} disabled={isSubmitting}
+              className="flex-1 py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-600 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 bg-white dark:bg-slate-700 transition-colors disabled:opacity-50 order-2 md:order-1"
             >
-              {isSubmitting ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Submit Idea</>}
+              Cancel
+            </button>
+            <button type="submit" disabled={isSubmitting}
+              className="flex-[2] py-4 bg-[#8B1A1A] text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-colors active:scale-95 disabled:opacity-50 order-1 md:order-2"
+            >
+              {isSubmitting
+                ? <><Loader className="animate-spin" size={18} /> Submitting...</>
+                : <><Send size={18} /> Submit Idea</>
+              }
             </button>
           </div>
         </div>

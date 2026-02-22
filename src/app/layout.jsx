@@ -3,10 +3,11 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { PiPProvider } from '@/context/PiPContext';
 import QueryProvider from '@/components/providers/QueryProvider';
-import GoogleAnalytics from '@/components/common/GoogleAnalytics';
 import Providers from '@/components/providers/Providers';
 import SplashScreen from '@/components/common/SplashScreen';
 import ClientOnlyComponents from '@/components/ClientOnlyComponents';
+
+// ⚡ REMOVED: GoogleAnalytics server import — now deferred in ClientOnlyComponents
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -56,12 +57,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* ⚡ NO PRELOAD - Let Next.js Image handle priority */}
-        
-        {/* ⚡ CRITICAL: Preconnect to external domains */}
+        {/* ⚡ CRITICAL: Preconnect to external domains FIRST */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        
+        {/* ⚡ GTM/GA: dns-prefetch only — actual script loads after page via ClientOnlyComponents */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+        {/* ⚡ REMOVED: preconnect to googletagmanager — delays render on mobile since it's 
+            not needed for initial paint. dns-prefetch is sufficient here. */}
         
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -69,10 +73,11 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="HOT Church" />
       </head>
       <body className={inter.className}>
-        {/* ⚡ Google Analytics - deferred loading */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_ID} />
-        )}
+        {/*
+          ⚡ REMOVED: GoogleAnalytics component from here (was server-rendered).
+          GA is now fully deferred in ClientOnlyComponents with { ssr: false }
+          so it never blocks first paint on mobile.
+        */}
         
         <QueryProvider>
           <ThemeProvider>
@@ -84,7 +89,7 @@ export default function RootLayout({ children }) {
                 {children}
               </Providers>
               
-              {/* ✅ Client-only components moved to separate client component */}
+              {/* ✅ ALL client-only / analytics components — fully deferred */}
               <ClientOnlyComponents />
             </PiPProvider>
           </ThemeProvider>

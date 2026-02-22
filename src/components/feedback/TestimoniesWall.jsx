@@ -81,18 +81,15 @@ const TestimoniesWall = () => {
       {/* GRID: HIGH DENSITY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {testimonies.map((testimony) => (
-          <Card key={testimony._id} className="group relative flex flex-col bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[40px] p-8 hover:border-slate-900 dark:hover:border-slate-50 transition-all hover:shadow-2xl hover:shadow-slate-200/50 h-full overflow-hidden">
+          <Card key={testimony._id} className="group relative flex flex-col bg-white dark:bg-stone-800 border-2 border-slate-100 dark:border-slate-700 rounded-[10px] p-4 hover:border-slate-900 dark:hover:border-slate-50 transition-all hover:shadow-2xl hover:shadow-slate-200/50 h-full overflow-hidden">
             
-            {/* FLOATING ICON */}
-            <Quote className="absolute -right-4 -top-4 text-slate-50 group-hover:text-red-50 transition-colors" size={120} />
-
             <div className="relative z-10 flex flex-col h-full">
               <div className="flex items-center justify-between mb-6">
-                <span className="px-4 py-1.5 bg-slate-900 dark:bg-slate-700 text-white dark:text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                <span className="px-4 py-1.5 bg-slate-900 dark:bg-stone-950 text-white dark:text-white text-[9px] font-black uppercase tracking-widest rounded-full">
                   {testimony.feedbackData?.testimonyType || 'Grace Report'}
                 </span>
                 {testimony.feedbackData?.testimonyDate && (
-                  <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase">
+                  <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase">
                     <Calendar size={12} className="text-red-500" />
                     {formatDate(testimony.feedbackData.testimonyDate)}
                   </span>
@@ -126,7 +123,7 @@ const TestimoniesWall = () => {
                   href={`/testimony/${testimony._id}`}
                   className="flex items-center justify-center gap-3 w-full bg-slate-50 group-hover:bg-slate-900 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
                 >
-                  Full Document <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  Read full story <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>

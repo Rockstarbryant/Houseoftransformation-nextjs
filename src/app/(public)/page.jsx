@@ -84,7 +84,7 @@ export default async function HomePage() {
               </span>
             </div>
             <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-6">
-              Sermon <span className="text-[#8B1A1A]">Teachings</span>
+              Sermon Teachings
             </h2>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
               {featuredSermon?.pinned 
@@ -131,7 +131,7 @@ export default async function HomePage() {
                 </div>
                 {/* Adjusted text size for mobile: text-3xl instead of 4xl */}
                 <h2 className="text-3xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">
-                  Upcoming <span className="text-[#8B1A1A]">Events</span>
+                  Upcoming Events
                 </h2>
               </div>
               <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium md:max-w-xs text-center md:text-center leading-relaxed">
@@ -155,7 +155,7 @@ export default async function HomePage() {
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-100 dark:text-slate-100">The Power of Service</span>
             </div>
             <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-8">
-              Make Your <span className="text-[#8B1A1A]">Impact</span>
+              Make Your Impact
             </h2>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto">
               You weren&apos;t just meant to attend; you were meant to belong. Find your team and start your journey of impact.
