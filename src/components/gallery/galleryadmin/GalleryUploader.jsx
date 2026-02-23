@@ -3,14 +3,26 @@ import { Upload, X, AlertCircle, CheckCircle, Loader, Copy } from 'lucide-react'
 
 /**
  * FIXES APPLIED:
- * 1. Multi-file uploads now work: sequential upload loop instead of only files[0]
- * 2. Mobile "Network Error" fix: ArrayBuffer → forced MIME type Blob prevents Android from losing content-type
- * 3. Progress tracking per-file shown to user
- * 4. Sequential uploads (not parallel) to avoid mobile connection limits
- * 5. Title auto-numbering for multi-file single-caption mode
+ * 1. Multi-file uploads: sequential loop over all files.
+ * 2. Mobile file-revocation fix: ALL files are read into memory as stable Blobs
+ *    the moment they are selected (processFiles), NOT inside the upload loop.
+ *    On iOS/Android the browser can revoke File object access after any async
+ *    yield (e.g. after the first network request completes), making subsequent
+ *    FileReader calls on files[1], [2]… fail with "Could not read file".
+ *    By pre-loading everything synchronously into plain Blob objects stored in
+ *    a ref, the upload loop only ever touches in-memory data.
+ * 3. MIME type enforcement: explicit type forced on every Blob.
+ * 4. Content-Type NOT manually set in service (browser sets multipart boundary).
+ * 5. Progress tracking per-file.
+ * 6. Title auto-numbering for multi-file single-caption mode.
  */
 const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
+  // `files` holds display metadata only: { name, size, index }
   const [files, setFiles] = useState([]);
+  // `stagedBlobs` is the source of truth for upload — plain Blobs in RAM, never revoked.
+  // Shape: Array<{ blob: Blob, name: string, mimeType: string }>
+  const stagedBlobsRef = useRef([]);
+
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -34,21 +46,22 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-  // ─── File Preparation ────────────────────────────────────────────────────
+  // ─── Eager file reader ────────────────────────────────────────────────────
   /**
-   * Reads the full file into memory and reconstructs as a Blob with an
-   * *explicit* MIME type. This is the key fix for Android Chrome/Brave:
-   * on some Android versions the original File object loses its type when
-   * passed through FormData, causing multer's fileFilter to reject it.
+   * Reads a single File into an ArrayBuffer and returns a stable Blob.
+   * Called immediately inside processFiles (synchronous user-gesture context),
+   * so the File handle is always still valid at read time.
    */
-  const prepareFile = (file) => {
+  const readFileToBlob = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        // Force the MIME type we already validated — never let it be empty
-        const mimeType = file.type || 'image/jpeg';
-        const stableBlob = new Blob([e.target.result], { type: mimeType });
-        resolve({ blob: stableBlob, name: file.name, type: mimeType });
+        const mimeType = file.type || 'image/jpeg'; // never let type be empty
+        resolve({
+          blob: new Blob([e.target.result], { type: mimeType }),
+          name: file.name,
+          mimeType,
+        });
       };
       reader.onerror = () => reject(new Error(`Could not read file: ${file.name}`));
       reader.readAsArrayBuffer(file);
@@ -75,11 +88,31 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
   };
   const handleFileSelect = (e) => processFiles(Array.from(e.target.files));
 
-  const processFiles = (selectedFiles) => {
+  /**
+   * Validates files then IMMEDIATELY reads them all into in-memory Blobs.
+   * 
+   * WHY EAGER LOADING IS CRITICAL ON MOBILE:
+   * iOS Safari and Android Chrome both revoke File object access after
+   * asynchronous yields that follow the original user-gesture event handler.
+   * Once the first `await onUpload(...)` resolves/rejects, any subsequent
+   * FileReader.readAsArrayBuffer(files[i]) call throws a "NotReadableError"
+   * which surfaces as "Could not read file: filename.jpg".
+   * 
+   * Solution: read every file into a plain Blob BEFORE the first upload starts.
+   * Blobs backed by ArrayBuffer data live in RAM and are never revoked.
+   */
+  const processFiles = async (selectedFiles) => {
     setError(null);
+
     const validFiles = [];
     for (const file of selectedFiles) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      // Extension fallback for Android browsers that omit MIME type
+      const ext = file.name?.split('.').pop()?.toLowerCase();
+      const allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const mimeOk = ALLOWED_TYPES.includes(file.type);
+      const extOk  = allowedExts.includes(ext);
+
+      if (!mimeOk && !extOk) {
         setError(`Invalid type: ${file.name}. Only JPEG, PNG, WebP, GIF allowed.`);
         continue;
       }
@@ -89,19 +122,49 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
       }
       validFiles.push(file);
     }
-    if (validFiles.length > 0) {
-      setFiles(prev => [...prev, ...validFiles]);
-      if (!useSingleCaption) {
-        setMultipleCaptions(prev => [
-          ...prev,
-          ...validFiles.map(() => ({ title: '', description: '', category: categories?.[0] || 'Worship Services' }))
-        ]);
-      }
+
+    if (!validFiles.length) return;
+
+    // Read all valid files into stable Blobs RIGHT NOW, while File handles are fresh
+    const readResults = await Promise.all(
+      validFiles.map(f =>
+        readFileToBlob(f).catch(err => {
+          setError(`Failed to load ${f.name}: ${err.message}`);
+          return null; // skip this file
+        })
+      )
+    );
+
+    const successfulBlobs = readResults.filter(Boolean);
+    if (!successfulBlobs.length) return;
+
+    // Append to the staged blobs ref (used during upload, never re-reads File objects)
+    stagedBlobsRef.current = [...stagedBlobsRef.current, ...successfulBlobs];
+
+    // Update display-only state (name + size for the UI list)
+    const displayEntries = successfulBlobs.map(({ name, blob }) => ({
+      name,
+      size: blob.size,
+    }));
+
+    setFiles(prev => [...prev, ...displayEntries]);
+
+    if (!useSingleCaption) {
+      setMultipleCaptions(prev => [
+        ...prev,
+        ...successfulBlobs.map(() => ({
+          title: '',
+          description: '',
+          category: categories?.[0] || 'Worship Services',
+        })),
+      ]);
     }
   };
 
   const removeFile = (index) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
+    // Keep the blob ref in sync — remove the corresponding staged blob
+    stagedBlobsRef.current = stagedBlobsRef.current.filter((_, i) => i !== index);
     if (!useSingleCaption) {
       setMultipleCaptions(prev => prev.filter((_, i) => i !== index));
     }
@@ -130,15 +193,19 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!files.length) return setError('Please select at least one photo');
-    if (!singleCaptionData.title.trim() && useSingleCaption) return setError('Title is required');
+    if (useSingleCaption && !singleCaptionData.title.trim()) return setError('Title is required');
 
-    // Validate multi-caption titles
     if (!useSingleCaption) {
       for (let i = 0; i < files.length; i++) {
         if (!multipleCaptions[i]?.title?.trim()) {
           return setError(`Title required for photo ${i + 1}: ${files[i].name}`);
         }
       }
+    }
+
+    // Safety check — blobs must already be staged
+    if (stagedBlobsRef.current.length !== files.length) {
+      return setError('Files are still loading, please wait a moment and try again.');
     }
 
     setUploading(true);
@@ -148,74 +215,77 @@ const GalleryUploader = ({ onUpload, categories, isOpen, onClose }) => {
     let successCount = 0;
     const errors = [];
 
-    // ── Sequential uploads (critical for mobile stability) ──
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setUploadProgress({ current: i + 1, total: files.length, percent: Math.round(((i) / files.length) * 100) });
+    // ── Sequential uploads — one at a time is far more stable on mobile ──
+    for (let i = 0; i < stagedBlobsRef.current.length; i++) {
+      setUploadProgress({
+        current: i + 1,
+        total: files.length,
+        percent: Math.round((i / files.length) * 100),
+      });
+
+      const { blob, name } = stagedBlobsRef.current[i];
 
       try {
-        // Step 1: Read file into memory and create a stable blob with forced MIME
-        const { blob, name, type } = await prepareFile(file);
-
-        // Step 2: Build FormData
         const formData = new FormData();
-        // Append blob with explicit filename — this is crucial for multer on mobile
+        // blob is a plain Blob in RAM — never revoked, always readable
         formData.append('photo', blob, name);
 
-        // Step 3: Determine caption for this file
         let title, description, category;
         if (useSingleCaption) {
-          // For multi-file: append " - N" suffix so each DB record has unique title
           title = files.length > 1
             ? `${singleCaptionData.title.trim()} - ${i + 1}`
             : singleCaptionData.title.trim();
           description = singleCaptionData.description?.trim() || '';
           category = singleCaptionData.category;
         } else {
-          title = multipleCaptions[i]?.title?.trim() || 'Untitled';
+          title       = multipleCaptions[i]?.title?.trim()       || 'Untitled';
           description = multipleCaptions[i]?.description?.trim() || '';
-          category = multipleCaptions[i]?.category || categories?.[0] || 'Worship Services';
+          category    = multipleCaptions[i]?.category            || categories?.[0] || 'Worship Services';
         }
 
         formData.append('title', title);
         formData.append('description', description);
         formData.append('category', category);
 
-        // Step 4: Upload — onUpload is provided by the parent page
         await onUpload(formData);
         successCount++;
 
-        setUploadProgress({ current: i + 1, total: files.length, percent: Math.round(((i + 1) / files.length) * 100) });
+        setUploadProgress({
+          current: i + 1,
+          total: files.length,
+          percent: Math.round(((i + 1) / files.length) * 100),
+        });
 
       } catch (err) {
-        console.error(`Upload failed for ${file.name}:`, err);
+        console.error(`Upload failed for ${name}:`, err);
         const msg = err?.response?.data?.message || err?.message || 'Unknown error';
-        errors.push(`${file.name}: ${msg}`);
+        errors.push(`${name}: ${msg}`);
       }
     }
 
     setUploading(false);
 
     if (successCount === files.length) {
-      // All succeeded
       setSuccess(true);
       setUploadProgress({ current: files.length, total: files.length, percent: 100 });
       setTimeout(() => {
+        // Full reset
         onClose();
         setSuccess(false);
         setFiles([]);
+        stagedBlobsRef.current = [];
         setMultipleCaptions([]);
         setSingleCaptionData({ title: '', description: '', category: categories?.[0] || 'Worship Services' });
         setUploadProgress({ current: 0, total: 0, percent: 0 });
       }, 2000);
     } else if (successCount > 0) {
-      // Partial success
       setError(`${successCount}/${files.length} uploaded. Failures:\n${errors.join('\n')}`);
-      // Remove successfully uploaded files from the list
-      const failedNames = errors.map(e => e.split(':')[0]);
-      setFiles(prev => prev.filter(f => failedNames.includes(f.name)));
+      // Trim the staged list down to only the failed ones
+      const failedNames = new Set(errors.map(e => e.split(':')[0].trim()));
+      const remaining = stagedBlobsRef.current.filter(b => failedNames.has(b.name));
+      stagedBlobsRef.current = remaining;
+      setFiles(prev => prev.filter(f => failedNames.has(f.name)));
     } else {
-      // All failed
       setError(`All uploads failed:\n${errors.join('\n')}`);
     }
   };
