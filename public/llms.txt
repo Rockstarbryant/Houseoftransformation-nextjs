@@ -1,0 +1,74 @@
+# Busia House of Transformation (H.O.T) — Busia, Kenya
+
+> A vibrant Christian ministry in Busia Town, Busia County, Kenya, dedicated to transforming lives through the anointed Gospel of Jesus Christ. Founded around 1989 (originally as Nairobi Gospel Assembly Church), H.O.T has grown into a premier Christian community in Western Kenya with deep roots and over 36 years of ministry.
+
+## About
+
+House of Transformation Ministries (H.O.T) is located in Busia Town, opposite The Breeze Hotel, along the Busia–Kisumu Road, Busia County, Kenya. The church serves diverse communities including the Luhya and Iteso peoples of western Kenya.
+
+**Mission:** To transform the lives of God's people for spiritual and physical prosperity by preaching the Kingdom of God and those things which concern the Lord Jesus Christ (Acts 28:31).
+
+**Vision:** To see the church flourishing and holistically transforming people's lives through the anointed Gospel globally (Matthew 28:19-20).
+
+**Core Beliefs:**
+- The Bible as the inspired, infallible Word of God
+- One God in three persons: Father, Son, and Holy Spirit
+- Salvation by grace through faith in Jesus Christ
+- The transformative power of the Kingdom Gospel (Acts 28:31)
+- The importance of community, fellowship, and good works (Hebrews 10:25)
+
+**Leadership:**
+- Pastor Johnstone Masiga - Lead Pastor
+- Apostle Aloys A. Rutivi — Founding Pastor
+
+
+## Service Times
+
+- **Sunday** — 8:00 AM to 1:00 PM (Main Worship Service)
+- **Wednesday** — 6:30 PM to 8:00 PM (Bible Study)
+
+
+## Location & Contact
+
+- **Address:** Main Street, opposite Breeze Hotel, Busia–Kisumu Road, Busia Town, Busia County, Kenya
+- **Phone:** +254 726 793 503
+- **Email:** masigajohnstone@yahoo.com
+- **Website:** https://houseoftransformation-nextjs.vercel.app
+- **Coordinates:** 0.46012, 34.11225
+
+## Social Media
+
+- **Facebook:** https://facebook.com/houseoftransformation
+- **YouTube:** https://youtube.com/@houseoftransformation
+- **Instagram:** https://instagram.com/houseoftransformation
+- **Twitter/X:** https://twitter.com/hot_busia
+
+## Pages
+
+- [Home](https://houseoftransformation-nextjs.vercel.app/): Hero section, live stream link, featured sermon, upcoming events, donation info, and service departments overview.
+- [About](https://houseoftransformation-nextjs.vercel.app/about): Church history, mission, vision, core beliefs, and leadership team.
+- [Sermons](https://houseoftransformation-nextjs.vercel.app/sermons): Archive of apostolic teachings and messages. Includes pinned/featured sermons and the most recent messages.
+- [Past Livestreams](https://houseoftransformation-nextjs.vercel.app/livestream): Recordings of past live worship services and special broadcasts.
+- [Events](https://houseoftransformation-nextjs.vercel.app/events): Upcoming church events, workshops, special gatherings, and community programs. Supports event registration.
+- [Gallery](https://houseoftransformation-nextjs.vercel.app/gallery): Photo gallery from worship services, youth events, community outreach, special events, and kids ministry.
+- [Blog](https://houseoftransformation-nextjs.vercel.app/blog): Articles and posts in categories: News, Events, Teaching, and Testimonies.
+- [Service Areas](https://houseoftransformation-nextjs.vercel.app/service-areas): Ministry departments and volunteer opportunities within the church.
+- [Volunteer](https://houseoftransformation-nextjs.vercel.app/volunteer): Information on how to serve, available volunteer roles, and application process.
+- [Donations](https://houseoftransformation-nextjs.vercel.app/donate): Online giving options. Supports M-Pesa and other payment methods.
+- [Feedback](https://houseoftransformation-nextjs.vercel.app/feedback): Share testimonies, suggestions, or thoughts with the church team.
+- [Contact](https://houseoftransformation-nextjs.vercel.app/contact): Church location, contact form, map, and communication details.
+- [Portal](https://houseoftransformation-nextjs.vercel.app/portal): Member portal for registered users. Role-based access for members, volunteers, and admins.
+
+## Key Features
+
+- **Live Streaming** — Sunday services and special events streamed live via the website.
+- **Sermon Archive** — Video and text-based sermons available on demand.
+- **Online Giving** — M-Pesa-integrated donations system.
+- **Event Registration** — Members and visitors can register for upcoming church events.
+- **Member Portal** — Authenticated access for members, volunteers, and administrators.
+- **PWA Support** — The site is installable as a Progressive Web App on mobile devices.
+- **Dark Mode** — Full dark/light theme toggle available.
+
+## History
+
+Founded around 1989 as Nairobi Gospel Assembly Church, H.O.T later established its Busia Main Campus as a key outreach in western Kenya. The ministry has served the Busia community for over 36 years, preaching the Gospel of the Kingdom and seeing lives transformed spiritually, physically, and communally.
