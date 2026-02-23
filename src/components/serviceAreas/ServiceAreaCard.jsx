@@ -26,7 +26,7 @@ const ServiceAreaCard = ({ name, description, imageUrl, teamCount, timeCommitmen
     <Card 
       padding="none"
       shadow="none"
-      className="bg-white dark:bg-slate-800 overflow-hidden transition-all duration-300 hover:shadow-lg group"
+      className="bg-white dark:bg-stone-950 overflow-hidden transition-all duration-300 hover:shadow-lg group"
     >
       {/* ENTIRE CARD IS A LINK - redirects to /service-areas/${slug} */}
       <Link

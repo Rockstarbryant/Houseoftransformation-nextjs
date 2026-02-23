@@ -146,6 +146,10 @@ export default async function HomePage() {
           </div>
         </section>
 
+
+        {/* Donation Section */}
+      <DonationSection />
+
       {/* Service Areas */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -180,8 +184,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Donation Section */}
-      <DonationSection />
+      
     </div>
     </>
   );
