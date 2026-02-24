@@ -11,10 +11,11 @@ const HeroSection = () => {
 
   // 🎯 OPTIMIZED: Single LCP image with proper Next.js optimization
   const lcpImage = {
-    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_85,w_900/v1770702213/church-gallery/pln6fcqe7jhcfsvugtzw.jpg',
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917063/church-gallery/tfn6ny6a6vrc8gaabnbi.jpg',
     alt: 'Bishop Aloys Rutivi - House of Transformation Church Busia'
   };
-
+// https://res.cloudinary.com/dcu8uuzrs/image/f_auto,q_85,w_900/upload/v1771917039/church-gallery/qyenc4wtdeegj9ssrbik.webp
+// https://res.cloudinary.com/dcu8uuzrs/image/upload/f_auto,q_85,w_900/v1770702213/church-gallery/pln6fcqe7jhcfsvugtzw.jpg
   // 🚀 LAZY LOAD: Floating images (not critical for LCP)
   const floatingImages = [
     {
@@ -157,7 +158,7 @@ const HeroSection = () => {
 
             <div className="relative w-full mb-4 sm:w-2/5 h-32 sm:h-auto shrink-0 bg-slate-100">
               <img 
-                src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop" 
+                src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771916522/church-gallery/ntgr0tlokuufnxmlhwgp.jpg" 
                 alt="Community" 
                 className="w-full h-full object-cover"
                 loading="lazy"
@@ -170,7 +171,7 @@ const HeroSection = () => {
                 
                 <div>
                   <h2 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    Welcome <span className="text-[#8B1A1A]">Home.</span>
+                    BUSIA H.O.T <span className="text-[#8B1A1A]">WELCOMES YOU.</span>
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm sm:text-base leading-relaxed">
                     We are so glad you're here. Whether you are looking for a new community or just visiting, we'd love to connect.

@@ -1,7 +1,11 @@
 const imageUrls = [
-  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg', // Image 1
-  'https://pbs.twimg.com/profile_images/700352011582251008/wrxEHL3q.jpg', // Image 2
-  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767445662/copy_of_ot_ibz2xp_6e0397.jpg' // Image 3
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917081/church-gallery/rna86cxayr531yeguolr.jpg', // Image 0
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771839996/church-gallery/h9awmwomo2qacuorldvr.jpg', // Image 1
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767445662/copy_of_ot_ibz2xp_6e0397.jpg', // Image 2
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771844795/church-gallery/orvi32ziq3phcnppqswu.jpg',
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771872140/church-gallery/w1fsxgatgfshyod4tbct.jpg',
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917027/church-gallery/pjggqzslpzey7zxy1uhf.webp',
+  'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917035/church-gallery/apw4ujv4nxunfqcnizok.jpg'
 ];
 
 export const serviceAreasData = [
@@ -50,7 +54,7 @@ export const serviceAreasData = [
     slug: 'childrens-ministry',
     name: 'Children\'s Ministry',
     description: 'Nurture and teach the next generation of believers with fun, engaging, and spiritually enriching activities',
-    imageUrl: imageUrls[1],
+    imageUrl: imageUrls[4],
     teamCount: 15,
     timeCommitment: '3 hours/week',
     teamLead: 'Sister Priscilla Kiplagat',
@@ -90,7 +94,7 @@ export const serviceAreasData = [
     slug: 'ushering-team',
     name: 'Ushering Team',
     description: 'Welcome guests with warmth and create a welcoming atmosphere during services and events',
-    imageUrl: imageUrls[2],
+    imageUrl: imageUrls[3],
     teamCount: 22,
     timeCommitment: '2-3 hours/week',
     teamLead: 'Samuel Otunga',
@@ -170,7 +174,7 @@ export const serviceAreasData = [
     slug: 'community-outreach',
     name: 'Community Outreach',
     description: 'Extend God\'s love through community service, evangelism, and local/global mission work',
-    imageUrl: imageUrls[1],
+    imageUrl: imageUrls[6],
     teamCount: 18,
     timeCommitment: 'Flexible',
     teamLead: 'Pastor David Kipchoge',
@@ -211,7 +215,7 @@ export const serviceAreasData = [
     slug: 'prayer-ministry',
     name: 'Prayer Ministry',
     description: 'Intercede for our congregation, community, and world through dedicated prayer and spiritual warfare',
-    imageUrl: imageUrls[2],
+    imageUrl: imageUrls[5],
     teamCount: 24,
     timeCommitment: 'Flexible',
     teamLead: 'Prophetess Mary Wanjiru',

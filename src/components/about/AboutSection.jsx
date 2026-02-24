@@ -15,24 +15,61 @@ import {
   Clock,
   ShieldCheck,
   Zap,
-  Globe
+  Globe,
+  MessageCircle
 } from 'lucide-react';
 import Button from '../common/Button';
 
 const churchImages = [
   {
-    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg',
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771841162/church-gallery/jqokjekkz4cawznexfs3.jpg',
     alt: 'Sunday worship service at House of Transformation Main Campus Busia'
   },
   {
-    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1770702881/church-gallery/py4vev0znmvnc6zgo3w5.jpg',
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771916647/church-gallery/fhn49caalk8qhueissce.jpg',
     alt: 'Members of the House of Transformation community gathering in Busia County'
   },
   {
-    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767445662/copy_of_ot_ibz2xp_6e0397.jpg',
-    alt: 'Community fellowship and ministry outreach in Western Kenya'
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917059/church-gallery/jwgfauffyxyzhj0m5shz.jpg',
+    alt: 'Lead Pastor J.K Masiga of House of Transformation church in Busia County'
+  },
+  {
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771917053/church-gallery/ze43ldp7vrrxiyprysk0.jpg',
+    alt: 'Steve Member of the House of Transformation community gathering in Busia County'
+  },
+  {
+    url: 'https://res.cloudinary.com/dcu8uuzrs/image/upload/v1771916535/church-gallery/ac46jhzzy9jn0cm3pmsd.jpg',
+    alt: 'Dedicated team of House of Transformation community gathering in Busia County'
   }
 ];
+
+// FAQ Item Component - Defined OUTSIDE the main component
+const FAQItem = ({ question, answer }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-5 sm:py-6 text-left gap-4 group"
+        aria-expanded={open}
+      >
+        <span className="text-sm sm:text-base md:text-lg font-black text-slate-900 dark:text-white group-hover:text-[#8B1A1A] transition-colors">
+          {question}
+        </span>
+        <span className={`flex-shrink-0 w-7 h-7 rounded-full border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 transition-all duration-300 ${open ? 'bg-[#8B1A1A] border-[#8B1A1A] text-white rotate-45' : ''}`}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
+      </button>
+      <div className={`overflow-hidden transition-all duration-300 ${open ? 'max-h-96 pb-5' : 'max-h-0'}`}>
+        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
+          {answer}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const AboutSection = ({ preview = false }) => {
   if (preview) {
@@ -94,7 +131,7 @@ const AboutSection = ({ preview = false }) => {
           <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-6 mt-6 sm:p-8 md:p-12 lg:p-20 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col justify-center min-h-[280px] md:min-h-[350px]">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-4 md:mb-6">
               <span className="sr-only">About House of Transformation Busia</span>
-              THE <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
+              BUSIA <span className="text-[#8B1A1A]">H.O.T</span> <br />EXPERIENCE.
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-500 dark:text-slate-400 font-medium max-w-xl">
               Touching and transforming lives through the anointed gospel since 1989.
@@ -102,7 +139,7 @@ const AboutSection = ({ preview = false }) => {
           </div>
 
           {/* Stats Card */}
-          <div className="lg:col-span-4 bg-[#8B1A1A] rounded-2xl md:rounded-[3rem] p-6 mt-6 sm:p-8 md:p-10 flex flex-col justify-between text-white shadow-xl min-h-[180px] md:min-h-[200px]">
+          <div className="lg:col-span-4 bg-[#8B1A1A] rounded-xl md:rounded-[1rem] p-6 mt-6 sm:p-8 md:p-10 flex flex-col justify-between text-white shadow-xl min-h-[180px] md:min-h-[200px]">
             <Zap size={32} className="text-white/50" />
             <div>
               <p className="text-3xl sm:text-4xl font-black mb-2">36+</p>
@@ -224,7 +261,7 @@ const AboutSection = ({ preview = false }) => {
                 <div className="space-y-3 md:space-y-4 border-l-4 border-[#8B1A1A] pl-4 sm:pl-6 md:pl-8">
                   <h4 className="text-base sm:text-lg md:text-xl font-black text-[#8B1A1A]">Expansion to Busia</h4>
                   <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed">
-                    The Busia Main Campus was established as a key outreach in western Kenya, addressing the unique needs of diverse communities including the Luhya and Iteso people.
+                    The Busia Main Campus was established as a key outreach in western Kenya, addressing the unique needs of diverse communities.
                   </p>
                 </div>
               </div>
@@ -239,27 +276,85 @@ const AboutSection = ({ preview = false }) => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white text-center mb-8 md:mb-12 lg:mb-16">Our Leadership</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {[
-              { name: "Apostle Aloys A. Rutivi", role: "Founding Pastor", img: churchImages[2].url },
-              { name: "Lavern Rutivi", role: "Worship Coordinator", img: churchImages[0].url },
-              { name: "The Dedicated Team", role: "Pastors & Volunteers", img: churchImages[1].url }
+              { name: "Pastor Johnstone Masiga", role: "Founding Pastor", img: churchImages[2].url },
+              { name: "Brother Stephen", role: "Worship Coordinator", img: churchImages[3].url },
+              { name: "The Dedicated Team", role: "Pastors & Volunteers", img: churchImages[4].url }
             ].map((leader, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-5 sm:p-6 md:p-8 shadow-sm border border-slate-100 text-center space-y-3 md:space-y-4 min-h-[240px]">
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-md bg-slate-200">
-                  <Image
-                    src={leader.img}
-                    alt={`${leader.name} - ${leader.role} at House of Transformation Busia`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                    sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
-                  />
-                </div>
-                <div>
-                  <h4 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white">{leader.name}</h4>
-                  <p className="text-[#8B1A1A] font-bold text-[9px] sm:text-[10px] uppercase tracking-widest mt-1">{leader.role}</p>
+              <div key={i} className="relative rounded-2xl md:rounded-[2.5rem] overflow-hidden shadow-md aspect-[3/4] min-h-[320px] bg-slate-800 group">
+                {/* Full-bleed image */}
+                <Image
+                  src={leader.img}
+                  alt={`${leader.name} - ${leader.role} at House of Transformation Busia`}
+                  fill
+                  unoptimized
+                  className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                {/* Gradient overlay for text legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Name overlay at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 md:p-8">
+                  <h4 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight drop-shadow-lg">{leader.name}</h4>
+                  <p className="text-[#FF6B6B] font-bold text-[9px] sm:text-[10px] uppercase tracking-widest mt-1.5 drop-shadow">{leader.role}</p>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6b. FAQ */}
+      <section className="px-4 sm:px-6 py-8 md:py-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 lg:p-20 shadow-sm border border-slate-100">
+            <div className="grid lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16">
+
+              {/* FAQ Header */}
+              <div className="lg:col-span-4 space-y-3 md:space-y-4">
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-red-50 rounded-2xl flex items-center justify-center text-[#8B1A1A]">
+                  <MessageCircle size={28} />
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white">
+                  Common Questions
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
+                  Everything you need to know before you visit or get involved.
+                </p>
+              </div>
+
+              {/* FAQ Items */}
+              <div className="lg:col-span-8 divide-y divide-slate-100 dark:divide-slate-800">
+                {[
+                  {
+                    question: "When are all your services held?",
+                    answer: "We have one Sunday service held at 9:00 AM, to 01:00 PM. We also hold a midweek Community Outreach every Wednesday from 2:00 PM for deeper Bible study, prayers, and community building."
+                  },
+                  {
+                    question: "Can I attend online if I can't come in person?",
+                    answer: "Absolutely. We live-stream our services and post recordings on our Facebook Page (Busia House of Transformation) and across our social media platforms. You can worship with us from anywhere in the world."
+                  },
+                  {
+                    question: "I'm visiting for the first time, what should I expect?",
+                    answer: "You are warmly welcome! Expect uplifting worship songs, relevant biblical teaching, and a friendly congregation. There is no dress code, just come as you are. Our team is always on hand to help new visitors feel at home."
+                  },
+                  {
+                    question: "What departments or ministries can I join?",
+                    answer: "We have active departments for worship, youth, children, outreach, and administration. Whether you're passionate about music, serving the community, or working with the next generation, there is a place for you at H.O.T."
+                  },
+                  {
+                    question: "What community outreach programmes does H.O.T. run?",
+                    answer: "Our outreach work includes youth and children's empowerment programmes, community health drives, missions trips to new regions, and social support for families in need. We believe in holistic transformation, addressing spiritual, physical, and practical needs."
+                  },
+                  {
+                    question: "How do I get in touch or connect with the leadership?",
+                    answer: "You can reach us through our social media pages on Facebook, Whatsapp, X, and YouTube. All @BusiaHOTMinistriesKe. You're also welcome to speak with our team in person after any service at the Busia Main Campus, Busia County, Kenya."
+                  }
+                ].map((faq, i) => (
+                  <FAQItem key={i} question={faq.question} answer={faq.answer} />
+                ))}
+              </div>
+
+            </div>
           </div>
         </div>
       </section>

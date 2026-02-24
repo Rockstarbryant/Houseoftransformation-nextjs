@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, MapPin, Heart, MessageCircle, Users, Gift, ArrowUpRight } from 'lucide-react';
+import { Calendar, MapPin, Heart, MessageCircle, Users, Gift, ArrowUpRight, Zap } from 'lucide-react';
 import { CHURCH_INFO, SERVICE_TIMES } from '@/utils/constants';
 import Link from 'next/link';
 
@@ -20,23 +20,25 @@ const QuickInfoBar = () => {
       <div className="max-w-[1600px] mx-auto md:px-6">
         <div className="flex flex-col lg:flex-row bg-slate-100 dark:bg-slate-900 md:rounded-[1rem] overflow-hidden min-h-[800px]">
           
-          {/* LEFT PANEL: High-Impact Visual - LAZY LOAD */}
-          <div className="lg:w-5/12 relative min-h-[400px] group">
-            <img 
-              src="https://res.cloudinary.com/dcu8uuzrs/image/upload/v1767444965/WhatsApp_Image_2026-01-03_at_15.54.45_mpogon.jpg" 
-              className="absolute inset-0 w-full h-full object-cover opacity-160" 
-              alt="H.O.T Ministry"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-transparent" />
-            <div className="absolute bottom-16 left-12 right-12 space-y-4">
-              <div className="w-20 h-1 bg-[#8B1A1A]" />
-              <h2 className="text-5xl font-black text-white leading-tight tracking-tighter">
-                YOUR JOURNEY <br /> <span className="text-[#8B1A1A]">STARTS HERE.</span>
-              </h2>
-              <p className="text-slate-200 font-medium max-w-xs">
+          {/* LEFT PANEL: High-Impact Visual */}
+          <div className="lg:w-5/12 relative bg-[#8B1A1A] md:rounded-[1rem] p-6 sm:p-8 md:p-10 flex flex-col justify-between text-white shadow-xl min-h-[400px] lg:min-h-full">
+            {/* Top icon */}
+            <div>
+              <Zap size={32} className="text-white/50" />
+            </div>
+
+            {/* Middle decorative content */}
+            <div className="space-y-4">
+              <div className="w-20 h-1 bg-white/40" />
+              <p className="text-white/80 font-medium max-w-xs">
                 Every resource you need to connect with the House of Transformation community.
               </p>
+            </div>
+
+            {/* Bottom stat */}
+            <div>
+              <p className="text-3xl sm:text-4xl font-black mb-2">36+</p>
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">Years of Ministry</p>
             </div>
           </div>
 
