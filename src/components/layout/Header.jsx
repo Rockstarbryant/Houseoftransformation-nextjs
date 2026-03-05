@@ -75,9 +75,12 @@ const Header = () => {
   return (
     <>
       {/* 1. Header locked to Red (#8B1A1A) with height transition only */}
-      <nav className={`fixed w-full z-50 transition-all duration-300 bg-[#8B1A1A] ${
-        isScrolled ? 'py-3 shadow-2xl' : 'py-5'
-      }`}>
+      <nav
+        style={{ top: 'var(--notice-height, 0px)' }}
+        className={`fixed w-full z-50 transition-all duration-300 bg-[#8B1A1A] ${
+          isScrolled ? 'py-3 shadow-2xl' : 'py-5'
+        }`}
+      >
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             

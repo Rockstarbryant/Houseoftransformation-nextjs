@@ -29,16 +29,16 @@ const Toast = ({ message, type, onClose }) => {
 
   const styles = {
     success: 'bg-green-500 dark:bg-green-700 border-green-200 dark:border-green-800 text-white dark:text-white',
-    error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
-    warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200',
-    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
+    error: 'bg-red-500 dark:bg-red-900 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
+    warning: 'bg-amber-500 dark:bg-amber-900 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200',
+    info: 'bg-blue-500 dark:bg-blue-900 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
   };
 
   const iconColors = {
-    success: 'text-green-600 dark:text-green-400',
-    error: 'text-red-600 dark:text-red-400',
-    warning: 'text-amber-600 dark:text-amber-400',
-    info: 'text-blue-600 dark:text-blue-400'
+    success: 'text-white dark:text-white',
+    error: 'text-white dark:text-white',
+    warning: 'text-white dark:text-white',
+    info: 'text-white dark:text-white'
   };
 
   useEffect(() => {

@@ -270,6 +270,15 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
         });
       }
 
+      if (canManageAnnouncements()) {
+        sections.push({
+          name: 'Notice Bar',
+          href: '/portal/notices',
+          icon: 'Megaphone',
+          permission: 'manage:announcements'
+        });
+      }
+
       if (canManageEvents()) {
         sections.push({
           name: 'Events',
