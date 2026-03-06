@@ -160,7 +160,7 @@ const Footer = () => {
             &copy; {currentYear} {CHURCH_INFO.name}. 
           </p>
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
-          <div className="flex items-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+          <div className="flex items-center gap-4 text-[10px] font-black text-slate-200 uppercase tracking-widest">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/documentation" className="hover:text-white transition-colors">Documentation</Link>
