@@ -163,6 +163,7 @@ const Footer = () => {
           <div className="flex items-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/documentation" className="hover:text-white transition-colors">Documentation</Link>
             <span className="flex items-center gap-1 text-white">
               Built by <Link href="https://x.com/rockstarbryant" className="hover:text-white text-red-500 underline transition-colors">Bryant</Link>
             </span>
