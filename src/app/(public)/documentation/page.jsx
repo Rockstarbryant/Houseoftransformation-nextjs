@@ -907,12 +907,12 @@ export default function DocumentationPage() {
                 <h4 className="font-black text-sm uppercase tracking-wide mb-4 text-slate-900 dark:text-white">Feedback Lifecycle</h4>
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   {['submitted (pending)', 'reviewed', 'responded', 'archived', '[testimony] published', 'soft-deleted', 'permanently deleted'].map((status, idx, arr) => (
-                    <React.Fragment key={idx}>
+                    <div key={idx} className="flex items-center gap-3">
                       <span className="px-4 py-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 font-bold text-xs">
                         {status}
                       </span>
                       {idx < arr.length - 1 && <span className="text-slate-400">→</span>}
-                    </React.Fragment>
+                    </div>
                   ))}
                 </div>
               </div>
