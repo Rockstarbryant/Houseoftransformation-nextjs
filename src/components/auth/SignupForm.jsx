@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Lock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
@@ -10,80 +11,46 @@ import Button from '@/components/common/Button';
 export default function SignupForm({ onSuccess, onSwitchToLogin }) {
   const router = useRouter();
   const { signup, signInWithGoogle } = useAuth();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Password strength validation
   const validatePassword = (pwd) => {
     const hasUppercase = /[A-Z]/.test(pwd);
     const hasLowercase = /[a-z]/.test(pwd);
     const hasNumber = /\d/.test(pwd);
     const hasSpecial = /[@$!%*?&]/.test(pwd);
     const hasLength = pwd.length >= 8;
-
     return {
       isValid: hasUppercase && hasLowercase && hasNumber && hasSpecial && hasLength,
-      hasLength,
-      hasUppercase,
-      hasLowercase,
-      hasNumber,
-      hasSpecial
+      hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial
     };
   };
 
-  // Email validation
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Name validation
   const validateName = (name) => {
     const trimmed = name.trim();
-    if (trimmed.length < 2 || trimmed.length > 100) return false;
-    if (!/^[a-zA-Z\s'-]+$/.test(trimmed)) return false;
-    return true;
+    return trimmed.length >= 2 && trimmed.length <= 100 && /^[a-zA-Z\s'-]+$/.test(trimmed);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
+    if (errors[name]) setErrors({ ...errors, [name]: '' });
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (!validateName(formData.name)) {
-      newErrors.name = 'Name must be 2-100 characters, letters only';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Valid email required';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else {
-      const pwdValidation = validatePassword(formData.password);
-      if (!pwdValidation.isValid) {
-        newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
-      }
-    }
-
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    else if (!validateName(formData.name)) newErrors.name = 'Name must be 2-100 characters, letters only';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!validateEmail(formData.email)) newErrors.email = 'Valid email required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (!validatePassword(formData.password).isValid)
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -92,48 +59,27 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
     e.preventDefault();
     setErrors({});
     setGeneralError('');
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-
     try {
-      console.log('[SIGNUP] Attempting signup for:', formData.email);
-
       const result = await signup(formData);
-
       if (result.success) {
-        console.log('[SIGNUP] Success! User:', result.user?.email);
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push('/login');
-        }
+        onSuccess ? onSuccess() : router.push('/login');
       } else {
-        console.error('[SIGNUP] Failed:', result.error);
-
-        if (result.validationErrors && Array.isArray(result.validationErrors)) {
+        if (result.validationErrors?.length) {
           const fieldErrors = {};
-          result.validationErrors.forEach((err) => {
-            fieldErrors[err.field] = err.message;
-          });
+          result.validationErrors.forEach((err) => { fieldErrors[err.field] = err.message; });
           setErrors(fieldErrors);
         } else {
           setGeneralError(result.error || 'Signup failed. Please try again.');
         }
       }
     } catch (error) {
-      console.error('[SIGNUP] Error:', error);
-
-      if (error.message?.includes('already exists')) {
-        setGeneralError('Email already registered. Please login instead.');
-      } else if (error.message?.includes('rate limit')) {
-        setGeneralError('Too many signup attempts. Please try again later.');
-      } else {
-        setGeneralError(error.message || 'An unexpected error occurred. Please try again.');
-      }
+      setGeneralError(
+        error.message?.includes('already exists') ? 'Email already registered. Please login instead.'
+        : error.message?.includes('rate limit') ? 'Too many signup attempts. Please try again later.'
+        : error.message || 'An unexpected error occurred. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -142,15 +88,13 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
   const handleGoogleSignIn = async () => {
     setGeneralError('');
     setIsGoogleLoading(true);
-
     try {
       const result = await signInWithGoogle();
       if (!result.success) {
         setGeneralError(result.error || 'Google sign-in failed. Please try again.');
         setIsGoogleLoading(false);
       }
-      // If successful, user will be redirected to Google
-    } catch (error) {
+    } catch {
       setGeneralError('An unexpected error occurred.');
       setIsGoogleLoading(false);
     }
@@ -176,7 +120,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
         </div>
       )}
 
-      {/* Google Sign-In Button */}
+      {/* Google Sign-In */}
       <button
         type="button"
         onClick={handleGoogleSignIn}
@@ -188,22 +132,10 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
         ) : (
           <>
             <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             Continue with Google
           </>
@@ -213,7 +145,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
       {/* Divider */}
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-4 bg-white text-gray-500 font-medium">Or sign up with email</span>
@@ -221,48 +153,26 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name Field */}
+        {/* Name */}
         <div>
-          <Input
-            name="name"
-            placeholder="Full Name"
-            icon={User}
-            value={formData.name}
-            onChange={handleChange}
-            required
-            disabled={isSubmitting || isGoogleLoading}
-          />
+          <Input name="name" placeholder="Full Name" icon={User} value={formData.name}
+            onChange={handleChange} required disabled={isSubmitting || isGoogleLoading} />
           {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
           <p className="text-xs text-gray-500 mt-1">Letters, spaces, hyphens, and apostrophes only</p>
         </div>
 
-        {/* Email Field */}
+        {/* Email */}
         <div>
-          <Input
-            name="email"
-            type="email"
-            placeholder="Email"
-            icon={Mail}
-            value={formData.email}
-            onChange={handleChange}
-            required
-            disabled={isSubmitting || isGoogleLoading}
-          />
+          <Input name="email" type="email" placeholder="Email" icon={Mail} value={formData.email}
+            onChange={handleChange} required disabled={isSubmitting || isGoogleLoading} />
           {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
         </div>
 
-        {/* Password Field */}
+        {/* Password */}
         <div>
-          <Input
-            name="password"
-            type="password"
-            placeholder="Password"
-            icon={Lock}
-            value={formData.password}
-            onChange={handleChange}
-            required
-            disabled={isSubmitting || isGoogleLoading}
-          />
+          <Input name="password" type="password" placeholder="Password" icon={Lock}
+            value={formData.password} onChange={handleChange} required
+            disabled={isSubmitting || isGoogleLoading} />
           {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
 
           {formData.password && (
@@ -271,11 +181,10 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
               <div className="space-y-1">
                 {passwordRequirements.map((req, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    {req.met ? (
-                      <CheckCircle size={16} className="text-green-600" />
-                    ) : (
-                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
-                    )}
+                    {req.met
+                      ? <CheckCircle size={16} className="text-green-600" />
+                      : <div className="w-4 h-4 border-2 border-gray-300 rounded-full" />
+                    }
                     <span className={`text-xs ${req.met ? 'text-green-600' : 'text-gray-600'}`}>
                       {req.label}
                     </span>
@@ -285,6 +194,29 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }) {
             </div>
           )}
         </div>
+
+        {/* ── Legal Consent Notice ── */}
+        <p className="text-xs text-gray-500 leading-relaxed pt-1">
+          By creating an account, you agree to our{' '}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-900 font-semibold underline underline-offset-2 hover:text-blue-700 transition-colors"
+          >
+            Terms &amp; Conditions
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-900 font-semibold underline underline-offset-2 hover:text-blue-700 transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
 
         <Button type="submit" variant="primary" fullWidth disabled={isSubmitting || isGoogleLoading}>
           {isSubmitting ? 'Creating account...' : 'Create Account'}

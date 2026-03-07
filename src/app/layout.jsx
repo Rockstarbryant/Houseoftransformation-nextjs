@@ -1,11 +1,15 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { Inter, Geist } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { PiPProvider } from '@/context/PiPContext';
 import QueryProvider from '@/components/providers/QueryProvider';
 import Providers from '@/components/providers/Providers';
 import SplashScreen from '@/components/common/SplashScreen';
 import ClientOnlyComponents from '@/components/ClientOnlyComponents';
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 // ⚡ REMOVED: GoogleAnalytics server import — now deferred in ClientOnlyComponents
 
@@ -55,7 +59,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <head>
         {/* ⚡ CRITICAL: Preconnect to external domains FIRST */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Facebook, Youtube, Instagram, Mail, Phone, MapPin, Heart, ArrowRight } from 'lucide-react';
+import { Facebook, Youtube, Instagram, Mail, Phone, MapPin, ArrowRight, FileText, ShieldCheck } from 'lucide-react';
 import { CHURCH_INFO, SERVICE_TIMES, SOCIAL_LINKS } from '@/utils/constants';
 
 const Footer = () => {
@@ -102,6 +102,23 @@ const Footer = () => {
                 <li><Link href="/donate" className="hover:text-white transition-colors">Giving</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
               </ul>
+
+              {/* Legal Links */}
+              <h4 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mt-10 mb-5">Legal</h4>
+              <ul className="space-y-4 text-slate-500 text-[11px] font-black uppercase tracking-widest">
+                <li>
+                  <Link href="/terms" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <FileText size={11} className="text-[#8B1A1A] shrink-0" />
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <ShieldCheck size={11} className="text-[#8B1A1A] shrink-0" />
+                    Privacy Policy
+                  </Link>
+                </li>
+              </ul>
             </div>
             <div>
               <h4 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-8">Services</h4>
@@ -147,7 +164,11 @@ const Footer = () => {
               )}
             </form>
             <p className="text-slate-600 text-[9px] font-bold uppercase tracking-[0.2em] leading-loose">
-              By subscribing, you agree to receive spiritual resources and event updates.
+              By subscribing, you agree to receive spiritual resources and event updates. Read our{' '}
+              <Link href="/privacy" className="text-slate-400 hover:text-white underline underline-offset-2 transition-colors">
+                Privacy Policy
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -157,17 +178,20 @@ const Footer = () => {
       <div className="border-t border-slate-900 py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            &copy; {currentYear} {CHURCH_INFO.name}. 
+            &copy; {currentYear} {CHURCH_INFO.name}. All rights reserved.
           </p>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
-          <div className="flex items-center gap-4 text-[10px] font-black text-slate-200 uppercase tracking-widest">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <nav aria-label="Legal" className="flex items-center gap-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <Link href="/terms" className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
+            <span className="text-slate-700" aria-hidden="true">/</span>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <span className="text-slate-700" aria-hidden="true">/</span>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+            <span className="text-slate-700" aria-hidden="true">/</span>
             <Link href="/documentation" className="hover:text-white transition-colors">Documentation</Link>
-            <span className="flex items-center gap-1 text-white">
-              Built by <Link href="https://x.com/rockstarbryant" className="hover:text-white text-red-500 underline transition-colors">Bryant</Link>
-            </span>
-          </div>
+          </nav>
+          <span className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            Built by <Link href="https://x.com/rockstarbryant" className="hover:text-white text-red-500 underline transition-colors">Bryant</Link>
+          </span>
         </div>
       </div>
     </footer>
