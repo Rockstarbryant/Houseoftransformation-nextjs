@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Upload, Trash2, Camera, Shield
+  User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Upload, Trash2, Camera, Shield, Bell, MessageSquare
 } from 'lucide-react';
-import { getMyProfile, updateUser, deleteSelfAccount } from '@/services/api/userService';
+import { getMyProfile, updateUser, deleteSelfAccount, updateNotificationPreferences } from '@/services/api/userService';
 import { uploadToCloudinary, getOptimizedImageUrl } from '@/lib/cloudinaryUpload';
 import Loader from '@/components/common/Loader';
 
@@ -31,6 +31,10 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  // Notification preferences state
+  const [notifPrefs, setNotifPrefs] = useState({ email: false, sms: false });
+  const [savingNotif, setSavingNotif] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -66,6 +70,11 @@ export default function ProfilePage() {
           bio: response.user.bio || '',
           gender: response.user.gender || ''
         });
+        
+      setNotifPrefs({
+        email: response.user.notifications?.email ?? false,
+        sms:   response.user.notifications?.sms   ?? false,
+      });
       }
     } catch (err) {
       console.error('[Profile] Fetch error:', err);
@@ -172,6 +181,24 @@ export default function ProfilePage() {
     setEditing(false);
     setError(null);
   };
+
+  const handleNotifSave = async () => {
+  try {
+    setSavingNotif(true);
+    setError(null);
+    const response = await updateNotificationPreferences(user._id, notifPrefs);
+    if (response.success) {
+      setUser(response.user);
+      setSuccess('Notification preferences saved!');
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  } catch (err) {
+    console.error('[Profile] Notification prefs error:', err);
+    setError(err.response?.data?.message || 'Failed to save notification preferences');
+  } finally {
+    setSavingNotif(false);
+  }
+};
 
   // ============================================
   // DELETE ACCOUNT
@@ -508,6 +535,113 @@ export default function ProfilePage() {
                 </div>
               )}
             </form>
+
+            {/* ── NOTIFICATION PREFERENCES ─────────────────────────────────────── */}
+<div className="mt-8 pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-700">
+  <div className="flex items-center gap-3 mb-1">
+    <Bell size={20} className="text-[#8B1A1A]" />
+    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+      Notification Preferences
+    </h3>
+  </div>
+  <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+    Choose how you want to receive church announcements.
+  </p>
+
+  <div className="space-y-4 mb-6">
+
+    {/* Email toggle */}
+    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+          <Mail size={18} className="text-blue-600 dark:text-blue-400" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            Email Notifications
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Receive announcements to {user.email}
+          </p>
+        </div>
+      </div>
+      {/* Toggle switch */}
+      <button
+        type="button"
+        onClick={() => setNotifPrefs(p => ({ ...p, email: !p.email }))}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A] focus:ring-offset-2 ${
+          notifPrefs.email
+            ? 'bg-[#8B1A1A]'
+            : 'bg-slate-300 dark:bg-slate-600'
+        }`}
+        aria-label="Toggle email notifications"
+      >
+        <span
+          className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+            notifPrefs.email ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+
+    {/* SMS toggle */}
+    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+          <MessageSquare size={18} className="text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            SMS Notifications
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {user.phone
+              ? `Receive alerts to ${user.phone}`
+              : 'Add a phone number above to enable SMS'}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        disabled={!user.phone}
+        onClick={() => setNotifPrefs(p => ({ ...p, sms: !p.sms }))}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A] focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+          notifPrefs.sms && user.phone
+            ? 'bg-[#8B1A1A]'
+            : 'bg-slate-300 dark:bg-slate-600'
+        }`}
+        aria-label="Toggle SMS notifications"
+      >
+        <span
+          className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+            notifPrefs.sms && user.phone ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  </div>
+
+  {/* Save preferences button */}
+  <button
+    type="button"
+    onClick={handleNotifSave}
+    disabled={savingNotif}
+    className="px-6 py-2.5 bg-[#8B1A1A] text-white rounded-lg hover:bg-red-800 transition-colors font-medium text-sm disabled:opacity-50 flex items-center gap-2"
+  >
+    {savingNotif ? (
+      <>
+        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        Saving...
+      </>
+    ) : (
+      <>
+        <Save size={16} />
+        Save Preferences
+      </>
+    )}
+  </button>
+</div>
+
 
             {/* Danger Zone */}
             <div className="mt-8 pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-700">

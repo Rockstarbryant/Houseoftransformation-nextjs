@@ -110,6 +110,26 @@ export const updateUserRole = async (userId, roleId) => {
 };
 
 /**
+ * Update notification preferences for a user
+ * @param {string} userId - User ID
+ * @param {{ email: boolean, sms: boolean }} prefs - Notification preferences
+ */
+export const updateNotificationPreferences = async (userId, prefs) => {
+  try {
+    const response = await api.put(`/users/${userId}`, {
+      notifications: {
+        email: Boolean(prefs.email),
+        sms:   Boolean(prefs.sms),
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[UserService] Update notification preferences error:', error);
+    throw error;
+  }
+};
+
+/**
  * Delete user (Admin only) - Hard delete from both MongoDB and Supabase
  */
 export const deleteUser = async (userId) => {
