@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
-  User, Calendar, BookOpen, ImageIcon, Heart, Users, Megaphone, Shield, BarChart3, LogOut, Home, Play, Newspaper, DollarSign, FileText, MessageSquare, Mail, Bookmark, Bell, ChevronLeft, ChevronRight
+  User, Calendar, BookOpen, ImageIcon, Heart, Zap, Users, Megaphone, Shield, BarChart3, LogOut, Home, Play, Newspaper, DollarSign, FileText, MessageSquare, Mail, Bookmark, Bell, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -25,6 +25,7 @@ export default function PortalSidebar({ isCollapsed, onToggleCollapse, onCloseMo
     'Heart': <Heart size={22} />,
     'Users': <Users size={22} />,
     'Mail': <Mail size={22} />,
+    'Zap': <Zap size={22} />,
     'Shield': <Shield size={22} />,
     'BarChart3': <BarChart3 size={22} />,
     'Play': <Play size={22} />,

@@ -105,6 +105,7 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
    */
   const canManageLivestream = () => hasPermission('manage:livestream');
   const canSendEmailNotifications = () => hasPermission('manage:users') || isAdmin();
+  const canAccessCommunications = () => hasPermission('manage:users') || isAdmin();
 
   /**
    * Feedback Management - Granular by Category
@@ -333,6 +334,15 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
           permission: 'manage:users'
         });
       }
+
+      if (canAccessCommunications()) {
+        sections.push({
+          name: 'Communications',
+          href: '/portal/communications',
+          icon: 'Zap',
+          permission: 'manage:users'
+        });
+      }
       
       if (canManageBlog()) {
         sections.push({
@@ -531,6 +541,7 @@ canVerifyPayments,
     canArchiveFeedbackGeneral,
     canViewFeedbackStats,
     canSendEmailNotifications,
+    canAccessCommunications,
 
     // Volunteers
     canManageVolunteers,
