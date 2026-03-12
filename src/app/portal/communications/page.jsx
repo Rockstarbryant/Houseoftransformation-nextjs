@@ -40,7 +40,18 @@ const STATUS_STYLES = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-KE', { year:'numeric', month:'short', day:'numeric' }) : '—';
+//const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-KE', { year:'numeric', month:'short', day:'numeric' }) : '—';
+const fmtDate = (d) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('en-KE', {
+    timeZone: 'Africa/Nairobi',
+    year:   'numeric',
+    month:  'short',
+    day:    'numeric',
+    hour:   '2-digit',
+    minute: '2-digit',
+  });
+};
 const fmtDT    = (d) => d ? new Date(d).toLocaleString('en-KE') : '—';
 const channels = (arr = []) => arr.map(c => c.toUpperCase()).join(' + ');
 
@@ -175,6 +186,14 @@ export default function CommunicationsPage() {
   );
 }
 
+// ADD this helper at the top of ComposeTab (or as a module-level function)
+const toUTCISOString = (localDateTimeString) => {
+  if (!localDateTimeString) return undefined;
+  // new Date() on a datetime-local string treats it as LOCAL browser time
+  // .toISOString() converts it to UTC with Z suffix
+  return new Date(localDateTimeString).toISOString();
+};
+
 // ── Compose Tab ───────────────────────────────────────────────────────────────
 function ComposeTab({ users, roles, templates, sendMutation, onTemplateCreate }) {
   const [channels,       setChannels]       = useState(['email']);
@@ -223,7 +242,7 @@ function ComposeTab({ users, roles, templates, sendMutation, onTemplateCreate })
       recipientType,
       targetRoles:   recipientType === 'role' ? [selectedRoleId] : [],
       targetUserIds: ['bulk', 'single'].includes(recipientType) ? selectedUsers : [],
-      scheduledFor:  scheduledFor || undefined,
+      scheduledFor: scheduledFor ? toUTCISOString(scheduledFor) : undefined,
     };
 
     try {
@@ -431,6 +450,9 @@ function ComposeTab({ users, roles, templates, sendMutation, onTemplateCreate })
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Schedule (optional)
+               <span className="ml-2 font-normal text-slate-400 text-xs">
+                — your local time ({Intl.DateTimeFormat().resolvedOptions().timeZone})
+              </span>
             </label>
             <input
               type="datetime-local"

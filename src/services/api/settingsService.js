@@ -102,7 +102,7 @@ export const getMpesaSettings = async () => {
 
 export const updateMpesaSettings = async (data) => {
   try {
-    const response = await api.patch('/settings/mpesa', data);    
+    const response = await api.patch('/settings/mpesa', data);
     return response.data;
   } catch (error) {
     console.error('[SettingsService] Update M-Pesa settings error:', error);
@@ -125,7 +125,7 @@ export const simulateMpesaStkPush = async (phoneNumber, amount, accountRef = nul
     const response = await api.post('/settings/mpesa/simulate', {
       phoneNumber,
       amount,
-      accountRef
+      accountRef,
     });
     return response.data;
   } catch (error) {
@@ -164,6 +164,54 @@ export const updatePaymentGateway = async (data) => {
     return response.data;
   } catch (error) {
     console.error('[SettingsService] Update payment gateway error:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// CHURCH INFO, LEADERSHIP & SERVICE TIMES
+// ============================================
+
+export const getChurchInfo = async () => {
+  try {
+    const response = await api.get('/settings/church-info');
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Get church info error:', error);
+    throw error;
+  }
+};
+
+export const updateChurchInfo = async (data) => {
+  try {
+    const response = await api.patch('/settings/church-info', data);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update church info error:', error);
+    throw error;
+  }
+};
+
+export const updateLeadership = async (data) => {
+  try {
+    // Backend expects { leadership: [...] } — wrap if a raw array was passed
+    const payload = Array.isArray(data) ? { leadership: data } : data;
+    const response = await api.patch('/settings/leadership', payload);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update leadership error:', error);
+    throw error;
+  }
+};
+
+export const updateServiceTimes = async (data) => {
+  try {
+    // Backend expects { serviceTimes: [...] } — wrap if a raw array was passed
+    const payload = Array.isArray(data) ? { serviceTimes: data } : data;
+    const response = await api.patch('/settings/service-times', payload);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update service times error:', error);
     throw error;
   }
 };
@@ -243,7 +291,7 @@ export const validateEmailSettings = (data) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 
@@ -259,7 +307,7 @@ export const validateSocialMedia = (data) => {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 
@@ -273,12 +321,12 @@ export const exportSettingsAsJSON = (settings) => {
   const dataStr = JSON.stringify(settings, null, 2);
   const dataBlob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(dataBlob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   link.download = `settings-backup-${new Date().toISOString().split('T')[0]}.json`;
   link.click();
-  
+
   URL.revokeObjectURL(url);
 };
 
@@ -288,55 +336,55 @@ export const getSettingsCategories = () => {
       id: 'general',
       name: 'General',
       icon: 'Settings',
-      description: 'Site name, contact info, and basic settings'
+      description: 'Site name, contact info, and basic settings',
     },
     {
       id: 'email',
       name: 'Email',
       icon: 'Mail',
-      description: 'SMTP configuration and email templates'
+      description: 'SMTP configuration and email templates',
     },
     {
       id: 'notifications',
       name: 'Notifications',
       icon: 'Bell',
-      description: 'Email, SMS, and push notification preferences'
+      description: 'Email, SMS, and push notification preferences',
     },
     {
       id: 'security',
       name: 'Security',
       icon: 'Shield',
-      description: 'Password policies and session settings'
+      description: 'Password policies and session settings',
     },
     {
       id: 'payment',
       name: 'Payment & Donations',
       icon: 'CreditCard',
-      description: 'Payment gateways and M-Pesa configuration'
+      description: 'Payment gateways and M-Pesa configuration',
     },
     {
       id: 'social',
       name: 'Social Media',
       icon: 'Share2',
-      description: 'Social media links and profiles'
+      description: 'Social media links and profiles',
     },
     {
       id: 'maintenance',
       name: 'Maintenance',
       icon: 'AlertTriangle',
-      description: 'Maintenance mode and system alerts'
+      description: 'Maintenance mode and system alerts',
     },
     {
       id: 'api-keys',
       name: 'API Keys',
       icon: 'Key',
-      description: 'Third-party service API keys'
+      description: 'Third-party service API keys',
     },
     {
       id: 'features',
       name: 'Features',
       icon: 'Zap',
-      description: 'Enable or disable site features'
-    }
+      description: 'Enable or disable site features',
+    },
   ];
 };

@@ -324,7 +324,18 @@ uncancel: async (pledgeId) => {
     console.error('[PLEDGE-SERVICE] Uncancel error:', error);
     throw error;
   }
-}
+},
+
+
+sendReminders: async () => {
+    try {
+      const response = await api.post('/pledges/send-reminders', {});
+      return response?.data || { success: false };
+    } catch (error) {
+      console.error('[PLEDGE-SERVICE] Send reminders error:', error);
+      throw error;
+    }
+  }
 };
 
 // ============================================

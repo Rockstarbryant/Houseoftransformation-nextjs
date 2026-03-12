@@ -12,12 +12,19 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  // ── ALL reminder fields live in the same formData state ──────────────────
   const [formData, setFormData] = useState({
-    campaignId: preselectedCampaign || '',
-    pledgedAmount: '',
-    installmentPlan: 'lump-sum',
-    installmentCount: 1,
-    notes: ''
+    campaignId:         preselectedCampaign || '',
+    pledgedAmount:      '',
+    installmentPlan:    'lump-sum',
+    installmentCount:   1,
+    notes:              '',
+    // reminder fields
+    reminderEnabled:    true,
+    reminderChannels:   ['email'],
+    reminderFrequency:  'weekly',
+    reminderCustomDays: 7,
+    reminderMaxCount:   3,
   });
 
   const [selectedCampaign, setSelectedCampaign] = useState(null);
@@ -36,12 +43,9 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
   const fetchCampaigns = async () => {
     try {
       const response = await donationApi.campaigns.getAll({ status: 'active' });
-      
       if (response.success) {
-        // Filter only campaigns that allow pledges
         const pledgeableCampaigns = response.campaigns.filter(c => c.allowPledges === true);
         setCampaigns(pledgeableCampaigns);
-        
         if (preselectedCampaign) {
           const campaign = pledgeableCampaigns.find(c => c._id === preselectedCampaign);
           setSelectedCampaign(campaign);
@@ -55,38 +59,23 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
 
   // Calculate max installments based on campaign end date
   useEffect(() => {
-    if (!selectedCampaign) {
-      setMaxInstallments(1);
-      return;
-    }
+    if (!selectedCampaign) { setMaxInstallments(1); return; }
 
     const now = new Date();
     const endDate = new Date(selectedCampaign.endDate);
     const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
-    if (daysRemaining <= 0) {
-      setMaxInstallments(1);
-      return;
-    }
+    if (daysRemaining <= 0) { setMaxInstallments(1); return; }
 
     let maxCount = 1;
     switch (formData.installmentPlan) {
-      case 'weekly':
-        maxCount = Math.floor(daysRemaining / 7);
-        break;
-      case 'bi-weekly':
-        maxCount = Math.floor(daysRemaining / 14);
-        break;
-      case 'monthly':
-        maxCount = Math.floor(daysRemaining / 30);
-        break;
-      default:
-        maxCount = 1;
+      case 'weekly':    maxCount = Math.floor(daysRemaining / 7);  break;
+      case 'bi-weekly': maxCount = Math.floor(daysRemaining / 14); break;
+      case 'monthly':   maxCount = Math.floor(daysRemaining / 30); break;
+      default:          maxCount = 1;
     }
 
     setMaxInstallments(Math.max(1, maxCount));
-    
-    // Reset installment count if exceeds max
     if (formData.installmentCount > maxCount) {
       setFormData(prev => ({ ...prev, installmentCount: maxCount }));
     }
@@ -106,43 +95,36 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
     }
 
     if (formData.installmentPlan === 'lump-sum') {
-      setInstallmentPreview({
-        count: 1,
-        amount: amount,
-        frequency: 'once'
-      });
+      setInstallmentPreview({ count: 1, amount, frequency: 'once' });
       return;
     }
 
     const count = parseInt(formData.installmentCount) || 1;
     const installmentAmount = amount / count;
 
-    let frequency = 'payment';
-    switch (formData.installmentPlan) {
-      case 'weekly':
-        frequency = 'week';
-        break;
-      case 'bi-weekly':
-        frequency = 'bi-week';
-        break;
-      case 'monthly':
-        frequency = 'month';
-        break;
-    }
-
+    const frequencyMap = { weekly: 'week', 'bi-weekly': 'bi-week', monthly: 'month' };
     setInstallmentPreview({
-      count: count,
+      count,
       amount: installmentAmount,
-      frequency: frequency
+      frequency: frequencyMap[formData.installmentPlan] || 'payment'
     });
-
   }, [formData.pledgedAmount, formData.installmentPlan, formData.installmentCount, selectedCampaign]);
 
   const handleCampaignChange = (campaignId) => {
-    setFormData({ ...formData, campaignId });
+    setFormData(prev => ({ ...prev, campaignId }));
     const campaign = campaigns.find(c => c._id === campaignId);
     setSelectedCampaign(campaign);
     setError(null);
+  };
+
+  // ── Helper: toggle a reminder channel on/off ─────────────────────────────
+  const toggleChannel = (ch, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      reminderChannels: checked
+        ? [...(prev.reminderChannels || []), ch]
+        : (prev.reminderChannels || []).filter(c => c !== ch)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -153,7 +135,6 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
       setError('Please select a campaign');
       return;
     }
-
     if (!formData.pledgedAmount || parseFloat(formData.pledgedAmount) <= 0) {
       setError('Please enter a valid pledge amount');
       return;
@@ -163,10 +144,16 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
       setLoading(true);
 
       const response = await donationApi.pledges.create({
-        campaignId: formData.campaignId,
-        pledgedAmount: parseFloat(formData.pledgedAmount),
-        installmentPlan: formData.installmentPlan,
-        notes: formData.notes
+        campaignId:         formData.campaignId,
+        pledgedAmount:      parseFloat(formData.pledgedAmount),
+        installmentPlan:    formData.installmentPlan,
+        notes:              formData.notes,
+        // reminder preferences
+        reminderEnabled:    formData.reminderEnabled,
+        reminderChannels:   formData.reminderChannels,
+        reminderFrequency:  formData.reminderFrequency,
+        reminderCustomDays: formData.reminderCustomDays,
+        reminderMaxCount:   formData.reminderMaxCount,
       });
 
       if (response.success) {
@@ -186,6 +173,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-6 z-10">
           <div className="flex items-center justify-between">
@@ -194,12 +182,8 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
                 <Heart className="text-white" size={20} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Make a Pledge
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Commit to supporting a campaign
-                </p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Make a Pledge</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Commit to supporting a campaign</p>
               </div>
             </div>
             <button
@@ -214,6 +198,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">
@@ -230,7 +215,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
               value={formData.campaignId}
               onChange={(e) => handleCampaignChange(e.target.value)}
               required
-              disabled={loading || preselectedCampaign}
+              disabled={loading || !!preselectedCampaign}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none disabled:opacity-50"
             >
               <option value="">-- Choose a Campaign --</option>
@@ -252,9 +237,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar size={16} className="text-blue-600" />
-                <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
-                  Campaign Details
-                </span>
+                <span className="text-sm font-bold text-blue-900 dark:text-blue-200">Campaign Details</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
@@ -269,9 +252,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
                 </div>
                 <div>
                   <span className="text-slate-600 dark:text-slate-400">Goal:</span>
-                  <span className="ml-2 font-semibold">
-                    Ksh {selectedCampaign.goalAmount.toLocaleString()}
-                  </span>
+                  <span className="ml-2 font-semibold">Ksh {selectedCampaign.goalAmount.toLocaleString()}</span>
                 </div>
                 <div>
                   <span className="text-slate-600 dark:text-slate-400">Raised:</span>
@@ -293,7 +274,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
               <input
                 type="number"
                 value={formData.pledgedAmount}
-                onChange={(e) => setFormData({ ...formData, pledgedAmount: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, pledgedAmount: e.target.value }))}
                 placeholder="e.g., 5000"
                 min="1"
                 step="1"
@@ -314,7 +295,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
             </label>
             <select
               value={formData.installmentPlan}
-              onChange={(e) => setFormData({ ...formData, installmentPlan: e.target.value, installmentCount: 1 })}
+              onChange={(e) => setFormData(prev => ({ ...prev, installmentPlan: e.target.value, installmentCount: 1 }))}
               required
               disabled={loading}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none disabled:opacity-50"
@@ -326,7 +307,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
             </select>
           </div>
 
-          {/* Installment Count (Duration) */}
+          {/* Installment Count */}
           {formData.installmentPlan !== 'lump-sum' && selectedCampaign && (
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
@@ -334,7 +315,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
               </label>
               <select
                 value={formData.installmentCount}
-                onChange={(e) => setFormData({ ...formData, installmentCount: parseInt(e.target.value) })}
+                onChange={(e) => setFormData(prev => ({ ...prev, installmentCount: parseInt(e.target.value) }))}
                 required
                 disabled={loading}
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none disabled:opacity-50"
@@ -356,14 +337,14 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
             <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={16} className="text-green-600" />
-                <span className="text-sm font-bold text-green-900 dark:text-green-200">
-                  💡 Installment Preview
-                </span>
+                <span className="text-sm font-bold text-green-900 dark:text-green-200">💡 Installment Preview</span>
               </div>
               <p className="text-sm text-green-800 dark:text-green-200">
                 You will make <strong>{installmentPreview.count}</strong> payment
                 {installmentPreview.count > 1 ? 's' : ''} of{' '}
-                <strong>Ksh {installmentPreview.amount.toLocaleString('en-KE', { maximumFractionDigits: 2 })}</strong>{' '}
+                <strong>
+                  Ksh {installmentPreview.amount.toLocaleString('en-KE', { maximumFractionDigits: 2 })}
+                </strong>{' '}
                 each {installmentPreview.count > 1 ? `(${installmentPreview.frequency})` : ''}
               </p>
             </div>
@@ -376,12 +357,124 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
             </label>
             <textarea
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               placeholder="Add any special notes or dedication..."
               rows={3}
               disabled={loading}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#8B1A1A] outline-none resize-none disabled:opacity-50"
             />
+          </div>
+
+          {/* ── Reminder Preferences ────────────────────────────────────────────── */}
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  Payment Reminders
+                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Get notified when a payment is due
+                </p>
+              </div>
+              {/* Toggle switch */}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, reminderEnabled: !prev.reminderEnabled }))}
+                className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none focus:ring-2 focus:ring-[#8B1A1A] focus:ring-offset-2 ${
+                  formData.reminderEnabled ? 'bg-[#8B1A1A]' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+                aria-label="Toggle reminders"
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                  formData.reminderEnabled ? 'right-1' : 'left-1'
+                }`} />
+              </button>
+            </div>
+
+            {formData.reminderEnabled && (
+              <div className="space-y-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+
+                {/* Channels */}
+                <div>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                    Remind me via
+                  </p>
+                  <div className="flex gap-4">
+                    {['email', 'sms'].map(ch => (
+                      <label key={ch} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={(formData.reminderChannels || ['email']).includes(ch)}
+                          onChange={(e) => toggleChannel(ch, e.target.checked)}
+                          className="w-4 h-4 rounded accent-[#8B1A1A]"
+                        />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
+                          {ch}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Frequency */}
+                <div>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                    Reminder frequency
+                  </p>
+                  <select
+                    value={formData.reminderFrequency}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reminderFrequency: e.target.value }))}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="custom">Custom interval</option>
+                  </select>
+                </div>
+
+                {/* Custom days input */}
+                {formData.reminderFrequency === 'custom' && (
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                      Every how many days?
+                    </p>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={formData.reminderCustomDays}
+                      onChange={(e) => setFormData(prev => ({ ...prev, reminderCustomDays: parseInt(e.target.value) || 7 }))}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Max reminders slider */}
+                <div>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                    Maximum reminders:{' '}
+                    <span className="text-[#8B1A1A] font-black">{formData.reminderMaxCount}</span>
+                  </p>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={formData.reminderMaxCount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reminderMaxCount: parseInt(e.target.value) }))}
+                    className="w-full accent-[#8B1A1A]"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>1</span><span>5</span><span>10</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    We will stop reminding you after{' '}
+                    <strong>{formData.reminderMaxCount}</strong> reminder
+                    {formData.reminderMaxCount > 1 ? 's' : ''}
+                  </p>
+                </div>
+
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -412,6 +505,7 @@ export default function PledgeForm({ onClose, onSuccess, preselectedCampaign = n
               Cancel
             </button>
           </div>
+
         </form>
       </div>
     </div>

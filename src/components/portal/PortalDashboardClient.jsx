@@ -36,7 +36,9 @@ import {
   Zap, MessageSquare, DollarSign, Settings, Bookmark,
   HandHeart, ChevronUp, ChevronDown, AlertCircle, Mic,
   Star, RefreshCw, Mail, Play, FileText, Clock, Activity,
-  Video, Volume2,
+  Video, Volume2, Phone, MapPin, ExternalLink, Globe,
+  Facebook, Instagram, Twitter, Youtube, Linkedin,
+  Mic2, HeartHandshake, UserCircle2,
 } from 'lucide-react';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -54,12 +56,22 @@ const ICON_MAP = {
   Megaphone: Volume2,
 };
 
-/** Priority styling for announcements — kept identical to original */
+/** Priority styling for announcements */
 const PRIORITY_CONFIG = {
   low:    { icon: Info,          colorClass: 'text-blue-500',  bgClass: 'bg-blue-50 dark:bg-blue-950/40',   label: 'Low'    },
   normal: { icon: Bell,          colorClass: 'text-slate-500', bgClass: 'bg-slate-50 dark:bg-slate-700/50', label: 'Normal' },
   high:   { icon: AlertTriangle, colorClass: 'text-amber-500', bgClass: 'bg-amber-50 dark:bg-amber-950/40', label: 'High'   },
   urgent: { icon: Zap,           colorClass: 'text-red-600',   bgClass: 'bg-red-50 dark:bg-red-950/40',     label: 'Urgent' },
+};
+
+/** Social media display config */
+const SOCIAL_META = {
+  facebook:  { label: 'Facebook',    color: '#1877F2', bg: '#1877F215' },
+  twitter:   { label: 'X (Twitter)', color: '#000000', bg: '#00000012' },
+  instagram: { label: 'Instagram',   color: '#E4405F', bg: '#E4405F15' },
+  youtube:   { label: 'YouTube',     color: '#FF0000', bg: '#FF000015' },
+  linkedin:  { label: 'LinkedIn',    color: '#0A66C2', bg: '#0A66C215' },
+  whatsapp:  { label: 'WhatsApp',    color: '#25D366', bg: '#25D36615' },
 };
 
 function getGreeting() {
@@ -79,6 +91,20 @@ function formatRelativeDate(iso) {
   if (h < 24)  return `${h}h ago`;
   if (d <  7)  return `${d}d ago`;
   return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' });
+}
+
+function whatsappLink(phone) {
+  const stripped = (phone ?? '').replace(/\D/g, '');
+  return `https://wa.me/${stripped}`;
+}
+
+// WhatsApp SVG icon (lucide doesn't include brand icons)
+function WhatsAppIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -164,8 +190,6 @@ function ChartTooltip({ active, payload, label }) {
 
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 0 — HOME
-// Fetches: getOverview, getEvents(upcoming), feedbackService.getStats,
-//          getSystemAnalytics (recent activity)
 // ════════════════════════════════════════════════════════════════════════════
 
 function HomeTab({ user, sections, router, permissions }) {
@@ -176,10 +200,10 @@ function HomeTab({ user, sections, router, permissions }) {
   const [loading,       setLoading]       = useState(true);
   const [errors,        setErrors]        = useState({});
 
-  const firstName      = user?.name?.split(' ')[0] || 'Member';
-  const roleName       = user?.role?.name || 'Member';
-  const canFeedback    = permissions.canReadAnyFeedback?.();
-  const canEvents      = permissions.canManageEvents?.();
+  const firstName   = user?.name?.split(' ')[0] || 'Member';
+  const roleName    = user?.role?.name || 'Member';
+  const canFeedback = permissions.canReadAnyFeedback?.();
+  const canEvents   = permissions.canManageEvents?.();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -192,38 +216,29 @@ function HomeTab({ user, sections, router, permissions }) {
       getSystemAnalytics(),
     ]);
 
-    // All service functions return response.data. Backend may additionally
-    // wrap in { success, data: {...} } — unwrap both shapes.
     const unwrap = (v) => v?.data ?? v ?? {};
 
-    // ── DEV: log raw shapes so we know what backend returns ──
     if (process.env.NODE_ENV === 'development') {
       console.group('[Dashboard HomeTab] Raw API responses');
-      console.log('overview raw:',  results[0].status === 'fulfilled' ? results[0].value : results[0].reason);
-      console.log('events raw:',    results[1].status === 'fulfilled' ? results[1].value : results[1].reason);
-      console.log('feedback raw:',  results[2].status === 'fulfilled' ? results[2].value : results[2].reason);
-      console.log('system raw:',    results[3].status === 'fulfilled' ? results[3].value : results[3].reason);
+      console.log('overview raw:', results[0].status === 'fulfilled' ? results[0].value : results[0].reason);
+      console.log('events raw:',  results[1].status === 'fulfilled' ? results[1].value : results[1].reason);
       console.groupEnd();
     }
 
-    // overview
     if (results[0].status === 'fulfilled') {
       setOverview(unwrap(results[0].value));
     } else setErrors(e => ({ ...e, overview: true }));
 
-    // events — shape: { events: [], total } OR { data: { events: [] } }
     if (results[1].status === 'fulfilled') {
       const raw = results[1].value;
       const v   = raw?.data ?? raw;
       setEvents(Array.isArray(v?.events) ? v.events : Array.isArray(v) ? v : []);
     } else setErrors(e => ({ ...e, events: true }));
 
-    // feedback stats
     if (results[2].status === 'fulfilled' && results[2].value) {
       setFeedbackStats(unwrap(results[2].value));
     }
 
-    // system activity
     if (results[3].status === 'fulfilled') {
       const sys  = unwrap(results[3].value);
       const acts = sys.recentActivity ?? sys.auditLogs ?? sys.activity ?? [];
@@ -236,8 +251,6 @@ function HomeTab({ user, sections, router, permissions }) {
   useEffect(() => { load(); }, [load]);
 
   const ov = overview ?? {};
-
-  // Derive stat values defensively — the backend may nest them differently
   const totalMembers   = ov.totalUsers       ?? ov.users?.total     ?? ov.totalMembers;
   const upcomingEvents = ov.upcomingEvents   ?? ov.events?.upcoming ?? ov.totalEvents;
   const pendingFb      = ov.pendingFeedback  ?? ov.feedback?.pending ?? ov.totalFeedback;
@@ -268,8 +281,6 @@ function HomeTab({ user, sections, router, permissions }) {
               </span>
             </div>
           </div>
-
-          {/* Compact 2026 motif */}
           <div className="flex flex-col items-center select-none shrink-0" style={{ fontFamily: 'Georgia,serif' }}>
             <div style={{ fontSize:'clamp(2rem,6vw,3.5rem)', fontWeight:900, lineHeight:1,
               background:'linear-gradient(180deg,#ffe86a 0%,#f5a623 60%,#c84a00 100%)',
@@ -290,16 +301,14 @@ function HomeTab({ user, sections, router, permissions }) {
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard loading={loading} icon={Users}         label="Total Members"       value={formatNumber(totalMembers)}   color="#8B1A1A" />
-        <StatCard loading={loading} icon={Calendar}      label="Upcoming Events"     value={formatNumber(upcomingEvents)} color="#2980b9" />
-        <StatCard loading={loading} icon={MessageSquare} label="Pending Feedback"    value={formatNumber(pendingFb)}      color="#8e44ad" />
-        <StatCard loading={loading} icon={Bell}          label="Announcements"       value={formatNumber(totalAnn)}       color="#e74c3c" />
+        <StatCard loading={loading} icon={Users}         label="Total Members"    value={formatNumber(totalMembers)}   color="#8B1A1A" />
+        <StatCard loading={loading} icon={Calendar}      label="Upcoming Events"  value={formatNumber(upcomingEvents)} color="#2980b9" />
+        <StatCard loading={loading} icon={MessageSquare} label="Pending Feedback" value={formatNumber(pendingFb)}      color="#8e44ad" />
+        <StatCard loading={loading} icon={Bell}          label="Announcements"    value={formatNumber(totalAnn)}       color="#e74c3c" />
       </div>
 
       {/* ── Quick actions + Activity feed ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
-
-        {/* Quick actions */}
         <div className="lg:col-span-3">
           <SectionHeader title="Quick Actions" />
           {sections.length <= 1 ? (
@@ -330,7 +339,7 @@ function HomeTab({ user, sections, router, permissions }) {
           )}
         </div>
 
-        {/* Recent activity from getSystemAnalytics */}
+        {/* Recent activity */}
         <div className="lg:col-span-2">
           <SectionHeader title="Recent Activity" action={() => router.push('/portal/analytics')} actionLabel="View all" />
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
@@ -440,7 +449,7 @@ function HomeTab({ user, sections, router, permissions }) {
         )}
       </div>
 
-      {/* ── Feedback summary — only for users who can read feedback ── */}
+      {/* ── Feedback summary ── */}
       {canFeedback && (
         <div>
           <SectionHeader title="Feedback Overview" action={() => router.push('/portal/feedback')} actionLabel="Review all" />
@@ -463,7 +472,6 @@ function HomeTab({ user, sections, router, permissions }) {
                 { label: 'Prayer',     icon: HandHeart,     key: 'prayer',     color: '#2980b9' },
                 { label: 'Suggestion', icon: MessageSquare, key: 'suggestion', color: '#8e44ad' },
               ].map(({ label, icon: Icon, key, color }) => {
-                // Try multiple shapes the backend might return
                 const count = feedbackStats?.[key]?.total
                   ?? feedbackStats?.byCategory?.[key]
                   ?? feedbackStats?.categories?.[key]
@@ -490,232 +498,427 @@ function HomeTab({ user, sections, router, permissions }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// TAB 1 — EXPLORE (Analytics)
-// Fetches: getOverview, getContentAnalytics, getFinancialAnalytics,
-//          getUserAnalytics, getEngagementAnalytics
-// Gated by canViewAnalytics permission
+// LEADER CARD
 // ════════════════════════════════════════════════════════════════════════════
 
-function ExploreTab({ router, canViewAnalytics }) {
-  const [data,    setData]    = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(false);
+function LeaderCard({ leader }) {
+  const initials = (leader.name ?? '?')
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 hover:shadow-md transition-shadow flex flex-col gap-3">
+      {/* Avatar + identity */}
+      <div className="flex items-center gap-3">
+        {leader.avatar ? (
+          <img
+            src={leader.avatar}
+            alt={leader.name}
+            className="w-12 h-12 rounded-full object-cover border-2 border-slate-100 dark:border-slate-700 shrink-0"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0"
+            style={{ background: HOT_RED }}
+          >
+            {initials}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{leader.name}</p>
+          <p className="text-[11px] font-semibold" style={{ color: HOT_RED }}>{leader.title}</p>
+          {leader.ministry && (
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{leader.ministry}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Bio */}
+      {leader.bio && (
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{leader.bio}</p>
+      )}
+
+      {/* Contact buttons */}
+      <div className="flex flex-wrap gap-1.5">
+        {leader.whatsapp && (
+          <a
+            href={whatsappLink(leader.whatsapp)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
+            style={{ background: '#25D36618', color: '#25D366' }}
+          >
+            <WhatsAppIcon size={10} color="#25D366" /> WhatsApp
+          </a>
+        )}
+        {leader.phone && (
+          <a
+            href={`tel:${leader.phone.replace(/\s/g, '')}`}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
+            style={{ background: `${HOT_RED}15`, color: HOT_RED }}
+          >
+            <Phone size={10} /> Call
+          </a>
+        )}
+        {leader.email && (
+          <a
+            href={`mailto:${leader.email}`}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+          >
+            <Mail size={10} /> Email
+          </a>
+        )}
+        {leader.instagram && (
+          <a
+            href={leader.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
+            style={{ background: '#E4405F15', color: '#E4405F' }}
+          >
+            <Instagram size={10} /> IG
+          </a>
+        )}
+        {leader.facebook && (
+          <a
+            href={leader.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
+            style={{ background: '#1877F215', color: '#1877F2' }}
+          >
+            <Facebook size={10} /> FB
+          </a>
+        )}
+        {leader.twitter && (
+          <a
+            href={leader.twitter}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+          >
+            <Twitter size={10} /> X
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TAB 1 — CONNECT (was Explore)
+// Fetches church info from /api/settings/church-info (auth-gated, non-admin)
+// ════════════════════════════════════════════════════════════════════════════
+
+function ExploreTab({ router }) {
+  const [churchInfo, setChurchInfo] = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(false);
 
   const load = useCallback(async () => {
-    if (!canViewAnalytics) { setLoading(false); return; }
     setLoading(true);
     setError(false);
     try {
-      const [ov, ct, fi, us, en] = await Promise.all([
-        getOverview(),
-        getContentAnalytics(),
-        getFinancialAnalytics(),
-        getUserAnalytics(),
-        getEngagementAnalytics(),
-      ]);
-      // Services return response.data. Backend may additionally wrap in
-      // { success, data: {...} } — unwrap both shapes with helper.
-      const unwrap = (v) => v?.data ?? v ?? {};
-
-      // All analytics functions already return response.data directly
-      setData({
-        overview:   unwrap(ov),
-        content:    unwrap(ct),
-        financial:  unwrap(fi),
-        users:      unwrap(us),
-        engagement: unwrap(en),
-      });
+      const res  = await api.get('/settings/church-info');
+      const data = res.data?.churchInfo ?? res.data ?? {};
+      setChurchInfo(data);
     } catch (err) {
-      console.error('[ExploreTab] Analytics load error:', err);
+      console.error('[ConnectTab] Load error:', err);
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [canViewAnalytics]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  // ── No-access state ──
-  if (!canViewAnalytics) {
+  // ── Loading skeleton ──────────────────────────────────────────────────────
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Shield size={40} className="text-slate-200 dark:text-slate-700 mb-4" />
-        <h2 className="text-lg font-black text-slate-700 dark:text-slate-300 mb-2">Analytics Restricted</h2>
-        <p className="text-sm text-slate-400 max-w-xs">
-          You need the <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs">view:analytics</code> permission to access this section.
-        </p>
+      <div className="space-y-4 pb-6">
+        {/* Banner skeleton */}
+        <div className="bg-slate-200 dark:bg-slate-700 rounded-2xl animate-pulse h-36" />
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 animate-pulse">
+            <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-1/3 mb-4" />
+            <div className="space-y-2">
+              <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-2/3" />
+              <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-1/2" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
-  const ov = data.overview   ?? {};
-  const ct = data.content    ?? {};
-  const fi = data.financial  ?? {};
-  const us = data.users      ?? {};
-  const en = data.engagement ?? {};
+  // ── Error state ───────────────────────────────────────────────────────────
+  if (error || !churchInfo) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <AlertCircle size={32} className="text-slate-300 mb-3" />
+        <p className="text-sm text-slate-400 mb-3">Could not load church info</p>
+        <button
+          onClick={load}
+          className="flex items-center gap-1.5 text-xs font-bold"
+          style={{ color: HOT_RED }}
+        >
+          <RefreshCw size={12} /> Retry
+        </button>
+      </div>
+    );
+  }
 
-  // Build chart arrays — try several possible backend shapes
-  const memberGrowthData = (us.monthly ?? us.growth ?? us.timeline ?? []).map(item => ({
-    month:   item.month ? getMonthName(item.month) : (item.label ?? item.name ?? ''),
-    members: item.total ?? item.count ?? item.members ?? 0,
-  }));
+  const social    = churchInfo.socialMedia  ?? {};
+  const services  = churchInfo.serviceTimes ?? [];
+  const leaders   = churchInfo.leadership   ?? [];
+  const activeSocials = Object.entries(SOCIAL_META).filter(([key]) => social[key]);
 
-  const contentChartData = (ct.monthly ?? ct.monthlyContent ?? ct.timeline ?? []).map(item => ({
-    month:   item.month ? getMonthName(item.month) : (item.label ?? ''),
-    sermons: item.sermons ?? 0,
-    blogs:   item.blogs   ?? 0,
-    events:  item.events  ?? 0,
-  }));
-
-  const financialChartData = (fi.monthly ?? fi.monthlyGiving ?? fi.timeline ?? []).map(item => ({
-    month:  item.month ? getMonthName(item.month) : (item.label ?? ''),
-    amount: item.total ?? item.amount ?? item.giving ?? 0,
-  }));
-
-  const roleData = (us.byRole ?? us.roles ?? []).map((r, i) => ({
-    name:  r.role ?? r.name ?? `Role ${i + 1}`,
-    value: r.count ?? r.total ?? r.value ?? 0,
-    color: ['#8B1A1A','#c0392b','#d4a017','#2c3e50','#2980b9'][i % 5],
-  }));
+  const hasAnyContact = churchInfo.contactPhone
+    || churchInfo.contactEmail
+    || activeSocials.length > 0
+    || leaders.length > 0
+    || churchInfo.prayerLine
+    || churchInfo.counselingContact
+    || churchInfo.newMembersContact;
 
   return (
     <div className="space-y-6 pb-6">
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Analytics</p>
-        <h1 className="text-2xl md:text-3xl font-black">Ministry Insights</h1>
-        <p className="text-slate-400 text-sm mt-1">House of Transformation — Busia Campus</p>
+      {/* ── Church Identity Banner ────────────────────────────────────────── */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{ background: 'linear-gradient(135deg,#1a0505 0%,#4a0e0e 60%,#1a0505 100%)' }}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 60% 60% at 80% 40%,rgba(180,30,30,.35) 0%,transparent 70%)' }}
+        />
+        <div className="relative z-10 p-5 md:p-6">
+          <p className="text-red-300 text-[10px] font-black uppercase tracking-widest mb-1">
+            {churchInfo.siteTagline ?? 'Busia County, Kenya'}
+          </p>
+          <h1 className="text-white text-2xl md:text-3xl font-black leading-tight">
+            {churchInfo.siteName ?? 'House of Transformation'}
+          </h1>
+          {churchInfo.churchMotto && (
+            <p className="text-red-200 text-sm mt-2 italic">"{churchInfo.churchMotto}"</p>
+          )}
+          <div className="flex flex-wrap gap-2 mt-4">
+            {churchInfo.foundedYear && (
+              <span className="text-[10px] font-bold bg-white/15 text-white px-2.5 py-1 rounded-full">
+                Est. {churchInfo.foundedYear}
+              </span>
+            )}
+            {services.length > 0 && (
+              <span className="text-[10px] font-bold bg-white/15 text-white px-2.5 py-1 rounded-full">
+                {services.length} Service{services.length > 1 ? 's' : ''} / week
+              </span>
+            )}
+            {leaders.length > 0 && (
+              <span className="text-[10px] font-bold bg-white/15 text-white px-2.5 py-1 rounded-full">
+                {leaders.length} Leader{leaders.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      {error ? (
-        <ErrorRetry message="Could not load analytics. Check your connection and try again." onRetry={load} />
-      ) : (
-        <>
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <StatCard loading={loading} icon={Users}        label="Total Members"  value={formatNumber(ov.totalUsers ?? ov.users?.total)}                                          color="#8B1A1A" />
-            <StatCard loading={loading} icon={FileText}     label="Total Content"  value={formatNumber((ov.sermons?.total ?? 0) + (ov.blogs?.total ?? 0) + (ov.events?.total ?? 0) || ov.totalContent)} color="#8e44ad" />
-            <StatCard loading={loading} icon={DollarSign}   label="Total Raised"   value={fi.campaigns?.totalRaised ? `KES ${formatNumber(fi.campaigns.totalRaised)}` : '—'}        color="#27ae60" />
-            <StatCard loading={loading} icon={Heart}        label="Total Feedback" value={formatNumber(ov.totalFeedback ?? ov.feedback?.total ?? en.feedback?.total)}              color="#e74c3c" />
-          </div>
-
-          {/* Member growth line chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
-            <SectionHeader title="Member Growth" action={() => router.push('/portal/analytics')} actionLabel="Full report" />
-            {loading ? <ChartSkeleton height={200} /> : memberGrowthData.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-10">No growth data available</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={memberGrowthData} margin={{ top:5, right:10, left:-20, bottom:0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Line type="monotone" dataKey="members" name="Members" stroke={HOT_RED} strokeWidth={3}
-                    dot={{ fill:HOT_RED, r:4 }} activeDot={{ r:6, fill:HOT_RED }} />
-                </LineChart>
-              </ResponsiveContainer>
+      {/* ── Quick Contact ─────────────────────────────────────────────────── */}
+      {(churchInfo.contactPhone || churchInfo.contactEmail || churchInfo.contactAddress) && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
+          <SectionHeader title="Church Contact" />
+          <div className="flex flex-wrap gap-2">
+            {churchInfo.contactPhone && (
+              <a
+                href={`tel:${churchInfo.contactPhone.replace(/\s/g, '')}`}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 hover:border-[#8B1A1A] hover:shadow-sm transition-all"
+                style={{ color: HOT_RED }}
+              >
+                <Phone size={13} /> {churchInfo.contactPhone}
+              </a>
+            )}
+            {churchInfo.contactEmail && (
+              <a
+                href={`mailto:${churchInfo.contactEmail}`}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 hover:border-slate-400 hover:shadow-sm transition-all text-slate-700 dark:text-slate-200"
+              >
+                <Mail size={13} /> {churchInfo.contactEmail}
+              </a>
+            )}
+            {churchInfo.contactAddress && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400">
+                <MapPin size={13} /> {churchInfo.contactAddress}
+              </div>
             )}
           </div>
+        </div>
+      )}
 
-          {/* Content bar + Role donut */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-6">
-            <div className="md:col-span-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
-              <SectionHeader title="Content Published" />
-              {loading ? <ChartSkeleton height={200} /> : contentChartData.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-10">No content data available</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={contentChartData} margin={{ top:0, right:10, left:-20, bottom:0 }} barGap={4}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize:11 }} />
-                    <Bar dataKey="sermons" name="Sermons" fill={HOT_RED}  radius={[4,4,0,0]} />
-                    <Bar dataKey="blogs"   name="Blogs"   fill="#d4a017"  radius={[4,4,0,0]} />
-                    <Bar dataKey="events"  name="Events"  fill="#2980b9"  radius={[4,4,0,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            <div className="md:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
-              <SectionHeader title="Members by Role" />
-              {loading ? <ChartSkeleton height={140} /> : roleData.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-10">No role data</p>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height={140}>
-                    <PieChart>
-                      <Pie data={roleData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
-                        {roleData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                      </Pie>
-                      <Tooltip formatter={(v, n) => [v, n]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="space-y-1.5 mt-2">
-                    {roleData.slice(0, 5).map((r, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: r.color }} />
-                          <span className="text-xs text-slate-600 dark:text-slate-300 font-medium capitalize">{r.name}</span>
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 dark:text-white">{r.value}</span>
-                      </div>
-                    ))}
+      {/* ── Ministry Hotlines ─────────────────────────────────────────────── */}
+      {(churchInfo.prayerLine || churchInfo.counselingContact || churchInfo.newMembersContact) && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
+          <SectionHeader title="Ministry Hotlines" />
+          <div className="space-y-2">
+            {churchInfo.prayerLine && (
+              <a
+                href={`tel:${churchInfo.prayerLine.replace(/\s/g, '')}`}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-50 dark:border-slate-700/50 hover:border-red-200 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg" style={{ background: `${HOT_RED}15` }}>
+                    <Mic2 size={14} style={{ color: HOT_RED }} />
                   </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Donations bar chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
-            <SectionHeader title="Monthly Giving (KES)" action={() => router.push('/portal/donations')} actionLabel="Full report" />
-            {loading ? <ChartSkeleton height={180} /> : financialChartData.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-10">No financial data available</p>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={financialChartData} margin={{ top:0, right:10, left:-10, bottom:0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize:10, fill:'#94a3b8' }} axisLine={false} tickLine={false}
-                      tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
-                    <Tooltip formatter={v => [`KES ${Number(v).toLocaleString()}`, 'Giving']} />
-                    <Bar dataKey="amount" name="Giving" fill="#27ae60" radius={[5,5,0,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-
-                {/* Campaign summary row */}
-                {fi.campaigns && (
-                  <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                    {[
-                      { label: 'Active Campaigns',   value: fi.campaigns.active         ?? '—' },
-                      { label: 'Total Raised',        value: fi.campaigns.totalRaised    ? `KES ${formatNumber(fi.campaigns.totalRaised)}` : '—' },
-                      { label: 'Payments Verified',   value: fi.payments?.verified       ?? fi.payments?.total ?? '—' },
-                    ].map((s, i) => (
-                      <div key={i} className="text-center">
-                        <p className="text-sm md:text-base font-black text-slate-900 dark:text-white">{s.value}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{s.label}</p>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-white">Prayer Line</p>
+                    <p className="text-[10px] text-slate-400">24/7 intercessory prayer</p>
                   </div>
-                )}
-              </>
+                </div>
+                <span className="text-xs font-bold shrink-0 ml-2" style={{ color: HOT_RED }}>
+                  {churchInfo.prayerLine}
+                </span>
+              </a>
+            )}
+            {churchInfo.counselingContact && (
+              <a
+                href={`tel:${churchInfo.counselingContact.replace(/\s/g, '')}`}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-50 dark:border-slate-700/50 hover:border-purple-200 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <HeartHandshake size={14} className="text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-white">Pastoral Counseling</p>
+                    <p className="text-[10px] text-slate-400">Confidential pastoral support</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold shrink-0 ml-2 text-purple-600">
+                  {churchInfo.counselingContact}
+                </span>
+              </a>
+            )}
+            {churchInfo.newMembersContact && (
+              <a
+                href={`tel:${churchInfo.newMembersContact.replace(/\s/g, '')}`}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-50 dark:border-slate-700/50 hover:border-emerald-200 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <UserCircle2 size={14} className="text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-white">New Members Desk</p>
+                    <p className="text-[10px] text-slate-400">Orientation & onboarding</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold shrink-0 ml-2 text-emerald-600">
+                  {churchInfo.newMembersContact}
+                </span>
+              </a>
             )}
           </div>
+        </div>
+      )}
 
-          {/* Engagement overview row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard loading={loading} icon={Users}        label="Volunteers"     value={formatNumber(en.volunteers?.total ?? en.volunteers?.active)}   color="#27ae60" />
-            <StatCard loading={loading} icon={MessageSquare}label="Total Feedback" value={formatNumber(en.feedback?.total)}                               color="#8e44ad" />
-            <StatCard loading={loading} icon={Video}        label="Livestreams"    value={formatNumber(en.livestreams?.total)}                            color="#e74c3c" />
-            <StatCard loading={loading} icon={ImageIcon}    label="Gallery Photos" value={formatNumber(en.gallery?.total ?? en.photos?.total)}            color="#2980b9" />
+      {/* ── Social Media Hub ──────────────────────────────────────────────── */}
+      {activeSocials.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
+          <SectionHeader title="Follow Us" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {activeSocials.map(([key, meta]) => {
+              const href = key === 'whatsapp' ? whatsappLink(social[key]) : social[key];
+              return (
+                <a
+                  key={key}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:shadow-md hover:scale-[1.02] transition-all"
+                >
+                  <div className="p-2 rounded-lg shrink-0" style={{ background: meta.bg }}>
+                    {key === 'facebook'  && <Facebook  size={16} style={{ color: meta.color }} />}
+                    {key === 'instagram' && <Instagram size={16} style={{ color: meta.color }} />}
+                    {key === 'twitter'   && <Twitter   size={16} style={{ color: meta.color }} />}
+                    {key === 'youtube'   && <Youtube   size={16} style={{ color: meta.color }} />}
+                    {key === 'linkedin'  && <Linkedin  size={16} style={{ color: meta.color }} />}
+                    {key === 'whatsapp'  && <WhatsAppIcon size={16} color={meta.color} />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-800 dark:text-white truncate">{meta.label}</p>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                      View <ExternalLink size={9} />
+                    </p>
+                  </div>
+                </a>
+              );
+            })}
           </div>
-        </>
+        </div>
+      )}
+
+      {/* ── Service Schedule ──────────────────────────────────────────────── */}
+      {services.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
+          <SectionHeader title="Service Schedule" />
+          <div className="space-y-2">
+            {services.map((svc, i) => (
+              <div
+                key={i}
+                className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
+                  i === 0
+                    ? 'border-l-4 bg-slate-50 dark:bg-slate-700/30'
+                    : 'border border-slate-50 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700/20'
+                }`}
+                style={i === 0 ? { borderLeftColor: HOT_RED } : {}}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-lg shrink-0" style={{ background: `${HOT_RED}15` }}>
+                    <Clock size={13} style={{ color: HOT_RED }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 dark:text-white">{svc.name}</p>
+                    {svc.venue && (
+                      <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                        <MapPin size={9} /> {svc.venue}
+                      </p>
+                    )}
+                    {svc.description && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">{svc.description}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right shrink-0 ml-3">
+                  <p className="text-xs font-black text-slate-800 dark:text-white">{svc.day}</p>
+                  <p className="text-[10px] font-semibold" style={{ color: HOT_RED }}>{svc.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Leadership & Staff ────────────────────────────────────────────── */}
+      {leaders.length > 0 && (
+        <div>
+          <SectionHeader title="Leadership & Staff" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {leaders.map((leader, i) => (
+              <LeaderCard key={leader._id ?? i} leader={leader} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Empty state ───────────────────────────────────────────────────── */}
+      {!hasAnyContact && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-12 text-center">
+          <Globe size={32} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Church connect info not set up yet</p>
+          <p className="text-xs text-slate-400 mt-1">An admin can add this via Settings → General</p>
+        </div>
       )}
     </div>
   );
@@ -723,16 +926,13 @@ function ExploreTab({ router, canViewAnalytics }) {
 
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 2 — ANNOUNCEMENTS
-// Real API — logic kept identical to the original working implementation.
-// Uses: api.get('/announcements?page=&limit=10')
-//       api.post('/announcements/:id/read')
 // ════════════════════════════════════════════════════════════════════════════
 
 function AnnouncementsTab({ router }) {
-  const [announcements,       setAnnouncements]       = useState([]);
-  const [loadingAnnouncements,setLoadingAnnouncements] = useState(false);
-  const [announcementsPage,   setAnnouncementsPage]   = useState(1);
-  const [activeFilter,        setActiveFilter]         = useState('All');
+  const [announcements,        setAnnouncements]        = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [announcementsPage,    setAnnouncementsPage]    = useState(1);
+  const [activeFilter,         setActiveFilter]         = useState('All');
 
   const fetchAnnouncements = async () => {
     try {
@@ -846,11 +1046,9 @@ function AnnouncementsTab({ router }) {
                 {!a.isRead && (
                   <div className="absolute top-4 right-4 w-2 h-2 rounded-full" style={{ background: HOT_RED }} />
                 )}
-
                 <div className={`p-2.5 rounded-xl shrink-0 h-fit ${Cfg.bgClass}`}>
                   <Icon size={18} className={Cfg.colorClass} />
                 </div>
-
                 <div className="flex-1 min-w-0 pr-4">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: HOT_RED }}>
@@ -866,7 +1064,6 @@ function AnnouncementsTab({ router }) {
                   </h3>
                   <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed">{a.content}</p>
                 </div>
-
                 {!a.isRead && (
                   <button
                     onClick={e => { e.stopPropagation(); markAsRead(a._id); }}
@@ -887,7 +1084,6 @@ function AnnouncementsTab({ router }) {
 
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 3 — PROFILE
-// Uses: user from AuthContext (immediate) + getMyProfile() for extended data
 // ════════════════════════════════════════════════════════════════════════════
 
 function ProfileTab({ user, router }) {
@@ -895,13 +1091,12 @@ function ProfileTab({ user, router }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // getMyProfile() returns response.data; backend may wrap in { success, data, user }
     getMyProfile()
       .then(res => {
         const unwrapped = res?.data ?? res ?? {};
         setProfile(unwrapped?.user ?? unwrapped);
       })
-      .catch(() => { /* fall back gracefully to user from AuthContext */ })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -917,7 +1112,6 @@ function ProfileTab({ user, router }) {
 
   const permissions = Array.isArray(user?.role?.permissions) ? user.role.permissions : [];
 
-  // Group permissions into readable buckets
   const permGroups = {
     Management:    permissions.filter(p => p.startsWith('manage:')),
     'View Access': permissions.filter(p => p.startsWith('view:')),
@@ -933,7 +1127,6 @@ function ProfileTab({ user, router }) {
     Donations:     { bg:'bg-green-50 dark:bg-green-950/40',text:'text-green-700 dark:text-green-400', dot:'bg-green-500'  },
   };
 
-  // Strip permission prefixes to produce a human-readable label
   const permLabel = p =>
     p.replace(/^(manage:|view:|read:|respond:|publish:|archive:|approve:|create:|verify:|edit:|delete:|activate:|feature:|process:)/,'')
      .replace(/:feedback$/, '').replace(/[_:]/g, ' ').trim();
@@ -1015,7 +1208,7 @@ function ProfileTab({ user, router }) {
         </div>
       </div>
 
-      {/* Permissions — grouped and human-readable */}
+      {/* Permissions */}
       {permissions.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
           <SectionHeader title="Your Permissions" />
@@ -1074,27 +1267,27 @@ function ProfileTab({ user, router }) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function PortalDashboardClient() {
-  const { user }              = useAuth();
-  const permissions           = usePermissions();
+  const { user }                                  = useAuth();
+  const permissions                               = usePermissions();
   const { getAccessibleSections, canViewAnalytics } = permissions;
-  const router                = useRouter();
-  const [currentPage, setCurrentPage] = useState(0);
-  const sections              = getAccessibleSections();
+  const router                                    = useRouter();
+  const [currentPage, setCurrentPage]             = useState(0);
+  const sections                                  = getAccessibleSections();
 
   const NAV = [
-    { icon: Home,       label: 'Home'    },
-    { icon: TrendingUp, label: 'Explore' },
-    { icon: Bell,       label: 'Updates' },
-    { icon: User,       label: 'Profile' },
+    { icon: Home,    label: 'Home'    },
+    { icon: Users,   label: 'Connect' },
+    { icon: Bell,    label: 'Updates' },
+    { icon: User,    label: 'Profile' },
   ];
 
   return (
     <div className="pb-24 md:pb-0">
 
-      {/* Tab content — conditionally rendered (not mounted when hidden) */}
+      {/* Tab content */}
       <div className="min-h-[calc(100vh-180px)]">
         {currentPage === 0 && <HomeTab          user={user} sections={sections} router={router} permissions={permissions} />}
-        {currentPage === 1 && <ExploreTab       router={router} canViewAnalytics={canViewAnalytics()} />}
+        {currentPage === 1 && <ExploreTab       key={currentPage} router={router} />}
         {currentPage === 2 && <AnnouncementsTab router={router} />}
         {currentPage === 3 && <ProfileTab       user={user} router={router} />}
       </div>

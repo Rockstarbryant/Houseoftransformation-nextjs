@@ -1,4 +1,4 @@
-// src/components/donations/EnhancedAdminPledgeTable.jsx - REDESIGNED
+// src/components/donations/EnhancedAdminPledgeTable.jsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Edit, Trash2, Eye, Download, AlertCircle, ChevronUp, ChevronDown, 
   Printer, History, Filter, X as CloseIcon, AlertTriangle, Info, 
-  Search, DollarSign, X  // ✅ ADD X here
+  Search, DollarSign, X, Bell, CheckCircle
 } from 'lucide-react';
 import { donationApi } from '@/services/api/donationService';
 import { formatCurrency, formatDateShort, getStatusBadge } from '@/utils/donationHelpers';
@@ -14,20 +14,19 @@ import EditPledgeModal from './EditPledgeModal';
 import ManualPaymentModal from './ManualPaymentModal';
 import PledgeHistoryModal from './PledgeHistoryModal';
 
-// Modern Confirmation Dialog
+// ─── Confirmation Dialog (unchanged) ────────────────────────────────────────
 function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'warning', confirmText = 'Confirm', isLoading = false }) {
   if (!isOpen) return null;
 
   const typeStyles = {
     warning: 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-    danger: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400',
-    info: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+    danger:  'bg-red-100  dark:bg-red-900/20  text-red-600  dark:text-red-400',
+    info:    'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
   };
-
   const typeIcons = {
     warning: <AlertTriangle className="w-6 h-6" />,
-    danger: <AlertCircle className="w-6 h-6" />,
-    info: <Info className="w-6 h-6" />
+    danger:  <AlertCircle   className="w-6 h-6" />,
+    info:    <Info          className="w-6 h-6" />
   };
 
   return (
@@ -39,12 +38,8 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
               {typeIcons[type]}
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">
-                {title}
-              </h3>
-              <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-line">
-                {message}
-              </p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{title}</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-line">{message}</p>
             </div>
           </div>
         </div>
@@ -60,12 +55,12 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
             onClick={onConfirm}
             disabled={isLoading}
             className={`px-4 py-2.5 text-sm font-bold text-white rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 ${
-              type === 'danger' 
-                ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30' 
+              type === 'danger'
+                ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30'
                 : 'bg-[#8B1A1A] hover:bg-[#6d1414] shadow-lg shadow-rose-500/30'
             }`}
           >
-            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+            {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />}
             {confirmText}
           </button>
         </div>
@@ -74,101 +69,113 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'war
   );
 }
 
+// ─── Send Reminders Result Toast ─────────────────────────────────────────────
+function ReminderToast({ result, onClose }) {
+  if (!result) return null;
+  const isSuccess = result.success;
+  return (
+    <div className={`fixed bottom-6 right-6 z-[100] flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-5 duration-300 max-w-sm ${
+      isSuccess
+        ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+        : 'bg-rose-50   dark:bg-rose-950/80   border-rose-200   dark:border-rose-800   text-rose-800   dark:text-rose-200'
+    }`}>
+      <div className="mt-0.5">
+        {isSuccess ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-sm">{isSuccess ? 'Reminders Queued!' : 'Failed to Queue Reminders'}</p>
+        <p className="text-xs mt-0.5 opacity-80">{result.message}</p>
+      </div>
+      <button onClick={onClose} className="opacity-60 hover:opacity-100 transition-opacity">
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTrigger = 0 }) {
   const queryClient = useQueryClient();
-  
-  const [selectedPledges, setSelectedPledges] = useState([]);
-  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, action: null, pledgeId: null });
-  
-  // Filter states
-  const [filterPledgeStatus, setFilterPledgeStatus] = useState('all');
-  const [filterCampaign, setFilterCampaign] = useState('all');
-  const [filterPaymentMethod, setFilterPaymentMethod] = useState('all');
-  const [filterOverdueOnly, setFilterOverdueOnly] = useState(false);
-  const [filterAmountMin, setFilterAmountMin] = useState('');
-  const [filterAmountMax, setFilterAmountMax] = useState('');
-  
-  // Modal states
-  const [editingPledge, setEditingPledge] = useState(null);
-  const [recordingPaymentFor, setRecordingPaymentFor] = useState(null);
-  const [viewingHistoryFor, setViewingHistoryFor] = useState(null);
 
-  // Fetch pledges
+  const [selectedPledges,      setSelectedPledges]      = useState([]);
+  const [sortConfig,           setSortConfig]            = useState({ key: 'created_at', direction: 'desc' });
+  const [searchTerm,           setSearchTerm]            = useState('');
+  const [showAdvancedFilters,  setShowAdvancedFilters]   = useState(false);
+  const [confirmDialog,        setConfirmDialog]         = useState({ isOpen: false, action: null, pledgeId: null });
+
+  // ✅ NEW: reminder state
+  const [isSendingReminders,   setIsSendingReminders]   = useState(false);
+  const [reminderResult,       setReminderResult]        = useState(null);
+  const [showReminderConfirm,  setShowReminderConfirm]  = useState(false);
+
+  // Filter states
+  const [filterPledgeStatus,   setFilterPledgeStatus]   = useState('all');
+  const [filterCampaign,       setFilterCampaign]       = useState('all');
+  const [filterPaymentMethod,  setFilterPaymentMethod]  = useState('all');
+  const [filterOverdueOnly,    setFilterOverdueOnly]    = useState(false);
+  const [filterAmountMin,      setFilterAmountMin]      = useState('');
+  const [filterAmountMax,      setFilterAmountMax]      = useState('');
+
+  // Modal states
+  const [editingPledge,        setEditingPledge]        = useState(null);
+  const [recordingPaymentFor,  setRecordingPaymentFor]  = useState(null);
+  const [viewingHistoryFor,    setViewingHistoryFor]    = useState(null);
+
+  // ─── Data queries (unchanged) ──────────────────────────────────────────────
   const { data: pledges = [], isLoading, error } = useQuery({
     queryKey: ['pledges', campaignId, refreshTrigger],
     queryFn: async () => {
-      let response;
-      if (campaignId) {
-        response = await donationApi.pledges.getCampaignPledges(campaignId);
-      } else {
-        response = await donationApi.pledges.getAllPledges();
-      }
-
-      if (response.success && response.pledges) {
-        return response.pledges;
-      }
+      const response = campaignId
+        ? await donationApi.pledges.getCampaignPledges(campaignId)
+        : await donationApi.pledges.getAllPledges();
+      if (response.success && response.pledges) return response.pledges;
       throw new Error(response.message || 'Failed to fetch pledges');
     },
     staleTime: 30000,
     refetchOnWindowFocus: true,
   });
 
-  // Fetch campaigns
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
       const response = await donationApi.campaigns.getAll();
-      if (response.success && response.campaigns) {
-        return response.campaigns;
-      }
-      return [];
+      return response.success ? (response.campaigns || []) : [];
     },
     staleTime: 60000,
   });
 
-  // Fetch users
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
       const response = await fetch('/api/users');
       const data = await response.json();
-      if (data.success && data.users) {
-        return data.users;
-      }
-      return [];
+      return data.success ? (data.users || []) : [];
     },
     staleTime: 300000,
   });
 
-  // Fetch payments map
   const { data: paymentsMap = {} } = useQuery({
     queryKey: ['payments-map'],
     queryFn: async () => {
       const { success, payments: allPayments } = await donationApi.payments.getAll({ limit: 10000 });
-      
-      if (success && allPayments) {
-        const paymentMap = {};
-        allPayments.forEach(payment => {
-          if (payment.pledge_id) {
-            if (!paymentMap[payment.pledge_id] || 
-                new Date(payment.created_at) > new Date(paymentMap[payment.pledge_id].created_at)) {
-              paymentMap[payment.pledge_id] = payment;
-            }
+      if (!success || !allPayments) return {};
+      const paymentMap = {};
+      allPayments.forEach(payment => {
+        if (payment.pledge_id) {
+          if (!paymentMap[payment.pledge_id] ||
+              new Date(payment.created_at) > new Date(paymentMap[payment.pledge_id].created_at)) {
+            paymentMap[payment.pledge_id] = payment;
           }
-        });
-        return paymentMap;
-      }
-      return {};
+        }
+      });
+      return paymentMap;
     },
     enabled: pledges.length > 0,
     staleTime: 30000,
     refetchOnWindowFocus: true,
   });
 
-  // Mutations
+  // ─── Mutations (unchanged) ─────────────────────────────────────────────────
   const cancelMutation = useMutation({
     mutationFn: (pledgeId) => donationApi.pledges.cancel(pledgeId),
     onSuccess: (response, pledgeId) => {
@@ -181,64 +188,69 @@ export default function EnhancedAdminPledgeTable({ campaignId = null, refreshTri
         alert(response.message || 'Failed to cancel pledge');
       }
     },
-    onError: (error) => {
-      alert('Error cancelling pledge: ' + error.message);
-    },
+    onError: (error) => alert('Error cancelling pledge: ' + error.message),
   });
 
   const deleteMutation = useMutation({
-  mutationFn: (pledgeId) => donationApi.pledges.delete(pledgeId),
-  onSuccess: (response, pledgeId) => {
-    if (response.success) {
-      queryClient.setQueryData(['pledges', campaignId, refreshTrigger], (old) =>
-        old.filter(p => p.id !== pledgeId)
-      );
-      queryClient.invalidateQueries({ queryKey: ['pledges'] });
-      setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
-    } else {
-      alert(response.message || 'Failed to delete pledge');
-    }
-  },
-  onError: (error) => {
-    alert('Error deleting pledge: ' + error.message);
-  },
-});
+    mutationFn: (pledgeId) => donationApi.pledges.delete(pledgeId),
+    onSuccess: (response, pledgeId) => {
+      if (response.success) {
+        queryClient.setQueryData(['pledges', campaignId, refreshTrigger], (old) =>
+          old.filter(p => p.id !== pledgeId)
+        );
+        queryClient.invalidateQueries({ queryKey: ['pledges'] });
+        setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+      } else {
+        alert(response.message || 'Failed to delete pledge');
+      }
+    },
+    onError: (error) => alert('Error deleting pledge: ' + error.message),
+  });
 
-const uncancelMutation = useMutation({
-  mutationFn: (pledgeId) => donationApi.pledges.uncancel(pledgeId),
-  onSuccess: (response) => {
-    if (response.success) {
-      queryClient.invalidateQueries({ queryKey: ['pledges'] });
+  const uncancelMutation = useMutation({
+    mutationFn: (pledgeId) => donationApi.pledges.uncancel(pledgeId),
+    onSuccess: (response) => {
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['pledges'] });
+        setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+      } else {
+        alert(response.message || 'Failed to restore pledge');
+        setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
+      }
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || error.message || 'Error restoring pledge');
       setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
-    } else {
-      // Show the actual error message from the server
-      alert(response.message || 'Failed to restore pledge');
-      setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
-    }
-  },
-  onError: (error) => {
-    // Parse error response
-    const errorMessage = error.response?.data?.message || error.message || 'Error restoring pledge';
-    alert(errorMessage);
-    setConfirmDialog({ isOpen: false, action: null, pledgeId: null });
-  },
-});
+    },
+  });
 
-  // Helper functions
-  const getUserName = (userId) => {
-    if (!userId) return 'N/A';
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      return user.full_name || user.email || 'Unknown User';
+  // ✅ NEW: Send reminders handler
+  const handleSendReminders = async () => {
+    setShowReminderConfirm(false);
+    setIsSendingReminders(true);
+    setReminderResult(null);
+    try {
+      const response = await donationApi.pledges.sendReminders();
+      setReminderResult({
+        success: response.success,
+        message: response.success
+          ? (response.message || 'Reminders have been queued. Members will be notified shortly.')
+          : (response.message || 'Failed to queue reminders.')
+      });
+    } catch (err) {
+      setReminderResult({
+        success: false,
+        message: err.response?.data?.message || err.message || 'An unexpected error occurred.'
+      });
+    } finally {
+      setIsSendingReminders(false);
     }
-    return 'Unknown User';
   };
 
+  // ─── Helpers (unchanged) ──────────────────────────────────────────────────
   const getCampaignTitle = (pledge) => {
     if (!pledge) return 'General';
-    if (pledge.campaign_title && pledge.campaign_title !== 'Unknown Campaign') {
-      return pledge.campaign_title;
-    }
+    if (pledge.campaign_title && pledge.campaign_title !== 'Unknown Campaign') return pledge.campaign_title;
     const campaign = campaigns.find(c => c.supabaseId === pledge.campaign_id);
     return campaign?.title || 'General Offering';
   };
@@ -248,41 +260,28 @@ const uncancelMutation = useMutation({
     return new Date(pledge.due_date) < new Date();
   };
 
-  // Sorting
+  // ─── Sorting (unchanged) ───────────────────────────────────────────────────
   const sortedPledges = useMemo(() => {
     if (!pledges) return [];
-    let sorted = [...pledges];
-    
+    const sorted = [...pledges];
     if (sortConfig.key) {
       sorted.sort((a, b) => {
-        let aVal = a[sortConfig.key];
-        let bVal = b[sortConfig.key];
-        
-        if (sortConfig.key === 'campaign_title') {
-          aVal = getCampaignTitle(a);
-          bVal = getCampaignTitle(b);
-        }
-        
+        let aVal = sortConfig.key === 'campaign_title' ? getCampaignTitle(a) : a[sortConfig.key];
+        let bVal = sortConfig.key === 'campaign_title' ? getCampaignTitle(b) : b[sortConfig.key];
         if (aVal === null || aVal === undefined) aVal = '';
         if (bVal === null || bVal === undefined) bVal = '';
-        
         if (typeof aVal === 'string') {
-          return sortConfig.direction === 'asc'
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
+          return sortConfig.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         }
-        
         return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
       });
     }
-    
     return sorted;
   }, [pledges, sortConfig, campaigns]);
 
-  // Filtering
+  // ─── Filtering (unchanged) ────────────────────────────────────────────────
   const processedPledges = useMemo(() => {
     let filtered = sortedPledges;
-
     if (searchTerm) {
       filtered = filtered.filter(p =>
         p.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -291,104 +290,45 @@ const uncancelMutation = useMutation({
         getCampaignTitle(p).toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    if (filterPledgeStatus !== 'all') {
-      filtered = filtered.filter(p => p.status === filterPledgeStatus);
-    }
-
-    if (filterCampaign !== 'all') {
-      filtered = filtered.filter(p => p.campaign_id === filterCampaign);
-    }
-
-    if (filterPaymentMethod !== 'all') {
-      filtered = filtered.filter(p => {
-        const payment = paymentsMap[p.id];
-        return payment?.payment_method === filterPaymentMethod;
-      });
-    }
-
-    if (filterOverdueOnly) {
-      filtered = filtered.filter(p => isOverdue(p));
-    }
-
-    if (filterAmountMin) {
-      filtered = filtered.filter(p => p.pledged_amount >= parseFloat(filterAmountMin));
-    }
-
-    if (filterAmountMax) {
-      filtered = filtered.filter(p => p.pledged_amount <= parseFloat(filterAmountMax));
-    }
-
+    if (filterPledgeStatus !== 'all')  filtered = filtered.filter(p => p.status === filterPledgeStatus);
+    if (filterCampaign !== 'all')      filtered = filtered.filter(p => p.campaign_id === filterCampaign);
+    if (filterPaymentMethod !== 'all') filtered = filtered.filter(p => paymentsMap[p.id]?.payment_method === filterPaymentMethod);
+    if (filterOverdueOnly)             filtered = filtered.filter(p => isOverdue(p));
+    if (filterAmountMin)               filtered = filtered.filter(p => p.pledged_amount >= parseFloat(filterAmountMin));
+    if (filterAmountMax)               filtered = filtered.filter(p => p.pledged_amount <= parseFloat(filterAmountMax));
     return filtered;
   }, [sortedPledges, searchTerm, filterPledgeStatus, filterCampaign, filterPaymentMethod, filterOverdueOnly, filterAmountMin, filterAmountMax, paymentsMap]);
 
-  // Handle sort
   const handleSort = (key) => {
-    setSortConfig(prevConfig => ({
-      key,
-      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
-    }));
+    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
   };
 
-  // Handle select all
   const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedPledges(processedPledges.map(p => p.id));
-    } else {
-      setSelectedPledges([]);
-    }
+    setSelectedPledges(e.target.checked ? processedPledges.map(p => p.id) : []);
   };
 
-  // Handle cancel pledge
   const handleCancelPledge = (pledgeId) => {
-    setConfirmDialog({
-      isOpen: true,
-      action: 'cancel',
-      pledgeId,
-      title: 'Cancel Pledge?',
-      message: 'Are you sure you want to cancel this pledge? This action cannot be undone.',
-      type: 'danger'
-    });
+    setConfirmDialog({ isOpen: true, action: 'cancel', pledgeId, title: 'Cancel Pledge?', message: 'Are you sure you want to cancel this pledge? This action cannot be undone.', type: 'danger' });
   };
 
   const handleDeletePledge = (pledge) => {
-  if (pledge.status !== 'cancelled') {
-    alert('Only cancelled pledges can be deleted. Please cancel this pledge first.');
-    return;
-  }
-  
-  setConfirmDialog({
-    isOpen: true,
-    action: 'delete',
-    pledgeId: pledge.id,
-    title: 'Delete Pledge Permanently?',
-    message: `Are you sure you want to permanently delete the pledge by ${pledge.member_name}?\n\nThis action cannot be undone and will remove all pledge records.`,
-    type: 'danger'
-  });
-};
+    if (pledge.status !== 'cancelled') {
+      alert('Only cancelled pledges can be deleted. Please cancel this pledge first.');
+      return;
+    }
+    setConfirmDialog({ isOpen: true, action: 'delete', pledgeId: pledge.id, title: 'Delete Pledge Permanently?', message: `Are you sure you want to permanently delete the pledge by ${pledge.member_name}?\n\nThis action cannot be undone.`, type: 'danger' });
+  };
 
-const handleUncancelPledge = (pledge) => {
-  setConfirmDialog({
-    isOpen: true,
-    action: 'uncancel',
-    pledgeId: pledge.id,
-    title: 'Restore Cancelled Pledge?',
-    message: `Restore the pledge by ${pledge.member_name}? The pledge status will be updated based on payment progress.`,
-    type: 'info'
-  });
-};
+  const handleUncancelPledge = (pledge) => {
+    setConfirmDialog({ isOpen: true, action: 'uncancel', pledgeId: pledge.id, title: 'Restore Cancelled Pledge?', message: `Restore the pledge by ${pledge.member_name}? The pledge status will be updated based on payment progress.`, type: 'info' });
+  };
 
   const handleConfirmAction = () => {
-  if (confirmDialog.action === 'cancel' && confirmDialog.pledgeId) {
-    cancelMutation.mutate(confirmDialog.pledgeId);
-  } else if (confirmDialog.action === 'delete' && confirmDialog.pledgeId) {
-    deleteMutation.mutate(confirmDialog.pledgeId);
-  } else if (confirmDialog.action === 'uncancel' && confirmDialog.pledgeId) {
-    uncancelMutation.mutate(confirmDialog.pledgeId);
-  }
-};
+    if (confirmDialog.action === 'cancel')   cancelMutation.mutate(confirmDialog.pledgeId);
+    if (confirmDialog.action === 'delete')   deleteMutation.mutate(confirmDialog.pledgeId);
+    if (confirmDialog.action === 'uncancel') uncancelMutation.mutate(confirmDialog.pledgeId);
+  };
 
-  // Reset filters
   const resetFilters = () => {
     setSearchTerm('');
     setFilterPledgeStatus('all');
@@ -399,27 +339,20 @@ const handleUncancelPledge = (pledge) => {
     setFilterAmountMax('');
   };
 
-  // Export CSV
   const handleExportCSV = () => {
     const csv = [
       ['Name', 'Campaign', 'Email', 'Phone', 'Pledged', 'Paid', 'Balance', 'Status', 'Due Date'],
       ...processedPledges.map(p => [
-        p.member_name,
-        getCampaignTitle(p),
-        p.member_email,
-        p.member_phone,
-        p.pledged_amount,
-        p.paid_amount,
-        p.remaining_amount,
-        p.status,
+        p.member_name, getCampaignTitle(p), p.member_email, p.member_phone,
+        p.pledged_amount, p.paid_amount, p.remaining_amount, p.status,
         p.due_date ? new Date(p.due_date).toLocaleDateString() : 'N/A'
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = `pledges-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
@@ -436,8 +369,12 @@ const handleUncancelPledge = (pledge) => {
     );
   }
 
+  // ─── Count pending/partial pledges for reminder button badge ──────────────
+  const pendingCount = pledges.filter(p => p.status === 'pending' || p.status === 'partial').length;
+
   return (
     <div className="space-y-6">
+
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
@@ -467,6 +404,7 @@ const handleUncancelPledge = (pledge) => {
       {/* Search & Filters Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
         <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
+
           {/* Search */}
           <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -480,7 +418,33 @@ const handleUncancelPledge = (pledge) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+
+            {/* ✅ NEW: Send Reminders button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowReminderConfirm(true)}
+                disabled={isSendingReminders || pendingCount === 0}
+                title={pendingCount === 0 ? 'No pending pledges to remind' : `Send reminders to ${pendingCount} members with pending/partial pledges`}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+              >
+                {isSendingReminders ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                ) : (
+                  <Bell size={18} />
+                )}
+                <span className="hidden sm:inline">
+                  {isSendingReminders ? 'Queuing...' : 'Send Reminders'}
+                </span>
+                {/* Badge showing pending count */}
+                {pendingCount > 0 && !isSendingReminders && (
+                  <span className="ml-1 bg-white text-amber-600 text-xs font-black rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingCount > 99 ? '99+' : pendingCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
@@ -492,7 +456,7 @@ const handleUncancelPledge = (pledge) => {
               <Filter size={18} />
               Filters
             </button>
-            
+
             <button
               onClick={handleExportCSV}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
@@ -558,7 +522,6 @@ const handleUncancelPledge = (pledge) => {
                 <option value="cash">Cash</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Min Amount</label>
               <input
@@ -569,7 +532,6 @@ const handleUncancelPledge = (pledge) => {
                 className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none"
               />
             </div>
-
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Max Amount</label>
               <input
@@ -580,7 +542,6 @@ const handleUncancelPledge = (pledge) => {
                 className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#8B1A1A] outline-none"
               />
             </div>
-
             <div className="flex items-end">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -600,7 +561,7 @@ const handleUncancelPledge = (pledge) => {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A]" />
           </div>
         ) : processedPledges.length === 0 ? (
           <div className="text-center py-12">
@@ -629,70 +590,55 @@ const handleUncancelPledge = (pledge) => {
                       className="rounded w-4 h-4 text-[#8B1A1A] focus:ring-[#8B1A1A]"
                     />
                   </th>
-                  <th 
-                    className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('member_name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Name
-                      {sortConfig.key === 'member_name' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('campaign_title')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Campaign
-                      {sortConfig.key === 'campaign_title' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-                      )}
-                    </div>
-                  </th>
+                  {[
+                    { key: 'member_name',    label: 'Name' },
+                    { key: 'campaign_title', label: 'Campaign' },
+                  ].map(col => (
+                    <th key={col.key}
+                      className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {col.label}
+                        {sortConfig.key === col.key && (
+                          sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                        )}
+                      </div>
+                    </th>
+                  ))}
                   <th className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300">Contact</th>
-                  <th 
-                    className="px-4 py-4 text-right font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('pledged_amount')}
-                  >
-                    <div className="flex items-center justify-end gap-2">
-                      Pledged
-                      {sortConfig.key === 'pledged_amount' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-4 text-right font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('paid_amount')}
-                  >
-                    <div className="flex items-center justify-end gap-2">
-                      Paid
-                      {sortConfig.key === 'paid_amount' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-                      )}
-                    </div>
-                  </th>
+                  {[
+                    { key: 'pledged_amount', label: 'Pledged', right: true },
+                    { key: 'paid_amount',    label: 'Paid',    right: true },
+                  ].map(col => (
+                    <th key={col.key}
+                      className={`px-4 py-4 font-black text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${col.right ? 'text-right' : ''}`}
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <div className={`flex items-center gap-2 ${col.right ? 'justify-end' : ''}`}>
+                        {col.label}
+                        {sortConfig.key === col.key && (
+                          sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                        )}
+                      </div>
+                    </th>
+                  ))}
                   <th className="px-4 py-4 text-right font-black text-slate-700 dark:text-slate-300">Balance</th>
-                  <th className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300">Status</th>
-                  <th className="px-4 py-4 text-left font-black text-slate-700 dark:text-slate-300">Due Date</th>
+                  <th className="px-4 py-4 text-left  font-black text-slate-700 dark:text-slate-300">Status</th>
+                  <th className="px-4 py-4 text-left  font-black text-slate-700 dark:text-slate-300">Due Date</th>
                   <th className="px-4 py-4 text-center font-black text-slate-700 dark:text-slate-300">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {processedPledges.map(pledge => {
-                  const badge = getStatusBadge(pledge.status);
-                  const overdue = isOverdue(pledge);
-                  const payment = paymentsMap[pledge.id];
+                  const badge       = getStatusBadge(pledge.status);
+                  const overdue     = isOverdue(pledge);
                   const campaignName = getCampaignTitle(pledge);
 
                   return (
-                    <tr 
-                      key={pledge.id} 
-                      className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
-                        overdue ? 'bg-rose-50 dark:bg-rose-950/20' : ''
-                      }`}
+                    <tr
+                      key={pledge.id}
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${overdue ? 'bg-rose-50 dark:bg-rose-950/20' : ''}`}
                     >
                       <td className="px-4 py-4">
                         <input
@@ -748,37 +694,36 @@ const handleUncancelPledge = (pledge) => {
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => setEditingPledge(pledge)}
+                            disabled={pledge.status === 'cancelled' || uncancelMutation.isPending || deleteMutation.isPending}
                             className="p-2 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Edit pledge"
-                            disabled={pledge.status === 'cancelled' || uncancelMutation.isPending || deleteMutation.isPending}
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => setRecordingPaymentFor(pledge)}
+                            disabled={pledge.status === 'cancelled' || pledge.status === 'completed' || uncancelMutation.isPending || deleteMutation.isPending}
                             className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 rounded-lg transition-colors text-emerald-600 dark:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Record payment"
-                            disabled={pledge.status === 'cancelled' || pledge.status === 'completed' || uncancelMutation.isPending || deleteMutation.isPending}
                           >
                             <DollarSign size={16} />
                           </button>
                           <button
                             onClick={() => setViewingHistoryFor(pledge)}
+                            disabled={uncancelMutation.isPending || deleteMutation.isPending}
                             className="p-2 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-lg transition-colors text-purple-600 dark:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="View history"
-                            disabled={uncancelMutation.isPending || deleteMutation.isPending}
                           >
                             <History size={16} />
                           </button>
-                          
-                          {/* Show Uncancel button for cancelled pledges */}
+
                           {pledge.status === 'cancelled' ? (
                             <>
                               <button
                                 onClick={() => handleUncancelPledge(pledge)}
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
                                 className="p-2 hover:bg-amber-100 dark:hover:bg-amber-950/50 rounded-lg transition-colors text-amber-600 dark:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Restore pledge"
-                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
@@ -789,9 +734,9 @@ const handleUncancelPledge = (pledge) => {
                               </button>
                               <button
                                 onClick={() => handleDeletePledge(pledge)}
+                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
                                 className="p-2 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition-colors text-rose-600 dark:text-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Delete pledge permanently"
-                                disabled={uncancelMutation.isPending || deleteMutation.isPending}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -799,9 +744,9 @@ const handleUncancelPledge = (pledge) => {
                           ) : (
                             <button
                               onClick={() => handleCancelPledge(pledge.id)}
+                              disabled={cancelMutation.isPending || uncancelMutation.isPending || deleteMutation.isPending}
                               className="p-2 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg transition-colors text-rose-600 dark:text-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Cancel pledge"
-                              disabled={cancelMutation.isPending || uncancelMutation.isPending || deleteMutation.isPending}
                             >
                               <X size={16} />
                             </button>
@@ -829,7 +774,6 @@ const handleUncancelPledge = (pledge) => {
           }}
         />
       )}
-
       {recordingPaymentFor && (
         <ManualPaymentModal
           pledge={recordingPaymentFor}
@@ -841,7 +785,6 @@ const handleUncancelPledge = (pledge) => {
           }}
         />
       )}
-
       {viewingHistoryFor && (
         <PledgeHistoryModal
           pledge={viewingHistoryFor}
@@ -849,6 +792,19 @@ const handleUncancelPledge = (pledge) => {
         />
       )}
 
+      {/* ✅ NEW: Confirm reminder blast dialog */}
+      <ConfirmDialog
+        isOpen={showReminderConfirm}
+        onClose={() => setShowReminderConfirm(false)}
+        onConfirm={handleSendReminders}
+        title="Send Payment Reminders?"
+        message={`This will immediately send a reminder to all ${pendingCount} member${pendingCount !== 1 ? 's' : ''} with pending or partial pledges.\n\nThey will receive their configured channels (email/SMS) regardless of their scheduled reminder date.\n\nContinue?`}
+        type="warning"
+        confirmText="Send Reminders"
+        isLoading={isSendingReminders}
+      />
+
+      {/* Existing confirm dialog for pledge actions */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, action: null, pledgeId: null })}
@@ -856,7 +812,13 @@ const handleUncancelPledge = (pledge) => {
         title={confirmDialog.title}
         message={confirmDialog.message}
         type={confirmDialog.type}
-        isLoading={cancelMutation.isPending || deleteMutation.isPending || uncancelMutation.isPending}  // ✅ UPDATE THIS
+        isLoading={cancelMutation.isPending || deleteMutation.isPending || uncancelMutation.isPending}
+      />
+
+      {/* ✅ NEW: Result toast */}
+      <ReminderToast
+        result={reminderResult}
+        onClose={() => setReminderResult(null)}
       />
     </div>
   );

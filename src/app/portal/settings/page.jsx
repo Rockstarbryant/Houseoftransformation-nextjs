@@ -1,22 +1,23 @@
-// app/portal/settings/page.jsx - PART 1: Imports, State & Navigation
+// app/portal/settings/page.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
-  Settings as SettingsIcon, Mail, Bell, Shield, CreditCard, Share2, 
-  AlertTriangle, Key, Zap, Save, RefreshCw, Download, CheckCircle, 
-  XCircle, AlertCircle, Eye, EyeOff, Globe, Phone, BookOpen, Calendar, ImageIcon, Users, MapPin
+  Settings as SettingsIcon, Mail, Bell, Shield, CreditCard, Share2,
+  AlertTriangle, Key, Zap, Save, RefreshCw, Download, CheckCircle,
+  XCircle, AlertCircle, Eye, EyeOff, Globe, Phone, BookOpen, Calendar, ImageIcon, Users, MapPin,
+  Plus, Trash2,
 } from 'lucide-react';
 import {
   getSettings, updateGeneralSettings, updateEmailSettings, updateNotificationSettings,
   updateSecuritySettings, updatePaymentSettings, updateSocialMedia, updateMaintenanceMode,
   updateApiKeys, updateFeatures, resetSettings, simulateMpesaStkPush, exportSettingsAsJSON, maskSensitiveData,
-  testMpesaConnection, updateDonationSettings
+  testMpesaConnection, updateDonationSettings,
+  updateChurchInfo, updateLeadership, updateServiceTimes,
 } from '@/services/api/settingsService';
 import Loader from '@/components/common/Loader';
-
 
 /**
  * Settings Management Portal
@@ -31,35 +32,27 @@ export default function SettingsPage() {
   // ============================================
   // STATE MANAGEMENT
   // ============================================
-  
-  // Data state
+
   const [settings, setSettings] = useState(null);
   const [originalSettings, setOriginalSettings] = useState(null);
-  
-  // UI state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-  
-  // Navigation state
   const [activeTab, setActiveTab] = useState('general');
-  
-  // Visibility toggles for sensitive fields
   const [showPasswords, setShowPasswords] = useState({});
 
-  // 1. Hook MUST come first
-useEffect(() => {
-  if (canAccessSettings) {
-    fetchSettings();
-  }
-}, [canAccessSettings]); // added dependency
+  useEffect(() => {
+    if (canAccessSettings) {
+      fetchSettings();
+    }
+  }, [canAccessSettings]);
 
   // ============================================
   // PERMISSION CHECK
   // ============================================
-  
+
   if (!canAccessSettings) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -79,18 +72,12 @@ useEffect(() => {
   // ============================================
   // DATA FETCHING
   // ============================================
-/*
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-*/
+
   const fetchSettings = async () => {
     try {
       setLoading(true);
       setError(null);
-
       const response = await getSettings();
-      
       if (response.success) {
         setSettings(response.settings);
         setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
@@ -107,27 +94,30 @@ useEffect(() => {
   };
 
   // ============================================
-  // SAVE HANDLERS
+  // SAVE HANDLERS — existing
   // ============================================
 
   const handleSaveGeneral = async () => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateGeneralSettings({
-        siteName: settings.siteName,
-        siteTagline: settings.siteTagline,
+      // Snapshot the values we're saving RIGHT NOW before any async gap
+      const saving = {
+        siteName:        settings.siteName,
+        siteTagline:     settings.siteTagline,
         siteDescription: settings.siteDescription,
-        contactEmail: settings.contactEmail,
-        contactPhone: settings.contactPhone,
-        contactAddress: settings.contactAddress
-      });
-
+        contactEmail:    settings.contactEmail,
+        contactPhone:    settings.contactPhone,
+        contactAddress:  settings.contactAddress,
+      };
+      const response = await updateGeneralSettings(saving);
+      console.log('[Settings] General save response:', response);
       if (response.success) {
         setSuccess('General settings saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        // Only patch the exact fields we sent — never spread the full server response
+        // (which is a full Mongoose document and would overwrite unrelated nested objects)
+        setSettings(prev => ({ ...prev, ...saving }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, ...saving })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -143,13 +133,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateEmailSettings(settings.emailSettings);
-
+      const emailSnapshot = { ...settings.emailSettings };
+      const response = await updateEmailSettings(emailSnapshot);
       if (response.success) {
         setSuccess('Email settings saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, emailSettings: { ...prev.emailSettings, ...emailSnapshot } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, emailSettings: { ...prev.emailSettings, ...emailSnapshot } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -165,13 +154,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
+      const saving = { ...settings.notificationSettings };
       const response = await updateNotificationSettings(settings.notificationSettings);
-
       if (response.success) {
         setSuccess('Notification settings saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, notificationSettings: { ...prev.notificationSettings, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, notificationSettings: { ...prev.notificationSettings, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -187,13 +175,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
+      const saving = { ...settings.securitySettings };
       const response = await updateSecuritySettings(settings.securitySettings);
-
       if (response.success) {
         setSuccess('Security settings saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, securitySettings: { ...prev.securitySettings, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, securitySettings: { ...prev.securitySettings, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -206,54 +193,47 @@ useEffect(() => {
   };
 
   const handleSavePayment = async () => {
-  try {
-    setSaving(true);
-    setError(null);
-
-    console.log('[Settings] Saving payment settings:', settings.paymentSettings);
-
-    // Use the service function instead of api.patch
-    const response = await updatePaymentSettings({
-      paymentGateway: settings.paymentSettings.paymentGateway,
-      minimumDonation: settings.paymentSettings.minimumDonation,
-      currency: settings.paymentSettings.currency,
-      mpesa: settings.paymentSettings.mpesa,
-      stripe: settings.paymentSettings.stripe,
-      paypal: settings.paymentSettings.paypal,
-      flutterwave: settings.paymentSettings.flutterwave,
-      enablePayments: settings.paymentSettings.enablePayments
-    });
-
-    console.log('[Settings] Payment save response:', response);
-
-    if (response.success) {
-      setSuccess('Payment settings saved successfully!');
-      setSettings(response.settings);
-      setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
-      setHasChanges(false);
-      setTimeout(() => setSuccess(null), 3000);
-    } else {
-      setError(response.message || 'Failed to save payment settings');
+    try {
+      setSaving(true);
+      setError(null);
+      const paymentSnapshot = {
+        paymentGateway: settings.paymentSettings.paymentGateway,
+        minimumDonation: settings.paymentSettings.minimumDonation,
+        currency: settings.paymentSettings.currency,
+        mpesa: settings.paymentSettings.mpesa,
+        stripe: settings.paymentSettings.stripe,
+        paypal: settings.paymentSettings.paypal,
+        flutterwave: settings.paymentSettings.flutterwave,
+        enablePayments: settings.paymentSettings.enablePayments,
+      };
+      const response = await updatePaymentSettings(paymentSnapshot);
+      if (response.success) {
+        setSuccess('Payment settings saved successfully!');
+        setSettings(prev => ({ ...prev, paymentSettings: { ...prev.paymentSettings, ...paymentSnapshot } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, paymentSettings: { ...prev.paymentSettings, ...paymentSnapshot } })));
+        setHasChanges(false);
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(response.message || 'Failed to save payment settings');
+      }
+    } catch (err) {
+      console.error('[Settings] Save payment error:', err);
+      setError(err.response?.data?.message || 'Failed to save payment settings');
+    } finally {
+      setSaving(false);
     }
-  } catch (err) {
-    console.error('[Settings] Save payment error:', err);
-    setError(err.response?.data?.message || 'Failed to save payment settings');
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const handleSaveSocial = async () => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateSocialMedia(settings.socialMedia);
-
+      const saving = { ...settings.socialMedia };
+      const response = await updateSocialMedia(saving);
       if (response.success) {
         setSuccess('Social media links saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, socialMedia: { ...prev.socialMedia, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, socialMedia: { ...prev.socialMedia, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -269,13 +249,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateMaintenanceMode(settings.maintenanceMode);
-
+      const saving = { ...settings.maintenanceMode };
+      const response = await updateMaintenanceMode(saving);
       if (response.success) {
         setSuccess('Maintenance mode updated successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, maintenanceMode: { ...prev.maintenanceMode, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, maintenanceMode: { ...prev.maintenanceMode, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -291,13 +270,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateApiKeys(settings.apiKeys);
-
+      const saving = { ...settings.apiKeys };
+      const response = await updateApiKeys(saving);
       if (response.success) {
         setSuccess('API keys saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, apiKeys: { ...prev.apiKeys, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, apiKeys: { ...prev.apiKeys, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -313,13 +291,12 @@ useEffect(() => {
     try {
       setSaving(true);
       setError(null);
-
-      const response = await updateFeatures(settings.features);
-
+      const saving = { ...settings.features };
+      const response = await updateFeatures(saving);
       if (response.success) {
         setSuccess('Feature flags saved successfully!');
-        setSettings(response.settings);
-        setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        setSettings(prev => ({ ...prev, features: { ...prev.features, ...saving } }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, features: { ...prev.features, ...saving } })));
         setHasChanges(false);
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -331,33 +308,172 @@ useEffect(() => {
     }
   };
 
-  
+  // ============================================
+  // SAVE HANDLERS — new (church info, leadership, service times)
+  // ============================================
+
+  const handleSaveChurchInfo = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      const saving = {
+        churchMotto:       settings.churchMotto,
+        foundedYear:       settings.foundedYear,
+        prayerLine:        settings.prayerLine,
+        counselingContact: settings.counselingContact,
+        newMembersContact: settings.newMembersContact,
+      };
+      const response = await updateChurchInfo(saving);
+      console.log('[Settings] Church info save response:', response);
+      if (response.success) {
+        setSuccess('Church info saved successfully!');
+        setSettings(prev => ({ ...prev, ...saving }));
+        setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, ...saving })));
+        setHasChanges(false);
+        setTimeout(() => setSuccess(null), 3000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save church info');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveLeadership = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      const response = await updateLeadership(settings.leadership ?? []);
+      // Backend may return { success, leadership } or { success, settings: { leadership } }
+      const saved = response.leadership ?? response.settings?.leadership ?? settings.leadership ?? [];
+      if (response.success !== false) {
+        setSuccess('Leadership updated successfully!');
+        setSettings(prev => ({ ...prev, leadership: saved }));
+        setOriginalSettings(prev => ({ ...prev, leadership: JSON.parse(JSON.stringify(saved)) }));
+        setHasChanges(false);
+        setTimeout(() => setSuccess(null), 3000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update leadership');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveServiceTimes = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      const response = await updateServiceTimes(settings.serviceTimes ?? []);
+      // Backend may return { success, serviceTimes } or { success, settings: { serviceTimes } }
+      const saved = response.serviceTimes ?? response.settings?.serviceTimes ?? settings.serviceTimes ?? [];
+      if (response.success !== false) {
+        setSuccess('Service times updated successfully!');
+        setSettings(prev => ({ ...prev, serviceTimes: saved }));
+        setOriginalSettings(prev => ({ ...prev, serviceTimes: JSON.parse(JSON.stringify(saved)) }));
+        setHasChanges(false);
+        setTimeout(() => setSuccess(null), 3000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update service times');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ============================================
+  // LEADERSHIP HELPERS
+  // ============================================
+
+  const addLeader = () => {
+    setSettings(prev => ({
+      ...prev,
+      leadership: [
+        ...(prev.leadership ?? []),
+        {
+          name: '', title: '', ministry: '', phone: '', whatsapp: '',
+          email: '', facebook: '', instagram: '', twitter: '',
+          bio: '', avatar: '', isVisible: true,
+          displayOrder: (prev.leadership?.length ?? 0),
+        },
+      ],
+    }));
+    setHasChanges(true);
+  };
+
+  const removeLeader = (index) => {
+    setSettings(prev => ({
+      ...prev,
+      leadership: (prev.leadership ?? []).filter((_, i) => i !== index),
+    }));
+    setHasChanges(true);
+  };
+
+  const updateLeaderField = (index, field, value) => {
+    setSettings(prev => {
+      const updated = [...(prev.leadership ?? [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, leadership: updated };
+    });
+    setHasChanges(true);
+  };
+
+  // ============================================
+  // SERVICE TIME HELPERS
+  // ============================================
+
+  const addServiceTime = () => {
+    setSettings(prev => ({
+      ...prev,
+      serviceTimes: [
+        ...(prev.serviceTimes ?? []),
+        { name: '', day: '', time: '', venue: '', description: '', isActive: true },
+      ],
+    }));
+    setHasChanges(true);
+  };
+
+  const removeServiceTime = (index) => {
+    setSettings(prev => ({
+      ...prev,
+      serviceTimes: (prev.serviceTimes ?? []).filter((_, i) => i !== index),
+    }));
+    setHasChanges(true);
+  };
+
+  const updateServiceTimeField = (index, field, value) => {
+    setSettings(prev => {
+      const updated = [...(prev.serviceTimes ?? [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, serviceTimes: updated };
+    });
+    setHasChanges(true);
+  };
 
   // ============================================
   // UTILITY FUNCTIONS
   // ============================================
 
   const handleChange = (category, field, value) => {
-  setSettings(prev => {
-    const updated = { ...prev };
-    if (category && category.includes('.')) {
-      // Handle nested properties like 'paymentSettings.mpesa'
-      const [parent, child] = category.split('.');
-      updated[parent] = {
-        ...updated[parent],
-        [child]: {
-          ...updated[parent][child],
-          [field]: value
-        }
-      };
-    } else if (category) {
-      updated[category] = { ...updated[category], [field]: value };
-    } else {
-      updated[field] = value;
-    }
-    return updated;
-  });
-  setHasChanges(true);
+    setSettings(prev => {
+      const updated = { ...prev };
+      if (category && category.includes('.')) {
+        const [parent, child] = category.split('.');
+        updated[parent] = {
+          ...updated[parent],
+          [child]: {
+            ...updated[parent][child],
+            [field]: value,
+          },
+        };
+      } else if (category) {
+        updated[category] = { ...updated[category], [field]: value };
+      } else {
+        updated[field] = value;
+      }
+      return updated;
+    });
+    setHasChanges(true);
   };
 
   const handleReset = () => {
@@ -384,36 +500,35 @@ useEffect(() => {
     setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
-  // Save handler router
   const handleSave = () => {
-  switch (activeTab) {
-    case 'general': return handleSaveGeneral();
-    case 'email': return handleSaveEmail();
-    case 'notifications': return handleSaveNotifications();
-    case 'security': return handleSaveSecurity();
-    case 'payment': return handleSavePayment();
-    case 'social': return handleSaveSocial();
-    case 'maintenance': return handleSaveMaintenance();
-    case 'api-keys': return handleSaveApiKeys();
-    case 'features': return handleSaveFeatures();
-    default: return;
-  }
-};
+    switch (activeTab) {
+      case 'general':       return handleSaveGeneral();
+      case 'email':         return handleSaveEmail();
+      case 'notifications': return handleSaveNotifications();
+      case 'security':      return handleSaveSecurity();
+      case 'payment':       return handleSavePayment();
+      case 'social':        return handleSaveSocial();
+      case 'maintenance':   return handleSaveMaintenance();
+      case 'api-keys':      return handleSaveApiKeys();
+      case 'features':      return handleSaveFeatures();
+      default:              return;
+    }
+  };
 
   // ============================================
   // TAB CONFIGURATION
   // ============================================
 
   const tabs = [
-    { id: 'general', name: 'General', icon: SettingsIcon, color: 'blue' },
-    { id: 'email', name: 'Email', icon: Mail, color: 'green' },
-    { id: 'notifications', name: 'Notifications', icon: Bell, color: 'purple' },
-    { id: 'security', name: 'Security', icon: Shield, color: 'red' },
-    { id: 'payment', name: 'Payment', icon: CreditCard, color: 'yellow' },
-    { id: 'social', name: 'Social Media', icon: Share2, color: 'pink' },
-    { id: 'maintenance', name: 'Maintenance', icon: AlertTriangle, color: 'orange' },
-    { id: 'api-keys', name: 'API Keys', icon: Key, color: 'indigo' },
-    { id: 'features', name: 'Features', icon: Zap, color: 'cyan' }
+    { id: 'general',       name: 'General',       icon: SettingsIcon, color: 'blue'   },
+    { id: 'email',         name: 'Email',          icon: Mail,         color: 'green'  },
+    { id: 'notifications', name: 'Notifications',  icon: Bell,         color: 'purple' },
+    { id: 'security',      name: 'Security',       icon: Shield,       color: 'red'    },
+    { id: 'payment',       name: 'Payment',        icon: CreditCard,   color: 'yellow' },
+    { id: 'social',        name: 'Social Media',   icon: Share2,       color: 'pink'   },
+    { id: 'maintenance',   name: 'Maintenance',    icon: AlertTriangle,color: 'orange' },
+    { id: 'api-keys',      name: 'API Keys',       icon: Key,          color: 'indigo' },
+    { id: 'features',      name: 'Features',       icon: Zap,          color: 'cyan'   },
   ];
 
   // ============================================
@@ -503,44 +618,43 @@ useEffect(() => {
       {activeTab === 'maintenance' && settings.maintenanceMode.enabled && (
         <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 text-white shadow-lg animate-pulse">
           <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="absolute w-3 h-3 bg-white rounded-full animate-ping"></div>
-          <div className="w-3 h-3 bg-white rounded-full"></div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute w-3 h-3 bg-white rounded-full animate-ping"></div>
+                <div className="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+              <div>
+                <p className="font-black text-lg">🚨 MAINTENANCE MODE IS ACTIVE</p>
+                <p className="text-sm opacity-90">Non-admin users cannot access the site</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-semibold opacity-75">Status</p>
+              <p className="text-lg font-black">LIVE NOW</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="font-black text-lg">🚨 MAINTENANCE MODE IS ACTIVE</p>
-          <p className="text-sm opacity-90">Non-admin users cannot access the site</p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="text-xs font-semibold opacity-75">Status</p>
-        <p className="text-lg font-black">LIVE NOW</p>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
-{/* LIVE TEST - Show when maintenance is enabled */}
-{activeTab === 'maintenance' && settings.maintenanceMode.enabled && (
-  <div className="bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-6 space-y-4">
-    <div className="flex items-start gap-3">
-      <AlertCircle className="text-orange-600 flex-shrink-0 mt-1" size={20} />
-      <div className="space-y-2">
-        <h3 className="font-bold text-slate-900 dark:text-white">Quick Test</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Open this URL in a new incognito/private window to see how non-admin users experience the maintenance page:
-        </p>
-        <div className="bg-white dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-900 dark:text-white break-all">
-          {typeof window !== 'undefined' ? window.location.origin : 'https://yoursite.com'}
+      {activeTab === 'maintenance' && settings.maintenanceMode.enabled && (
+        <div className="bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-orange-600 flex-shrink-0 mt-1" size={20} />
+            <div className="space-y-2">
+              <h3 className="font-bold text-slate-900 dark:text-white">Quick Test</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Open this URL in a new incognito/private window to see how non-admin users experience the maintenance page:
+              </p>
+              <div className="bg-white dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-900 dark:text-white break-all">
+                {typeof window !== 'undefined' ? window.location.origin : 'https://yoursite.com'}
+              </div>
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold">
+                ✓ You should see the maintenance page
+              </p>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold">
-          ✓ You should see the maintenance page
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Success/Error Messages */}
       {success && (
@@ -557,7 +671,6 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Changes Warning */}
       {hasChanges && (
         <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="text-yellow-600" size={20} />
@@ -579,7 +692,6 @@ useEffect(() => {
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
-
                 return (
                   <button
                     key={tab.id}
@@ -602,10 +714,8 @@ useEffect(() => {
         {/* Content Area */}
         <div className="lg:col-span-3">
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-            {/* Continued in Part 3 for Settings Forms... */}
-            
 
-            {/* GENERAL SETTINGS */}
+            {/* ── GENERAL SETTINGS ─────────────────────────────────────────── */}
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>
@@ -695,10 +805,471 @@ useEffect(() => {
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
                   />
                 </div>
+
+                {/* ── CHURCH IDENTITY EXTRAS ─────────────────────────────── */}
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-6 mt-2">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                    Church Identity Extras
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                    Motto, founding year, and dedicated ministry contact lines shown in the member Connect tab.
+                  </p>
+
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Church Motto / Vision Statement
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.churchMotto ?? ''}
+                          onChange={e => handleChange(null, 'churchMotto', e.target.value)}
+                          placeholder="e.g. Transforming Lives, Building Nations"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Year Founded
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.foundedYear ?? ''}
+                          onChange={e => handleChange(null, 'foundedYear', Number(e.target.value))}
+                          min="1900"
+                          max={new Date().getFullYear()}
+                          placeholder="2005"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Prayer Line
+                        </label>
+                        <input
+                          type="tel"
+                          value={settings.prayerLine ?? ''}
+                          onChange={e => handleChange(null, 'prayerLine', e.target.value)}
+                          placeholder="+254 7XX XXX XXX"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Shown as 24/7 Prayer Line</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Counseling Contact
+                        </label>
+                        <input
+                          type="tel"
+                          value={settings.counselingContact ?? ''}
+                          onChange={e => handleChange(null, 'counselingContact', e.target.value)}
+                          placeholder="+254 7XX XXX XXX"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Pastoral counseling line</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          New Members Desk
+                        </label>
+                        <input
+                          type="tel"
+                          value={settings.newMembersContact ?? ''}
+                          onChange={e => handleChange(null, 'newMembersContact', e.target.value)}
+                          placeholder="+254 7XX XXX XXX"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Orientation & onboarding</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSaveChurchInfo}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#8B1A1A] text-white text-sm font-bold rounded-lg hover:bg-red-900 transition-colors disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save Church Info
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── SERVICE TIMES ──────────────────────────────────────── */}
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Service Schedule</h3>
+                    <button
+                      onClick={addServiceTime}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
+                      style={{ color: '#8B1A1A' }}
+                    >
+                      <Plus size={13} /> Add Service
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                    Service times shown on the member Connect tab and public-facing pages.
+                  </p>
+
+                  {(settings.serviceTimes ?? []).length === 0 ? (
+                    <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+                      <Calendar size={24} className="text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">No service times added yet</p>
+                      <button
+                        onClick={addServiceTime}
+                        className="mt-3 text-xs font-bold"
+                        style={{ color: '#8B1A1A' }}
+                      >
+                        + Add first service time
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(settings.serviceTimes ?? []).map((svc, i) => (
+                        <div
+                          key={i}
+                          className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                              Service {i + 1}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={svc.isActive ?? true}
+                                  onChange={e => updateServiceTimeField(i, 'isActive', e.target.checked)}
+                                  className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                                />
+                                <span className="text-xs text-slate-500">Active</span>
+                              </label>
+                              <button
+                                onClick={() => removeServiceTime(i)}
+                                className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Service Name</label>
+                              <input
+                                type="text"
+                                value={svc.name ?? ''}
+                                onChange={e => updateServiceTimeField(i, 'name', e.target.value)}
+                                placeholder="Sunday Morning Service"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Day</label>
+                              <select
+                                value={svc.day ?? ''}
+                                onChange={e => updateServiceTimeField(i, 'day', e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              >
+                                <option value="">Select day</option>
+                                {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(d => (
+                                  <option key={d} value={d}>{d}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Time</label>
+                              <input
+                                type="text"
+                                value={svc.time ?? ''}
+                                onChange={e => updateServiceTimeField(i, 'time', e.target.value)}
+                                placeholder="9:00 AM – 12:00 PM"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Venue</label>
+                              <input
+                                type="text"
+                                value={svc.venue ?? ''}
+                                onChange={e => updateServiceTimeField(i, 'venue', e.target.value)}
+                                placeholder="Main Sanctuary"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-3">
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Description (optional)</label>
+                            <input
+                              type="text"
+                              value={svc.description ?? ''}
+                              onChange={e => updateServiceTimeField(i, 'description', e.target.value)}
+                              placeholder="e.g. Worship, Word, Prayer"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(settings.serviceTimes ?? []).length > 0 && (
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={handleSaveServiceTimes}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#8B1A1A] text-white text-sm font-bold rounded-lg hover:bg-red-900 transition-colors disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save Service Times
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── LEADERSHIP DIRECTORY ───────────────────────────────── */}
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Leadership & Staff Directory</h3>
+                    <button
+                      onClick={addLeader}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
+                      style={{ color: '#8B1A1A' }}
+                    >
+                      <Plus size={13} /> Add Leader
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                    Names, roles, ministries, and contact details shown to all logged-in members on the Connect tab.
+                  </p>
+
+                  {(settings.leadership ?? []).length === 0 ? (
+                    <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+                      <Users size={24} className="text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">No leaders added yet</p>
+                      <button
+                        onClick={addLeader}
+                        className="mt-3 text-xs font-bold"
+                        style={{ color: '#8B1A1A' }}
+                      >
+                        + Add first leader
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(settings.leadership ?? []).map((leader, i) => (
+                        <div
+                          key={i}
+                          className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
+                        >
+                          {/* Header row */}
+                          <div className="flex items-center justify-between mb-4">
+                            <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                              Leader {i + 1}{leader.name ? ` — ${leader.name}` : ''}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={leader.isVisible ?? true}
+                                  onChange={e => updateLeaderField(i, 'isVisible', e.target.checked)}
+                                  className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                                />
+                                <span className="text-xs text-slate-500">Visible</span>
+                              </label>
+                              <button
+                                onClick={() => removeLeader(i)}
+                                className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Identity */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Full Name *</label>
+                              <input
+                                type="text"
+                                value={leader.name ?? ''}
+                                onChange={e => updateLeaderField(i, 'name', e.target.value)}
+                                placeholder="Pastor John Doe"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Title / Position</label>
+                              <input
+                                type="text"
+                                value={leader.title ?? ''}
+                                onChange={e => updateLeaderField(i, 'title', e.target.value)}
+                                placeholder="Senior Pastor"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Ministry / Department</label>
+                              <input
+                                type="text"
+                                value={leader.ministry ?? ''}
+                                onChange={e => updateLeaderField(i, 'ministry', e.target.value)}
+                                placeholder="Main Ministry / Youth / Worship"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Contact */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                <Phone className="inline mr-1" size={11} /> Phone
+                              </label>
+                              <input
+                                type="tel"
+                                value={leader.phone ?? ''}
+                                onChange={e => updateLeaderField(i, 'phone', e.target.value)}
+                                placeholder="+254 7XX XXX XXX"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                WhatsApp Number
+                              </label>
+                              <input
+                                type="tel"
+                                value={leader.whatsapp ?? ''}
+                                onChange={e => updateLeaderField(i, 'whatsapp', e.target.value)}
+                                placeholder="+254 7XX XXX XXX"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                <Mail className="inline mr-1" size={11} /> Email
+                              </label>
+                              <input
+                                type="email"
+                                value={leader.email ?? ''}
+                                onChange={e => updateLeaderField(i, 'email', e.target.value)}
+                                placeholder="pastor@hot.org"
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Social */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Facebook URL</label>
+                              <input
+                                type="url"
+                                value={leader.facebook ?? ''}
+                                onChange={e => updateLeaderField(i, 'facebook', e.target.value)}
+                                placeholder="https://facebook.com/..."
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Instagram URL</label>
+                              <input
+                                type="url"
+                                value={leader.instagram ?? ''}
+                                onChange={e => updateLeaderField(i, 'instagram', e.target.value)}
+                                placeholder="https://instagram.com/..."
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">X (Twitter) URL</label>
+                              <input
+                                type="url"
+                                value={leader.twitter ?? ''}
+                                onChange={e => updateLeaderField(i, 'twitter', e.target.value)}
+                                placeholder="https://x.com/..."
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Bio + Avatar + Order */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Short Bio</label>
+                              <textarea
+                                value={leader.bio ?? ''}
+                                onChange={e => updateLeaderField(i, 'bio', e.target.value)}
+                                placeholder="Brief description shown on the Connect tab…"
+                                rows={2}
+                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none resize-none"
+                              />
+                            </div>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Avatar URL (Cloudinary)</label>
+                                <input
+                                  type="url"
+                                  value={leader.avatar ?? ''}
+                                  onChange={e => updateLeaderField(i, 'avatar', e.target.value)}
+                                  placeholder="https://res.cloudinary.com/..."
+                                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Display Order</label>
+                                <input
+                                  type="number"
+                                  value={leader.displayOrder ?? 0}
+                                  onChange={e => updateLeaderField(i, 'displayOrder', Number(e.target.value))}
+                                  min="0"
+                                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                                />
+                                <p className="text-[10px] text-slate-400 mt-0.5">Lower = shown first</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(settings.leadership ?? []).length > 0 && (
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={handleSaveLeadership}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#8B1A1A] text-white text-sm font-bold rounded-lg hover:bg-red-900 transition-colors disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save Leadership
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* EMAIL SETTINGS */}
+            {/* ── EMAIL SETTINGS ───────────────────────────────────────────── */}
             {activeTab === 'email' && (
               <div className="space-y-6">
                 <div>
@@ -758,7 +1329,7 @@ useEffect(() => {
                     </label>
                     <div className="relative">
                       <input
-                        type={showPasswords.smtpPassword ? "text" : "password"}
+                        type={showPasswords.smtpPassword ? 'text' : 'password'}
                         value={settings.emailSettings.smtpPassword}
                         onChange={(e) => handleChange('emailSettings', 'smtpPassword', e.target.value)}
                         placeholder="••••••••"
@@ -805,7 +1376,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* NOTIFICATION SETTINGS */}
+            {/* ── NOTIFICATION SETTINGS ────────────────────────────────────── */}
             {activeTab === 'notifications' && (
               <div className="space-y-6">
                 <div>
@@ -819,9 +1390,7 @@ useEffect(() => {
 
                 <div className="space-y-4">
                   <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                      Notification Channels
-                    </h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">Notification Channels</h3>
                     <div className="space-y-3">
                       <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
                         <div className="flex items-center gap-3">
@@ -874,9 +1443,7 @@ useEffect(() => {
                   </div>
 
                   <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                      Event Notifications
-                    </h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">Event Notifications</h3>
                     <div className="space-y-3">
                       <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
                         <span className="font-semibold text-slate-900 dark:text-white">New User Registration</span>
@@ -913,10 +1480,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Continued in Part 4 for remaining settings forms... */}
-           
-
-            {/* SECURITY SETTINGS */}
+            {/* ── SECURITY SETTINGS ────────────────────────────────────────── */}
             {activeTab === 'security' && (
               <div className="space-y-6">
                 <div>
@@ -959,9 +1523,7 @@ useEffect(() => {
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                    Password Requirements
-                  </h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white mb-4">Password Requirements</h3>
                   <div className="space-y-3">
                     <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
                       <span className="font-semibold text-slate-900 dark:text-white">Require Special Characters</span>
@@ -1027,520 +1589,474 @@ useEffect(() => {
               </div>
             )}
 
-           
+            {/* ── PAYMENT & DONATIONS SETTINGS ─────────────────────────────── */}
+            {activeTab === 'payment' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    Payment & Donations Settings
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Configure payment gateways and donation features
+                  </p>
+                </div>
 
-{/* PAYMENT & DONATIONS SETTINGS */}
-{activeTab === 'payment' && (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-        Payment & Donations Settings
-      </h2>
-      <p className="text-slate-600 dark:text-slate-400">
-        Configure payment gateways and donation features
-      </p>
-    </div>
+                <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white">Enable Donations</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Allow users to make donations and pledges</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.paymentSettings.enablePayments}
+                    onChange={(e) => handleChange('paymentSettings', 'enablePayments', e.target.checked)}
+                    className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                  />
+                </label>
 
-    {/* Enable Donations */}
-    <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-      <div>
-        <p className="font-bold text-slate-900 dark:text-white">Enable Donations</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Allow users to make donations and pledges</p>
-      </div>
-      <input
-        type="checkbox"
-        checked={settings.paymentSettings.enablePayments}
-        onChange={(e) => handleChange('paymentSettings', 'enablePayments', e.target.checked)}
-        className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-      />
-    </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                      Primary Payment Gateway
+                    </label>
+                    <select
+                      value={settings.paymentSettings.paymentGateway}
+                      onChange={(e) => handleChange('paymentSettings', 'paymentGateway', e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                    >
+                      <option value="mpesa">M-Pesa</option>
+                      <option value="stripe">Stripe</option>
+                      <option value="paypal">PayPal</option>
+                    </select>
+                  </div>
 
-    {/* Payment Gateway & Currency */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-          Primary Payment Gateway
-        </label>
-        <select
-          value={settings.paymentSettings.paymentGateway}
-          onChange={(e) => handleChange('paymentSettings', 'paymentGateway', e.target.value)}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-        >
-          <option value="mpesa">M-Pesa</option>
-          <option value="stripe">Stripe</option>
-          <option value="paypal">PayPal</option>
-        </select>
-      </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                      Currency
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.paymentSettings.currency}
+                      onChange={(e) => handleChange('paymentSettings', 'currency', e.target.value)}
+                      placeholder="KES"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                    />
+                  </div>
+                </div>
 
-      <div>
-        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-          Currency
-        </label>
-        <input
-          type="text"
-          value={settings.paymentSettings.currency}
-          onChange={(e) => handleChange('paymentSettings', 'currency', e.target.value)}
-          placeholder="KES"
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-        />
-      </div>
-    </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                    Minimum Donation Amount ({settings.paymentSettings.currency})
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.paymentSettings.minimumDonation}
+                    onChange={(e) => handleChange('paymentSettings', 'minimumDonation', Number(e.target.value))}
+                    min="1"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                  />
+                </div>
 
-    <div>
-      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-        Minimum Donation Amount ({settings.paymentSettings.currency})
-      </label>
-      <input
-        type="number"
-        value={settings.paymentSettings.minimumDonation}
-        onChange={(e) => handleChange('paymentSettings', 'minimumDonation', Number(e.target.value))}
-        min="1"
-        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-      />
-    </div>
+                {/* M-PESA CONFIGURATION */}
+                {settings.paymentSettings.paymentGateway === 'mpesa' && (
+                  <div className="bg-orange-50 dark:bg-orange-950/30 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-6 space-y-6">
+                    <div className="flex items-start gap-3 mb-4">
+                      <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+                      <div>
+                        <h3 className="font-bold text-orange-900 dark:text-orange-200">M-Pesa Configuration</h3>
+                        <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
+                          Configure your M-Pesa business account credentials for processing mobile money donations
+                        </p>
+                      </div>
+                    </div>
 
-    {/* M-PESA CONFIGURATION */}
-    {settings.paymentSettings.paymentGateway === 'mpesa' && (
-      <div className="bg-orange-50 dark:bg-orange-950/30 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-6 space-y-6">
-        <div className="flex items-start gap-3 mb-4">
-          <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
-          <div>
-            <h3 className="font-bold text-orange-900 dark:text-orange-200">M-Pesa Configuration</h3>
-            <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
-              Configure your M-Pesa business account credentials for processing mobile money donations
-            </p>
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Consumer Key
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.paymentSettings.mpesa.consumerKey}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerKey', e.target.value)}
+                          placeholder="From Safaricom Developer Portal"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Get this from your Safaricom Daraja API credentials
+                        </p>
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Consumer Key
-            </label>
-            <input
-              type="text"
-              value={settings.paymentSettings.mpesa.consumerKey}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerKey', e.target.value)}
-              placeholder="From Safaricom Developer Portal"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Get this from your Safaricom Daraja API credentials
-            </p>
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Consumer Secret
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.mpesaSecret ? 'text' : 'password'}
+                            value={settings.paymentSettings.mpesa.consumerSecret}
+                            onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerSecret', e.target.value)}
+                            placeholder="••••••••••••••••"
+                            className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility('mpesaSecret')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            {showPasswords.mpesaSecret ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Consumer Secret
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.mpesaSecret ? "text" : "password"}
-                value={settings.paymentSettings.mpesa.consumerSecret}
-                onChange={(e) => handleChange('paymentSettings.mpesa', 'consumerSecret', e.target.value)}
-                placeholder="••••••••••••••••"
-                className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('mpesaSecret')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPasswords.mpesaSecret ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Business Shortcode
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.paymentSettings.mpesa.shortcode}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'shortcode', e.target.value)}
+                          placeholder="174379"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Business Shortcode
-            </label>
-            <input
-              type="text"
-              value={settings.paymentSettings.mpesa.shortcode}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'shortcode', e.target.value)}
-              placeholder="174379"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Passkey
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.mpesaPasskey ? 'text' : 'password'}
+                            value={settings.paymentSettings.mpesa.passkey}
+                            onChange={(e) => handleChange('paymentSettings.mpesa', 'passkey', e.target.value)}
+                            placeholder="••••••••••••••••"
+                            className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility('mpesaPasskey')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            {showPasswords.mpesaPasskey ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Passkey
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.mpesaPasskey ? "text" : "password"}
-                value={settings.paymentSettings.mpesa.passkey}
-                onChange={(e) => handleChange('paymentSettings.mpesa', 'passkey', e.target.value)}
-                placeholder="••••••••••••••••"
-                className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('mpesaPasskey')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPasswords.mpesaPasskey ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Party A (Phone Number)
+                        </label>
+                        <input
+                          type="tel"
+                          value={settings.paymentSettings.mpesa.partyA || ''}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'partyA', e.target.value)}
+                          placeholder="254712345678"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Phone number initiating the STK/C2B request
+                        </p>
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Party A (Phone Number)
-            </label>
-            <input
-              type="tel"
-              value={settings.paymentSettings.mpesa.partyA || ''}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'partyA', e.target.value)}
-              placeholder="254712345678"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Phone number initiating the STK/C2B request
-            </p>
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Party B (Business Shortcode)
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.paymentSettings.mpesa.partyB || ''}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'partyB', e.target.value)}
+                          placeholder="174379"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Organization receiving the funds
+                        </p>
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Party B (Business Shortcode)
-            </label>
-            <input
-              type="text"
-              value={settings.paymentSettings.mpesa.partyB || ''}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'partyB', e.target.value)}
-              placeholder="174379"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Organization receiving the funds
-            </p>
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Transaction Type
+                        </label>
+                        <select
+                          value={settings.paymentSettings.mpesa.transactionType || 'CustomerPayBillOnline'}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionType', e.target.value)}
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        >
+                          <option value="CustomerPayBillOnline">Pay Bill Online</option>
+                          <option value="CustomerBuyGoodsOnline">Buy Goods Online</option>
+                        </select>
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Transaction Type
-            </label>
-            <select
-              value={settings.paymentSettings.mpesa.transactionType || 'CustomerPayBillOnline'}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionType', e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            >
-              <option value="CustomerPayBillOnline">Pay Bill Online</option>
-              <option value="CustomerBuyGoodsOnline">Buy Goods Online</option>
-            </select>
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Default Amount (KES)
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.paymentSettings.mpesa.amount || 0}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'amount', Number(e.target.value))}
+                          placeholder="100"
+                          min="1"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Default Amount (KES)
-            </label>
-            <input
-              type="number"
-              value={settings.paymentSettings.mpesa.amount || 0}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'amount', Number(e.target.value))}
-              placeholder="100"
-              min="1"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Transaction Description
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.paymentSettings.mpesa.transactionDesc || ''}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionDesc', e.target.value)}
+                          placeholder="Church Donation"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Transaction Description
-            </label>
-            <input
-              type="text"
-              value={settings.paymentSettings.mpesa.transactionDesc || ''}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'transactionDesc', e.target.value)}
-              placeholder="Church Donation"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Account Reference
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.paymentSettings.mpesa.accountRef || ''}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'accountRef', e.target.value)}
+                          placeholder="HOT-DONATION"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Account Reference
-            </label>
-            <input
-              type="text"
-              value={settings.paymentSettings.mpesa.accountRef || ''}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'accountRef', e.target.value)}
-              placeholder="HOT-DONATION"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Environment
+                        </label>
+                        <select
+                          value={settings.paymentSettings.mpesa.environment}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'environment', e.target.value)}
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        >
+                          <option value="sandbox">Sandbox (Testing)</option>
+                          <option value="production">Production (Live)</option>
+                        </select>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Use sandbox for testing, production for live transactions
+                        </p>
+                      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Environment
-            </label>
-            <select
-              value={settings.paymentSettings.mpesa.environment}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'environment', e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            >
-              <option value="sandbox">Sandbox (Testing)</option>
-              <option value="production">Production (Live)</option>
-            </select>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Use sandbox for testing, production for live transactions
-            </p>
-          </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Callback URL
+                        </label>
+                        <input
+                          type="url"
+                          value={settings.paymentSettings.mpesa.callbackUrl}
+                          onChange={(e) => handleChange('paymentSettings.mpesa', 'callbackUrl', e.target.value)}
+                          placeholder="https://yourdomain.com/api/payments/mpesa-callback"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          URL where M-Pesa will send payment confirmations
+                        </p>
+                      </div>
+                    </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Callback URL
-            </label>
-            <input
-              type="url"
-              value={settings.paymentSettings.mpesa.callbackUrl}
-              onChange={(e) => handleChange('paymentSettings.mpesa', 'callbackUrl', e.target.value)}
-              placeholder="https://yourdomain.com/api/payments/mpesa-callback"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              URL where M-Pesa will send payment confirmations
-            </p>
-          </div>
-        </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Request Timeout (ms)
+                      </label>
+                      <input
+                        type="number"
+                        value={settings.paymentSettings.mpesa.timeout}
+                        onChange={(e) => handleChange('paymentSettings.mpesa', 'timeout', Number(e.target.value))}
+                        min="1000"
+                        max="30000"
+                        step="1000"
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                      />
+                    </div>
 
-        <div>
-          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-            Request Timeout (ms)
-          </label>
-          <input
-            type="number"
-            value={settings.paymentSettings.mpesa.timeout}
-            onChange={(e) => handleChange('paymentSettings.mpesa', 'timeout', Number(e.target.value))}
-            min="1000"
-            max="30000"
-            step="1000"
-            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-          />
-        </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          setSaving(true);
+                          setError(null);
+                          const result = await testMpesaConnection();
+                          if (result.success) {
+                            setSuccess('M-Pesa connection is valid!');
+                            setTimeout(() => setSuccess(null), 3000);
+                          } else {
+                            setError(result.message || 'M-Pesa configuration is invalid. Please check your credentials.');
+                          }
+                        } catch (err) {
+                          console.error('[Settings] M-Pesa test error:', err);
+                          setError(err.response?.data?.message || err.message || 'Failed to test M-Pesa connection');
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      disabled={saving}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Testing...
+                        </>
+                      ) : (
+                        'Test M-Pesa Connection'
+                      )}
+                    </button>
 
-        {/* Test M-Pesa Button */}
-        <button
-            onClick={async () => {
-              try {
-                setSaving(true);
-                setError(null);
-                const result = await testMpesaConnection();
-                
-                if (result.success) {
-                  setSuccess('M-Pesa connection is valid!');
-                  setTimeout(() => setSuccess(null), 3000);
-                } else {
-                  setError(result.message || 'M-Pesa configuration is invalid. Please check your credentials.');
-                }
-              } catch (err) {
-                console.error('[Settings] M-Pesa test error:', err);
-                setError(err.response?.data?.message || err.message || 'Failed to test M-Pesa connection');
-              } finally {
-                setSaving(false);
-              }
-            }}
-            disabled={saving}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Testing...
-            </>
-          ) : (
-            'Test M-Pesa Connection'
-          )}
-        </button>
+                    {/* STK PUSH SIMULATION */}
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-6">
+                      <div className="flex items-start gap-3 mb-6">
+                        <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                        <div>
+                          <h3 className="font-bold text-blue-900 dark:text-blue-200">STK Push Simulation</h3>
+                          <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                            Test M-Pesa payment flow by simulating an STK push. Enter a test phone number and amount.
+                          </p>
+                        </div>
+                      </div>
 
-        {/* STK PUSH SIMULATION */}
-<div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-6">
-  <div className="flex items-start gap-3 mb-6">
-    <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-    <div>
-      <h3 className="font-bold text-blue-900 dark:text-blue-200">STK Push Simulation</h3>
-      <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
-        Test M-Pesa payment flow by simulating an STK push. Enter a test phone number and amount.
-      </p>
-    </div>
-  </div>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                              Test Phone Number
+                            </label>
+                            <input
+                              type="tel"
+                              id="simulatePhoneNumber"
+                              placeholder="254712345678"
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                            />
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              Format: 254XXXXXXXXX (Kenya)
+                            </p>
+                          </div>
 
-  <div className="space-y-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-          Test Phone Number
-        </label>
-        <input
-          type="tel"
-          id="simulatePhoneNumber"
-          placeholder="254712345678"
-          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-        />
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Format: 254XXXXXXXXX (Kenya)
-        </p>
-      </div>
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                              Test Amount (KES)
+                            </label>
+                            <input
+                              type="number"
+                              id="simulateAmount"
+                              placeholder="100"
+                              min="1"
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                            />
+                          </div>
+                        </div>
 
-      <div>
-        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-          Test Amount (KES)
-        </label>
-        <input
-          type="number"
-          id="simulateAmount"
-          placeholder="100"
-          min="1"
-          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-        />
-      </div>
-    </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                            Account Reference (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            id="simulateAccountRef"
+                            placeholder="HOT-TEST-001"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                          />
+                        </div>
 
-    <div>
-      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-        Account Reference (Optional)
-      </label>
-      <input
-        type="text"
-        id="simulateAccountRef"
-        placeholder="HOT-TEST-001"
-        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-      />
-    </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setSaving(true);
+                              setError(null);
+                              const phoneNumber = document.getElementById('simulatePhoneNumber').value;
+                              const amount = document.getElementById('simulateAmount').value;
+                              const accountRef = document.getElementById('simulateAccountRef').value;
+                              if (!phoneNumber || !amount) {
+                                setError('Phone number and amount are required');
+                                setSaving(false);
+                                return;
+                              }
+                              const result = await simulateMpesaStkPush(phoneNumber, parseInt(amount), accountRef);
+                              if (result.success) {
+                                setSuccess('STK Push simulated! Check console for details.');
+                                console.log('[Settings] STK Push Simulation Result:', result.simulation);
+                                setTimeout(() => setSuccess(null), 5000);
+                                document.getElementById('simulatePhoneNumber').value = '';
+                                document.getElementById('simulateAmount').value = '';
+                                document.getElementById('simulateAccountRef').value = '';
+                              } else {
+                                setError(result.message || 'Failed to simulate STK push');
+                              }
+                            } catch (err) {
+                              console.error('[Settings] STK push simulation error:', err);
+                              setError(err.response?.data?.message || err.message || 'Failed to simulate STK push');
+                            } finally {
+                              setSaving(false);
+                            }
+                          }}
+                          disabled={saving}
+                          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {saving ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Simulating...
+                            </>
+                          ) : (
+                            'Simulate STK Push'
+                          )}
+                        </button>
 
-    <button
-      onClick={async () => {
-        try {
-          setSaving(true);
-          setError(null);
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            <span className="font-semibold">How it works:</span> This simulates what happens when a user initiates a payment. In production, the STK push would appear on the customer's phone. The simulation shows the exact credentials and parameters that would be sent to M-Pesa.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-          const phoneNumber = document.getElementById('simulatePhoneNumber').value;
-          const amount = document.getElementById('simulateAmount').value;
-          const accountRef = document.getElementById('simulateAccountRef').value;
+                {/* Donation Features */}
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                  <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-4">Donation Features</h3>
+                  <div className="space-y-3">
+                    {[
+                      { key: 'enableCampaigns',       label: 'Enable Campaigns'        },
+                      { key: 'enablePledges',          label: 'Enable Pledges'          },
+                      { key: 'enableOfferings',        label: 'Enable Offerings'        },
+                      { key: 'sendReceipts',           label: 'Send Donation Receipts'  },
+                      { key: 'enablePledgeReminders',  label: 'Enable Pledge Reminders' },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+                        <span className="font-semibold text-slate-900 dark:text-white">{label}</span>
+                        <input
+                          type="checkbox"
+                          checked={settings.donationSettings[key]}
+                          onChange={(e) => handleChange('donationSettings', key, e.target.checked)}
+                          className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-          if (!phoneNumber || !amount) {
-            setError('Phone number and amount are required');
-            setSaving(false);
-            return;
-          }
-
-          console.log('[Settings] Simulating STK push with:', { phoneNumber, amount, accountRef });
-
-          const result = await simulateMpesaStkPush(phoneNumber, parseInt(amount), accountRef);
-
-          if (result.success) {
-            setSuccess(`STK Push simulated! Check console for details.`);
-            console.log('[Settings] STK Push Simulation Result:', result.simulation);
-            setTimeout(() => setSuccess(null), 5000);
-            
-            // Clear inputs
-            document.getElementById('simulatePhoneNumber').value = '';
-            document.getElementById('simulateAmount').value = '';
-            document.getElementById('simulateAccountRef').value = '';
-          } else {
-            setError(result.message || 'Failed to simulate STK push');
-          }
-        } catch (err) {
-          console.error('[Settings] STK push simulation error:', err);
-          setError(err.response?.data?.message || err.message || 'Failed to simulate STK push');
-        } finally {
-          setSaving(false);
-        }
-      }}
-      disabled={saving}
-      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
-    >
-      {saving ? (
-        <>
-          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          Simulating...
-        </>
-      ) : (
-        'Simulate STK Push'
-      )}
-    </button>
-
-    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-      <p className="text-xs text-slate-600 dark:text-slate-400">
-        <span className="font-semibold">How it works:</span> This simulates what happens when a user initiates a payment. In production, the STK push would appear on the customer's phone. The simulation shows the exact credentials and parameters that would be sent to M-Pesa.
-      </p>
-    </div>
-  </div>
-</div>
-      </div>
-    )}
-
-    {/* Donation Features */}
-    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-      <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-4">Donation Features</h3>
-      <div className="space-y-3">
-        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-          <span className="font-semibold text-slate-900 dark:text-white">Enable Campaigns</span>
-          <input
-            type="checkbox"
-            checked={settings.donationSettings.enableCampaigns}
-            onChange={(e) => handleChange('donationSettings', 'enableCampaigns', e.target.checked)}
-            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-          />
-        </label>
-
-        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-          <span className="font-semibold text-slate-900 dark:text-white">Enable Pledges</span>
-          <input
-            type="checkbox"
-            checked={settings.donationSettings.enablePledges}
-            onChange={(e) => handleChange('donationSettings', 'enablePledges', e.target.checked)}
-            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-          />
-        </label>
-
-        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-          <span className="font-semibold text-slate-900 dark:text-white">Enable Offerings</span>
-          <input
-            type="checkbox"
-            checked={settings.donationSettings.enableOfferings}
-            onChange={(e) => handleChange('donationSettings', 'enableOfferings', e.target.checked)}
-            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-          />
-        </label>
-
-        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-          <span className="font-semibold text-slate-900 dark:text-white">Send Donation Receipts</span>
-          <input
-            type="checkbox"
-            checked={settings.donationSettings.sendReceipts}
-            onChange={(e) => handleChange('donationSettings', 'sendReceipts', e.target.checked)}
-            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-          />
-        </label>
-
-        <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-          <span className="font-semibold text-slate-900 dark:text-white">Enable Pledge Reminders</span>
-          <input
-            type="checkbox"
-            checked={settings.donationSettings.enablePledgeReminders}
-            onChange={(e) => handleChange('donationSettings', 'enablePledgeReminders', e.target.checked)}
-            className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-          />
-        </label>
-      </div>
-    </div>
-  </div>
-  )}
-
-            {/* SOCIAL MEDIA SETTINGS */}
+            {/* ── SOCIAL MEDIA SETTINGS ────────────────────────────────────── */}
             {activeTab === 'social' && (
               <div className="space-y-6">
                 <div>
@@ -1553,97 +2069,33 @@ useEffect(() => {
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Globe className="inline mr-2" size={16} />
-                      Facebook
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialMedia.facebook}
-                      onChange={(e) => handleChange('socialMedia', 'facebook', e.target.value)}
-                      placeholder="https://facebook.com/yourchurch"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Globe className="inline mr-2" size={16} />
-                      Twitter
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialMedia.twitter}
-                      onChange={(e) => handleChange('socialMedia', 'twitter', e.target.value)}
-                      placeholder="https://twitter.com/yourchurch"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Globe className="inline mr-2" size={16} />
-                      Instagram
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialMedia.instagram}
-                      onChange={(e) => handleChange('socialMedia', 'instagram', e.target.value)}
-                      placeholder="https://instagram.com/yourchurch"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Globe className="inline mr-2" size={16} />
-                      YouTube
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialMedia.youtube}
-                      onChange={(e) => handleChange('socialMedia', 'youtube', e.target.value)}
-                      placeholder="https://youtube.com/c/yourchurch"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Globe className="inline mr-2" size={16} />
-                      LinkedIn
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialMedia.linkedin}
-                      onChange={(e) => handleChange('socialMedia', 'linkedin', e.target.value)}
-                      placeholder="https://linkedin.com/company/yourchurch"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                      <Phone className="inline mr-2" size={16} />
-                      WhatsApp
-                    </label>
-                    <input
-                      type="tel"
-                      value={settings.socialMedia.whatsapp}
-                      onChange={(e) => handleChange('socialMedia', 'whatsapp', e.target.value)}
-                      placeholder="+254 XXX XXX XXX"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                    />
-                  </div>
+                  {[
+                    { key: 'facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/yourchurch',          type: 'url', icon: Globe  },
+                    { key: 'twitter',   label: 'Twitter',   placeholder: 'https://twitter.com/yourchurch',           type: 'url', icon: Globe  },
+                    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourchurch',         type: 'url', icon: Globe  },
+                    { key: 'youtube',   label: 'YouTube',   placeholder: 'https://youtube.com/c/yourchurch',         type: 'url', icon: Globe  },
+                    { key: 'linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/company/yourchurch',  type: 'url', icon: Globe  },
+                    { key: 'whatsapp',  label: 'WhatsApp',  placeholder: '+254 XXX XXX XXX',                         type: 'tel', icon: Phone  },
+                  ].map(({ key, label, placeholder, type, icon: Icon }) => (
+                    <div key={key}>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        <Icon className="inline mr-2" size={16} />
+                        {label}
+                      </label>
+                      <input
+                        type={type}
+                        value={settings.socialMedia[key]}
+                        onChange={(e) => handleChange('socialMedia', key, e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Continued in Part 5 for remaining settings... */}
-           
-
-            {/* MAINTENANCE MODE */}
+            {/* ── MAINTENANCE MODE ─────────────────────────────────────────── */}
             {activeTab === 'maintenance' && (
               <div className="space-y-6">
                 <div>
@@ -1668,8 +2120,8 @@ useEffect(() => {
                           {settings.maintenanceMode.enabled ? 'Maintenance Mode Active' : 'Enable Maintenance Mode'}
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {settings.maintenanceMode.enabled 
-                            ? 'Site is currently in maintenance mode' 
+                          {settings.maintenanceMode.enabled
+                            ? 'Site is currently in maintenance mode'
                             : 'Disable public access to the website'}
                         </p>
                       </div>
@@ -1717,7 +2169,7 @@ useEffect(() => {
                         <div>
                           <p className="font-semibold text-yellow-900 dark:text-yellow-200">Warning</p>
                           <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
-                            Maintenance mode will prevent all non-admin users from accessing the site. 
+                            Maintenance mode will prevent all non-admin users from accessing the site.
                             Make sure to disable it when maintenance is complete.
                           </p>
                         </div>
@@ -1728,7 +2180,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* API KEYS */}
+            {/* ── API KEYS ─────────────────────────────────────────────────── */}
             {activeTab === 'api-keys' && (
               <div className="space-y-6">
                 <div>
@@ -1759,7 +2211,7 @@ useEffect(() => {
                     </label>
                     <div className="relative">
                       <input
-                        type={showPasswords.googleMaps ? "text" : "password"}
+                        type={showPasswords.googleMaps ? 'text' : 'password'}
                         value={settings.apiKeys.googleMapsKey}
                         onChange={(e) => handleChange('apiKeys', 'googleMapsKey', e.target.value)}
                         placeholder="AIza..."
@@ -1795,7 +2247,7 @@ useEffect(() => {
                       </label>
                       <div className="relative">
                         <input
-                          type={showPasswords.cloudinarySecret ? "text" : "password"}
+                          type={showPasswords.cloudinarySecret ? 'text' : 'password'}
                           value={settings.apiKeys.cloudinarySecret}
                           onChange={(e) => handleChange('apiKeys', 'cloudinarySecret', e.target.value)}
                           placeholder="••••••••"
@@ -1818,7 +2270,7 @@ useEffect(() => {
                     </label>
                     <div className="relative">
                       <input
-                        type={showPasswords.sendgrid ? "text" : "password"}
+                        type={showPasswords.sendgrid ? 'text' : 'password'}
                         value={settings.apiKeys.sendgridKey}
                         onChange={(e) => handleChange('apiKeys', 'sendgridKey', e.target.value)}
                         placeholder="SG...."
@@ -1854,7 +2306,7 @@ useEffect(() => {
                       </label>
                       <div className="relative">
                         <input
-                          type={showPasswords.twilioToken ? "text" : "password"}
+                          type={showPasswords.twilioToken ? 'text' : 'password'}
                           value={settings.apiKeys.twilioToken}
                           onChange={(e) => handleChange('apiKeys', 'twilioToken', e.target.value)}
                           placeholder="••••••••"
@@ -1874,7 +2326,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* FEATURE FLAGS */}
+            {/* ── FEATURE FLAGS ────────────────────────────────────────────── */}
             {activeTab === 'features' && (
               <div className="space-y-6">
                 <div>
@@ -1887,136 +2339,36 @@ useEffect(() => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <BookOpen size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Blog</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable blog posts</p>
+                  {[
+                    { key: 'enableBlog',        label: 'Blog',        desc: 'Enable blog posts',           icon: BookOpen   },
+                    { key: 'enableEvents',      label: 'Events',      desc: 'Enable events management',    icon: Calendar   },
+                    { key: 'enableSermons',     label: 'Sermons',     desc: 'Enable sermon library',       icon: BookOpen   },
+                    { key: 'enableGallery',     label: 'Gallery',     desc: 'Enable photo gallery',        icon: ImageIcon  },
+                    { key: 'enableDonations',   label: 'Donations',   desc: 'Enable online donations',     icon: CreditCard },
+                    { key: 'enableVolunteers',  label: 'Volunteers',  desc: 'Enable volunteer program',    icon: Users      },
+                    { key: 'enableTestimonies', label: 'Testimonies', desc: 'Enable testimony sharing',    icon: CheckCircle},
+                    { key: 'enableLivestream',  label: 'Livestream',  desc: 'Enable live streaming',       icon: Globe      },
+                  ].map(({ key, label, desc, icon: Icon }) => (
+                    <label key={key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Icon size={20} className="text-slate-500" />
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white">{label}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{desc}</p>
+                        </div>
                       </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableBlog}
-                      onChange={(e) => handleChange('features', 'enableBlog', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Calendar size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Events</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable events management</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableEvents}
-                      onChange={(e) => handleChange('features', 'enableEvents', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <BookOpen size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Sermons</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable sermon library</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableSermons}
-                      onChange={(e) => handleChange('features', 'enableSermons', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ImageIcon size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Gallery</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable photo gallery</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableGallery}
-                      onChange={(e) => handleChange('features', 'enableGallery', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <CreditCard size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Donations</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable online donations</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableDonations}
-                      onChange={(e) => handleChange('features', 'enableDonations', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Users size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Volunteers</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable volunteer program</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableVolunteers}
-                      onChange={(e) => handleChange('features', 'enableVolunteers', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Testimonies</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable testimony sharing</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableTestimonies}
-                      onChange={(e) => handleChange('features', 'enableTestimonies', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Globe size={20} className="text-slate-500" />
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Livestream</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Enable live streaming</p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.features.enableLivestream}
-                      onChange={(e) => handleChange('features', 'enableLivestream', e.target.checked)}
-                      className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                    />
-                  </label>
+                      <input
+                        type="checkbox"
+                        checked={settings.features[key]}
+                        onChange={(e) => handleChange('features', key, e.target.checked)}
+                        className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                      />
+                    </label>
+                  ))}
                 </div>
               </div>
             )}
+
           </div>
         </div>
       </div>
