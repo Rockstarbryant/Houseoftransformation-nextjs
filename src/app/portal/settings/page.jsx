@@ -42,6 +42,8 @@ export default function SettingsPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showPasswords, setShowPasswords] = useState({});
+  const [collapsedLeaders, setCollapsedLeaders] = useState({});
+  const [collapsedServiceTimes, setCollapsedServiceTimes] = useState({});
 
   useEffect(() => {
     if (canAccessSettings) {
@@ -417,6 +419,22 @@ export default function SettingsPage() {
     });
     setHasChanges(true);
   };
+
+  const toggleLeader = (index) => {
+  setCollapsedLeaders(prev => ({ ...prev, [index]: !prev[index] }));
+};
+
+const toggleServiceTime = (index) => {
+  setCollapsedServiceTimes(prev => ({ ...prev, [index]: !prev[index] }));
+};
+
+const collapseAllLeaders = () => {
+  const all = {};
+  (settings.leadership ?? []).forEach((_, i) => { all[i] = true; });
+  setCollapsedLeaders(all);
+};
+
+const expandAllLeaders = () => setCollapsedLeaders({});
 
   // ============================================
   // SERVICE TIME HELPERS
@@ -938,7 +956,7 @@ export default function SettingsPage() {
                         <div
                           key={i}
                           className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
-                        >
+                          >
                           <div className="flex items-center justify-between mb-3">
                             <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                               Service {i + 1}
@@ -1044,14 +1062,34 @@ export default function SettingsPage() {
                 {/* ── LEADERSHIP DIRECTORY ───────────────────────────────── */}
                 <div className="border-t border-slate-100 dark:border-slate-700 pt-6">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Leadership & Staff Directory</h3>
-                    <button
-                      onClick={addLeader}
-                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
-                      style={{ color: '#8B1A1A' }}
-                    >
-                      <Plus size={13} /> Add Leader
-                    </button>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Leadership & Staff Directory
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {(settings.leadership ?? []).length > 0 && (
+                        <>
+                          <button
+                            onClick={expandAllLeaders}
+                            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            Expand all
+                          </button>
+                          <button
+                            onClick={collapseAllLeaders}
+                            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            Collapse all
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={addLeader}
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
+                        style={{ color: '#8B1A1A' }}
+                      >
+                        <Plus size={13} /> Add Leader
+                      </button>
+                    </div>
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
                     Names, roles, ministries, and contact details shown to all logged-in members on the Connect tab.
@@ -1073,178 +1111,206 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       {(settings.leadership ?? []).map((leader, i) => (
                         <div
-                          key={i}
-                          className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
+                    key={i}
+                    className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden transition-all"
+                  >
+                    {/* ── Collapsible Header ── */}
+                    <button
+                      type="button"
+                      onClick={() => toggleLeader(i)}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {/* Chevron */}
+                        <svg
+                          className={`w-4 h-4 flex-shrink-0 text-slate-400 transition-transform duration-200 ${
+                            collapsedLeaders[i] ? '-rotate-90' : 'rotate-0'
+                          }`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
                         >
-                          {/* Header row */}
-                          <div className="flex items-center justify-between mb-4">
-                            <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                              Leader {i + 1}{leader.name ? ` — ${leader.name}` : ''}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <label className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={leader.isVisible ?? true}
-                                  onChange={e => updateLeaderField(i, 'isVisible', e.target.checked)}
-                                  className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
-                                />
-                                <span className="text-xs text-slate-500">Visible</span>
-                              </label>
-                              <button
-                                onClick={() => removeLeader(i)}
-                                className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide truncate">
+                          Leader {i + 1}{leader.name ? ` — ${leader.name}` : ''}
+                          {leader.title && (
+                            <span className="normal-case font-semibold text-slate-400 dark:text-slate-500 ml-1">
+                              · {leader.title}
+                            </span>
+                          )}
+                        </p>
+                      </div>
 
-                          {/* Identity */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Full Name *</label>
-                              <input
-                                type="text"
-                                value={leader.name ?? ''}
-                                onChange={e => updateLeaderField(i, 'name', e.target.value)}
-                                placeholder="Pastor John Doe"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Title / Position</label>
-                              <input
-                                type="text"
-                                value={leader.title ?? ''}
-                                onChange={e => updateLeaderField(i, 'title', e.target.value)}
-                                placeholder="Senior Pastor"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Ministry / Department</label>
-                              <input
-                                type="text"
-                                value={leader.ministry ?? ''}
-                                onChange={e => updateLeaderField(i, 'ministry', e.target.value)}
-                                placeholder="Main Ministry / Youth / Worship"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                          </div>
+                      {/* Right-side controls — stop propagation so they don't toggle collapse */}
+                      <div
+                        className="flex items-center gap-2 flex-shrink-0 ml-2"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={leader.isVisible ?? true}
+                            onChange={e => updateLeaderField(i, 'isVisible', e.target.checked)}
+                            className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                          />
+                          <span className="text-xs text-slate-500 hidden sm:inline">Visible</span>
+                        </label>
+                        <button
+                          onClick={() => removeLeader(i)}
+                          className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </button>
 
-                          {/* Contact */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
-                                <Phone className="inline mr-1" size={11} /> Phone
-                              </label>
-                              <input
-                                type="tel"
-                                value={leader.phone ?? ''}
-                                onChange={e => updateLeaderField(i, 'phone', e.target.value)}
-                                placeholder="+254 7XX XXX XXX"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
-                                WhatsApp Number
-                              </label>
-                              <input
-                                type="tel"
-                                value={leader.whatsapp ?? ''}
-                                onChange={e => updateLeaderField(i, 'whatsapp', e.target.value)}
-                                placeholder="+254 7XX XXX XXX"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
-                                <Mail className="inline mr-1" size={11} /> Email
-                              </label>
-                              <input
-                                type="email"
-                                value={leader.email ?? ''}
-                                onChange={e => updateLeaderField(i, 'email', e.target.value)}
-                                placeholder="pastor@hot.org"
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
+                    {/* ── Collapsible Body ── */}
+                    {!collapsedLeaders[i] && (
+                      <div className="px-4 pb-4 border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+                        {/* Identity */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Full Name *</label>
+                            <input
+                              type="text"
+                              value={leader.name ?? ''}
+                              onChange={e => updateLeaderField(i, 'name', e.target.value)}
+                              placeholder="Pastor John Doe"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
                           </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Title / Position</label>
+                            <input
+                              type="text"
+                              value={leader.title ?? ''}
+                              onChange={e => updateLeaderField(i, 'title', e.target.value)}
+                              placeholder="Senior Pastor"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Ministry / Department</label>
+                            <input
+                              type="text"
+                              value={leader.ministry ?? ''}
+                              onChange={e => updateLeaderField(i, 'ministry', e.target.value)}
+                              placeholder="Main Ministry / Youth / Worship"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                        </div>
 
-                          {/* Social */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        {/* Contact */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                              <Phone className="inline mr-1" size={11} /> Phone
+                            </label>
+                            <input
+                              type="tel"
+                              value={leader.phone ?? ''}
+                              onChange={e => updateLeaderField(i, 'phone', e.target.value)}
+                              placeholder="+254 7XX XXX XXX"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">WhatsApp Number</label>
+                            <input
+                              type="tel"
+                              value={leader.whatsapp ?? ''}
+                              onChange={e => updateLeaderField(i, 'whatsapp', e.target.value)}
+                              placeholder="+254 7XX XXX XXX"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                              <Mail className="inline mr-1" size={11} /> Email
+                            </label>
+                            <input
+                              type="email"
+                              value={leader.email ?? ''}
+                              onChange={e => updateLeaderField(i, 'email', e.target.value)}
+                              placeholder="pastor@hot.org"
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Social */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Facebook URL</label>
+                            <input
+                              type="url"
+                              value={leader.facebook ?? ''}
+                              onChange={e => updateLeaderField(i, 'facebook', e.target.value)}
+                              placeholder="https://facebook.com/..."
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Instagram URL</label>
+                            <input
+                              type="url"
+                              value={leader.instagram ?? ''}
+                              onChange={e => updateLeaderField(i, 'instagram', e.target.value)}
+                              placeholder="https://instagram.com/..."
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">X (Twitter) URL</label>
+                            <input
+                              type="url"
+                              value={leader.twitter ?? ''}
+                              onChange={e => updateLeaderField(i, 'twitter', e.target.value)}
+                              placeholder="https://x.com/..."
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Bio + Avatar + Order */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Short Bio</label>
+                            <textarea
+                              value={leader.bio ?? ''}
+                              onChange={e => updateLeaderField(i, 'bio', e.target.value)}
+                              placeholder="Brief description shown on the Connect tab…"
+                              rows={2}
+                              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none resize-none"
+                            />
+                          </div>
+                          <div className="space-y-3">
                             <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Facebook URL</label>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Avatar URL (Cloudinary)</label>
                               <input
                                 type="url"
-                                value={leader.facebook ?? ''}
-                                onChange={e => updateLeaderField(i, 'facebook', e.target.value)}
-                                placeholder="https://facebook.com/..."
+                                value={leader.avatar ?? ''}
+                                onChange={e => updateLeaderField(i, 'avatar', e.target.value)}
+                                placeholder="https://res.cloudinary.com/..."
                                 className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Instagram URL</label>
+                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Display Order</label>
                               <input
-                                type="url"
-                                value={leader.instagram ?? ''}
-                                onChange={e => updateLeaderField(i, 'instagram', e.target.value)}
-                                placeholder="https://instagram.com/..."
+                                type="number"
+                                value={leader.displayOrder ?? 0}
+                                onChange={e => updateLeaderField(i, 'displayOrder', Number(e.target.value))}
+                                min="0"
                                 className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                               />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">X (Twitter) URL</label>
-                              <input
-                                type="url"
-                                value={leader.twitter ?? ''}
-                                onChange={e => updateLeaderField(i, 'twitter', e.target.value)}
-                                placeholder="https://x.com/..."
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Bio + Avatar + Order */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Short Bio</label>
-                              <textarea
-                                value={leader.bio ?? ''}
-                                onChange={e => updateLeaderField(i, 'bio', e.target.value)}
-                                placeholder="Brief description shown on the Connect tab…"
-                                rows={2}
-                                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none resize-none"
-                              />
-                            </div>
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Avatar URL (Cloudinary)</label>
-                                <input
-                                  type="url"
-                                  value={leader.avatar ?? ''}
-                                  onChange={e => updateLeaderField(i, 'avatar', e.target.value)}
-                                  placeholder="https://res.cloudinary.com/..."
-                                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Display Order</label>
-                                <input
-                                  type="number"
-                                  value={leader.displayOrder ?? 0}
-                                  onChange={e => updateLeaderField(i, 'displayOrder', Number(e.target.value))}
-                                  min="0"
-                                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                                />
-                                <p className="text-[10px] text-slate-400 mt-0.5">Lower = shown first</p>
-                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Lower = shown first</p>
                             </div>
                           </div>
                         </div>
+                      </div>
+                    )}
+                  </div>
                       ))}
                     </div>
                   )}

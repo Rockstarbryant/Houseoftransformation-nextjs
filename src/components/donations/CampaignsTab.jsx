@@ -513,6 +513,14 @@ const completeMutation = useMutation({
   }
 });
 
+const activateMutation = useMutation({
+  mutationFn: (id) => donationApi.campaigns.activate(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    setAlertMessage({ message: 'Campaign activated successfully!', type: 'success' });
+  }
+});
+
   const archiveMutation = useMutation({
     mutationFn: (id) => donationApi.campaigns.archive(id),
     onSuccess: () => {
@@ -652,13 +660,13 @@ const completeMutation = useMutation({
                         </div>
                       </td>
                       <td className="px-8 py-6">
-  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-    activeTab === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-  }`}>
-    <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-    {statusInfo.label || campaign.status}
-  </span>
-</td>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        activeTab === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                        {statusInfo.label || campaign.status}
+                      </span>
+                    </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                           <Calendar size={14} />
@@ -699,6 +707,23 @@ const completeMutation = useMutation({
                                   <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
                                 </button>
                               )}
+
+                              {/* ACTIVATE CAMPAIGN (Draft only) */}
+                            {canActivateCampaign() && campaign.status === 'draft' && (
+                              <button
+                                onClick={() => {
+                                  if (confirm('Activate this campaign? It will become visible for donations.')) {
+                                    activateMutation.mutate(campaign._id);
+                                  }
+                                }}
+                                className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all group"
+                                title="Activate Campaign"
+                                disabled={activateMutation.isPending}
+                              >
+                                <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
+                              </button>
+                            )}
+
                             {/* ✅ FIX: Use canEditCampaign(campaign) instead of canRecordContribution() */}
                             {canEditCampaign(campaign) && activeTab === 'active' && (
                               <button 
