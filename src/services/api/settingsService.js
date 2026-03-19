@@ -230,6 +230,16 @@ export const updateSocialMedia = async (data) => {
   }
 };
 
+export const updatePaymentMethods = async (data) => {
+  try {
+    const response = await api.patch('/settings/payment-methods', data);
+    return response.data;
+  } catch (error) {
+    console.error('[SettingsService] Update payment methods error:', error);
+    throw error;
+  }
+};
+
 export const updateMaintenanceMode = async (data) => {
   try {
     const response = await api.patch('/settings/maintenance', data);

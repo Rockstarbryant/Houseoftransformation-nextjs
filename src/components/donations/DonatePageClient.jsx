@@ -1,35 +1,140 @@
 // src/components/donations/DonatePageClient.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { donationApi } from '@/services/api/donationService';
-import { formatCurrency, getCampaignTypeIcon, calculateCampaignProgress } from '@/utils/donationHelpers';
-import { 
-  Heart, 
-  Target,
-  Users, 
-  ArrowRight, 
-  CheckCircle,
-  Smartphone,
-  CreditCard,
-  Building2,
-  Banknote,
-  Copy,
-  Check,
-  X,
-  Gift,
-  Phone,
-  ChevronDown
+import { formatCurrency, calculateCampaignProgress } from '@/utils/donationHelpers';
+import {
+  Heart, Target, Users, ArrowRight, CheckCircle, Smartphone, CreditCard,
+  Building2, Banknote, Copy, Check, X, Gift, Phone, ChevronDown, Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 
 
-// --- COMPONENTS ---
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Payment Details Component (LOGIC PRESERVED, UI CLEANED)
-function PaymentDetailsCard({ campaign }) {
+/**
+ * Build a display-ready list of payment method objects from settings.
+ *
+ * @param {object|null} pm         - settings.churchPaymentMethods
+ * @param {object|null} cardConfig - settings.titheCard / settings.offeringCard
+ *                                   Pass null for campaigns (show all globally-enabled methods).
+ * @param {'tithe'|'offering'|'campaign'} type
+ * @param {string} [campaignId]
+ */
+function buildPaymentMethods(pm, cardConfig, type, campaignId) {
+  if (!pm) return [];
+  const methods = [];
+
+  // Decide whether a given key's method should appear in this context
+  const shouldShow = (key) => {
+    if (!pm[key]?.enabled) return false;
+    if (!cardConfig) return true; // campaigns: show all globally-enabled methods
+    const showKey = 'show' + key.charAt(0).toUpperCase() + key.slice(1);
+    return !!cardConfig[showKey];
+  };
+
+  // The account reference shown on the paybill row (per card type)
+  const accountRef = (method) => {
+    if (type === 'tithe')    return method.titheAccountRef    || 'TITHE';
+    if (type === 'offering') return method.offeringAccountRef || 'OFFERING';
+    return campaignId?.slice(-8) || 'CAMPAIGN';
+  };
+
+  // ── M-Pesa Paybill ──────────────────────────────────────────────────────────
+  if (shouldShow('paybill') && pm.paybill?.number) {
+    methods.push({
+      id: 'paybill',
+      icon: Smartphone,
+      title: pm.paybill.label || 'M-Pesa Paybill',
+      colorClass: 'text-[#8B1A1A]',
+      bgClass: 'bg-red-50 dark:bg-red-900/10',
+      details: [
+        { label: 'Paybill Number', value: pm.paybill.number,      field: 'paybill'  },
+        { label: 'Account Number', value: accountRef(pm.paybill),  field: 'account'  },
+      ],
+    });
+  }
+
+  // ── M-Pesa Till ─────────────────────────────────────────────────────────────
+  if (shouldShow('till') && pm.till?.number) {
+    methods.push({
+      id: 'till',
+      icon: CreditCard,
+      title: pm.till.label || 'M-Pesa Till Number',
+      colorClass: 'text-[#8B1A1A]',
+      bgClass: 'bg-red-50 dark:bg-red-900/10',
+      details: [
+        { label: 'Till Number', value: pm.till.number, field: 'till' },
+      ],
+    });
+  }
+
+  // ── Bank Transfer ────────────────────────────────────────────────────────────
+  if (shouldShow('bank') && pm.bank?.accountNumber) {
+    const bankDetails = [];
+    if (pm.bank.bankName)      bankDetails.push({ label: 'Bank Name',      value: pm.bank.bankName,      field: 'bank'       });
+    bankDetails.push(          { label: 'Account Number', value: pm.bank.accountNumber, field: 'bankaccount' });
+    if (pm.bank.accountName)   bankDetails.push({ label: 'Account Name',   value: pm.bank.accountName,   field: 'bankname'   });
+    if (pm.bank.branchName)    bankDetails.push({ label: 'Branch',          value: pm.bank.branchName,    field: 'branch'     });
+
+    methods.push({
+      id: 'bank',
+      icon: Building2,
+      title: pm.bank.label || 'Bank Transfer',
+      colorClass: 'text-slate-600 dark:text-slate-400',
+      bgClass: 'bg-slate-50 dark:bg-slate-800',
+      details: bankDetails,
+    });
+  }
+
+  // ── Pochi la Biashara ────────────────────────────────────────────────────────
+  if (shouldShow('pochiLaBiashara') && pm.pochiLaBiashara?.number) {
+    const pochiDetails = [
+      { label: 'Phone Number', value: pm.pochiLaBiashara.number, field: 'pochi' },
+    ];
+    if (pm.pochiLaBiashara.name)
+      pochiDetails.push({ label: 'Account Name', value: pm.pochiLaBiashara.name, field: 'pochiname' });
+
+    methods.push({
+      id: 'pochi',
+      icon: Phone,
+      title: pm.pochiLaBiashara.label || 'Pochi la Biashara',
+      colorClass: 'text-green-600',
+      bgClass: 'bg-green-50 dark:bg-green-900/10',
+      details: pochiDetails,
+    });
+  }
+
+  // ── PayPal ───────────────────────────────────────────────────────────────────
+  if (shouldShow('paypal') && pm.paypal?.email) {
+    methods.push({
+      id: 'paypal',
+      icon: Globe,
+      title: pm.paypal.label || 'PayPal',
+      colorClass: 'text-blue-600',
+      bgClass: 'bg-blue-50 dark:bg-blue-900/10',
+      details: [
+        { label: 'PayPal Email', value: pm.paypal.email, field: 'paypal' },
+      ],
+    });
+  }
+
+  return methods;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REUSABLE: PaymentMethodsList
+// Renders the list of copyable payment-method cards.
+// Used by TitheOfferingCard, PaymentDetailsCard (campaigns) — and eventually
+// the Homepage giving section too.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PaymentMethodsList({ methods, prefix = 'pm' }) {
   const [copiedField, setCopiedField] = useState(null);
 
   const copyToClipboard = (text, field) => {
@@ -38,68 +143,31 @@ function PaymentDetailsCard({ campaign }) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const paymentMethods = [
-    {
-      id: 'mpesa-paybill',
-      icon: Smartphone,
-      title: 'M-Pesa Paybill',
-      color: 'text-[#8B1A1A]',
-      bgColor: 'bg-red-50 dark:bg-red-900/10',
-      details: [
-        { label: 'Paybill Number', value: '247247', field: 'paybill' },
-        { label: 'Account Number', value: campaign._id?.slice(-8) || 'CAMPAIGN', field: 'account' }
-      ]
-    },
-    {
-      id: 'mpesa-till',
-      icon: CreditCard,
-      title: 'M-Pesa Till Number',
-      color: 'text-[#8B1A1A]',
-      bgColor: 'bg-red-50 dark:bg-red-900/10',
-      details: [
-        { label: 'Till Number', value: '5678901', field: 'till' }
-      ]
-    },
-    {
-      id: 'bank',
-      icon: Building2,
-      title: 'Bank Transfer',
-      color: 'text-slate-600 dark:text-slate-400',
-      bgColor: 'bg-slate-50 dark:bg-slate-800',
-      details: [
-        { label: 'Bank Name', value: 'Kenya Commercial Bank', field: 'bank' },
-        { label: 'Account Number', value: '1234567890', field: 'bankaccount' },
-        { label: 'Account Name', value: 'House of Transformation', field: 'bankname' }
-      ]
-    }
-  ];
+  if (!methods || methods.length === 0) {
+    return (
+      <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">
+        No payment methods configured yet. Contact the church office for details.
+      </p>
+    );
+  }
 
   return (
-    <div className="mt-6 border-t border-slate-100 dark:border-slate-700 pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-      <div className="flex items-center gap-2 mb-4">
-        <Banknote className="text-[#8B1A1A]" size={18} />
-        <h4 className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wide">
-          Payment Methods
-        </h4>
-      </div>
-
-      <div className="space-y-3">
-        {paymentMethods.map((method) => {
-          const Icon = method.icon;
-          return (
-            <div
-              key={method.id}
-              className={`${method.bgColor} rounded-lg p-4 border border-slate-100 dark:border-slate-700`}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Icon className={method.color} size={18} />
-                <span className={`font-bold text-sm ${method.color === 'text-[#8B1A1A]' ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
-                  {method.title}
-                </span>
-              </div>
-              
-              <div className="space-y-2">
-                {method.details.map((detail) => (
+    <div className="space-y-3">
+      {methods.map((method) => {
+        const Icon = method.icon;
+        return (
+          <div
+            key={method.id}
+            className={`${method.bgClass} rounded-lg p-4 border border-slate-100 dark:border-slate-700`}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Icon className={method.colorClass} size={18} />
+              <span className="font-bold text-sm text-slate-900 dark:text-white">{method.title}</span>
+            </div>
+            <div className="space-y-2">
+              {method.details.map((detail) => {
+                const fieldKey = `${prefix}-${method.id}-${detail.field}`;
+                return (
                   <div
                     key={detail.field}
                     className="flex items-center justify-between bg-white dark:bg-slate-900 rounded px-3 py-2 border border-slate-100 dark:border-slate-700"
@@ -113,76 +181,76 @@ function PaymentDetailsCard({ campaign }) {
                       </p>
                     </div>
                     <button
-                      onClick={() => copyToClipboard(detail.value, detail.field)}
+                      onClick={() => copyToClipboard(detail.value, fieldKey)}
                       className="ml-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
                       title="Copy to clipboard"
                     >
-                      {copiedField === detail.field ? (
+                      {copiedField === fieldKey ? (
                         <Check className="text-green-600" size={14} />
                       ) : (
                         <Copy className="text-slate-400 hover:text-[#8B1A1A]" size={14} />
                       )}
                     </button>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// Tithe/Offering Card Component (LOGIC STRICTLY PRESERVED, DESIGN MODERNIZED)
-// Removed gradients, added clean solid backgrounds with Red accents
-function TitheOfferingCard({ type, title, subtitle, verse, reference, icon }) {
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PaymentDetailsCard — shown inside a campaign card (Manual Pay toggle)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PaymentDetailsCard({ campaign, churchPaymentMethods }) {
+  const methods = buildPaymentMethods(churchPaymentMethods, null, 'campaign', campaign._id);
+
+  return (
+    <div className="mt-6 border-t border-slate-100 dark:border-slate-700 pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="flex items-center gap-2 mb-4">
+        <Banknote className="text-[#8B1A1A]" size={18} />
+        <h4 className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wide">
+          Payment Methods
+        </h4>
+      </div>
+      <PaymentMethodsList methods={methods} prefix={`campaign-${campaign._id}`} />
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TitheOfferingCard
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TitheOfferingCard({
+  type,
+  title,
+  subtitle,
+  verse,
+  reference,
+  icon,
+  churchPaymentMethods,
+  cardConfig,
+}) {
   const [showPayment, setShowPayment] = useState(false);
-  const [copiedField, setCopiedField] = useState(null);
 
-  const copyToClipboard = (text, field) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
+  const methods = buildPaymentMethods(churchPaymentMethods, cardConfig, type);
   const IconComponent = icon === 'church' ? Building2 : Gift;
-
-  const paymentMethods = [
-    {
-      id: 'mpesa-paybill',
-      icon: Smartphone,
-      title: 'M-Pesa Paybill',
-      details: [
-        { label: 'Paybill Number', value: '247247', field: 'paybill' },
-        { label: 'Account Number', value: type === 'tithe' ? 'TITHE' : 'OFFERING', field: 'account' }
-      ]
-    },
-    {
-      id: 'mpesa-till',
-      icon: CreditCard,
-      title: 'M-Pesa Till',
-      details: [
-        { label: 'Till Number', value: '5678901', field: 'till' }
-      ]
-    },
-    {
-      id: 'bank',
-      icon: Building2,
-      title: 'Bank Transfer',
-      details: [
-        { label: 'Bank', value: 'KCB Bank', field: 'bank' },
-        { label: 'Account', value: '1234567890', field: 'bankaccount' }
-      ]
-    }
-  ];
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border-t-4 border-[#8B1A1A] overflow-hidden transition-transform hover:-translate-y-1 duration-300">
       <div className="p-6 sm:p-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              {title}
+            </h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{subtitle}</p>
           </div>
           <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-full text-[#8B1A1A]">
@@ -194,62 +262,29 @@ function TitheOfferingCard({ type, title, subtitle, verse, reference, icon }) {
           <p className="text-slate-700 dark:text-slate-300 text-sm italic mb-2">
             &quot;{verse}&quot;
           </p>
-          <p className="text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wide">- {reference}</p>
+          <p className="text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wide">
+            - {reference}
+          </p>
         </div>
 
         <button
           onClick={() => setShowPayment(!showPayment)}
           className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 border-2 
-            ${showPayment 
-              ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' 
+            ${showPayment
+              ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
               : 'bg-[#8B1A1A] text-white border-[#8B1A1A] hover:bg-[#a01f1f] hover:border-[#a01f1f]'
             }`}
         >
           {showPayment ? (
             <>Hide Payment Info <ChevronDown className="rotate-180" size={18} /></>
           ) : (
-            <>Give {title} <Heart size={18} className={showPayment ? "" : "fill-white/20"} /></>
+            <>Give {title} <Heart size={18} className="fill-white/20" /></>
           )}
         </button>
 
-        {/* Payment Methods - Logic Preserved */}
         {showPayment && (
-          <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-            {paymentMethods.map((method) => {
-              const MethodIcon = method.icon;
-              return (
-                <div key={method.id} className="border border-slate-100 dark:border-slate-700 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MethodIcon size={18} className="text-[#8B1A1A]" />
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">{method.title}</span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {method.details.map((detail) => (
-                      <div
-                        key={detail.field}
-                        className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded px-3 py-2"
-                      >
-                        <div className="flex-1">
-                          <p className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold">{detail.label}</p>
-                          <p className="font-mono text-sm font-bold text-slate-900 dark:text-white">{detail.value}</p>
-                        </div>
-                        <button
-                          onClick={() => copyToClipboard(detail.value, `${type}-${detail.field}`)}
-                          className="ml-2 p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
-                        >
-                          {copiedField === `${type}-${detail.field}` ? (
-                            <Check className="text-green-600" size={16} />
-                          ) : (
-                            <Copy className="text-slate-400 hover:text-[#8B1A1A]" size={16} />
-                          )}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-6 animate-in fade-in slide-in-from-top-4 duration-300">
+            <PaymentMethodsList methods={methods} prefix={type} />
           </div>
         )}
       </div>
@@ -257,9 +292,13 @@ function TitheOfferingCard({ type, title, subtitle, verse, reference, icon }) {
   );
 }
 
-// Contribution Modal Component (LOGIC PRESERVED)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QuickContributeModal — logic unchanged
+// ─────────────────────────────────────────────────────────────────────────────
+
 function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
-  const [step, setStep] = useState('details'); 
+  const [step, setStep] = useState('details');
   const [formData, setFormData] = useState({ amount: '', phone: '', name: '', email: '' });
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -269,14 +308,11 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
     setError(null);
   };
 
-  const validatePhone = (phone) => {
-    const cleaned = phone.replace(/\s+/g, '');
-    return /^254\d{9}$/.test(cleaned);
-  };
+  const validatePhone = (phone) => /^254\d{9}$/.test(phone.replace(/\s+/g, ''));
 
   const formatPhoneNumber = (phone) => {
     let cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('0')) cleaned = '254' + cleaned.substring(1);
+    if (cleaned.startsWith('0'))   cleaned = '254' + cleaned.substring(1);
     if (!cleaned.startsWith('254')) cleaned = '254' + cleaned;
     return cleaned;
   };
@@ -288,15 +324,9 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
       setError('Minimum contribution is KES 10');
       return;
     }
-    if (!formData.phone) {
-      setError('Phone number is required');
-      return;
-    }
+    if (!formData.phone) { setError('Phone number is required'); return; }
     const formattedPhone = formatPhoneNumber(formData.phone);
-    if (!validatePhone(formattedPhone)) {
-      setError('Invalid Kenyan phone number');
-      return;
-    }
+    if (!validatePhone(formattedPhone)) { setError('Invalid Kenyan phone number'); return; }
 
     try {
       setIsSubmitting(true);
@@ -304,15 +334,11 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
       const response = await donationApi.contributions.initiateMpesa(
         campaign._id,
         parseFloat(formData.amount),
-        formattedPhone
+        formattedPhone,
       );
-
       if (response.success) {
         setStep('success');
-        setTimeout(() => {
-          onSuccess?.();
-          onClose();
-        }, 5000);
+        setTimeout(() => { onSuccess?.(); onClose(); }, 5000);
       } else {
         setError(response.message || 'Failed to initiate M-Pesa payment');
         setStep('details');
@@ -339,12 +365,12 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800">
-        
+
         {step === 'details' && (
           <>
             <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-2 h-6 bg-[#8B1A1A] rounded-full"></span>
+                <span className="w-2 h-6 bg-[#8B1A1A] rounded-full" />
                 Quick Give
               </h3>
               <button onClick={handleClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
@@ -402,9 +428,9 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
 
         {step === 'processing' && (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A] mx-auto mb-6"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B1A1A] mx-auto mb-6" />
             <h3 className="font-bold text-lg mb-2 dark:text-white">Requesting Payment...</h3>
-            <p className="text-slate-500 text-sm">Check your phone for the MPesa prompt.</p>
+            <p className="text-slate-500 text-sm">Check your phone for the M-Pesa prompt.</p>
           </div>
         )}
 
@@ -414,8 +440,10 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
               <CheckCircle className="text-green-600" size={32} />
             </div>
             <h3 className="font-bold text-xl mb-2 dark:text-white">Prompt Sent!</h3>
-            <p className="text-slate-500 mb-6">Enter your MPesa PIN on your phone to complete the transaction.</p>
-            <button onClick={handleClose} className="w-full bg-slate-100 dark:bg-slate-800 py-3 rounded-lg font-bold text-slate-900 dark:text-white">Close</button>
+            <p className="text-slate-500 mb-6">Enter your M-Pesa PIN on your phone to complete the transaction.</p>
+            <button onClick={handleClose} className="w-full bg-slate-100 dark:bg-slate-800 py-3 rounded-lg font-bold text-slate-900 dark:text-white">
+              Close
+            </button>
           </div>
         )}
       </div>
@@ -423,15 +451,26 @@ function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
   );
 }
 
-// --- MAIN CLIENT COMPONENT ---
 
-export default function DonatePageClient({ initialCampaigns }) {
-  const router = useRouter();
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN CLIENT COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function DonatePageClient({ initialCampaigns, paymentSettings }) {
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState(initialCampaigns || []);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState({});
+
+  // Derive the three pieces we need from paymentSettings
+  const churchPaymentMethods = paymentSettings?.churchPaymentMethods ?? null;
+  const titheCard            = paymentSettings?.titheCard            ?? null;
+  const offeringCard         = paymentSettings?.offeringCard         ?? null;
+
+  // Hide card entirely only if the admin has explicitly disabled it
+  const showTitheCard    = titheCard?.enabled    !== false;
+  const showOfferingCard = offeringCard?.enabled !== false;
 
   const loadCampaigns = async () => {
     try {
@@ -451,141 +490,138 @@ export default function DonatePageClient({ initialCampaigns }) {
     setShowPaymentDetails(prev => ({ ...prev, [campaignId]: !prev[campaignId] }));
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen font-sans bg-slate-50 dark:bg-slate-950">
-      
-      {/* 1. MODERN HERO SECTION (Reduced Text, High Impact) */}
+
+      {/* 1. HERO */}
       <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 z-10 bg-slate-900/60 mix-blend-multiply"></div>
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-        
-        {/* Background Image */}
-        <div 
+        <div className="absolute inset-0 z-10 bg-slate-900/60 mix-blend-multiply" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+        <div
           className="absolute inset-0 z-0 scale-105 animate-in fade-in duration-1000"
           style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1920&q=80')",
-            backgroundSize: "cover",
-            backgroundPosition: "center"
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         />
 
         <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
-          
-          
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-4 mt-18 leading-tight tracking-tight drop-shadow-lg animate-in slide-in-from-bottom-6 fade-in duration-700 delay-100">
             Your Generosity <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-300">Changes Lives</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-300">
+              Changes Lives
+            </span>
           </h1>
-          
           <p className="text-lg sm:text-xl text-slate-200 mb-10 max-w-2xl mx-auto leading-relaxed font-light animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
             Every contribution fuels ministry, transforms our community, and advances God&apos;s kingdom.
           </p>
-          
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-10 fade-in duration-700 delay-300">
-            <Link 
+            <Link
               href="#campaigns"
               className="w-full sm:w-auto px-8 py-4 bg-[#8B1A1A] hover:bg-[#a01f1f] text-white font-bold rounded-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-red-900/20"
             >
               Support Campaigns <ArrowRight size={20} />
             </Link>
-            <Link 
+            <Link
               href="#tithe-offerings"
               className="w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white font-bold rounded-lg transition-all border border-white/30 flex items-center justify-center gap-2"
             >
-             Give Tithe & Offering
+              Give Tithe &amp; Offering
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 2. IMPACT STRIP (Replaces massive "Why Give" text) */}
+      {/* 2. IMPACT STRIP */}
       <section className="relative z-30 -mt-16 max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-[#8B1A1A]">
-              <Users size={24} />
+          {[
+            { Icon: Users,     label: 'Community', desc: 'Supporting families in need.',     bg: 'bg-red-50 dark:bg-red-900/20',   color: 'text-[#8B1A1A]' },
+            { Icon: Target,    label: 'Mission',   desc: 'Spreading the Gospel.',            bg: 'bg-blue-50 dark:bg-blue-900/20', color: 'text-blue-600'  },
+            { Icon: Building2, label: 'Sanctuary', desc: "Building God's house.",            bg: 'bg-amber-50 dark:bg-amber-900/20', color: 'text-amber-600' },
+          ].map(({ Icon, label, desc, bg, color }, i) => (
+            <div
+              key={label}
+              className={`flex items-center gap-4 p-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors${i > 0 ? ' border-l-0 md:border-l border-slate-100 dark:border-slate-800' : ''}`}
+            >
+              <div className={`w-12 h-12 rounded-full ${bg} flex items-center justify-center ${color}`}>
+                <Icon size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white">{label}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{desc}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Community</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Supporting families in need.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-0 md:border-l border-slate-100 dark:border-slate-800">
-            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-              <Target size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Mission</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Spreading the Gospel.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-0 md:border-l border-slate-100 dark:border-slate-800">
-            <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600">
-              <Building2 size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Sanctuary</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Building God&apos;s house.</p>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* 3. TITHE & OFFERINGS (Redesigned: Clean, No Gradients) */}
-      <section id="tithe-offerings" className="py-20 bg-slate-50 dark:bg-slate-950">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-[#8B1A1A] font-bold tracking-widest text-xs uppercase mb-2 block">Biblical Stewardship</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-4">Tithe & Offering</h2>
-            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Giving is an act of worship. It reminds us that God is the owner of everything, and we are His stewards.
-            </p>
-          </div>
+      {/* 3. TITHE & OFFERINGS */}
+      {(showTitheCard || showOfferingCard) && (
+        <section id="tithe-offerings" className="py-20 bg-slate-50 dark:bg-slate-950">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <span className="text-[#8B1A1A] font-bold tracking-widest text-xs uppercase mb-2 block">
+                Biblical Stewardship
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-4">
+                Tithe &amp; Offering
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                Giving is an act of worship. It reminds us that God is the owner of everything, and we are His stewards.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <TitheOfferingCard
-              type="tithe"
-              title="Tithe"
-              subtitle="Why Tithe?
-              A tithe (10%) is our way of recognizing that God owns everything. It keeps our hearts reminded of the God who not only calls us to give, but blesses us in return."
-              verse="Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it."
-              reference="Malachi 3:10"
-              icon="church"
-            />
-            <TitheOfferingCard
-              type="offering"
-              title="Offerings"
-              subtitle="Offerings are gifts beyond the tithe, given as the Lord leads your heart. They represent our gratitude and desire to advance God's kingdom through the church."
-              verse="Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver."
-              reference="2 Corinthians 9:7"
-              icon="gift"
-            />
+            <div className={`grid grid-cols-1 gap-8${showTitheCard && showOfferingCard ? ' md:grid-cols-2' : ''}`}>
+              {showTitheCard && (
+                <TitheOfferingCard
+                  type="tithe"
+                  title="Tithe"
+                  subtitle="Why Tithe? A tithe (10%) is our way of recognizing that God owns everything. It keeps our hearts reminded of the God who not only calls us to give, but blesses us in return."
+                  verse="Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it."
+                  reference="Malachi 3:10"
+                  icon="church"
+                  churchPaymentMethods={churchPaymentMethods}
+                  cardConfig={titheCard}
+                />
+              )}
+              {showOfferingCard && (
+                <TitheOfferingCard
+                  type="offering"
+                  title="Offerings"
+                  subtitle="Offerings are gifts beyond the tithe, given as the Lord leads your heart. They represent our gratitude and desire to advance God's kingdom through the church."
+                  verse="Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver."
+                  reference="2 Corinthians 9:7"
+                  icon="gift"
+                  churchPaymentMethods={churchPaymentMethods}
+                  cardConfig={offeringCard}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* 4. ACTIVE CAMPAIGNS (Brought Forward, Clean Design) */}
+      {/* 4. ACTIVE CAMPAIGNS */}
       <section id="campaigns" className="py-20 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-end mb-10 gap-4">
             <div>
               <span className="text-[#8B1A1A] font-bold tracking-widest text-xs uppercase mb-2 block">Current Needs</span>
-              <h2 className="text-3xl justify-center sm:text-4xl font-black text-slate-900 dark:text-white">
-                Active Campaigns
-              </h2>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">Active Campaigns</h2>
             </div>
-            
             <div className="flex-1 max-w-sm md:text-left">
-                    <h3 className="text-2xl font-bold dark:text-slate-200 mb-2">
-                      God Gets to You What He Can Get Through You
-                    </h3>
-                    <p className="text-red-800  leading-relaxed">
-                      &quot;You will be enriched in every way so that you can be generous on every occasion, 
-                      and through us your generosity will result in thanksgiving to God.&quot; 
-                      <span className="font-semibold block mt-2">- 2 Corinthians 9:11</span>
-                    </p>
-                  </div>
+              <h3 className="text-2xl font-bold dark:text-slate-200 mb-2">
+                God Gets to You What He Can Get Through You
+              </h3>
+              <p className="text-red-800 leading-relaxed">
+                &quot;You will be enriched in every way so that you can be generous on every occasion,
+                and through us your generosity will result in thanksgiving to God.&quot;
+                <span className="font-semibold block mt-2">- 2 Corinthians 9:11</span>
+              </p>
+            </div>
           </div>
 
           {campaigns.length === 0 ? (
@@ -596,16 +632,21 @@ export default function DonatePageClient({ initialCampaigns }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {campaigns.map(campaign => {
+              {campaigns.map((campaign) => {
                 const progress = calculateCampaignProgress(campaign.currentAmount, campaign.goalAmount);
-                
                 return (
-                  <div key={campaign._id} className="group bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-red-900/5 hover:-translate-y-1 transition-all duration-300">
-                    
-                    {/* Image Area */}
+                  <div
+                    key={campaign._id}
+                    className="group bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-red-900/5 hover:-translate-y-1 transition-all duration-300"
+                  >
+                    {/* Image */}
                     <div className="relative h-52 overflow-hidden">
                       {campaign.imageUrl ? (
-                        <img src={campaign.imageUrl} alt={campaign.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <img
+                          src={campaign.imageUrl}
+                          alt={campaign.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
                       ) : (
                         <div className="w-full h-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
                           <Heart className="text-slate-300" size={40} />
@@ -616,28 +657,30 @@ export default function DonatePageClient({ initialCampaigns }) {
                       </div>
                     </div>
 
+                    {/* Body */}
                     <div className="p-6">
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 line-clamp-1">
                         {campaign.title}
                       </h3>
-                      
                       <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 line-clamp-2 leading-relaxed">
                         {campaign.description}
                       </p>
 
+                      {/* Progress */}
                       <div className="space-y-3 mb-6">
                         <div className="flex justify-between text-xs font-semibold">
                           <span className="text-slate-900 dark:text-white">{formatCurrency(campaign.currentAmount)}</span>
                           <span className="text-slate-500">of {formatCurrency(campaign.goalAmount)}</span>
                         </div>
                         <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                          <div 
+                          <div
                             className="bg-[#8B1A1A] h-2 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${Math.min(progress, 100)}%` }}
-                          ></div>
+                          />
                         </div>
                       </div>
 
+                      {/* Actions */}
                       <div className="space-y-3">
                         <button
                           onClick={() => handleContribute(campaign)}
@@ -646,7 +689,6 @@ export default function DonatePageClient({ initialCampaigns }) {
                           <Smartphone size={16} />
                           Contribute Now
                         </button>
-                        
                         <div className="flex gap-2">
                           <button
                             onClick={() => togglePaymentDetails(campaign._id)}
@@ -664,7 +706,7 @@ export default function DonatePageClient({ initialCampaigns }) {
                       </div>
 
                       {showPaymentDetails[campaign._id] && (
-                        <PaymentDetailsCard campaign={campaign} />
+                        <PaymentDetailsCard campaign={campaign} churchPaymentMethods={churchPaymentMethods} />
                       )}
                     </div>
                   </div>
@@ -675,21 +717,21 @@ export default function DonatePageClient({ initialCampaigns }) {
         </div>
       </section>
 
-      {/* 5. MINIMALIST CTA (Clean Footer) */}
+      {/* 5. CTA FOOTER */}
       <section className="py-16 bg-[#8B1A1A] text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Make a Difference Today</h2>
           <p className="text-red-100 mb-8">Join the House of Transformation family in impacting our world.</p>
           <div className="flex justify-center gap-4">
-             {user ? (
-               <Link href="/portal/donations" className="bg-white text-[#8B1A1A] px-8 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
-                 Make A Pledge.
-               </Link>
-             ) : (
-               <Link href="/signup" className="bg-white text-[#8B1A1A] px-8 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
-                 Create Account
-               </Link>
-             )}
+            {user ? (
+              <Link href="/portal/donations" className="bg-white text-[#8B1A1A] px-8 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                Make A Pledge
+              </Link>
+            ) : (
+              <Link href="/signup" className="bg-white text-[#8B1A1A] px-8 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                Create Account
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -699,11 +741,8 @@ export default function DonatePageClient({ initialCampaigns }) {
         <QuickContributeModal
           campaign={selectedCampaign}
           isOpen={showContributeModal}
-          onClose={() => {
-            setShowContributeModal(false);
-            setSelectedCampaign(null);
-          }}
-          onSuccess={() => loadCampaigns()}
+          onClose={() => { setShowContributeModal(false); setSelectedCampaign(null); }}
+          onSuccess={loadCampaigns}
         />
       )}
     </div>

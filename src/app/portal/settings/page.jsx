@@ -15,7 +15,7 @@ import {
   updateSecuritySettings, updatePaymentSettings, updateSocialMedia, updateMaintenanceMode,
   updateApiKeys, updateFeatures, resetSettings, simulateMpesaStkPush, exportSettingsAsJSON, maskSensitiveData,
   testMpesaConnection, updateDonationSettings,
-  updateChurchInfo, updateLeadership, updateServiceTimes,
+  updateChurchInfo, updatePaymentMethods, updateLeadership, updateServiceTimes,
 } from '@/services/api/settingsService';
 import Loader from '@/components/common/Loader';
 
@@ -382,6 +382,51 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+
+  const handleSavePaymentMethods = async () => {
+  try {
+    setSaving(true);
+    setError(null);
+    const payload = {
+      churchPaymentMethods: settings.churchPaymentMethods,
+      titheCard:            settings.titheCard,
+      offeringCard:         settings.offeringCard,
+    };
+    const response = await updatePaymentMethods(payload);
+    if (response.success) {
+      setSuccess('Payment display settings saved!');
+      setSettings(prev => ({ ...prev, ...payload }));
+      setOriginalSettings(prev => JSON.parse(JSON.stringify({ ...prev, ...payload })));
+      setHasChanges(false);
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to save payment methods');
+  } finally {
+    setSaving(false);
+  }
+};
+
+// Generic helper for deeply-nested churchPaymentMethods fields
+const updatePaymentMethodField = (method, field, value) => {
+  setSettings(prev => ({
+    ...prev,
+    churchPaymentMethods: {
+      ...prev.churchPaymentMethods,
+      [method]: { ...(prev.churchPaymentMethods?.[method] || {}), [field]: value },
+    },
+  }));
+  setHasChanges(true);
+};
+
+// Helper for titheCard / offeringCard toggles
+const updateCardConfig = (card, field, value) => {
+  setSettings(prev => ({
+    ...prev,
+    [card]: { ...(prev[card] || {}), [field]: value },
+  }));
+  setHasChanges(true);
+};
 
   // ============================================
   // LEADERSHIP HELPERS
@@ -1115,11 +1160,13 @@ const expandAllLeaders = () => setCollapsedLeaders({});
                     className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden transition-all"
                   >
                     {/* ── Collapsible Header ── */}
-                    <button
-                      type="button"
-                      onClick={() => toggleLeader(i)}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
-                    >
+                    <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleLeader(i)}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && toggleLeader(i)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer select-none"
+                  >
                       <div className="flex items-center gap-2 min-w-0">
                         {/* Chevron */}
                         <svg
@@ -1161,7 +1208,7 @@ const expandAllLeaders = () => setCollapsedLeaders({});
                           <Trash2 size={14} />
                         </button>
                       </div>
-                    </button>
+                      </div>
 
                     {/* ── Collapsible Body ── */}
                     {!collapsedLeaders[i] && (
@@ -1655,6 +1702,7 @@ const expandAllLeaders = () => setCollapsedLeaders({});
               </div>
             )}
 
+
             {/* ── PAYMENT & DONATIONS SETTINGS ─────────────────────────────── */}
             {activeTab === 'payment' && (
               <div className="space-y-6">
@@ -2095,6 +2143,171 @@ const expandAllLeaders = () => setCollapsedLeaders({});
                     </div>
                   </div>
                 )}
+
+                {/* ── PUBLIC PAYMENT DISPLAY ──────────────────────────────────────────── */}
+<div className="bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-6">
+  <div>
+    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+      Public Payment Display
+    </h3>
+    <p className="text-sm text-slate-500 dark:text-slate-400">
+      Control what donors see on the Donate page. These are display values
+      only — they are separate from your M-Pesa STK Push API credentials above.
+    </p>
+  </div>
+
+  {/* ── Card visibility ─────────────────────────────────────────────────── */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {[
+      { card: 'titheCard',    label: 'Show Tithe Card'    },
+      { card: 'offeringCard', label: 'Show Offering Card' },
+    ].map(({ card, label }) => (
+      <label key={card} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-[#8B1A1A] transition-colors">
+        <span className="font-semibold text-slate-900 dark:text-white text-sm">{label}</span>
+        <input
+          type="checkbox"
+          checked={settings[card]?.enabled ?? true}
+          onChange={e => updateCardConfig(card, 'enabled', e.target.checked)}
+          className="w-5 h-5 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+        />
+      </label>
+    ))}
+  </div>
+
+  {/* ── Method definitions ──────────────────────────────────────────────── */}
+  {[
+    {
+      key: 'paybill',
+      title: 'M-Pesa Paybill',
+      fields: [
+        { f: 'label',              label: 'Display Label',         type: 'text',  ph: 'M-Pesa Paybill'    },
+        { f: 'number',             label: 'Paybill Number',        type: 'text',  ph: '247247'             },
+        { f: 'titheAccountRef',    label: 'Tithe Account Ref',     type: 'text',  ph: 'TITHE'              },
+        { f: 'offeringAccountRef', label: 'Offering Account Ref',  type: 'text',  ph: 'OFFERING'           },
+        { f: 'campaignAccountRef', label: 'Campaign Account Ref',  type: 'text',  ph: 'CAMPAIGN'           },
+      ],
+    },
+    {
+      key: 'till',
+      title: 'M-Pesa Till Number',
+      fields: [
+        { f: 'label',  label: 'Display Label', type: 'text', ph: 'M-Pesa Till Number' },
+        { f: 'number', label: 'Till Number',   type: 'text', ph: '123456'             },
+      ],
+    },
+    {
+      key: 'bank',
+      title: 'Bank Transfer',
+      fields: [
+        { f: 'label',         label: 'Display Label',   type: 'text', ph: 'Bank Transfer'             },
+        { f: 'bankName',      label: 'Bank Name',       type: 'text', ph: 'Kenya Commercial Bank'     },
+        { f: 'accountNumber', label: 'Account Number',  type: 'text', ph: '1234567890'                },
+        { f: 'accountName',   label: 'Account Name',    type: 'text', ph: 'House of Transformation'   },
+        { f: 'branchName',    label: 'Branch (opt)',    type: 'text', ph: 'Busia Branch'              },
+      ],
+    },
+    {
+      key: 'pochiLaBiashara',
+      title: 'Pochi la Biashara',
+      fields: [
+        { f: 'label',  label: 'Display Label',  type: 'text', ph: 'Pochi la Biashara'  },
+        { f: 'number', label: 'Phone Number',   type: 'tel',  ph: '+254 7XX XXX XXX'   },
+        { f: 'name',   label: 'Account Name',   type: 'text', ph: 'House of Transformation' },
+      ],
+    },
+    {
+      key: 'paypal',
+      title: 'PayPal',
+      fields: [
+        { f: 'label', label: 'Display Label', type: 'text',  ph: 'PayPal'              },
+        { f: 'email', label: 'PayPal Email',  type: 'email', ph: 'give@hot.org'        },
+        { f: 'link',  label: 'PayPal Link (opt)', type: 'url', ph: 'https://paypal.me/...' },
+      ],
+    },
+  ].map(({ key, title, fields }) => {
+    const pm = settings.churchPaymentMethods?.[key] || {};
+    return (
+      <div key={key} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+        {/* Header with enable toggle */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+          <span className="font-bold text-sm text-slate-900 dark:text-white">{title}</span>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs text-slate-500">
+              {pm.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+            <input
+              type="checkbox"
+              checked={pm.enabled ?? false}
+              onChange={e => updatePaymentMethodField(key, 'enabled', e.target.checked)}
+              className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+            />
+          </label>
+        </div>
+
+        {pm.enabled && (
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 space-y-3">
+            {/* Value fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {fields.map(({ f, label, type, ph }) => (
+                <div key={f}>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{label}</label>
+                  <input
+                    type={type}
+                    value={pm[f] ?? ''}
+                    onChange={e => updatePaymentMethodField(key, f, e.target.value)}
+                    placeholder={ph}
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Per-card visibility (skip for methods that don't have card-level toggles) */}
+            {key !== 'paypal' && (
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-[11px] font-bold uppercase text-slate-400 mb-2 tracking-wide">
+                  Show on…
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { card: 'titheCard',    showKey: 'show' + key.charAt(0).toUpperCase() + key.slice(1), label: 'Tithe Card'    },
+                    { card: 'offeringCard', showKey: 'show' + key.charAt(0).toUpperCase() + key.slice(1), label: 'Offering Card' },
+                  ].map(({ card, showKey, label }) => (
+                    <label key={card} className="flex items-center gap-1.5 cursor-pointer text-sm text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={settings[card]?.[showKey] ?? false}
+                        onChange={e => updateCardConfig(card, showKey, e.target.checked)}
+                        className="w-4 h-4 text-[#8B1A1A] rounded focus:ring-[#8B1A1A]"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  })}
+
+  {/* Save button */}
+  <div className="flex justify-end">
+    <button
+      onClick={handleSavePaymentMethods}
+      disabled={saving}
+      className="flex items-center gap-2 px-5 py-2.5 bg-[#8B1A1A] text-white text-sm font-bold rounded-lg hover:bg-red-900 transition-colors disabled:opacity-50"
+    >
+      {saving ? (
+        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <Save size={16} />
+      )}
+      Save Payment Display
+    </button>
+  </div>
+</div>
 
                 {/* Donation Features */}
                 <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
