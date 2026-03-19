@@ -21,11 +21,94 @@ import {
   Check,
   X,
   DollarSign,
-  Phone
+  Phone,
+  Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Quick Contribution Modal Component
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Build dynamic payment methods — returns the exact same shape the existing
+// paymentMethods.map() JSX expects: { id, icon, title, color, bgColor, details }
+// ─────────────────────────────────────────────────────────────────────────────
+function buildCampaignPaymentMethods(pm, campaignId) {
+  if (!pm) return [];
+  const methods = [];
+
+  const accountRef = campaignId?.slice(-8) || 'CAMPAIGN';
+
+  if (pm.paybill?.enabled && pm.paybill?.number) {
+    methods.push({
+      id:      'mpesa-paybill',
+      icon:    Smartphone,
+      title:   pm.paybill.label || 'M-Pesa Paybill',
+      color:   'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-950/30',
+      details: [
+        { label: 'Paybill Number', value: pm.paybill.number,                               field: 'paybill'  },
+        { label: 'Account Number', value: pm.paybill.campaignAccountRef || accountRef,      field: 'account'  },
+      ],
+    });
+  }
+
+  if (pm.till?.enabled && pm.till?.number) {
+    methods.push({
+      id:      'mpesa-till',
+      icon:    CreditCard,
+      title:   pm.till.label || 'M-Pesa Till Number',
+      color:   'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-950/30',
+      details: [
+        { label: 'Till Number', value: pm.till.number, field: 'till' },
+      ],
+    });
+  }
+
+  if (pm.bank?.enabled && pm.bank?.accountNumber) {
+    const details = [];
+    if (pm.bank.bankName)    details.push({ label: 'Bank Name',      value: pm.bank.bankName,      field: 'bank'        });
+    details.push(            { label: 'Account Number', value: pm.bank.accountNumber,  field: 'bankaccount' });
+    if (pm.bank.accountName) details.push({ label: 'Account Name',  value: pm.bank.accountName,   field: 'bankname'    });
+    if (pm.bank.branchName)  details.push({ label: 'Branch',        value: pm.bank.branchName,    field: 'branch'      });
+    methods.push({
+      id:      'bank',
+      icon:    Building2,
+      title:   pm.bank.label || 'Bank Transfer',
+      color:   'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+      details,
+    });
+  }
+
+  if (pm.pochiLaBiashara?.enabled && pm.pochiLaBiashara?.number) {
+    const details = [{ label: 'Phone Number', value: pm.pochiLaBiashara.number, field: 'pochi' }];
+    if (pm.pochiLaBiashara.name) details.push({ label: 'Account Name', value: pm.pochiLaBiashara.name, field: 'pochiname' });
+    methods.push({
+      id:      'pochi',
+      icon:    Phone,
+      title:   pm.pochiLaBiashara.label || 'Pochi la Biashara',
+      color:   'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+      details,
+    });
+  }
+
+  if (pm.paypal?.enabled && pm.paypal?.email) {
+    methods.push({
+      id:      'paypal',
+      icon:    Globe,
+      title:   pm.paypal.label || 'PayPal',
+      color:   'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+      details: [{ label: 'PayPal Email', value: pm.paypal.email, field: 'paypal' }],
+    });
+  }
+
+  return methods;
+}
+
+// Quick Contribution Modal Component — UNCHANGED
 function QuickContributeModal({ campaign, isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState('details'); // 'details' | 'processing' | 'success'
   const [formData, setFormData] = useState({
@@ -300,9 +383,13 @@ export default function CampaignDetailsPage() {
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
 
+  // Dynamic payment settings
+  const [churchPaymentMethods, setChurchPaymentMethods] = useState(null);
+
   useEffect(() => {
     if (campaignId) {
       loadCampaign();
+      fetchPaymentSettings();
     }
   }, [campaignId]);
 
@@ -311,7 +398,6 @@ export default function CampaignDetailsPage() {
     setError(null);
     try {
       const response = await donationApi.campaigns.getById(campaignId);
-      
       if (response.success) {
         setCampaign(response.campaign);
       } else {
@@ -322,6 +408,21 @@ export default function CampaignDetailsPage() {
       setError(err.response?.data?.message || 'Failed to load campaign');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await fetch(`${API_URL}/settings/public`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && data.settings?.churchPaymentMethods) {
+        setChurchPaymentMethods(data.settings.churchPaymentMethods);
+      }
+    } catch (err) {
+      console.error('[CampaignDetails] Failed to fetch payment settings:', err.message);
     }
   };
 
@@ -360,41 +461,8 @@ export default function CampaignDetailsPage() {
   const progress = calculateCampaignProgress(campaign.currentAmount, campaign.goalAmount);
   const remaining = campaign.goalAmount - campaign.currentAmount;
 
-  const paymentMethods = [
-    {
-      id: 'mpesa-paybill',
-      icon: Smartphone,
-      title: 'M-Pesa Paybill',
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-50 dark:bg-green-950/30',
-      details: [
-        { label: 'Paybill Number', value: '247247', field: 'paybill' },
-        { label: 'Account Number', value: campaign._id?.slice(-8) || 'CAMPAIGN', field: 'account' }
-      ]
-    },
-    {
-      id: 'mpesa-till',
-      icon: CreditCard,
-      title: 'M-Pesa Till Number',
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-50 dark:bg-green-950/30',
-      details: [
-        { label: 'Till Number', value: '5678901', field: 'till' }
-      ]
-    },
-    {
-      id: 'bank',
-      icon: Building2,
-      title: 'Bank Transfer',
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
-      details: [
-        { label: 'Bank Name', value: 'Kenya Commercial Bank', field: 'bank' },
-        { label: 'Account Number', value: '1234567890', field: 'bankaccount' },
-        { label: 'Account Name', value: 'House of Transformation', field: 'bankname' }
-      ]
-    }
-  ];
+  // Build dynamic list; falls back to empty array if settings haven't loaded yet
+  const paymentMethods = buildCampaignPaymentMethods(churchPaymentMethods, campaign._id);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -621,53 +689,59 @@ export default function CampaignDetailsPage() {
                   </h3>
                 </div>
 
-                <div className="space-y-4">
-                  {paymentMethods.map((method) => {
-                    const Icon = method.icon;
-                    return (
-                      <div
-                        key={method.id}
-                        className={`${method.bgColor} rounded-lg p-4 border border-slate-200 dark:border-slate-700`}
-                      >
-                        <div className="flex items-center gap-2 mb-3">
-                          <Icon className={method.color} size={18} />
-                          <span className={`font-semibold text-sm ${method.color}`}>
-                            {method.title}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {method.details.map((detail) => (
-                            <div
-                              key={detail.field}
-                              className="flex items-center justify-between bg-white dark:bg-slate-800 rounded px-3 py-2"
-                            >
-                              <div className="flex-1">
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                  {detail.label}
-                                </p>
-                                <p className="font-mono text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                  {detail.value}
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => copyToClipboard(detail.value, detail.field)}
-                                className="ml-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                title="Copy to clipboard"
+                {paymentMethods.length === 0 ? (
+                  <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">
+                    No manual payment methods configured yet. Use the M-Pesa button above or contact the church office.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {paymentMethods.map((method) => {
+                      const Icon = method.icon;
+                      return (
+                        <div
+                          key={method.id}
+                          className={`${method.bgColor} rounded-lg p-4 border border-slate-200 dark:border-slate-700`}
+                        >
+                          <div className="flex items-center gap-2 mb-3">
+                            <Icon className={method.color} size={18} />
+                            <span className={`font-semibold text-sm ${method.color}`}>
+                              {method.title}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {method.details.map((detail) => (
+                              <div
+                                key={detail.field}
+                                className="flex items-center justify-between bg-white dark:bg-slate-800 rounded px-3 py-2"
                               >
-                                {copiedField === detail.field ? (
-                                  <Check className="text-green-600" size={16} />
-                                ) : (
-                                  <Copy className="text-slate-400" size={16} />
-                                )}
-                              </button>
-                            </div>
-                          ))}
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {detail.label}
+                                  </p>
+                                  <p className="font-mono text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                    {detail.value}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => copyToClipboard(detail.value, detail.field)}
+                                  className="ml-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                  title="Copy to clipboard"
+                                >
+                                  {copiedField === detail.field ? (
+                                    <Check className="text-green-600" size={16} />
+                                  ) : (
+                                    <Copy className="text-slate-400" size={16} />
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-4">
                   <p className="text-amber-800 dark:text-amber-200 text-xs">
