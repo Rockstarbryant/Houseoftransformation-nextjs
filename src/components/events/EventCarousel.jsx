@@ -1,14 +1,33 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import EventCard from './EventCard';
 import Loader from '../common/Loader';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { getEvents } from '@/services/api/eventService';
+import { useEffect } from 'react';
 
-const SWIPE_THRESHOLD = 60; // px needed to trigger a slide change
+const SWIPE_THRESHOLD = 60;
+
+/**
+ * EventCarousel — key architectural decisions:
+ *
+ * 1. NO fixed min-h on the slide container.
+ *    The card's natural height drives the container height.
+ *
+ * 2. The motion.div uses position:relative (not absolute), so
+ *    the parent doesn't need an explicit height.
+ *
+ * 3. overflow-hidden is scoped to a narrow clip-mask wrapper
+ *    so slides clip horizontally but the card's full height is always visible.
+ *
+ * 4. AnimatePresence mode="wait" — exit completes before enter starts,
+ *    preventing two cards stacking and doubling the height.
+ */
 
 const EventCarousel = ({ limit, showViewAll = false }) => {
   const [events, setEvents] = useState([]);
@@ -19,14 +38,15 @@ const EventCarousel = ({ limit, showViewAll = false }) => {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       const data = await getEvents({ limit });
-      const eventsList = data.events || data.data || data;
-      setEvents(Array.isArray(eventsList) ? eventsList : []);
+      const list = data.events || data.data || data;
+      setEvents(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Error fetching events:', err);
       setEvents([]);
@@ -35,17 +55,17 @@ const EventCarousel = ({ limit, showViewAll = false }) => {
     }
   };
 
-  const paginate = (newDirection) => {
-    setDirection(newDirection);
+  const paginate = (newDir) => {
+    setDirection(newDir);
     setCurrentIndex((prev) => {
-      let next = prev + newDirection;
-      if (next < 0) next = events.length - 1;
-      if (next >= events.length) next = 0;
+      const next = prev + newDir;
+      if (next < 0) return events.length - 1;
+      if (next >= events.length) return 0;
       return next;
     });
   };
 
-  // Direction-aware slide variants
+  /* Slide animation — only translate on x-axis, no y movement */
   const variants = {
     enter: (dir) => ({
       x: dir > 0 ? '100%' : '-100%',
@@ -54,12 +74,10 @@ const EventCarousel = ({ limit, showViewAll = false }) => {
     center: {
       x: 0,
       opacity: 1,
-      zIndex: 1,
     },
     exit: (dir) => ({
       x: dir < 0 ? '100%' : '-100%',
       opacity: 0,
-      zIndex: 0,
     }),
   };
 
@@ -75,101 +93,151 @@ const EventCarousel = ({ limit, showViewAll = false }) => {
   if (events.length === 0) return null;
 
   return (
-    <div className="w-full max-w-full overflow-hidden relative pb-12">
+    <div className="w-full max-w-2xl mx-auto">
 
-      {/* ── Swipeable Slide Container ── */}
-      <div className="relative w-full min-h-[480px] sm:min-h-[450px] md:min-h-[420px] flex items-center justify-center">
-        <AnimatePresence initial={false} custom={direction} mode="wait">
-          <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 220, damping: 28 },
-              opacity: { duration: 0.25 },
-            }}
-            // ── Drag / swipe ──
-            // Disable drag when the user is interacting with form/description inside the card
-            drag={isUserInteracting ? false : 'x'}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.18}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -SWIPE_THRESHOLD) paginate(1);
-              else if (info.offset.x > SWIPE_THRESHOLD) paginate(-1);
-            }}
-            style={{ cursor: isUserInteracting ? 'default' : 'grab' }}
-            whileDrag={{ cursor: 'grabbing', scale: 0.98 }}
-            className="absolute w-full px-2 sm:px-8 md:px-0 max-w-full sm:max-w-lg md:max-w-2xl select-none"
+      {/* ── Main layout: [←]  [slide]  [→] ── */}
+      <div className="flex items-center gap-3 sm:gap-4 w-full">
+
+        {/* Prev arrow */}
+        {events.length > 1 && (
+          <button
+            onClick={() => paginate(-1)}
+            className={cn(
+              'flex-shrink-0 hidden sm:flex items-center justify-center',
+              'w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700',
+              'bg-white dark:bg-slate-900 shadow-md',
+              'hover:bg-[#8B1A1A] hover:border-[#8B1A1A] hover:text-white',
+              'text-slate-600 dark:text-slate-300 transition-all duration-200'
+            )}
+            aria-label="Previous event"
           >
-            <div className="min-h-[480px] sm:min-h-[450px] md:min-h-[420px]">
+            <ChevronLeft size={18} />
+          </button>
+        )}
+
+        {/*
+          ── Slide window ──
+          overflow-hidden clips the horizontal enter/exit animation.
+          It does NOT set a fixed height — the card determines height.
+          The motion.div is in normal flow (not absolute), so the
+          wrapper naturally wraps around whichever card is mounted.
+        */}
+        <div className="flex-1 overflow-hidden rounded-2xl">
+          <AnimatePresence initial={false} custom={direction} mode="wait">
+            <motion.div
+              key={currentIndex}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: 'spring', stiffness: 260, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
+              /* Drag/swipe — disabled while user interacts with form or description */
+              drag={isUserInteracting ? false : 'x'}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -SWIPE_THRESHOLD) paginate(1);
+                else if (info.offset.x > SWIPE_THRESHOLD) paginate(-1);
+              }}
+              style={{ cursor: isUserInteracting ? 'default' : 'grab' }}
+              whileDrag={{ cursor: 'grabbing' }}
+              className="w-full select-none"
+            >
               <EventCard
                 event={events[currentIndex]}
                 onInteractionStart={() => setIsUserInteracting(true)}
                 onInteractionEnd={() => setIsUserInteracting(false)}
               />
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Next arrow */}
+        {events.length > 1 && (
+          <button
+            onClick={() => paginate(1)}
+            className={cn(
+              'flex-shrink-0 hidden sm:flex items-center justify-center',
+              'w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700',
+              'bg-white dark:bg-slate-900 shadow-md',
+              'hover:bg-[#8B1A1A] hover:border-[#8B1A1A] hover:text-white',
+              'text-slate-600 dark:text-slate-300 transition-all duration-200'
+            )}
+            aria-label="Next event"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
       </div>
 
-      {/* ── Indicators ── */}
-      <div className="flex flex-col items-center gap-4 mt-0">
+      {/* ── Bottom controls ── */}
+      <div className="flex flex-col items-center gap-3 mt-5">
 
-        {/* Swipe hint */}
+        {/* Mobile swipe hint */}
         {events.length > 1 && (
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 select-none">
+          <p className="sm:hidden text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 select-none">
             ← swipe to browse →
           </p>
         )}
 
-        {/* Spring-animated dots — still clickable for accessibility */}
-        <div className="flex items-center gap-2">
-          {events.map((_, index) => (
-            <motion.button
-              key={index}
-              layout
-              onClick={() => {
-                setDirection(index > currentIndex ? 1 : -1);
-                setCurrentIndex(index);
-              }}
-              animate={{
-                width: index === currentIndex ? 32 : 8,
-                backgroundColor: index === currentIndex ? '#dc2626' : '#94a3b8',
-                opacity: index === currentIndex ? 1 : 0.45,
-              }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              className="h-1.5 rounded-full"
-              style={{ minWidth: 8 }}
-            />
-          ))}
-        </div>
+        {/* Dot indicators */}
+        {events.length > 1 && (
+          <div className="flex items-center gap-2">
+            {events.map((_, i) => (
+              <motion.button
+                key={i}
+                layout
+                onClick={() => {
+                  setDirection(i > currentIndex ? 1 : -1);
+                  setCurrentIndex(i);
+                }}
+                animate={{
+                  width: i === currentIndex ? 28 : 8,
+                  backgroundColor: i === currentIndex ? '#8B1A1A' : '#94a3b8',
+                  opacity: i === currentIndex ? 1 : 0.4,
+                }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                className="h-1.5 rounded-full"
+                style={{ minWidth: 8 }}
+                aria-label={`Event ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Animated counter flip */}
-        <div className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-slate-500 uppercase overflow-hidden">
+        {/* Counter */}
+        <div className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.span
-              key={`current-${currentIndex}`}
-              initial={{ y: -10, opacity: 0 }}
+              key={currentIndex}
+              initial={{ y: -8, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 10, opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="inline-block"
+              exit={{ y: 8, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="inline-block tabular-nums"
             >
               {currentIndex + 1}
             </motion.span>
           </AnimatePresence>
-          <span>/</span>
+          <span className="text-slate-300 dark:text-slate-600">/</span>
           <span>{events.length}</span>
         </div>
       </div>
 
+      {/* View All */}
       {showViewAll && (
         <div className="flex justify-center mt-10">
           <Link href="/events">
-            <Button variant="primary">View All Events</Button>
+            <Button
+              variant="outline"
+              className="font-black uppercase tracking-widest text-[11px] px-8 py-5 rounded-full border-2 border-slate-900 dark:border-slate-100 hover:bg-[#8B1A1A] hover:border-[#8B1A1A] hover:text-white dark:text-white transition-all duration-300"
+            >
+              View All Events
+            </Button>
           </Link>
         </div>
       )}

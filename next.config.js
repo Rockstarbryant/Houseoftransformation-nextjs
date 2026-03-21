@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -30,10 +32,9 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    // 🔧 Image optimization settings - fixes console quality warnings
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    qualities: [60, 75, 80, 85, 90], // ⚡ Configure allowed quality values
+    qualities: [60, 75, 80, 85, 90],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -56,16 +57,12 @@ const nextConfig = {
     root: process.cwd(),
   },
 
-  // ========================================
-  // 🔥 Prevent chunk loading errors
-  // ========================================
-  
-  // Generate unique build IDs to prevent chunk caching issues
+  // ── Unique build IDs to prevent chunk caching issues ─────────────────────
   generateBuildId: async () => {
     return `build-${Date.now()}`;
   },
-  
-  // Optimize webpack chunk splitting
+
+  // ── Webpack chunk splitting ───────────────────────────────────────────────
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.optimization = {
@@ -77,29 +74,18 @@ const nextConfig = {
           cacheGroups: {
             default: false,
             vendors: false,
-           // vendor: {
-           //   name: 'vendor',
-            //  chunks: 'all',
-             // test: /node_modules/,
-           //   priority: 20
-          //  },
-             // ⚡ React framework bundle
             framework: {
               name: 'framework',
               test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
               priority: 40,
               enforce: true,
             },
-            
-            // ⚡ Separate heavy libraries
             framer: {
               name: 'framer',
               test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
               priority: 35,
               enforce: true,
             },
-            
-            // ⚡ Other vendor libraries
             lib: {
               test: /[\\/]node_modules[\\/]/,
               name(module) {
@@ -118,16 +104,16 @@ const nextConfig = {
               chunks: 'all',
               priority: 10,
               reuseExistingChunk: true,
-              enforce: true
-            }
-          }
-        }
+              enforce: true,
+            },
+          },
+        },
       };
     }
     return config;
   },
-  
-  // Cache headers
+
+  // ── Cache headers ─────────────────────────────────────────────────────────
   async headers() {
     return [
       {
@@ -153,7 +139,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate', //'no-cache, no-store, must-revalidate',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },
@@ -161,4 +147,52 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// ── Sentry build-time configuration ──────────────────────────────────────────
+// withSentryConfig wraps nextConfig to:
+//   - Upload source maps to Sentry at build time (so stack traces show real
+//     line numbers instead of minified code).
+//   - Tree-shake Sentry debug code from production bundles.
+//   - Auto-instrument Next.js server components and API routes.
+//
+// Requires SENTRY_AUTH_TOKEN in your Vercel environment variables.
+// Get one from: sentry.io → Settings → Auth Tokens → Create Token
+module.exports = withSentryConfig(nextConfig, {
+  // ── Source map upload ────────────────────────────────────────────────────
+  // Uploads source maps so Sentry shows un-minified stack traces.
+  // Set SENTRY_AUTH_TOKEN in Vercel dashboard → Settings → Environment Variables.
+  org: process.env.SENTRY_ORG,       // your Sentry org slug (e.g. "hot-church")
+  project: process.env.SENTRY_PROJECT, // your Sentry project slug (e.g. "hot-frontend")
+
+  // Suppresses noisy Sentry CLI output during `next build`
+  silent: !process.env.CI,
+
+  // Upload wider set of source maps for better coverage of async chunks
+  widenClientFileUpload: true,
+
+  // Hides uploaded source maps from the browser
+  // (they exist only for Sentry's internal de-minification)
+  hideSourceMaps: true,
+
+  // ── Bundle optimisations ─────────────────────────────────────────────────
+  // disableLogger and automaticVercelMonitors are deprecated in the current
+  // @sentry/nextjs version — replaced with the webpack sub-object below.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayShadowDom: true,
+    excludeReplayIframe: true,
+    excludeReplayWorker: true,
+  },
+
+  // Replaces the deprecated `disableLogger: true`
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,   // tree-shakes Sentry debug/logger calls
+    },
+    // Replaces the deprecated `automaticVercelMonitors: false`
+    automaticVercelMonitors: false,
+  },
+
+  // Suppress the DSN being printed to stdout during `next dev`
+  // (the DSN is not a secret but there's no reason to clutter the terminal)
+  silent: true,
+});
