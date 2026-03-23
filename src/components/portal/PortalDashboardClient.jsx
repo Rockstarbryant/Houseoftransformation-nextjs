@@ -8,18 +8,6 @@ import Link from 'next/link';
 import api from '@/lib/api';
 
 // ── Real service imports ────────────────────────────────────────────────────
-import {
-  getOverview,
-  getUserAnalytics,
-  getContentAnalytics,
-  getFinancialAnalytics,
-  getEngagementAnalytics,
-  getSystemAnalytics,
-  formatNumber,
-  getMonthName,
-} from '@/services/api/analyticsService';
-import { getEvents } from '@/services/api/eventService';
-import { feedbackService } from '@/services/api/feedbackService';
 import { getMyProfile } from '@/services/api/userService';
 
 // ── Charts ──────────────────────────────────────────────────────────────────
@@ -31,14 +19,14 @@ import {
 // ── Icons ───────────────────────────────────────────────────────────────────
 import {
   Calendar, BookOpen, ImageIcon, Heart, Users, Shield,
-  BarChart3, ArrowRight, Home, TrendingUp, Bell, User,
+  BarChart3, ArrowRight, Home, Bell, User,
   ChevronLeft, ChevronRight, CheckCheck, Info, AlertTriangle,
   Zap, MessageSquare, DollarSign, Settings, Bookmark,
-  HandHeart, ChevronUp, ChevronDown, AlertCircle, Mic,
-  Star, RefreshCw, Mail, Play, FileText, Clock, Activity,
+  ChevronUp, ChevronDown, AlertCircle,
+  RefreshCw, Mail, Play, FileText, Clock,
   Video, Volume2, Phone, MapPin, ExternalLink, Globe,
   Facebook, Instagram, Twitter, Youtube, Linkedin,
-  Mic2, HeartHandshake, UserCircle2,
+  Mic2, HeartHandshake, UserCircle2, BookMarked, Church,
 } from 'lucide-react';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -192,69 +180,36 @@ function ChartTooltip({ active, payload, label }) {
 // TAB 0 — HOME
 // ════════════════════════════════════════════════════════════════════════════
 
-function HomeTab({ user, sections, router, permissions }) {
-  const [overview,      setOverview]      = useState(null);
-  const [events,        setEvents]        = useState([]);
-  const [feedbackStats, setFeedbackStats] = useState(null);
-  const [activity,      setActivity]      = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [errors,        setErrors]        = useState({});
+function HomeTab({ user }) {
+  const firstName = user?.name?.split(' ')[0] || 'Member';
+  const roleName  = user?.role?.name || 'Member';
 
-  const firstName   = user?.name?.split(' ')[0] || 'Member';
-  const roleName    = user?.role?.name || 'Member';
-  const canFeedback = permissions.canReadAnyFeedback?.();
-  const canEvents   = permissions.canManageEvents?.();
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setErrors({});
-
-    const results = await Promise.allSettled([
-      getOverview(),
-      getEvents({ limit: 3, status: 'upcoming' }),
-      canFeedback ? feedbackService.getStats() : Promise.resolve(null),
-      getSystemAnalytics(),
-    ]);
-
-    const unwrap = (v) => v?.data ?? v ?? {};
-
-    if (process.env.NODE_ENV === 'development') {
-      console.group('[Dashboard HomeTab] Raw API responses');
-      console.log('overview raw:', results[0].status === 'fulfilled' ? results[0].value : results[0].reason);
-      console.log('events raw:',  results[1].status === 'fulfilled' ? results[1].value : results[1].reason);
-      console.groupEnd();
-    }
-
-    if (results[0].status === 'fulfilled') {
-      setOverview(unwrap(results[0].value));
-    } else setErrors(e => ({ ...e, overview: true }));
-
-    if (results[1].status === 'fulfilled') {
-      const raw = results[1].value;
-      const v   = raw?.data ?? raw;
-      setEvents(Array.isArray(v?.events) ? v.events : Array.isArray(v) ? v : []);
-    } else setErrors(e => ({ ...e, events: true }));
-
-    if (results[2].status === 'fulfilled' && results[2].value) {
-      setFeedbackStats(unwrap(results[2].value));
-    }
-
-    if (results[3].status === 'fulfilled') {
-      const sys  = unwrap(results[3].value);
-      const acts = sys.recentActivity ?? sys.auditLogs ?? sys.activity ?? [];
-      setActivity(Array.isArray(acts) ? acts.slice(0, 8) : []);
-    }
-
-    setLoading(false);
-  }, [canFeedback]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const ov = overview ?? {};
-  const totalMembers   = ov.totalUsers       ?? ov.users?.total     ?? ov.totalMembers;
-  const upcomingEvents = ov.upcomingEvents   ?? ov.events?.upcoming ?? ov.totalEvents;
-  const pendingFb      = ov.pendingFeedback  ?? ov.feedback?.pending ?? ov.totalFeedback;
-  const totalAnn       = ov.totalAnnouncements ?? ov.announcements?.total;
+  const MEMBERSHIP_CARDS = [
+    {
+      icon: Users,
+      color: HOT_RED,
+      title: 'Why Membership Matters',
+      scripture: 'Titus 3:14',
+      quote: '"And let ours also learn to maintain good works for necessary uses, that they be not unfruitful."',
+      body: 'As the church grows in the present day twenty-first century, it becomes very necessary to know the bona-fide members of our church. This ensures quick service delivery, while at the same time shielding the church from dubious and phony believers, especially in times of distress. It is therefore vitally important for you and the church, that we have honest and timely information regarding our faithful saints. These works include tithes, offerings and church attendance.',
+    },
+    {
+      icon: Heart,
+      color: '#2980b9',
+      title: 'Membership Is Voluntary',
+      scripture: 'John 1:12–13 · 1 Corinthians 12:13',
+      quote: '"For by one Spirit are we all baptized into one….and have been all made to drink into one Spirit."',
+      body: 'Membership to the Church (THE BODY OF CHRIST) is voluntary as we all know that salvation is very personal. As long as you have accepted Christ as your personal Saviour, and have received or desire to receive the Holy Spirit, you are more than welcome to be a part of the family of God.',
+    },
+    {
+      icon: Church,
+      color: '#27ae60',
+      title: 'God Added You',
+      scripture: 'Acts 2:47',
+      quote: '"….And the Lord added to the church daily such as should be saved."',
+      body: 'We want you to know that we acknowledge that God has added you to the fellowship because it is He who began the good work in you. Your presence here is not by accident — it is a divine appointment, and we celebrate the work God is doing in and through your life.',
+    },
+  ];
 
   return (
     <div className="space-y-6 pb-6">
@@ -299,200 +254,84 @@ function HomeTab({ user, sections, router, permissions }) {
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard loading={loading} icon={Users}         label="Total Members"    value={formatNumber(totalMembers)}   color="#8B1A1A" />
-        <StatCard loading={loading} icon={Calendar}      label="Upcoming Events"  value={formatNumber(upcomingEvents)} color="#2980b9" />
-        <StatCard loading={loading} icon={MessageSquare} label="Pending Feedback" value={formatNumber(pendingFb)}      color="#8e44ad" />
-        <StatCard loading={loading} icon={Bell}          label="Announcements"    value={formatNumber(totalAnn)}       color="#e74c3c" />
-      </div>
-
-      {/* ── Quick actions + Activity feed ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
-        <div className="lg:col-span-3">
-          <SectionHeader title="Quick Actions" />
-          {sections.length <= 1 ? (
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-8 text-center border border-slate-100 dark:border-slate-700">
-              <p className="text-sm text-slate-500">No additional features assigned. Contact an admin.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {sections.map((section) => {
-                const Icon = ICON_MAP[section.icon] ?? Shield;
-                return (
-                  <Link key={section.href} href={section.href}>
-                    <div className="group p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-[#8B1A1A] hover:shadow-md dark:hover:border-red-800 transition-all cursor-pointer h-full">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 group-hover:bg-[#8B1A1A] transition-colors">
-                          <Icon size={16} className="text-slate-500 dark:text-slate-300 group-hover:text-white transition-colors" />
-                        </div>
-                        <ArrowRight size={14} className="text-slate-300 group-hover:text-[#8B1A1A] transition-all" />
-                      </div>
-                      <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-[#8B1A1A] transition-colors leading-tight">
-                        {section.name}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Recent activity */}
-        <div className="lg:col-span-2">
-          <SectionHeader title="Recent Activity" action={() => router.push('/portal/analytics')} actionLabel="View all" />
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-            {loading ? (
-              <div className="p-4 space-y-3 animate-pulse">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-lg shrink-0" />
-                    <div className="flex-1">
-                      <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-3/4 mb-1" />
-                      <div className="h-2 bg-slate-50 dark:bg-slate-700 rounded w-1/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : activity.length === 0 ? (
-              <div className="p-6 text-center">
-                <Activity size={20} className="text-slate-300 mx-auto mb-2" />
-                <p className="text-xs text-slate-400">No recent activity</p>
-              </div>
-            ) : (
-              activity.map((item, i) => (
-                <div key={i} className={`flex items-start gap-3 px-4 py-3 ${i < activity.length - 1 ? 'border-b border-slate-50 dark:border-slate-700/50' : ''}`}>
-                  <div className="p-1.5 rounded-lg shrink-0 mt-0.5 bg-slate-100 dark:bg-slate-700">
-                    <Activity size={13} className="text-slate-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug line-clamp-2">
-                      {item.action ?? item.description ?? item.message ?? item.event ?? '—'}
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      {formatRelativeDate(item.createdAt ?? item.timestamp ?? item.date)}
-                      {item.user?.name ? ` · ${item.user.name}` : ''}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
+      {/* ── Membership form intro banner ── */}
+      <div
+        className="rounded-2xl p-5 md:p-6 border"
+        style={{
+          background: `linear-gradient(135deg,${HOT_RED}10 0%,${HOT_RED}05 100%)`,
+          borderColor: `${HOT_RED}30`,
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl shrink-0" style={{ background: `${HOT_RED}18` }}>
+            <BookMarked size={22} style={{ color: HOT_RED }} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: HOT_RED }}>
+              Church Membership
+            </p>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+              Welcome to the Family of God
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              We are glad you are here. Below is what membership in the Body of Christ means at our church.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ── Upcoming events ── */}
-      <div>
-        <SectionHeader
-          title="Upcoming Events"
-          action={canEvents ? () => router.push('/portal/events') : null}
-          actionLabel="Manage events"
-        />
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 animate-pulse">
-                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-2/3 mb-2" />
-                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-1/2 mb-4" />
-                <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full" />
+      {/* ── Membership cards ── */}
+      <div className="space-y-4">
+        {MEMBERSHIP_CARDS.map(({ icon: Icon, color, title, scripture, quote, body }, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            {/* Card header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-50 dark:border-slate-700/60">
+              <div className="p-2.5 rounded-xl shrink-0" style={{ background: `${color}18` }}>
+                <Icon size={18} style={{ color }} />
               </div>
-            ))}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight">{title}</h3>
+                <p className="text-[10px] font-bold mt-0.5" style={{ color }}>{scripture}</p>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full shrink-0"
+                style={{ background: `${color}15`, color }}>
+                {i + 1}/{MEMBERSHIP_CARDS.length}
+              </span>
+            </div>
+
+            {/* Body text */}
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{body}</p>
+
+              {/* Scripture quote */}
+              <div
+                className="rounded-xl px-4 py-3 border-l-4"
+                style={{
+                  background: `${color}08`,
+                  borderLeftColor: color,
+                }}
+              >
+                <p className="text-[11px] font-bold italic text-slate-700 dark:text-slate-200 leading-relaxed">
+                  {quote}
+                </p>
+                <p className="text-[10px] font-black mt-1.5" style={{ color }}>{scripture}</p>
+              </div>
+            </div>
           </div>
-        ) : errors.events ? (
-          <ErrorRetry message="Could not load events" onRetry={load} />
-        ) : events.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-8 text-center">
-            <Calendar size={24} className="text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No upcoming events</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-            {events.map((ev, i) => {
-              const regCount = ev.registrations?.length ?? ev.registrationCount ?? 0;
-              const cap      = ev.capacity;
-              const pct      = cap ? Math.round((regCount / cap) * 100) : null;
-              const evDate   = ev.date
-                ? new Date(ev.date).toLocaleDateString('en-KE', { weekday:'short', day:'numeric', month:'short', year:'numeric' })
-                : 'TBA';
-              return (
-                <div key={ev._id ?? i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                      {ev.category ?? 'Event'}
-                    </span>
-                    {cap && <span className="text-[10px] font-bold text-slate-400">{regCount}/{cap}</span>}
-                  </div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight mb-2 line-clamp-2">{ev.title}</h3>
-                  <div className="space-y-1 mb-3">
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                      <Calendar size={11} /> {evDate}
-                    </p>
-                    {ev.time && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                        <Clock size={11} /> {ev.time}
-                      </p>
-                    )}
-                  </div>
-                  {pct !== null && (
-                    <>
-                      <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
-                        <div className="h-1.5 rounded-full" style={{ width:`${Math.min(pct,100)}%`, background: pct > 80 ? '#e74c3c' : HOT_RED }} />
-                      </div>
-                      <p className="text-[10px] text-slate-400 mt-1">{pct}% registered</p>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        ))}
       </div>
 
-      {/* ── Feedback summary ── */}
-      {canFeedback && (
-        <div>
-          <SectionHeader title="Feedback Overview" action={() => router.push('/portal/feedback')} actionLabel="Review all" />
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 text-center animate-pulse">
-                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full mx-auto mb-2" />
-                  <div className="h-6 bg-slate-100 dark:bg-slate-700 rounded w-8 mx-auto mb-1" />
-                  <div className="h-2 bg-slate-50 dark:bg-slate-700 rounded w-16 mx-auto" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                { label: 'Sermon',     icon: Mic,           key: 'sermon',     color: '#8B1A1A' },
-                { label: 'Service',    icon: Star,          key: 'service',    color: '#d4a017' },
-                { label: 'Testimony',  icon: Heart,         key: 'testimony',  color: '#27ae60' },
-                { label: 'Prayer',     icon: HandHeart,     key: 'prayer',     color: '#2980b9' },
-                { label: 'Suggestion', icon: MessageSquare, key: 'suggestion', color: '#8e44ad' },
-              ].map(({ label, icon: Icon, key, color }) => {
-                const count = feedbackStats?.[key]?.total
-                  ?? feedbackStats?.byCategory?.[key]
-                  ?? feedbackStats?.categories?.[key]
-                  ?? feedbackStats?.[key]
-                  ?? '—';
-                return (
-                  <div key={key} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 text-center hover:shadow-md transition-shadow">
-                    <div className="flex justify-center mb-2">
-                      <div className="p-2.5 rounded-full" style={{ background:`${color}18` }}>
-                        <Icon size={18} style={{ color }} />
-                      </div>
-                    </div>
-                    <p className="text-xl font-black text-slate-900 dark:text-white">{count}</p>
-                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{label}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {/* ── Footer note ── */}
+      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 text-center">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+          Have questions about membership? Reach out to the{' '}
+          <span className="font-bold" style={{ color: HOT_RED }}>New Members Desk</span>{' '}
+          or speak with any member of our leadership team.
+        </p>
+      </div>
     </div>
   );
 }
@@ -1286,7 +1125,7 @@ export default function PortalDashboardClient() {
 
       {/* Tab content */}
       <div className="min-h-[calc(100vh-180px)]">
-        {currentPage === 0 && <HomeTab          user={user} sections={sections} router={router} permissions={permissions} />}
+        {currentPage === 0 && <HomeTab          user={user} />}
         {currentPage === 1 && <ExploreTab       key={currentPage} router={router} />}
         {currentPage === 2 && <AnnouncementsTab router={router} />}
         {currentPage === 3 && <ProfileTab       user={user} router={router} />}

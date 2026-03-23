@@ -1,358 +1,240 @@
 // lib/events.js
-// Server-side data fetching functions for events
-// Used in Server Components (app router)
+// Server-side data fetching for events — used in Next.js Server Components
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+// ============================================
+// PUBLIC FETCHERS (no auth — no PII returned)
+// ============================================
 
 /**
- * Fetch all events from the API (Server-side)
- * @param {object} options - { limit, status, search, startDate, endDate, cache }
- * @returns {Promise<Array>} events array
+ * Fetch upcoming events — PUBLIC endpoint
+ * Returns events WITHOUT the registrations array (just registrationCount)
  */
 export async function getEvents(options = {}) {
-  const { 
-    limit, 
-    status, 
-    search, 
-    startDate, 
-    endDate,
-   // cache = 'no-store' // or 'force-cache', 'no-store'
-  } = options;
+  const { limit, status, search, startDate, endDate } = options;
 
   try {
-    // Build query parameters
     const params = new URLSearchParams();
-    if (limit) params.append('limit', limit);
-    if (status) params.append('status', status);
-    if (search) params.append('search', search);
+    if (limit)     params.append('limit', limit);
+    if (status)    params.append('status', status);
+    if (search)    params.append('search', search);
     if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    if (endDate)   params.append('endDate', endDate);
 
-    const queryString = params.toString();
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/events${queryString ? `?${queryString}` : ''}`;
+    const qs  = params.toString();
+    const url = `${API_BASE}/events${qs ? `?${qs}` : ''}`;
 
     const response = await fetch(url, {
-     // cache, // 'no-store' for dynamic, 'force-cache' for static
-      next: { revalidate: 60 }, // refresh every 60 seconds
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) {
-      console.error(`[lib/events] Failed to fetch events: ${response.status}`);
+      console.error(`[lib/events] getEvents failed: ${response.status}`);
       return [];
     }
 
     const data = await response.json();
-    
-    // Handle both response formats
-    const eventsList = data.events || data.data || data;
-    return Array.isArray(eventsList) ? eventsList : [];
-
+    const list = data.events || data.data || data;
+    return Array.isArray(list) ? list : [];
   } catch (error) {
-    console.error('[lib/events] Error fetching events:', error);
+    console.error('[lib/events] getEvents error:', error);
     return [];
   }
 }
 
 /**
- * Fetch single event by ID (Server-side)
- * @param {string} id - Event ID
- * @param {string} cache - Cache strategy ('no-store', 'force-cache')
- * @returns {Promise<Object|null>} event object or null
+ * Fetch single event by ID — PUBLIC endpoint (no registrations)
  */
 export async function getEvent(id, cache = 'no-store') {
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/events/${id}`;
-
-    const response = await fetch(url, {
+    const response = await fetch(`${API_BASE}/events/${id}`, {
       cache,
-      next: { 
-        revalidate: cache === 'no-store' ? 0 : 3600
-      },
+      next: { revalidate: cache === 'no-store' ? 0 : 3600 },
     });
 
     if (!response.ok) {
-      console.error(`[lib/events] Failed to fetch event ${id}: ${response.status}`);
+      console.error(`[lib/events] getEvent(${id}) failed: ${response.status}`);
       return null;
     }
 
     const data = await response.json();
-    
-    // Handle both response formats
     return data.event || data.data || data;
-
   } catch (error) {
-    console.error(`[lib/events] Error fetching event ${id}:`, error);
+    console.error(`[lib/events] getEvent(${id}) error:`, error);
     return null;
   }
 }
 
 /**
- * Fetch upcoming events (Server-side)
- * @param {number} limit - Maximum number of events to return
- * @param {string} cache - Cache strategy
- * @returns {Promise<Array>} upcoming events array
+ * Upcoming events helper
  */
-export async function getUpcomingEvents(limit = 10, cache = 'no-store') {
-  try {
-    const events = await getEvents({ 
-      limit, 
-      status: 'upcoming',
-      cache 
-    });
-
-    // Additional filtering to ensure only future events
-    const now = new Date();
-    return events.filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate >= now;
-    });
-
-  } catch (error) {
-    console.error('[lib/events] Error fetching upcoming events:', error);
-    return [];
-  }
+export async function getUpcomingEvents(limit = 10) {
+  const events = await getEvents({ limit });
+  const now = new Date();
+  return events.filter((e) => new Date(e.date) >= now);
 }
 
 /**
- * Fetch past events (Server-side)
- * @param {number} limit - Maximum number of events to return
- * @param {string} cache - Cache strategy
- * @returns {Promise<Array>} past events array
+ * Past events helper
  */
-export async function getPastEvents(limit = 10, cache = 'no-store') {
-  try {
-    const events = await getEvents({ 
-      limit, 
-      status: 'past',
-      cache 
-    });
-
-    // Additional filtering to ensure only past events
-    const now = new Date();
-    return events.filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate < now;
-    });
-
-  } catch (error) {
-    console.error('[lib/events] Error fetching past events:', error);
-    return [];
-  }
+export async function getPastEvents(limit = 10) {
+  const events = await getEvents({ limit });
+  const now = new Date();
+  return events.filter((e) => new Date(e.date) < now);
 }
 
 /**
- * Fetch events by date range (Server-side)
- * @param {string} startDate - Start date (ISO format)
- * @param {string} endDate - End date (ISO format)
- * @param {string} cache - Cache strategy
- * @returns {Promise<Array>} events array
+ * Events by date range
  */
-export async function getEventsByDateRange(startDate, endDate, cache = 'no-store') {
-  try {
-    return await getEvents({ 
-      startDate, 
-      endDate,
-      cache 
-    });
-  } catch (error) {
-    console.error('[lib/events] Error fetching events by date range:', error);
-    return [];
-  }
+export async function getEventsByDateRange(startDate, endDate) {
+  return getEvents({ startDate, endDate });
 }
 
 /**
- * Search events (Server-side)
- * @param {string} query - Search query
- * @param {string} cache - Cache strategy
- * @returns {Promise<Array>} events array
+ * Server-side event search
  */
-export async function searchEvents(query, cache = 'no-store') {
-  try {
-    if (!query || query.trim().length === 0) {
-      return await getEvents({ cache });
-    }
-
-    return await getEvents({ 
-      search: query,
-      cache 
-    });
-  } catch (error) {
-    console.error('[lib/events] Error searching events:', error);
-    return [];
-  }
+export async function searchEvents(query) {
+  if (!query?.trim()) return getEvents({});
+  return getEvents({ search: query });
 }
 
+// ============================================
+// ADMIN FETCHERS (require auth token — return PII)
+// ============================================
+
 /**
- * Get event registrations (Server-side)
- * @param {string} id - Event ID
- * @param {string} token - Auth token
- * @returns {Promise<Array>} registrations array
+ * Fetch ALL events for admin portal (past + upcoming)
+ * Calls GET /api/events/admin/all — requires manage:events permission
+ * Returns events with registrationCount (not full registrations array)
+ *
+ * @param {string} token  — Supabase / auth bearer token
+ * @param {object} options — { limit }
  */
-export async function getEventRegistrations(id, token) {
+export async function getEventsAdmin(token, options = {}) {
+  const { limit = 100 } = options;
+
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/events/${id}/registrations`;
+    const params = new URLSearchParams();
+    params.append('limit', limit);
+
+    const url = `${API_BASE}/events/admin/all?${params.toString()}`;
 
     const response = await fetch(url, {
-      headers: token ? {
-        'Authorization': `Bearer ${token}`
-      } : {},
-      cache: 'no-store', // Always fetch fresh registration data
+      cache: 'no-store', // always fresh for admin views
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (!response.ok) {
-      console.error(`[lib/events] Failed to fetch registrations for event ${id}: ${response.status}`);
+      console.error(`[lib/events] getEventsAdmin failed: ${response.status}`);
       return [];
     }
 
     const data = await response.json();
-    
-    // Handle both response formats
-    const registrations = data.registrations || data.data || data;
-    return Array.isArray(registrations) ? registrations : [];
-
+    const list = data.events || data.data || data;
+    return Array.isArray(list) ? list : [];
   } catch (error) {
-    console.error(`[lib/events] Error fetching registrations for event ${id}:`, error);
+    console.error('[lib/events] getEventsAdmin error:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch registrations for a specific event — ADMIN ONLY
+ * Returns full PII: names, emails, phones
+ *
+ * @param {string} id     — Event ID
+ * @param {string} token  — Auth bearer token
+ */
+export async function getEventRegistrations(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/events/${id}/registrations`, {
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`[lib/events] getEventRegistrations(${id}) failed: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const list = data.registrations || data.data || data;
+    return Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error(`[lib/events] getEventRegistrations(${id}) error:`, error);
     return [];
   }
 }
 
 // ============================================
-// UTILITY FUNCTIONS (Server-side safe)
+// SHARED UTILITIES (server-safe, no browser APIs)
 // ============================================
 
-/**
- * Format date for display
- * @param {string} dateStr - Date string
- * @returns {object} Formatted date object
- */
 export function formatDate(dateStr) {
   const date = new Date(dateStr);
   return {
     day: date.getDate(),
     month: date.toLocaleString('default', { month: 'short' }).toUpperCase(),
     year: date.getFullYear(),
-    full: date.toLocaleDateString('default', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })
+    full: date.toLocaleDateString('default', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    }),
   };
 }
 
-/**
- * Get event status
- * @param {object} event - Event object
- * @returns {string} Status ('past', 'today', 'upcoming')
- */
 export function getEventStatus(event) {
-  if (!event || !event.date) return 'unknown';
-  
+  if (!event?.date) return 'unknown';
   const eventDate = new Date(event.date);
   const now = new Date();
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  
-  if (eventDate < now - oneDayMs) {
-    return 'past';
-  } else if (eventDate > now + oneDayMs) {
-    return 'upcoming';
-  } else {
-    return 'today';
-  }
+  const oneDayMs = 86_400_000;
+  if (eventDate < now - oneDayMs) return 'past';
+  if (eventDate > now + oneDayMs) return 'upcoming';
+  return 'today';
 }
 
-/**
- * Sort events by date
- * @param {Array} events - Events array
- * @param {string} order - Sort order ('asc' or 'desc')
- * @returns {Array} Sorted events
- */
 export function sortEventsByDate(events, order = 'asc') {
-  if (!events || !Array.isArray(events)) return [];
-  
+  if (!Array.isArray(events)) return [];
   return [...events].sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    
-    return order === 'asc' ? dateA - dateB : dateB - dateA;
+    const diff = new Date(a.date) - new Date(b.date);
+    return order === 'asc' ? diff : -diff;
   });
 }
 
-/**
- * Filter events by category
- * @param {Array} events - Events array
- * @param {string} category - Category to filter by
- * @returns {Array} Filtered events
- */
 export function filterEventsByCategory(events, category) {
-  if (!events || !Array.isArray(events)) return [];
-  if (!category) return events;
-  
-  return events.filter(event => 
-    event.category?.toLowerCase() === category.toLowerCase()
-  );
+  if (!Array.isArray(events) || !category) return events ?? [];
+  return events.filter((e) => e.category?.toLowerCase() === category.toLowerCase());
 }
 
-/**
- * Get unique categories from events
- * @param {Array} events - Events array
- * @returns {Array} Array of unique categories
- */
 export function getUniqueCategories(events) {
-  if (!events || !Array.isArray(events)) return [];
-  
-  const categories = events
-    .map(event => event.category)
-    .filter(Boolean);
-  
-  return [...new Set(categories)];
+  if (!Array.isArray(events)) return [];
+  return [...new Set(events.map((e) => e.category).filter(Boolean))];
 }
 
-/**
- * Calculate days until event
- * @param {string} dateStr - Date string
- * @returns {number} Days until event
- */
 export function getDaysUntilEvent(dateStr) {
   if (!dateStr) return null;
-  
-  const eventDate = new Date(dateStr);
-  const now = new Date();
-  const diffTime = eventDate - now;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  return diffDays;
+  return Math.ceil((new Date(dateStr) - new Date()) / 86_400_000);
 }
 
-/**
- * Check if event is happening soon (within 7 days)
- * @param {string} dateStr - Date string
- * @returns {boolean}
- */
 export function isEventSoon(dateStr) {
   const days = getDaysUntilEvent(dateStr);
   return days !== null && days >= 0 && days <= 7;
 }
 
-/**
- * Group events by month
- * @param {Array} events - Events array
- * @returns {Object} Events grouped by month
- */
 export function groupEventsByMonth(events) {
-  if (!events || !Array.isArray(events)) return {};
-  
+  if (!Array.isArray(events)) return {};
   return events.reduce((acc, event) => {
     const date = new Date(event.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthName = date.toLocaleDateString('default', { year: 'numeric', month: 'long' });
-    
-    if (!acc[monthKey]) {
-      acc[monthKey] = {
-        name: monthName,
-        events: []
-      };
-    }
-    
-    acc[monthKey].events.push(event);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const name = date.toLocaleDateString('default', { year: 'numeric', month: 'long' });
+    if (!acc[key]) acc[key] = { name, events: [] };
+    acc[key].events.push(event);
     return acc;
   }, {});
 }

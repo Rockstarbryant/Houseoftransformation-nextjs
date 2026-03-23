@@ -44,36 +44,28 @@ export const usePermissions = () => {
   const canDeletePhoto = () => hasPermission('manage:gallery');
 
   /**
-   * Donations Management
+   * Donations Management - Granular Permissions
    */
-  /**
- * Donations Management - Granular Permissions
- */
-// Broad permission
-const canManageDonations = () => hasPermission('manage:donations');
+  const canManageDonations = () => hasPermission('manage:donations');
 
-// Campaign permissions
-const canViewCampaigns = () => hasAnyPermission(['view:campaigns', 'manage:donations']);
-const canCreateCampaign = () => hasAnyPermission(['create:campaigns', 'manage:donations']);
-const canEditCampaign = () => hasAnyPermission(['edit:campaigns', 'manage:donations']);
-const canDeleteCampaign = () => hasAnyPermission(['delete:campaigns', 'manage:donations']);
-const canActivateCampaign = () => hasAnyPermission(['activate:campaigns', 'manage:donations']);
-const canFeatureCampaign = () => hasAnyPermission(['feature:campaigns', 'manage:donations']);
+  const canViewCampaigns = () => hasAnyPermission(['view:campaigns', 'manage:donations']);
+  const canCreateCampaign = () => hasAnyPermission(['create:campaigns', 'manage:donations']);
+  const canEditCampaign = () => hasAnyPermission(['edit:campaigns', 'manage:donations']);
+  const canDeleteCampaign = () => hasAnyPermission(['delete:campaigns', 'manage:donations']);
+  const canActivateCampaign = () => hasAnyPermission(['activate:campaigns', 'manage:donations']);
+  const canFeatureCampaign = () => hasAnyPermission(['feature:campaigns', 'manage:donations']);
 
-// Pledge permissions
-const canViewPledges = () => hasAnyPermission(['view:pledges', 'manage:donations']);
-const canViewAllPledges = () => hasAnyPermission(['view:pledges:all', 'manage:donations']);
-const canApprovePledges = () => hasAnyPermission(['approve:pledges', 'manage:donations']);
-const canEditPledges = () => hasAnyPermission(['edit:pledges', 'manage:donations']);
+  const canViewPledges = () => hasAnyPermission(['view:pledges', 'manage:donations']);
+  const canViewAllPledges = () => hasAnyPermission(['view:pledges:all', 'manage:donations']);
+  const canApprovePledges = () => hasAnyPermission(['approve:pledges', 'manage:donations']);
+  const canEditPledges = () => hasAnyPermission(['edit:pledges', 'manage:donations']);
 
-// Payment permissions
-const canViewPayments = () => hasAnyPermission(['view:payments', 'manage:donations']);
-const canViewAllPayments = () => hasAnyPermission(['view:payments:all', 'manage:donations']);
-const canProcessPayments = () => hasAnyPermission(['process:payments', 'manage:donations']);
-const canVerifyPayments = () => hasAnyPermission(['verify:payments', 'manage:donations']);
+  const canViewPayments = () => hasAnyPermission(['view:payments', 'manage:donations']);
+  const canViewAllPayments = () => hasAnyPermission(['view:payments:all', 'manage:donations']);
+  const canProcessPayments = () => hasAnyPermission(['process:payments', 'manage:donations']);
+  const canVerifyPayments = () => hasAnyPermission(['verify:payments', 'manage:donations']);
 
-// Reports
-const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 'manage:donations']);
+  const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 'manage:donations']);
 
   /**
    * Users Management
@@ -108,42 +100,39 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
   const canAccessCommunications = () => hasPermission('manage:users') || isAdmin();
 
   /**
+   * ── NEW: Church Membership Management ─────────────────────────────────────
+   * Requires 'manage:members' permission (admin also has this via bypass).
+   */
+  const canManageMembers = () => hasPermission('manage:members') || isAdmin();
+
+  /**
    * Feedback Management - Granular by Category
    */
-  
-  // Broad permission (backward compatibility)
   const canManageFeedback = () => hasPermission('manage:feedback');
 
-  // Sermon Feedback
   const canReadFeedbackSermon = () => hasAnyPermission(['read:feedback:sermon', 'manage:feedback']);
   const canRespondFeedbackSermon = () => hasAnyPermission(['respond:feedback:sermon', 'manage:feedback']);
 
-  // Service Feedback
   const canReadFeedbackService = () => hasAnyPermission(['read:feedback:service', 'manage:feedback']);
   const canRespondFeedbackService = () => hasAnyPermission(['respond:feedback:service', 'manage:feedback']);
 
-  // Testimony Feedback
   const canReadFeedbackTestimony = () => hasAnyPermission(['read:feedback:testimony', 'manage:feedback']);
   const canRespondFeedbackTestimony = () => hasAnyPermission(['respond:feedback:testimony', 'manage:feedback']);
   const canPublishFeedbackTestimony = () => hasAnyPermission(['publish:feedback:testimony', 'manage:feedback']);
   const canArchiveFeedbackTestimony = () => hasAnyPermission(['archive:feedback:testimony', 'manage:feedback']);
 
-  // Suggestion Feedback
   const canReadFeedbackSuggestion = () => hasAnyPermission(['read:feedback:suggestion', 'manage:feedback']);
   const canRespondFeedbackSuggestion = () => hasAnyPermission(['respond:feedback:suggestion', 'manage:feedback']);
   const canArchiveFeedbackSuggestion = () => hasAnyPermission(['archive:feedback:suggestion', 'manage:feedback']);
 
-  // Prayer Feedback
   const canReadFeedbackPrayer = () => hasAnyPermission(['read:feedback:prayer', 'manage:feedback']);
   const canRespondFeedbackPrayer = () => hasAnyPermission(['respond:feedback:prayer', 'manage:feedback']);
   const canArchiveFeedbackPrayer = () => hasAnyPermission(['archive:feedback:prayer', 'manage:feedback']);
 
-  // General Feedback
   const canReadFeedbackGeneral = () => hasAnyPermission(['read:feedback:general', 'manage:feedback']);
   const canRespondFeedbackGeneral = () => hasAnyPermission(['respond:feedback:general', 'manage:feedback']);
   const canArchiveFeedbackGeneral = () => hasAnyPermission(['archive:feedback:general', 'manage:feedback']);
 
-  // Feedback Stats
   const canViewFeedbackStats = () => hasAnyPermission(['view:feedback:stats', 'manage:feedback']);
 
   /**
@@ -172,9 +161,6 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
 
   // ===== HELPER FUNCTIONS =====
 
-  /**
-   * Check if user can read feedback of any category
-   */
   const canReadAnyFeedback = () => {
     return hasAnyPermission([
       'read:feedback:sermon',
@@ -187,9 +173,6 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
     ]);
   };
 
-  /**
-   * Check if user can respond to feedback of any category
-   */
   const canRespondAnyFeedback = () => {
     return hasAnyPermission([
       'respond:feedback:sermon',
@@ -202,9 +185,6 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
     ]);
   };
 
-  /**
-   * Check if user can archive feedback of any category
-   */
   const canArchiveAnyFeedback = () => {
     return hasAnyPermission([
       'archive:feedback:sermon',
@@ -217,32 +197,22 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
     ]);
   };
 
-  /**
-   * Get feedback categories user can access (read)
-   */
   const getAccessibleFeedbackCategories = () => {
     const categories = [];
-    
     if (canReadFeedbackSermon()) categories.push('sermon');
     if (canReadFeedbackService()) categories.push('service');
     if (canReadFeedbackTestimony()) categories.push('testimony');
     if (canReadFeedbackSuggestion()) categories.push('suggestion');
     if (canReadFeedbackPrayer()) categories.push('prayer');
     if (canReadFeedbackGeneral()) categories.push('general');
-    
     return categories;
   };
 
   // ===== PORTAL ACCESS CONTROL =====
 
-  /**
-   * Get accessible portal sections for sidebar
-   * Returns: Array of section objects
-   */
   const getAccessibleSections = () => {
     try {
       const sections = [];
-
 
       // Everyone can access profile
       sections.push({
@@ -260,8 +230,6 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
         permission: null
       });
 
-      // Only show Announcements in sidebar for users with manage permission
-      // All users can access via dashboard
       if (canManageAnnouncements()) {
         sections.push({
           name: 'Announcements',
@@ -307,15 +275,14 @@ const canViewDonationReports = () => hasAnyPermission(['view:donation:reports', 
         });
       }
 
-      // Show donations if user has ANY donation permission
-if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canViewAllPayments() || canViewDonationReports()) {
-  sections.push({
-    name: 'Donations',
-    href: '/portal/donations',
-    icon: 'Heart',
-    permission: null // Multiple permissions possible
-  });
-}
+      if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canViewAllPayments() || canViewDonationReports()) {
+        sections.push({
+          name: 'Donations',
+          href: '/portal/donations',
+          icon: 'Heart',
+          permission: null
+        });
+      }
 
       if (canManageUsers()) {
         sections.push({
@@ -326,8 +293,18 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
         });
       }
 
+      // ── NEW: Church Membership Applications ───────────────────────────────
+      if (canManageMembers()) {
+        sections.push({
+          name: 'Membership',
+          href: '/portal/members',
+          icon: 'UserCheck',
+          permission: 'manage:members'
+        });
+      }
+
       if (canSendEmailNotifications()) {
-      sections.push({
+        sections.push({
           name: 'Email Notifications',
           href: '/portal/email-notifications',
           icon: 'Mail',
@@ -343,7 +320,7 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
           permission: 'manage:users'
         });
       }
-      
+
       if (canManageBlog()) {
         sections.push({
           name: 'Blog',
@@ -410,7 +387,6 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
       return sections;
     } catch (error) {
       console.error('[usePermissions] Error in getAccessibleSections:', error);
-      // Return at least profile section as fallback
       return [{
         name: 'Profile',
         href: '/portal/profile',
@@ -420,16 +396,10 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
     }
   };
 
-  /**
-   * Check if user can access portal at all
-   */
   const canAccessPortal = () => {
     return user && user.role;
   };
 
-  /**
-   * Check if user has any admin-like permissions
-   */
   const hasAdminPermissions = () => {
     const adminPermissions = [
       'manage:users',
@@ -473,26 +443,20 @@ if (canManageDonations() || canViewCampaigns() || canViewAllPledges() || canView
     // Donations
     canManageDonations,
     canViewDonationReports,
-    // Donations
-    canManageDonations,
-    canViewDonationReports,
-    // Campaign permissions
     canViewCampaigns,
     canCreateCampaign,
-canEditCampaign,
-canDeleteCampaign,
-canActivateCampaign,
-canFeatureCampaign,
-// Pledge permissions
-canViewPledges,
-canViewAllPledges,
-canApprovePledges,
-canEditPledges,
-// Payment permissions
-canViewPayments,
-canViewAllPayments,
-canProcessPayments,
-canVerifyPayments,
+    canEditCampaign,
+    canDeleteCampaign,
+    canActivateCampaign,
+    canFeatureCampaign,
+    canViewPledges,
+    canViewAllPledges,
+    canApprovePledges,
+    canEditPledges,
+    canViewPayments,
+    canViewAllPayments,
+    canProcessPayments,
+    canVerifyPayments,
 
     // Users
     canManageUsers,
@@ -515,6 +479,10 @@ canVerifyPayments,
 
     // Livestream
     canManageLivestream,
+
+    // ── NEW ──────────────────────────────────────────────────────────────────
+    canManageMembers,
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Feedback (Granular by Category)
     canManageFeedback,

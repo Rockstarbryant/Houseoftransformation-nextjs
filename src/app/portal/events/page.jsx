@@ -10,7 +10,7 @@ import {
   Download, RefreshCw, Grid, List, CheckCircle, XCircle, Eye
 } from 'lucide-react';
 import {
-  getEvents, createEvent, updateEvent, deleteEvent, getEventStatus,
+  getEvents, getEventsAdmin, createEvent, updateEvent, deleteEvent, getEventStatus,
   getStatusColor, formatEventDate, formatEventTime, getDaysUntilEvent,
   filterEventsByStatus, sortEventsByDate, searchEvents, exportEventsToCSV,
   downloadCSV, validateEventData, formatRegistrationCount
@@ -72,24 +72,27 @@ export default function EventsPage() {
   // ============================================
 
   const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await getEvents({ limit: 100 });
-      
-      if (response.success) {
-        setEvents(response.events || []);
-      } else {
-        setError('Failed to fetch events');
-      }
-    } catch (err) {
-      console.error('[Events] Fetch error:', err);
-      setError(err.response?.data?.message || 'Failed to load events');
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    setError(null);
+ 
+    // getEventsAdmin calls GET /api/events/admin/all
+    // — requires manage:events permission (sent automatically via api interceptor)
+    // — returns ALL events (past + upcoming) with registrationCount, no raw PII
+    const response = await getEventsAdmin({ limit: 100 });
+ 
+    if (response.success) {
+      setEvents(response.events || []);
+    } else {
+      setError('Failed to fetch events');
     }
-  };
+  } catch (err) {
+    console.error('[Events] Fetch error:', err);
+    setError(err.response?.data?.message || 'Failed to load events');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const applyFilters = () => {
     let filtered = [...events];
