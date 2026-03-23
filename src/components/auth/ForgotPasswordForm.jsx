@@ -5,13 +5,16 @@ import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Input from '../common/Input';
 import Button from '../common/Button';
-import api from '@/services/api/authService';
+import authService from '@/services/api/authService';
 
 const ForgotPasswordForm = () => {
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [email, setEmail]           = useState('');
+  const [error, setError]           = useState('');
+  const [success, setSuccess]       = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Keep a copy of the submitted email so we can show it in the success screen
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
   const handleChange = (e) => {
     setEmail(e.target.value);
@@ -21,27 +24,23 @@ const ForgotPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
 
-    // Simple email validation
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
-      setIsSubmitting(false);
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      const response = await api.post('/auth/forgot-password', { email });
-      
-      if (response.data.success) {
-        setSuccess(true);
-        setEmail('');
-      } else {
-        setError(response.data.message || 'Failed to send reset email');
-      }
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      // Security best practice: don't reveal if email exists
+      await authService.post('/auth/forgot-password', { email });
+      // Always show success — backend never reveals if account exists or is OAuth-only
+      setSubmittedEmail(email);
+      setSuccess(true);
+      setEmail('');
+    } catch {
+      // Even on network errors, show success — security best practice
+      setSubmittedEmail(email);
       setSuccess(true);
     } finally {
       setIsSubmitting(false);
@@ -60,32 +59,30 @@ const ForgotPasswordForm = () => {
             <div>
               <h2 className="text-2xl font-bold text-blue-900 mb-2">Check Your Email</h2>
               <p className="text-gray-600">
-                We've sent a password reset link to <strong className="text-blue-900">{email || 'your email'}</strong>
+                If a password-based account exists for{' '}
+                <strong className="text-blue-900">{submittedEmail}</strong>, we've sent
+                a reset link to that address.
               </p>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-              <p className="text-sm text-gray-700">
-                <strong className="text-blue-900">Didn't receive it?</strong>
-              </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left space-y-1">
+              <p className="text-sm font-semibold text-blue-900">Didn't receive it?</p>
               <ul className="text-sm text-gray-600 space-y-1">
                 <li>✓ Check your spam or junk folder</li>
                 <li>✓ Make sure you entered the correct email</li>
-                <li>✓ The link expires in 30 minutes</li>
+                <li>✓ The link expires in 1 hour</li>
+                <li>✓ If you signed up with Google, use "Continue with Google" instead</li>
               </ul>
             </div>
 
-            <Link href="/login" className="block">
+            <Link href="/login">
               <Button variant="primary" fullWidth>
                 Back to Login
               </Button>
             </Link>
 
             <button
-              onClick={() => {
-                setSuccess(false);
-                setEmail('');
-              }}
+              onClick={() => { setSuccess(false); setSubmittedEmail(''); }}
               className="text-sm text-blue-900 hover:text-blue-700 font-semibold hover:underline"
             >
               Try another email
@@ -99,7 +96,7 @@ const ForgotPasswordForm = () => {
   return (
     <div className="min-h-screen pt-28 pb-12 px-4 bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-md mx-auto">
-        <Link 
+        <Link
           href="/login"
           className="inline-flex items-center gap-2 text-blue-900 hover:text-blue-700 font-semibold mb-8 transition-colors"
         >
@@ -111,7 +108,15 @@ const ForgotPasswordForm = () => {
           <div>
             <h1 className="text-3xl font-bold text-blue-900 mb-2">Reset Password</h1>
             <p className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email and we'll send you a link to reset your password.
+            </p>
+          </div>
+
+          {/* Hint about Google accounts */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="text-sm text-amber-800">
+              <strong>Using Google?</strong> If you signed up with Google, go back and use
+              "Continue with Google" — password reset is only for email/password accounts.
             </p>
           </div>
 
@@ -135,19 +140,15 @@ const ForgotPasswordForm = () => {
               autoFocus
             />
 
-            <Button
-              type="submit"
-              variant="primary"
-              fullWidth
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="primary" fullWidth disabled={isSubmitting}>
               {isSubmitting ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-gray-700">
-              <strong className="text-blue-900">Security Tip:</strong> We'll never ask for your password via email. Always reset it through this secure page.
+              <strong className="text-blue-900">Security Tip:</strong> We will never ask
+              for your password via email. Always reset it through this secure page.
             </p>
           </div>
 
