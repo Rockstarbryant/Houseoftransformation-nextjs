@@ -302,7 +302,7 @@ export const usePermissions = () => {
           permission: 'manage:members'
         });
       }
-
+/*
       if (canSendEmailNotifications()) {
         sections.push({
           name: 'Email Notifications',
@@ -311,6 +311,7 @@ export const usePermissions = () => {
           permission: 'manage:users'
         });
       }
+*/
 
       if (canAccessCommunications()) {
         sections.push({
@@ -374,7 +375,7 @@ export const usePermissions = () => {
           permission: 'view:analytics'
         });
       }
-
+/*
       if (canViewAuditLogs()) {
         sections.push({
           name: 'Audit Logs',
@@ -383,7 +384,7 @@ export const usePermissions = () => {
           permission: 'view:audit_logs'
         });
       }
-
+*/
       return sections;
     } catch (error) {
       console.error('[usePermissions] Error in getAccessibleSections:', error);
